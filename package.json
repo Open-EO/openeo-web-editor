@@ -1,0 +1,48 @@
+{
+  "name": "openeo-web-editor",
+  "version": "0.0.2",
+  "author": "OpenEO Team",
+  "contributors": [
+    {
+      "name": "Matthias Mohr"
+    },
+    {
+      "name": "Gustav Jv Rensburg"
+    },
+    {
+      "name": "Miha Kadunc"
+    }
+  ],
+  "description": "A web-based editor for interactive usage of the OpenEO API (proof-of-concept).",
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/Open-EO/openeo-web-editor",
+  "bugs": {
+    "url": "https://github.com/Open-EO/openeo-web-editor/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Open-EO/openeo-web-editor.git"
+  },
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build",
+    "test": "vue-cli-service test"
+  },
+  "dependencies": {
+    "vue": "^2.5.13",
+    "openeo-js-client": "git+https://github.com/Open-EO/openeo-js-client.git",
+    "bulma": "^0.6.2",
+    "leaflet": "^1.2.0",
+    "codemirror": "^5.33.0"
+  },
+  "devDependencies": {
+    "@vue/cli-plugin-babel": "^3.0.0-alpha.10",
+    "@vue/cli-service": "^3.0.0-alpha.10",
+    "vue-template-compiler": "^2.5.13"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not ie <= 8"
+  ]
+}
