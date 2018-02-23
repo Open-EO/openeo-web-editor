@@ -2,7 +2,7 @@
   <div id="backendPanel" class="toolbar">
 	<div v-show="$config.allowServerChange">
 		<div class="server-toolbar">
-		<h3>Server: <input type="text" ref="serverUrl" value="" /> <button  @click="changeServerUrl">Change</button></h3>
+		<h3>Server: <input type="text" id="serverUrl" ref="serverUrl" value="" /> <button  @click="changeServerUrl">Change</button></h3>
 		</div>
 		<div class="auth-toolbar">
 		<button id="authenticate" @click="authenticate">Authenticate</button>
@@ -150,7 +150,7 @@ OpenEO.Editor.Visualization = {
 </script>
 
 <style scoped>
-#serverAddress {
+#serverUrl {
 	width: 300px;
 	font-family: monospace;
 }

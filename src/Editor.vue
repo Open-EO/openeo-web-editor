@@ -5,26 +5,26 @@
 			<SourceEnvironment />
 			<div class="userTabs">
 				<div class="tabsHeader">
-					<button class="tabItem tabActive" name="accountTab" @click="changeTab">Account</button>
-					<button class="tabItem" name="filesTab" @click="changeTab">Files</button>
-					<button class="tabItem" name="processGraphsTab" @click="changeTab">Process Graphs</button>
-					<button class="tabItem" name="jobsTab" @click="changeTab">Jobs</button>
+					<button class="tabItem tabActive" name="jobsTab" @click="changeTab">Jobs</button>
 					<button class="tabItem" name="servicesTab" @click="changeTab">Services</button>
-				</div>
-				<div class="tabContent tabActive" id="accountTab">
-					<AccountPanel />
-				</div>
-				<div class="tabContent" id="filesTab">
-					<FilePanel />
-				</div>
-				<div class="tabContent" id="processGraphsTab">
-					<ProcessGraphPanel />
+					<button class="tabItem" name="processGraphsTab" @click="changeTab">Process Graphs</button>
+					<button class="tabItem" name="filesTab" @click="changeTab">Files</button>
+					<button class="tabItem" name="accountTab" @click="changeTab">Account</button>
 				</div>
 				<div class="tabContent" id="jobsTab">
 					<JobPanel />
 				</div>
 				<div class="tabContent" id="servicesTab">
 					<ServicePanel />
+				</div>
+				<div class="tabContent" id="processGraphsTab">
+					<ProcessGraphPanel />
+				</div>
+				<div class="tabContent" id="filesTab">
+					<FilePanel />
+				</div>
+				<div class="tabContent tabActive" id="accountTab">
+					<AccountPanel />
 				</div>
 			</div>
 			<footer>
@@ -107,6 +107,9 @@ export default {
 </script>
 
 <style>
+html, body, #app, #container, #ide, #map {
+	height:100%;
+}
 body {
 	margin: 0;
 	overflow: hidden;
@@ -124,14 +127,12 @@ ul, ol {
 	top: 0px;
 	left: 50%;
 	width: 50%;
-	height: 100vh;
 }
 #ide {
 	position: absolute;
 	top: 0px;
 	left: 0px;
 	width: 50%;
-	height: 100vh;
 	overflow-y: auto;
 }
 .toolbar {
@@ -177,6 +178,9 @@ ul, ol {
 	border-radius: 5px 5px 0 0;
 	width: 10%;
 	min-width: 130px;
+}
+.tabItem:focus {
+	outline: none;
 }
 div.tabActive {
 	display: block;

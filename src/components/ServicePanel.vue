@@ -1,6 +1,5 @@
 <template>
   <div id="servicePanel">
-    <h3>Services</h3>
     <table>
       <tr>
         <th>Type</th>

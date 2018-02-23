@@ -1,6 +1,5 @@
 <template>
   <div id="filePanel">
-    <h3>Files</h3>
     <table>
       <tr>
         <th>Name</th>
@@ -22,6 +21,12 @@
 import EventBus from '../eventbus.js';
 
 export default {
-  name: 'FilePanel'
+  	name: 'FilePanel',
+  	methods: {
+	  sizeFormatter(value, rowProperties) {
+		var i = value == 0 ? 0 : Math.floor( Math.log(value) / Math.log(1024) );
+		return ( value / Math.pow(1024, i) ).toFixed(2) * 1 + ' ' + ['B', 'kB', 'MB', 'GB', 'TB'][i];
+	  }
+  }
 }
 </script>

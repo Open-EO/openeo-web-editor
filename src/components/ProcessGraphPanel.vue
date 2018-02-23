@@ -1,6 +1,5 @@
 <template>
   <div id="processGraphPanel">
-    <h3>Process Graphs</h3>
     <table>
       <tr>
         <th>#</th>

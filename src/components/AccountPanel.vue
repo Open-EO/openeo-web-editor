@@ -1,6 +1,5 @@
 <template>
 	<div id="filePanel">
-		<h3>Account</h3>
 		<ul>
 			<li>User Name: Guest</li>
 			<li>Credits: 0 <button id="topUpCredits">Top up</button></li>

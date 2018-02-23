@@ -29,15 +29,14 @@
     "test": "vue-cli-service test"
   },
   "dependencies": {
-    "vue": "^2.5.13",
-    "openeo-js-client": "git+https://github.com/Open-EO/openeo-js-client.git",
-    "bulma": "^0.6.2",
+    "codemirror": "^5.33.0",
     "leaflet": "^1.2.0",
-    "codemirror": "^5.33.0"
+    "openeo-js-client": "git+https://github.com/Open-EO/openeo-js-client.git",
+    "vue": "^2.5.13"
   },
   "devDependencies": {
-    "@vue/cli-plugin-babel": "^3.0.0-alpha.10",
-    "@vue/cli-service": "^3.0.0-alpha.10",
+    "@vue/cli-plugin-babel": "^3.0.0-beta.1",
+    "@vue/cli-service": "^3.0.0-beta.1",
     "vue-template-compiler": "^2.5.13"
   },
   "browserslist": [

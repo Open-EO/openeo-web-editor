@@ -1,6 +1,5 @@
 <template>
   <div id="jobPanel">
-    <h3>Jobs</h3>
     <table>
       <tr>
         <th>#</th>
