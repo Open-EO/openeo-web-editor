@@ -42,7 +42,7 @@ export default {
 		var value = `// Create the process graph
 OpenEO.Editor.ProcessGraph = OpenEO.ImageCollection.create('Sentinel2A-L1C')
 	.filter_daterange("2018-01-01","2018-01-31")
-	.NDI(3,8)
+	.NDVI(3,8)
 	.max_time();`;
 		this.editor.setValue(value);
 
@@ -85,7 +85,12 @@ OpenEO.Editor.ProcessGraph = OpenEO.ImageCollection.create('Sentinel2A-L1C')
 			// Execute job
 			OpenEO.Jobs.create(OpenEO.Editor.ProcessGraph)
 				.then(data => {
-					EventBus.$emit('updateMapTilesWithUrl', OpenEO.Jobs.getWcsPath(data.job_id));
+					// ToDo: Make compatible with /services endpoint and the urls generated there
+					var url = '';
+					if (OpenEO.API.driver == 'openeo-sentinelhub-driver') {
+						url = OpenEO.API.baseUrl + '/wcs/' + data.job_id;
+					}
+					EventBus.$emit('updateMapTilesWithUrl', url);
 				}).catch(errorCode => {
 					alert('Sorry, could not create an OpenEO job. (' + errorCode + ')');
 				});
