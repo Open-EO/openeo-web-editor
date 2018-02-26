@@ -149,7 +149,7 @@ OpenEO.Editor.ProcessGraph = OpenEO.ImageCollection.create('Sentinel2A-L1C')
 			downloadData(this.editor.getValue(), name + ".js");
 		},
 
-		insertToEditor: function(text) {
+		insertToEditor(text) {
 			this.editor.replaceSelection(text);
 		}
 

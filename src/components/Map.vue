@@ -48,7 +48,6 @@ export default {
 		createTileLayer(url) {
 			var self = this;
 
-			// 'http://localhost:8000/download/placeholder/wcs'
 			this.tiles = L.tileLayer.wms(url, {
 				request: 'GetCoverage',
 				service: 'WCS',

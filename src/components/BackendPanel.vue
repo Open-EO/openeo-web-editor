@@ -2,10 +2,9 @@
   <div id="backendPanel" class="toolbar">
 	<div v-show="$config.allowServerChange">
 		<div class="server-toolbar">
-		<h3>Server: <input type="text" id="serverUrl" ref="serverUrl" value="" /> <button  @click="changeServerUrl">Change</button></h3>
+		<h3>Server: <input type="text" id="serverUrl" ref="serverUrl" value="" /> <button  @click="updateServerUrl">Change</button></h3>
 		</div>
 		<div class="auth-toolbar">
-		<button id="authenticate" @click="authenticate">Authenticate</button>
 		</div>
 		<hr />
 	</div>
@@ -35,24 +34,27 @@ export default {
 	},
 	mounted() {
 		this.$refs.serverUrl.value = this.serverUrl;
-
 		this.setVisualizations();
-		this.$OpenEO.Data.get().then(this.setDiscoveredData);
-		this.$OpenEO.Processes.get().then(this.setDiscoveredProcesses);
+		this.discoverData();
+	},
+	watch: { 
+		serverUrl(newVal, oldVal) {
+			this.discoverData();
+		}
 	},
 	methods: {
 
-		changeServerUrl() {
+		discoverData() {
+			this.$OpenEO.Data.get().then(this.setDiscoveredData);
+			this.$OpenEO.Processes.get().then(this.setDiscoveredProcesses);
+		},
+
+		updateServerUrl() {
 			var url = this.$refs.serverUrl.value;
-			if (url && url != this.serverUrl) {
+			if (typeof url === 'string' && url != this.serverUrl) {
 				EventBus.$emit('changeServerUrl', url);
 			}
 		},
-		
-		authenticate() {
-			alert("Sorry, authentication is not implemented yet.");
-		},
-
 
 		insertDataToEditor() {
 			this.insertToEditor(this.$refs.data.value);
@@ -66,29 +68,38 @@ export default {
 			EventBus.$emit('addToSource', code);
 		},
 	
-		setDiscoveredData: function(data) {
+		setDiscoveredData(data) {
 			var select = document.getElementById('data');
+			this._truncateList(select);
 			for (var i in data) {
 				this._makeOption(select, null, data[i].product_id, data[i].description);
 			}
 		},
 		
-		setDiscoveredProcesses: function(data) {
+		setDiscoveredProcesses(data) {
 			var select = document.getElementById('processes');
+			this._truncateList(select);
 			for (var i in data) {
 				this._makeOption(select, null, data[i].process_id, data[i].description);
 			}
 		},
 		
-		setVisualizations: function() {
+		setVisualizations() {
 			var select = document.getElementById('visualizations');
+			this._truncateList(select);
 			for (var key in this.$OpenEO.Visualizations) {
 				this._makeOption(select, key, this.$OpenEO.Visualizations[key].name);
 			}
 			document.getElementById('insertVisualizations').addEventListener('click', this._insertVisualization);
 		},
 
-		_makeOption: function(select, key, title, description) {
+		_truncateList(select) {
+			while (select.firstChild) {
+				select.removeChild(select.firstChild);
+			}
+		},
+
+		_makeOption(select, key, title, description) {
 			var option = document.createElement("option");
 			var text = document.createTextNode(title);
 			option.appendChild(text);
@@ -104,7 +115,7 @@ export default {
 			select.appendChild(option);
 		},
 	
-	_insertVisualization: function() {
+	_insertVisualization() {
 		var select = document.getElementById('visualizations');
 		var code;
 		if (select.value === 'custom') {

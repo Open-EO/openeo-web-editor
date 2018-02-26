@@ -11,20 +11,20 @@
 					<button class="tabItem" name="filesTab" @click="changeTab">Files</button>
 					<button class="tabItem" name="accountTab" @click="changeTab">Account</button>
 				</div>
-				<div class="tabContent" id="jobsTab">
-					<JobPanel />
+				<div class="tabContent tabActive" id="jobsTab">
+					<JobPanel :userId="userId" />
 				</div>
 				<div class="tabContent" id="servicesTab">
-					<ServicePanel />
+					<ServicePanel :userId="userId" />
 				</div>
 				<div class="tabContent" id="processGraphsTab">
-					<ProcessGraphPanel />
+					<ProcessGraphPanel :userId="userId" />
 				</div>
 				<div class="tabContent" id="filesTab">
-					<FilePanel />
+					<FilePanel :userId="userId" />
 				</div>
-				<div class="tabContent tabActive" id="accountTab">
-					<AccountPanel />
+				<div class="tabContent" id="accountTab">
+					<AccountPanel :userId="userId" />
 				</div>
 			</div>
 			<footer>
@@ -61,33 +61,52 @@ export default {
 		SourceEnvironment
 	},
 	data() {
-		return {}
-	},
-	computed: {
-		serverUrl: {
-			get: function () {
-				return this.$OpenEO.API.baseUrl;
-			},
-			set: function(value) {
-				this.$OpenEO.API.baseUrl = value;
-			}
-		}
+		return {
+			serverUrl: null,
+			userId: null
+		};
 	},
 	created() {
-		this.setServerUrl(this.$config.serverUrl);
-		EventBus.$on('changeServerUrl', this.setServerUrl);
-	},
-	mounted() {
-
+		this.changeServer(this.$config.serverUrl);
+		EventBus.$on('changeServerUrl', this.changeServer);
 	},
 	methods: {
 
-		setServerUrl(url) {
-			this.$OpenEO.API.driver = 'openeo-sentinelhub-driver'; // ToDo: Remove this after proof-of-concept
+		changeServer(url) {
 			this.serverUrl = url;
+			// Invalidate old user id
+			this.userId = null;
+			// ToDo: Remove the driver switch after proof-of-concept
+			if (url.indexOf('/api') !== -1) {
+				this.$OpenEO.API.driver = 'openeo-r-backend';
+			}
+			else {
+				this.$OpenEO.API.driver = 'openeo-sentinelhub-driver';
+			}
+			// Update server in OpenEO JS client
+			this.$OpenEO.API.baseUrl = url;
+			// Request authentication
+			// ToDo: Problem: Auth is fired to late, BackendPanel updates earlier...
+			this.requestAuth();
+		},
+
+		requestAuth() {
+			// ToDo: Request credentials from user and authenticate him
+			if (this.$OpenEO.API.driver == 'openeo-r-backend') {
+				this.$OpenEO.Auth.login('test', 'test')
+					.then(data => {
+						this.userId = data.user_id;
+					})
+					.catch(errorCode => {
+						this.userId = null;
+					});
+			}
+			else {
+				this.userId = 'me';
+			}
 		},
 	
-		changeTab: function(evt) {
+		changeTab(evt) {
 			var i, x, tablinks;
 			var tabName = evt.currentTarget.name;
 			x = document.getElementsByClassName("tabContent");

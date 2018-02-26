@@ -1,35 +1,51 @@
 <template>
-  <div id="servicePanel">
-    <table>
-      <tr>
-        <th>Type</th>
-        <th>Name</th>
-        <th>Status</th>
-        <th>Action</th>
-      </tr>
-      <tr>
-        <td>WMS</td>
-        <td>Germany NDVI WMS</td>
-        <td class="active">Active</td>
-        <td><button id="deleteService">Delete</button></td>
-      </tr>
-    </table>
-  </div>
+  <DataTable ref="table" :dataSource="dataSource" :columns="columns" />
 </template>
 
 <script>
 import EventBus from '../eventbus.js';
+import DataTable from './DataTable.vue';
 
 export default {
 	name: 'ServicePanel',
-	data() {
-		return {}
+	props: ['userId'],
+	components: {
+		DataTable
 	},
-	mounted() {
-
+	data() {
+		return {
+			columns: {
+				service_id: {
+					name: '#'
+				},
+				service_type: {
+					name: 'Type'
+				},
+				actions: {
+					name: 'Actions',
+					type: 'actions',
+					id: 'service_id'
+				}
+			}
+		};
+	},
+	watch: { 
+		userId(newVal, oldVal) {
+			this.updateData();
+		}
 	},
 	methods: {
-		
+		dataSource() {
+			let users = OpenEO.Users.getObject(this.userId);
+			return users.getServices();
+		},
+		updateData() {
+			if (typeof this.userId !== 'string' && typeof this.userId !== 'number') {
+				this.$refs.table.setNoData(401);
+				return;
+			}
+			this.$refs.table.retrieveData();
+		}
 	}
 }
 </script>
