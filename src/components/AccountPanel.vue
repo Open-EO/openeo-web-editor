@@ -24,6 +24,7 @@ export default {
 		}
 	},
 	mounted() {
+		this.updateData();
 	},
 	watch: { 
 		userId(newVal, oldVal) {
@@ -51,7 +52,7 @@ export default {
 
 			let user = this.$OpenEO.Users.getObject(this.userId);
 			user.getCredits()
-				.then(data => {this.credits = data.credits})
+				.then(data => {this.credits = data})
 				.catch(errorCode => {this.credits = null; });
 		}
 	}

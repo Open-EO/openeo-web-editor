@@ -5,11 +5,11 @@
 			<SourceEnvironment />
 			<div class="userTabs">
 				<div class="tabsHeader">
-					<button class="tabItem tabActive" name="jobsTab" @click="changeTab">Jobs</button>
-					<button class="tabItem" name="servicesTab" @click="changeTab">Services</button>
-					<button class="tabItem" name="processGraphsTab" @click="changeTab">Process Graphs</button>
-					<button class="tabItem" name="filesTab" @click="changeTab">Files</button>
-					<button class="tabItem" name="accountTab" @click="changeTab">Account</button>
+					<button class="tabItem tabActive" name="jobsTab" @click="changeTab"><i class="fas fa-tasks"></i> Jobs</button>
+					<button class="tabItem" name="servicesTab" @click="changeTab"><i class="fas fa-map"></i> Services</button>
+					<button class="tabItem" name="processGraphsTab" @click="changeTab"><i class="fas fa-code-branch"></i> Process Graphs</button>
+					<button class="tabItem" name="filesTab" @click="changeTab"><i class="fas fa-file"></i> Files</button>
+					<button class="tabItem" name="accountTab" @click="changeTab"><i class="fas fa-user"></i> Account</button>
 				</div>
 				<div class="tabContent tabActive" id="jobsTab">
 					<JobPanel :userId="userId" />

@@ -4,6 +4,7 @@ import OpenEOVisualizations from './visualizations.js';
 import Vue from 'vue';
 import Config from './config.js';
 import Editor from './Editor.vue';
+import 'fontawesome-web/css/fontawesome-all.css'
 
 OpenEO.Visualizations = OpenEOVisualizations;
 

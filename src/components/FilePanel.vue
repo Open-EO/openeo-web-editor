@@ -1,5 +1,13 @@
 <template>
-  <DataTable ref="table" :dataSource="dataSource" :columns="columns" />
+	<DataTable ref="table" :dataSource="dataSource" :columns="columns" id="FilePanel">
+		<div slot="toolbar" slot-scope="props">
+			<button title="Add new file"><i class="fas fa-plus"></i> Add</button>
+		</div>
+		<div slot="actions" slot-scope="props">
+			<button title="Download"><i class="fas fa-download"></i></button>
+			<button title="Delete"><i class="fas fa-trash"></i></button>
+		</div>
+	</DataTable>
 </template>
 
 <script>
@@ -19,19 +27,25 @@ export default {
 					name: 'Path / Name'
 				},
 				size: {
-					name: 'Size'
+					name: 'Size',
+					format: "FileSize",
+					filterable: false
 				},
 				modified: {
 					name: 'Last modified',
-					type: 'datetime'
+					format: 'DateTime'
 				},
 				actions: {
 					name: 'Actions',
-					type: 'actions',
+					format: 'Actions',
+					filterable: false,
 					id: 'name'
 				}
 			}
 		};
+	},
+	mounted() {
+		this.updateData();
 	},
 	watch: { 
 		userId(newVal, oldVal) {
@@ -49,11 +63,25 @@ export default {
 				return;
 			}
 			this.$refs.table.retrieveData();
-		},
-		sizeFormatter(value, rowProperties) {
-			var i = value == 0 ? 0 : Math.floor( Math.log(value) / Math.log(1024) );
-			return ( value / Math.pow(1024, i) ).toFixed(2) * 1 + ' ' + ['B', 'kB', 'MB', 'GB', 'TB'][i];
 		}
 	}
 }
 </script>
+
+<style>
+#FilePanel .name {
+	width: 50%;
+}
+#FilePanel td.name {
+	word-break: break-all;
+}
+#FilePanel .size {
+	width: 10%;
+}
+#FilePanel .modified {
+	width: 20%;
+}
+#FilePanel td.size, #FilePanel td.modified {
+	text-align: right;
+}
+</style>

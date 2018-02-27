@@ -2,11 +2,11 @@
 	<div id="SourceEnvironment">
 		<h3>Script: <em id="scriptName">{{ scriptName }}</em></h3>
 		<div id="sourceCodeEditor"></div>
-		<button @click="runScript">Run</button>
-		<button @click="newScript">New</button>
-		<button @click="loadScript">Load</button>
-		<button @click="saveScript">Save</button>
-		<button @click="downloadScript">Download</button>
+		<button @click="runScript" title="Run (selected) script"><i class="fas fa-play"></i> Run</button>
+		<button @click="newScript" title="Clear current script / New script"><i class="fas fa-file"></i> New</button>
+		<button @click="loadScript" title="Load script from local storage"><i class="fas fa-folder-open"></i> Load</button>
+		<button @click="saveScript" title="Save script to local storage"><i class="fas fa-save"></i> Save</button>
+		<button @click="downloadScript" title="Download script"><i class="fas fa-download"></i> Download</button>
 	</div>
 </template>
 

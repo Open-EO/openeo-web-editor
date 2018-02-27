@@ -2,23 +2,26 @@
   <div id="backendPanel" class="toolbar">
 	<div v-show="$config.allowServerChange">
 		<div class="server-toolbar">
-		<h3>Server: <input type="text" id="serverUrl" ref="serverUrl" value="" /> <button  @click="updateServerUrl">Change</button></h3>
+		<h3>Server: <input type="text" id="serverUrl" ref="serverUrl" value="" />
+		<button  @click="updateServerUrl" title="Change server"><i class="fas fa-check"></i></button></h3>
 		</div>
 		<div class="auth-toolbar">
 		</div>
 		<hr />
 	</div>
     <div class="data-toolbar">
-      Data: <select id="data" ref="data"></select> <button id="insertData" @click="insertDataToEditor">+</button>
+      Data: <select id="data" ref="data"></select>
+	  <button id="insertData" @click="insertDataToEditor" title="Insert into script"><i class="fas fa-plus"></i></button>
     </div>
     <div class="processes-toolbar">
-      Processes: <select id="processes" ref="processes"></select> <button id="insertProcesses" @click="insertProcessToEditor">+</button>
+      Processes: <select id="processes" ref="processes"></select>
+	  <button id="insertProcesses" @click="insertProcessToEditor" title="Insert into script"><i class="fas fa-plus"></i></button>
     </div>
     <div class="vis-toolbar">
       Visualizations: <select id="visualizations">
         <option value="">None</option>
         <option value="custom">Custom function</option>
-      </select> <button id="insertVisualizations">+</button>
+      </select> <button id="insertVisualizations" title="Insert into script"><i class="fas fa-plus"></i></button>
     </div>
   </div>
 </template>
@@ -86,7 +89,6 @@ export default {
 		
 		setVisualizations() {
 			var select = document.getElementById('visualizations');
-			this._truncateList(select);
 			for (var key in this.$OpenEO.Visualizations) {
 				this._makeOption(select, key, this.$OpenEO.Visualizations[key].name);
 			}
