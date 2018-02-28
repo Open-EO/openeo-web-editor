@@ -3,7 +3,7 @@
 		<h3>User '{{ userName }}'</h3>
 		<br>
 		<ul>
-			<li>Credits: {{ credits === null ? 'N/A' : credits }} <button id="topUpCredits" v-if="credits !== null">Top up</button></li>
+			<li>Credits: {{ credits === null ? 'N/A' : credits }} <button id="topUpCredits" v-if="credits !== null" @click="topUpCredits">Top up</button></li>
 		</ul>
 	</div>
 </template>
@@ -25,6 +25,7 @@ export default {
 	},
 	mounted() {
 		this.updateData();
+		EventBus.$on('serverChanged', this.updateData);
 	},
 	watch: { 
 		userId(newVal, oldVal) {
@@ -54,6 +55,9 @@ export default {
 			user.getCredits()
 				.then(data => {this.credits = data})
 				.catch(errorCode => {this.credits = null; });
+		},
+		topUpCredits() {
+			this.$utils.error(this, 'Not implemented!');
 		}
 	}
 }

@@ -9,11 +9,11 @@
 		</div>
 		<hr />
 	</div>
-    <div class="data-toolbar">
+    <div class="data-toolbar" v-if="data.length > 0">
       Data: <select id="data" ref="data"></select>
 	  <button id="insertData" @click="insertDataToEditor" title="Insert into script"><i class="fas fa-plus"></i></button>
     </div>
-    <div class="processes-toolbar">
+    <div class="processes-toolbar" v-if="processes.length > 0">
       Processes: <select id="processes" ref="processes"></select>
 	  <button id="insertProcesses" @click="insertProcessToEditor" title="Insert into script"><i class="fas fa-plus"></i></button>
     </div>
@@ -33,7 +33,10 @@ export default {
 	name: 'BackendPanel',
 	props: ['serverUrl'],
 	data() {
-		return {}
+		return {
+			processes: [],
+			data: []
+		};
 	},
 	mounted() {
 		this.$refs.serverUrl.value = this.serverUrl;
@@ -48,8 +51,12 @@ export default {
 	methods: {
 
 		discoverData() {
-			this.$OpenEO.Data.get().then(this.setDiscoveredData);
-			this.$OpenEO.Processes.get().then(this.setDiscoveredProcesses);
+			this.$OpenEO.Data.get()
+				.then(this.setDiscoveredData)
+				.catch(error => this.setDiscoveredData([]));
+			this.$OpenEO.Processes.get()
+				.then(this.setDiscoveredProcesses)
+				.catch(error => this.setDiscoveredProcesses([]));
 		},
 
 		updateServerUrl() {
@@ -72,18 +79,26 @@ export default {
 		},
 	
 		setDiscoveredData(data) {
+			this.data = data;
 			var select = document.getElementById('data');
 			this._truncateList(select);
 			for (var i in data) {
+				if (typeof data[i].product_id === 'undefined') {
+					continue;
+				}
 				this._makeOption(select, null, data[i].product_id, data[i].description);
 			}
 		},
 		
-		setDiscoveredProcesses(data) {
+		setDiscoveredProcesses(processes) {
+			this.processes = processes;
 			var select = document.getElementById('processes');
 			this._truncateList(select);
-			for (var i in data) {
-				this._makeOption(select, null, data[i].process_id, data[i].description);
+			for (var i in processes) {
+				if (typeof processes[i].process_id === 'undefined') {
+					continue;
+				}
+				this._makeOption(select, null, processes[i].process_id, processes[i].description);
 			}
 		},
 		

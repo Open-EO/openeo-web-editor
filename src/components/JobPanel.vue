@@ -1,15 +1,16 @@
 <template>
 	<DataTable ref="table" :dataSource="dataSource" :columns="columns" id="JobPanel">
-		<div slot="toolbar" slot-scope="props">
-			<button title="Add new job"><i class="fas fa-plus"></i> Add</button>
+		<div slot="toolbar" slot-scope="p">
+			<button title="Add new job" @click="addJob(p.row[p.col.id])"><i class="fas fa-plus"></i> Add</button>
 		</div>
-		<div slot="actions" slot-scope="props">
-			<button title="Details"><i class="fas fa-info"></i></button>
-			<button title="Edit"><i class="fas fa-edit"></i></button>
-			<button title="Start as batch job"><i class="fas fa-play-circle"></i></button>
-			<button title="Pause batch job"><i class="fas fa-pause-circle"></i></button>
-			<button title="Disable"><i class="fas fa-stop-circle"></i></button>
-			<button title="Create Service"><i class="fas fa-plus"></i> <i class="fas fa-map"></i></button>
+		<div slot="actions" slot-scope="p">
+			<button title="Details" @click="showJobInfo(p.row[p.col.id])"><i class="fas fa-info"></i></button>
+			<button title="Edit" @click="editJob(p.row[p.col.id])"><i class="fas fa-edit"></i></button>
+			<button title="Queue as batch job" @click="queueJob(p.row[p.col.id])"><i class="fas fa-play-circle"></i></button>
+			<button title="Pause batch job" @click="pauseJob(p.row[p.col.id])"><i class="fas fa-pause-circle"></i></button>
+			<button title="Disable" @click="cancelJob(p.row[p.col.id])"><i class="fas fa-stop-circle"></i></button>
+			<button title="Download" @click="downloadJob(p.row[p.col.id])"><i class="fas fa-download"></i></button>
+			<button title="Create Service" @click="createServiceFromJob(p.row[p.col.id])"><i class="fas fa-plus"></i> <i class="fas fa-map"></i></button>
 		</div>
 	</DataTable>
 </template>
@@ -28,7 +29,8 @@ export default {
 		return {
 			columns: {
 				job_id: {
-					name: 'ID'
+					name: 'ID',
+					primaryKey: true
 				},
 				status: {
 					name: 'Status',
@@ -57,6 +59,8 @@ export default {
 	},
 	mounted() {
 		this.updateData();
+		EventBus.$on('jobCreated', this.jobCreated);
+		EventBus.$on('serverChanged', this.updateData);
 	},
 	watch: { 
 		userId(newVal, oldVal) {
@@ -65,7 +69,7 @@ export default {
 	},
 	methods: {
 		dataSource() {
-			let users = OpenEO.Users.getObject(this.userId);
+			let users = this.$OpenEO.Users.getObject(this.userId);
 			return users.getJobs();
 		},
 		updateData() {
@@ -74,6 +78,85 @@ export default {
 				return;
 			}
 			this.$refs.table.retrieveData();
+		},
+		jobCreated(data) {
+			this.$snotify.confirm('Stored with job ID: ' + data.job_id, 'Job created!', {
+				timeout: 20000,
+				showProgressBar: true,
+				closeOnClick: false,
+				pauseOnHover: true,
+				buttons: [
+					{text: 'Download', action: () => this.downloadJob(data.job_id)}
+				]
+			});
+		},
+		addJob(id) {
+			EventBus.$emit('evalScript', (script) => {
+				 this.$OpenEO.Jobs.create(script.ProcessGraph, {});
+			} , false);
+		},
+		showJobInfo(id) {
+			try {
+				var jobApi = this.$OpenEO.Jobs.getObject(id);
+				jobApi.get();
+			} catch (e) {
+				this.$utils.error(this, e.message);
+			}
+		},
+		editJob(id) {
+			EventBus.$emit('evalScript', (script) => {
+				var jobApi = this.$OpenEO.Jobs.getObject(id);
+				jobApi.modify(script.ProcessGraph, {});
+			} , false);
+			
+		},
+		queueJob(id) {
+			try {
+				var jobApi = this.$OpenEO.Jobs.getObject(id);
+				jobApi.queue();
+			} catch (e) {
+				this.$utils.error(this, e.message);
+			}
+		},
+		pauseJob(id) {
+			try {
+				var jobApi = this.$OpenEO.Jobs.getObject(id);
+				jobApi.pause();
+			} catch (e) {
+				this.$utils.error(this, e.message);
+			}
+		},
+		cancelJob(id) {
+			try {
+				var jobApi = this.$OpenEO.Jobs.getObject(id);
+				jobApi.cancel();
+			} catch (e) {
+				this.$utils.error(this, e.message);
+			}
+		},
+		downloadJob(id) {
+			var format = prompt('Please specify the file format you need or leave empty for default format.', '');
+			try {
+				this.$utils.info(this, 'Download requested. Please wait...');
+				var jobApi = this.$OpenEO.Jobs.getObject(id);
+				jobApi.download(format).then(data => {
+					var ext = '';
+					if (format) {
+						ext = "." + format;
+					}
+					this.$utils.downloadData(data, id + ext);
+				});
+			} catch (e) {
+				this.$utils.error(this, e.message);
+			}
+		},
+		createServiceFromJob(id) {
+			// ToDo: Request what user wants to add
+			try {
+				this.$OpenEO.Services.create(id, null, {});
+			} catch (e) {
+				this.$utils.error(this, e.message);
+			}
 		}
 	}
 }

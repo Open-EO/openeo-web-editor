@@ -34,6 +34,7 @@
 		<div id="map">
 			<Map />
 		</div>
+		<vue-snotify></vue-snotify>
 	</div>
 </template>
 
@@ -96,13 +97,16 @@ export default {
 				this.$OpenEO.Auth.login('test', 'test')
 					.then(data => {
 						this.userId = data.user_id;
+						EventBus.$emit('serverChanged');
 					})
 					.catch(errorCode => {
 						this.userId = null;
+						EventBus.$emit('serverChanged');
 					});
 			}
 			else {
 				this.userId = 'me';
+				EventBus.$emit('serverChanged');
 			}
 		},
 	

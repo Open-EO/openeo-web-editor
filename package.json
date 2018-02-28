@@ -33,7 +33,8 @@
     "fontawesome-web": "^5.0.2",
     "leaflet": "^1.2.0",
     "openeo-js-client": "git+https://github.com/Open-EO/openeo-js-client.git",
-    "vue": "^2.5.13"
+    "vue": "^2.5.13",
+    "vue-snotify": "^2.0.1"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "^3.0.0-beta.1",

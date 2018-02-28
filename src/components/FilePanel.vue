@@ -1,11 +1,11 @@
 <template>
 	<DataTable ref="table" :dataSource="dataSource" :columns="columns" id="FilePanel">
-		<div slot="toolbar" slot-scope="props">
+		<div slot="toolbar" slot-scope="p">
 			<button title="Add new file"><i class="fas fa-plus"></i> Add</button>
 		</div>
-		<div slot="actions" slot-scope="props">
-			<button title="Download"><i class="fas fa-download"></i></button>
-			<button title="Delete"><i class="fas fa-trash"></i></button>
+		<div slot="actions" slot-scope="p">
+			<button title="Download" @click="downloadFile(p.row[p.col.id])"><i class="fas fa-download"></i></button>
+			<button title="Delete" @click="deleteFile(p.row[p.col.id])"><i class="fas fa-trash"></i></button>
 		</div>
 	</DataTable>
 </template>
@@ -24,7 +24,8 @@ export default {
 		return {
 			columns: {
 				name: {
-					name: 'Path / Name'
+					name: 'Path / Name',
+					primaryKey: true
 				},
 				size: {
 					name: 'Size',
@@ -46,6 +47,7 @@ export default {
 	},
 	mounted() {
 		this.updateData();
+		EventBus.$on('serverChanged', this.updateData);
 	},
 	watch: { 
 		userId(newVal, oldVal) {
@@ -54,7 +56,7 @@ export default {
 	},
   	methods: {
 		dataSource() {
-			let users = OpenEO.Users.getObject(this.userId);
+			let users = this.$OpenEO.Users.getObject(this.userId);
 			return users.getFiles();
 		},
 		updateData() {
@@ -63,6 +65,28 @@ export default {
 				return;
 			}
 			this.$refs.table.retrieveData();
+		},
+		downloadFile(id) {
+			try {
+				var fileApi = this.$OpenEO.Users.getObject(this.userId).getFileObject(id);
+				fileApi.get();
+			} catch(e) {
+				this.$utils.error(this, e.message);
+			}
+		},
+		deleteFile(id) {
+			try {
+				var fileApi = this.$OpenEO.Users.getObject(this.userId).getFileObject(id);
+				fileApi.delete()
+					.then(data => {
+						this.$refs.table.removeData(id);
+					})
+					.catch(errorCode => {
+						// ToDo
+					});
+			} catch (e) {
+				this.$utils.error(this, e.message);
+			}
 		}
 	}
 }

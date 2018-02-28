@@ -34,22 +34,23 @@ export default {
 					"Ctrl-Space": "autocomplete"
 				}
 			},
-			editor: null
+			editor: null,
+			defaultScript: `// Create the process graph
+OpenEO.Editor.ProcessGraph = OpenEO.ImageCollection.create('Sentinel2A-L1C')
+	.filter_daterange("2018-01-01","2018-01-31")
+	.NDVI("B04","B08")
+	.max_time();`
 		}
 	},
 	mounted() {
 		this.editor = CodeMirror(document.getElementById('sourceCodeEditor'), this.editorOptions);
-		var value = `// Create the process graph
-OpenEO.Editor.ProcessGraph = OpenEO.ImageCollection.create('Sentinel2A-L1C')
-	.filter_daterange("2018-01-01","2018-01-31")
-	.NDVI(3,8)
-	.max_time();`;
-		this.editor.setValue(value);
-
+		this.editor.setValue(this.defaultScript);
 		EventBus.$on('addToSource', this.insertToEditor);
+		EventBus.$on('evalScript', this.evalScript);
+		EventBus.$on('jobCreated', this.jobCreated);
 	},
 	methods: {
-		runScript() {
+		evalScript(callback, selected) {
 			var OpenEO = this.$OpenEO;
 			OpenEO.Editor = {
 				ProcessGraph: {},
@@ -58,49 +59,71 @@ OpenEO.Editor.ProcessGraph = OpenEO.ImageCollection.create('Sentinel2A-L1C')
 					args: {}
 				}
 			};
-			var script = this.editor.getSelection();
+			var script;
+			if (selected) {
+				script = this.editor.getSelection();
+			}
 			if (!script) {
 				script = this.editor.getValue();
 			}
-			if (!script) {
-				return;
+			if (script) {
+				eval(script);
 			}
-			eval(script);
+			callback(OpenEO.Editor);
+		},
 
-			OpenEO.Editor.Visualization.args = OpenEO.Editor.Visualization.args || {};
+		runScript() {
+			EventBus.$emit('evalScript', this.runJob, true);
+		},
+
+		runJob(job) {
+			job.Visualization.args = job.Visualization.args || {};
 			// Modify visualization when user specified a pre-defined visualization
-			if (typeof OpenEO.Editor.Visualization.function === 'object') {
-				var vis = OpenEO.Editor.Visualization.function;
-				OpenEO.Editor.Visualization.function = vis.callback;
+			if (typeof job.Visualization.function === 'object') {
+				var vis = job.Visualization.function;
+				job.Visualization.function = vis.callback;
 				// Set default arguments when not given by user
 				if (typeof vis.arguments !== 'undefined') {
 					for(var key in vis.arguments) {
-						if (typeof OpenEO.Editor.Visualization.args[key] === 'undefined') {
-							OpenEO.Editor.Visualization.args[key] = vis.arguments[key].defaultValue;
+						if (typeof job.Visualization.args[key] === 'undefined') {
+							job.Visualization.args[key] = vis.arguments[key].defaultValue;
 						}
 					}
 				}
 			}
 
 			// Execute job
-			OpenEO.Jobs.create(OpenEO.Editor.ProcessGraph)
+			this.$OpenEO.Jobs.create(job.ProcessGraph)
 				.then(data => {
-					// ToDo: Make compatible with /services endpoint and the urls generated there
-					var url = '';
-					if (OpenEO.API.driver == 'openeo-sentinelhub-driver') {
-						url = OpenEO.API.baseUrl + '/wcs/' + data.job_id;
-					}
-					EventBus.$emit('updateMapTilesWithUrl', url);
+					EventBus.$emit('jobCreated', data);
 				}).catch(errorCode => {
-					alert('Sorry, could not create an OpenEO job. (' + errorCode + ')');
+					this.$utils.error(this, 'Sorry, could not create an OpenEO job. (' + errorCode + ')');
 				});
+		},
+
+		jobCreated(data) {
+			if (this.$OpenEO.API.driver == 'openeo-sentinelhub-driver') {
+				// ToDo: Make compatible with /services endpoint and the urls generated there
+				var url = '';
+				if (this.$OpenEO.API.driver == 'openeo-sentinelhub-driver') {
+					url = this.$OpenEO.API.baseUrl + '/wcs/' + data.job_id;
+				}
+				EventBus.$emit('updateMapTilesWithUrl', url);
+			}
+			else {
+				// ToDo
+			}
+		},
+
+		clearEditor() {
+			this.editor.setValue('');
+			this.scriptName = '';
 		},
 
 		newScript() {
 			var confirmed = confirm("Do you really want to clear the existing script to create a new one?");
 			if (confirmed) {
-				this.editor.setValue('');
-				this.scriptName = '';
+				this.clearEditor();
 			}
 		},
 		
@@ -115,7 +138,7 @@ OpenEO.Editor.ProcessGraph = OpenEO.ImageCollection.create('Sentinel2A-L1C')
 				this.scriptName = name;
 			}
 			else {
-				alert('No script with this name found.');
+				this.$utils.info(this, 'No script with the name "' + name + '" found.');
 			}
 		},
 		
@@ -129,24 +152,11 @@ OpenEO.Editor.ProcessGraph = OpenEO.ImageCollection.create('Sentinel2A-L1C')
 		},
 		
 		downloadScript() {
-			var downloadData = (function () {
-				var a = document.createElement("a");
-				document.body.appendChild(a);
-				a.style = "display: none";
-				return function (data, fileName) {
-					var blob = new Blob([data], {type: "text/javascript"});
-					var url = window.URL.createObjectURL(blob);
-					a.href = url;
-					a.download = fileName;
-					a.click();
-					window.URL.revokeObjectURL(url);
-				};
-			}());
 			var name = this.scriptName;
 			if (!name) {
 				name = "openeo-script";
 			}
-			downloadData(this.editor.getValue(), name + ".js");
+			this.$utils.downloadData(this.editor.getValue(), name + ".js", "text/javascript");
 		},
 
 		insertToEditor(text) {

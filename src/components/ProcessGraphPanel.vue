@@ -1,12 +1,12 @@
 <template>
 	<DataTable ref="table" :dataSource="dataSource" :columns="columns" id="ProcessGraphPanel">
-		<div slot="toolbar" slot-scope="props">
-			<button title="Add new process graph"><i class="fas fa-plus"></i> Add</button>
+		<div slot="toolbar" slot-scope="p">
+			<button title="Add new process graph" @click="addGraph"><i class="fas fa-plus"></i> Add</button>
 		</div>
-		<div slot="actions" slot-scope="props">
-			<button title="Details"><i class="fas fa-info"></i></button>
-			<button title="Edit"><i class="fas fa-edit"></i></button>
-			<button title="Delete"><i class="fas fa-trash"></i></button>
+		<div slot="actions" slot-scope="p">
+			<button title="Details" @click="graphInfo(p.row[p.col.id])"><i class="fas fa-info"></i></button>
+			<button title="Edit" @click="editGraph(p.row[p.col.id])"><i class="fas fa-edit"></i></button>
+			<button title="Delete" @click="deleteGraph(p.row[p.col.id])"><i class="fas fa-trash"></i></button>
 		</div>
 	</DataTable>
 </template>
@@ -25,7 +25,8 @@ export default {
 		return {
 			columns: {
 				$: {
-					name: 'ID'
+					name: 'ID',
+					primaryKey: true
 				},
 				actions: {
 					name: 'Actions',
@@ -38,6 +39,7 @@ export default {
 	},
 	mounted() {
 		this.updateData();
+		EventBus.$on('serverChanged', this.updateData);
 	},
 	watch: { 
 		userId(newVal, oldVal) {
@@ -46,7 +48,7 @@ export default {
 	},
 	methods: {
 		dataSource() {
-			let users = OpenEO.Users.getObject(this.userId);
+			let users = this.$OpenEO.Users.getObject(this.userId);
 			return users.getProcessGraphs();
 		},
 		updateData() {
@@ -55,6 +57,40 @@ export default {
 				return;
 			}
 			this.$refs.table.retrieveData();
+		},
+		addGraph() {
+			EventBus.$emit('evalScript', (script) => {
+				var userApi = this.$OpenEO.Users.getObject(this.userId);
+				userApi.createProcessGraph(script.ProcessGraph);
+			} , false);
+		},
+		graphInfo(id) {
+			try {
+				var pgApi = this.$OpenEO.Users.getObject(this.userId).getProcessGraphObject(id);
+				pgApi.get();
+			} catch(e) {
+				this.$utils.error(this, e.message);
+			}
+		},
+		editGraph(id) {
+			EventBus.$emit('evalScript', (script) => {
+				var pgApi = this.$OpenEO.Users.getObject(this.userId).getProcessGraphObject(id);
+				pgApi.replace(script.ProcessGraph);
+			} , false);
+		},
+		deleteGraph(id) {
+			try {
+				var pgApi = this.$OpenEO.Users.getObject(this.userId).getProcessGraphObject(id);
+				pgApi.delete()
+					.then(data => {
+						this.$refs.table.removeData(id);
+					})
+					.catch(errorCode => {
+						// ToDo
+					});
+			} catch(e) {
+				this.$utils.error(this, e.message);
+			}
 		}
 	}
 }

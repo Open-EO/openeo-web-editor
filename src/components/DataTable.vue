@@ -1,6 +1,6 @@
 <template>
 	<div class="dataTable" :id="id">
-		<div class="dataTableMenu">
+		<div class="dataTableMenu" v-if="data !== null">
 			<div class="dataTableToolbar">
 				<slot name="toolbar"></slot>
 			</div>
@@ -39,6 +39,7 @@ export default {
 		return {
 			data: null,
 			view: [],
+			primaryKey: null,
 			noDataMessage: 'Loading data...'
 		};
 	},
@@ -50,6 +51,14 @@ export default {
 	computed: {
 		columnCount() {
 			return Object.keys(this.columns).length;
+		}
+	},
+	created() {
+		for(var col in this.columns) {
+			if (this.columns[col].primaryKey) {
+				this.primaryKey = col;
+				break;
+			}
 		}
 	},
 	mounted() {
@@ -102,6 +111,33 @@ export default {
 				this.setNoData('Sorry, no data available.');
 			}
 		},
+		removeData(id) {
+			if (this.primaryKey === null) {
+				throw new Error('No primary key specified.');
+			}
+			this.data = this.data.filter(row => { row[this.primaryKey] != id });
+		},
+		addData(data) {
+			if (!data.hasOwnProperty(this.primaryKey)) {
+				throw new Error('Object does not contain a value for the primary key.');
+			}
+			this.data.push(data);
+		},
+		replaceData(id, data) {
+			if (this.primaryKey === null) {
+				throw new Error('No primary key specified.');
+			}
+			else if (!data.hasOwnProperty(this.primaryKey)) {
+				throw new Error('Object does not contain a value for the primary key.');
+			}
+			const index = array1.findIndex(row => { row[this.primaryKey] == id });
+			if (index >= 0) {
+				this.data[index] = data;
+			}
+			else {
+				throw new Error('No element with id "' + id + '" found.');
+			}
+		},
 		value(row, col, id) {
 			if (typeof row === 'object') {
 				return row[id];
@@ -122,6 +158,9 @@ export default {
 			// Sort this.view...
 		},
 		filter() {
+			if (typeof this.$refs.filterInput === 'undefined') {
+				return;
+			}
 			var searchTerm = this.$refs.filterInput.value;
 			if (searchTerm.length < 1) {
 				return;
@@ -157,8 +196,10 @@ export default {
 				return;
 			}
 			this.view = this.data;
-			this.filter();
-			this.sort();
+			if (this.data.length > 0) {
+				this.filter();
+				this.sort();
+			}
 		},
 		format(value, col) {
 			if (typeof col.format === 'string') {

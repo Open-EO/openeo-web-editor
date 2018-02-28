@@ -1,12 +1,12 @@
 <template>
 	<DataTable ref="table" :dataSource="dataSource" :columns="columns" id="ServicePanel">
-		<div slot="toolbar" slot-scope="props">
-			<button title="Add new service"><i class="fas fa-plus"></i> Add</button>
+		<div slot="toolbar" slot-scope="p">
+			<button title="Add new service" @click="addService"><i class="fas fa-plus"></i> Add</button>
 		</div>
-		<div slot="actions" slot-scope="props">
-			<button title="Details"><i class="fas fa-info"></i></button>
-			<button title="Edit"><i class="fas fa-edit"></i></button>
-			<button title="Delete"><i class="fas fa-trash"></i></button>
+		<div slot="actions" slot-scope="p">
+			<button title="Details" @click="serviceInfo(p.row[p.col.id])"><i class="fas fa-info"></i></button>
+			<button title="Edit" @click="editService(p.row[p.col.id])"><i class="fas fa-edit"></i></button>
+			<button title="Delete" @click="deleteService(p.row[p.col.id])"><i class="fas fa-trash"></i></button>
 		</div>
 	</DataTable>
 </template>
@@ -25,7 +25,8 @@ export default {
 		return {
 			columns: {
 				service_id: {
-					name: 'ID'
+					name: 'ID',
+					primaryKey: true
 				},
 				service_type: {
 					name: 'Type'
@@ -41,6 +42,7 @@ export default {
 	},
 	mounted() {
 		this.updateData();
+		EventBus.$on('serverChanged', this.updateData);
 	},
 	watch: { 
 		userId(newVal, oldVal) {
@@ -49,7 +51,7 @@ export default {
 	},
 	methods: {
 		dataSource() {
-			let users = OpenEO.Users.getObject(this.userId);
+			let users = this.$OpenEO.Users.getObject(this.userId);
 			return users.getServices();
 		},
 		updateData() {
@@ -58,6 +60,45 @@ export default {
 				return;
 			}
 			this.$refs.table.retrieveData();
+		},
+		addService() {
+			// ToDo: Request what user wants to add
+			try {
+				this.$OpenEO.Services.create(null, null, {});
+			} catch (e) {
+				this.$utils.error(this, e.message);
+			}
+		},
+		serviceInfo(id) {
+			try {
+				var serviceApi = this.$OpenEO.Services.getObject(id);
+				serviceApi.get();
+			} catch (e) {
+				this.$utils.error(this, e.message);
+			}
+		},
+		editService(id) {
+			// ToDo: Request what user wants to change
+			try {
+				var serviceApi = this.$OpenEO.Services.getObject(id);
+				serviceApi.modify(null, null, {});
+			} catch (e) {
+				this.$utils.error(this, e.message);
+			}
+		},
+		deleteService(id) {
+			try {
+				var serviceApi = this.$OpenEO.Services.getObject(id);
+				serviceApi.delete()
+					.then(data => {
+						this.$refs.table.removeData(id);
+					})
+					.catch(errorCode => {
+						// ToDo
+					});
+			} catch (e) {
+				this.$utils.error(this, e.message);
+			}
 		}
 	}
 }
