@@ -1,10 +1,10 @@
 <template>
 	<div class="dataTable" :id="id">
-		<div class="dataTableMenu" v-if="data.length > 0">
+		<div class="dataTableMenu">
 			<div class="dataTableToolbar">
 				<slot name="toolbar"></slot>
 			</div>
-			<div class="dataTableFilter">
+			<div class="dataTableFilter" v-if="data.length > 0">
 				<i class="fas fa-search"></i>
 				<input type="text" value="" ref="filterInput" placeholder="Search term" @keyup="updateView">
 				<button @click="clearFilter"><i class="fas fa-times-circle"></i></button>

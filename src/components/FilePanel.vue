@@ -1,11 +1,11 @@
 <template>
 	<DataTable ref="table" :dataSource="dataSource" :columns="columns" id="FilePanel">
 		<div slot="toolbar" slot-scope="p">
-			<button title="Add new file"><i class="fas fa-plus"></i> Add</button>
+			<button title="Add new file" v-show="openEO.Capabilities.uploadUserFile()"><i class="fas fa-plus"></i> Add</button>
 		</div>
 		<div slot="actions" slot-scope="p">
-			<button title="Download" @click="downloadFile(p.row[p.col.id])"><i class="fas fa-download"></i></button>
-			<button title="Delete" @click="deleteFile(p.row[p.col.id])"><i class="fas fa-trash"></i></button>
+			<button title="Download" @click="downloadFile(p.row[p.col.id])" v-show="openEO.Capabilities.downloadUserFile()"><i class="fas fa-download"></i></button>
+			<button title="Delete" @click="deleteFile(p.row[p.col.id])" v-show="openEO.Capabilities.deleteUserFile()"><i class="fas fa-trash"></i></button>
 		</div>
 	</DataTable>
 </template>
@@ -16,7 +16,7 @@ import DataTable from './DataTable.vue';
 
 export default {
   	name: 'FilePanel',
-	props: ['userId'],
+	props: ['openEO','userId'],
 	components: {
 		DataTable
 	},
@@ -56,11 +56,14 @@ export default {
 	},
   	methods: {
 		dataSource() {
-			let users = this.$OpenEO.Users.getObject(this.userId);
+			let users = this.openEO.Users.getObject(this.userId);
 			return users.getFiles();
 		},
 		updateData() {
-			if (typeof this.userId !== 'string' && typeof this.userId !== 'number') {
+			if (typeof this.$refs.table === 'undefined') {
+				return;
+			}
+			else if (typeof this.userId !== 'string' && typeof this.userId !== 'number') {
 				this.$refs.table.setNoData(401);
 				return;
 			}
@@ -68,7 +71,7 @@ export default {
 		},
 		downloadFile(id) {
 			try {
-				var fileApi = this.$OpenEO.Users.getObject(this.userId).getFileObject(id);
+				var fileApi = this.openEO.Users.getObject(this.userId).getFileObject(id);
 				fileApi.get();
 			} catch(e) {
 				this.$utils.error(this, e.message);
@@ -76,7 +79,7 @@ export default {
 		},
 		deleteFile(id) {
 			try {
-				var fileApi = this.$OpenEO.Users.getObject(this.userId).getFileObject(id);
+				var fileApi = this.openEO.Users.getObject(this.userId).getFileObject(id);
 				fileApi.delete()
 					.then(data => {
 						this.$refs.table.removeData(id);

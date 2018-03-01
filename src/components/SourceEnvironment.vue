@@ -22,6 +22,7 @@ import CodeMirror from 'codemirror';
 
 export default {
 	name: 'SourceEnvironment',
+	props: ['openEO'],
 	data() {
 		return {
 			scriptName: '',
@@ -50,7 +51,7 @@ OpenEO.Editor.ProcessGraph = OpenEO.ImageCollection.create('Sentinel2A-L1C')
 	},
 	methods: {
 		evalScript(callback) {
-			var OpenEO = this.$OpenEO;
+			var OpenEO = this.openEO;
 			OpenEO.Editor = {
 				ProcessGraph: {},
 				Visualization: {
@@ -85,11 +86,11 @@ OpenEO.Editor.ProcessGraph = OpenEO.ImageCollection.create('Sentinel2A-L1C')
 		},
 
 		jobCreated(data) {
-			if (this.$OpenEO.API.driver == 'openeo-sentinelhub-driver') {
+			if (this.openEO.API.driver == 'openeo-sentinelhub-driver') {
 				// ToDo: Make compatible with /services endpoint and the urls generated there
 				var url = '';
-				if (this.$OpenEO.API.driver == 'openeo-sentinelhub-driver') {
-					url = this.$OpenEO.API.baseUrl + '/wms/' + data.job_id;
+				if (this.openEO.API.driver == 'openeo-sentinelhub-driver') {
+					url = this.openEO.API.baseUrl + '/wms/' + data.job_id;
 				}
 				EventBus.$emit('updateMapTilesWithUrl', url);
 			}

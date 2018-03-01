@@ -1,30 +1,30 @@
 <template>
 	<div id="container">
 		<div id="ide">
-			<BackendPanel :serverUrl="serverUrl" />
-			<SourceEnvironment />
+			<BackendPanel :serverUrl="openEO.API.baseUrl" :openEO="openEO" />
+			<SourceEnvironment :openEO="openEO" />
 			<div class="userTabs">
 				<div class="tabsHeader">
-					<button class="tabItem tabActive" name="jobsTab" @click="changeTab"><i class="fas fa-tasks"></i> Jobs</button>
-					<button class="tabItem" name="servicesTab" @click="changeTab"><i class="fas fa-map"></i> Services</button>
-					<button class="tabItem" name="processGraphsTab" @click="changeTab"><i class="fas fa-code-branch"></i> Process Graphs</button>
-					<button class="tabItem" name="filesTab" @click="changeTab"><i class="fas fa-file"></i> Files</button>
+					<button class="tabItem" name="jobsTab" @click="changeTab"><i class="fas fa-tasks"></i> Jobs</button>
+					<button class="tabItem" name="servicesTab" @click="changeTab" v-if="supportsServices()"><i class="fas fa-map"></i> Services</button>
+					<button class="tabItem" name="processGraphsTab" @click="changeTab" v-if="supportsUserProcessGraphs()"><i class="fas fa-code-branch"></i> Process Graphs</button>
+					<button class="tabItem" name="filesTab" @click="changeTab" v-if="supportsUserFiles()"><i class="fas fa-file"></i> Files</button>
 					<button class="tabItem" name="accountTab" @click="changeTab"><i class="fas fa-user"></i> Account</button>
 				</div>
-				<div class="tabContent tabActive" id="jobsTab">
-					<JobPanel :userId="userId" />
+				<div class="tabContent" id="jobsTab">
+					<JobPanel :userId="openEO.Auth.userId" :openEO="openEO" />
 				</div>
-				<div class="tabContent" id="servicesTab">
-					<ServicePanel ref="servicePanel" :userId="userId" />
+				<div class="tabContent" id="servicesTab" v-if="supportsServices()">
+					<ServicePanel ref="servicePanel" :userId="openEO.Auth.userId" :openEO="openEO" />
 				</div>
-				<div class="tabContent" id="processGraphsTab">
-					<ProcessGraphPanel :userId="userId" />
+				<div class="tabContent" id="processGraphsTab" v-if="supportsUserProcessGraphs()">
+					<ProcessGraphPanel :userId="openEO.Auth.userId" :openEO="openEO" />
 				</div>
-				<div class="tabContent" id="filesTab">
-					<FilePanel :userId="userId" />
+				<div class="tabContent" id="filesTab" v-if="supportsUserFiles()">
+					<FilePanel :userId="openEO.Auth.userId" :openEO="openEO" />
 				</div>
 				<div class="tabContent" id="accountTab">
-					<AccountPanel :userId="userId" />
+					<AccountPanel :userId="openEO.Auth.userId" :openEO="openEO" />
 				</div>
 			</div>
 			<footer>
@@ -48,6 +48,15 @@ import Map from './components/Map.vue'
 import ProcessGraphPanel from './components/ProcessGraphPanel.vue'
 import ServicePanel from './components/ServicePanel.vue'
 import SourceEnvironment from './components/SourceEnvironment.vue'
+import axios from 'axios';
+import { OpenEO, Capabilities } from 'openeo-js-client/openeo.js';
+import OpenEOVisualizations from './visualizations.js';
+
+// Making axios available globally for the OpenEO JS client
+window.axios = axios;
+
+OpenEO.Visualizations = OpenEOVisualizations;
+OpenEO.Capabilities = new Capabilities();
 
 export default {
 	name: 'openeo-web-editor',
@@ -63,58 +72,74 @@ export default {
 	},
 	data() {
 		return {
-			serverUrl: null,
-			userId: null
+			openEO: OpenEO
 		};
 	},
 	created() {
 		this.changeServer(this.$config.serverUrl);
 		EventBus.$on('changeServerUrl', this.changeServer);
+		EventBus.$on('serverChanged', this.serverChanged);
+	},
+	mounted() {
+		this.resetActiveTab();
 	},
 	methods: {
 
 		changeServer(url) {
-			this.serverUrl = url;
+			this.openEO.Capabilities = new Capabilities();
+
+			// Update server url
+			this.openEO.API.baseUrl = url;
 			// Invalidate old user id
-			this.userId = null;
+			this.openEO.Auth.userId = null;
 			// ToDo: Remove the driver switch after proof-of-concept
 			if (url.indexOf('/api') !== -1) {
-				this.$OpenEO.API.driver = 'openeo-r-backend';
+				this.openEO.API.driver = 'openeo-r-backend';
 			}
 			else {
-				this.$OpenEO.API.driver = 'openeo-sentinelhub-driver';
+				this.openEO.API.driver = 'openeo-sentinelhub-driver';
 			}
-			// Update server in OpenEO JS client
-			this.$OpenEO.API.baseUrl = url;
 			// Request authentication
 			// ToDo: Problem: Auth is fired to late, BackendPanel updates earlier...
-			this.requestAuth();
 			this.requestCapabilities();
 		},
 
+		serverChanged() {
+			this.resetActiveTab();
+		},
+
 		requestCapabilities() {
-			this.$OpenEO.API.getCapabilities().then((info) => {
-				this.$capabilities = info;
+			this.openEO.API.getCapabilities().then(info => {
+				this.openEO.Capabilities = info;
+				this.requestAuth();
 			});
 		},
 
 		requestAuth() {
 			// ToDo: Request credentials from user and authenticate him
-			if (this.$OpenEO.API.driver == 'openeo-r-backend') {
-				this.$OpenEO.Auth.login('test', 'test')
+			if (this.openEO.API.driver == 'openeo-r-backend') {
+				this.openEO.Auth.login('test', 'test')
 					.then(data => {
-						this.userId = data.user_id;
+						this.openEO.Auth.userId = data.user_id;
 						EventBus.$emit('serverChanged');
 					})
 					.catch(errorCode => {
-						this.userId = null;
+						this.openEO.Auth.userId = null;
 						EventBus.$emit('serverChanged');
 					});
 			}
 			else {
-				this.userId = 'me';
+				this.openEO.Auth.userId = 'me';
 				EventBus.$emit('serverChanged');
 			}
+		},
+
+		resetActiveTab() {
+			var tab = document.getElementsByClassName("tabItem")[0];
+			if (!tab.className || tab.className.indexOf(' tabActive') === -1) {
+				tab.className += " tabActive";
+			}
+			document.getElementById(tab.name).style.display = "block";
 		},
 	
 		changeTab(evt) {
@@ -130,6 +155,16 @@ export default {
 			}
 			document.getElementById(tabName).style.display = "block";
 			evt.currentTarget.className += " tabActive";
+		},
+
+		supportsServices() {
+			return this.openEO.Capabilities.createService();
+		},
+		supportsUserProcessGraphs() {
+			return this.openEO.Capabilities.userProcessGraphs();
+		},
+		supportsUserFiles() {
+			return this.openEO.Capabilities.userFiles();
 		}
 
 	}
@@ -211,9 +246,6 @@ ul, ol {
 }
 .tabItem:focus {
 	outline: none;
-}
-div.tabActive {
-	display: block;
 }
 button.tabActive {
 	font-weight: bold;

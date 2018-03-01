@@ -1,16 +1,16 @@
 <template>
 	<DataTable ref="table" :dataSource="dataSource" :columns="columns" id="JobPanel">
 		<div slot="toolbar" slot-scope="p">
-			<button title="Add new job" @click="createJobFromScript"><i class="fas fa-plus"></i> Add</button>
+			<button title="Add new job" @click="createJobFromScript" v-show="openEO.Capabilities.createJob()"><i class="fas fa-plus"></i> Add</button>
 		</div>
 		<div slot="actions" slot-scope="p">
-			<button title="Details" @click="showJobInfo(p.row[p.col.id])"><i class="fas fa-info"></i></button>
-			<button title="Edit" @click="editJob(p.row[p.col.id])"><i class="fas fa-edit"></i></button>
-			<button title="Queue as batch job" @click="queueJob(p.row[p.col.id])"><i class="fas fa-play-circle"></i></button>
-			<button title="Pause batch job" @click="pauseJob(p.row[p.col.id])"><i class="fas fa-pause-circle"></i></button>
-			<button title="Disable" @click="cancelJob(p.row[p.col.id])"><i class="fas fa-stop-circle"></i></button>
-			<button title="Download" @click="downloadJob(p.row[p.col.id])"><i class="fas fa-download"></i></button>
-			<button title="Create Service" @click="createServiceFromJob(p.row[p.col.id])"><i class="fas fa-plus"></i> <i class="fas fa-map"></i></button>
+			<button title="Details" @click="showJobInfo(p.row[p.col.id])" v-show="openEO.Capabilities.jobInfo()"><i class="fas fa-info"></i></button>
+			<button title="Edit" @click="editJob(p.row[p.col.id])" v-show="openEO.Capabilities.updateJob()"><i class="fas fa-edit"></i></button>
+			<button title="Queue as batch job" @click="queueJob(p.row[p.col.id])" v-show="openEO.Capabilities.queueJob()"><i class="fas fa-play-circle"></i></button>
+			<button title="Pause batch job" @click="pauseJob(p.row[p.col.id])" v-show="openEO.Capabilities.pauseJob()"><i class="fas fa-pause-circle"></i></button>
+			<button title="Disable" @click="cancelJob(p.row[p.col.id])" v-show="openEO.Capabilities.cancelJob()"><i class="fas fa-stop-circle"></i></button>
+			<button title="Download" @click="downloadJob(p.row[p.col.id])" v-show="openEO.Capabilities.downloadJob()"><i class="fas fa-download"></i></button>
+			<button title="Create Service" @click="createServiceFromJob(p.row[p.col.id])" v-show="openEO.Capabilities.createService()"><i class="fas fa-plus"></i> <i class="fas fa-map"></i></button>
 		</div>
 	</DataTable>
 </template>
@@ -21,7 +21,7 @@ import DataTable from './DataTable.vue';
 
 export default {
 	name: 'JobPanel',
-	props: ['userId'],
+	props: ['openEO','userId'],
 	components: {
 		DataTable
 	},
@@ -69,7 +69,7 @@ export default {
 	},
 	methods: {
 		dataSource() {
-			let users = this.$OpenEO.Users.getObject(this.userId);
+			let users = this.openEO.Users.getObject(this.userId);
 			return users.getJobs();
 		},
 		updateData() {
@@ -77,24 +77,29 @@ export default {
 				this.$refs.table.setNoData(401);
 				return;
 			}
-			this.$refs.table.retrieveData();
+
+			if (this.openEO.Capabilities.userJobs()) {
+				this.$refs.table.retrieveData();
+			}
+			else {
+				this.$refs.table.setNoData(501);
+			}
 		},
 		jobCreated(data) {
 			this.$refs.table.addData(data);
 
-			var buttons = [];
-			buttons.push({text: 'Download', action: () => this.downloadJob(data.job_id)});
-			this.$snotify.confirm('Job created!', null, {
-				timeout: 10000,
-				showProgressBar: true,
-				closeOnClick: false,
-				pauseOnHover: true,
-				buttons: buttons
-			});
+			var options = {
+				buttons: []
+			};
+			if (this.openEO.Capabilities.downloadJob()) {
+				options.buttons.push({text: 'Download', action: () => this.downloadJob(data.job_id)});
+				options.timeout = 10000;
+			}
+			this.$snotify.confirm('Job created!', null, options);
 		},
 		createJob(job) {
 			// Todo: Output formats
-			this.$OpenEO.Jobs.create(job.ProcessGraph, {})
+			this.openEO.Jobs.create(job.ProcessGraph, {})
 				.then(data => {
 					EventBus.$emit('jobCreated', data);
 				}).catch(errorCode => {
@@ -109,7 +114,7 @@ export default {
 		},
 		showJobInfo(id) {
 			try {
-				var jobApi = this.$OpenEO.Jobs.getObject(id);
+				var jobApi = this.openEO.Jobs.getObject(id);
 				jobApi.get();
 			} catch (e) {
 				this.$utils.error(this, e.message);
@@ -117,14 +122,14 @@ export default {
 		},
 		editJob(id) {
 			EventBus.$emit('evalScript', (script) => {
-				var jobApi = this.$OpenEO.Jobs.getObject(id);
+				var jobApi = this.openEO.Jobs.getObject(id);
 				jobApi.modify(script.ProcessGraph, {});
 			} , false);
 			
 		},
 		queueJob(id) {
 			try {
-				var jobApi = this.$OpenEO.Jobs.getObject(id);
+				var jobApi = this.openEO.Jobs.getObject(id);
 				jobApi.queue();
 			} catch (e) {
 				this.$utils.error(this, e.message);
@@ -132,7 +137,7 @@ export default {
 		},
 		pauseJob(id) {
 			try {
-				var jobApi = this.$OpenEO.Jobs.getObject(id);
+				var jobApi = this.openEO.Jobs.getObject(id);
 				jobApi.pause();
 			} catch (e) {
 				this.$utils.error(this, e.message);
@@ -140,7 +145,7 @@ export default {
 		},
 		cancelJob(id) {
 			try {
-				var jobApi = this.$OpenEO.Jobs.getObject(id);
+				var jobApi = this.openEO.Jobs.getObject(id);
 				jobApi.cancel();
 			} catch (e) {
 				this.$utils.error(this, e.message);
@@ -150,7 +155,7 @@ export default {
 			var format = prompt('Please specify the file format you need or leave empty for default format.', '');
 			try {
 				this.$utils.info(this, 'Download requested. Please wait...');
-				var jobApi = this.$OpenEO.Jobs.getObject(id);
+				var jobApi = this.openEO.Jobs.getObject(id);
 				jobApi.download(format).then(data => {
 					var ext = '';
 					if (format) {
@@ -169,7 +174,7 @@ export default {
 			}
 			try {
 				// ToDo: Ask user for service arguments
-				this.$OpenEO.Services.create(id, type, {}).then(data => {
+				this.openEO.Services.create(id, type, {}).then(data => {
 					EventBus.$emit('serviceCreated', data);
 				}).catch(error => {
 					this.$utils.error(this, e.message);

@@ -5,9 +5,9 @@
 		</div>
 		<div slot="actions" slot-scope="p">
 			<button title="View on map" @click="viewService(p.row)"><i class="fas fa-map"></i></button>
-			<button title="Details" @click="serviceInfo(p.row[p.col.id])"><i class="fas fa-info"></i></button>
-			<button title="Edit" @click="editService(p.row[p.col.id])"><i class="fas fa-edit"></i></button>
-			<button title="Delete" @click="deleteService(p.row[p.col.id])"><i class="fas fa-trash"></i></button>
+			<button title="Details" @click="serviceInfo(p.row[p.col.id])" v-show="openEO.Capabilities.serviceInfo()"><i class="fas fa-info"></i></button>
+			<button title="Edit" @click="editService(p.row[p.col.id])" v-show="openEO.Capabilities.updateService()"><i class="fas fa-edit"></i></button>
+			<button title="Delete" @click="deleteService(p.row[p.col.id])" v-show="openEO.Capabilities.deleteService()"><i class="fas fa-trash"></i></button>
 		</div>
 	</DataTable>
 </template>
@@ -18,7 +18,7 @@ import DataTable from './DataTable.vue';
 
 export default {
 	name: 'ServicePanel',
-	props: ['userId'],
+	props: ['openEO','userId'],
 	components: {
 		DataTable
 	},
@@ -56,11 +56,14 @@ export default {
 	},
 	methods: {
 		dataSource() {
-			let users = this.$OpenEO.Users.getObject(this.userId);
+			let users = this.openEO.Users.getObject(this.userId);
 			return users.getServices();
 		},
 		updateData() {
-			if (typeof this.userId !== 'string' && typeof this.userId !== 'number') {
+			if (typeof this.$refs.table === 'undefined') {
+				return;
+			}
+			else if (typeof this.userId !== 'string' && typeof this.userId !== 'number') {
 				this.$refs.table.setNoData(401);
 				return;
 			}
@@ -69,30 +72,33 @@ export default {
 		serviceCreated(data) {
 			this.$refs.table.addData(data);
 
-			var buttons = [];
-			buttons.push({text: 'View', action: () => this.viewService(data)});
-			buttons.push({text: 'Details', action: () => this.serviceInfo(data.job_id)});
-			buttons.push({text: 'Edit', action: () => this.editService(data.job_id)});
-			buttons.push({text: 'Delete', action: () => this.deleteService(data.job_id)});
-			this.$snotify.confirm('Service created!', null, {
+			var options = {
 				timeout: 10000,
-				showProgressBar: true,
-				closeOnClick: false,
-				pauseOnHover: true,
-				buttons: buttons
-			});
+				buttons: []
+			};
+			options.buttons.push({text: 'View', action: () => this.viewService(data)});
+			if (this.openEO.Capabilities.serviceInfo()) {
+				options.buttons.push({text: 'Details', action: () => this.serviceInfo(data.job_id)});
+			}
+			if (this.openEO.Capabilities.updateService()) {
+				options.buttons.push({text: 'Edit', action: () => this.editService(data.job_id)});
+			}
+			if (this.openEO.Capabilities.deleteService()) {
+				options.buttons.push({text: 'Delete', action: () => this.deleteService(data.job_id)});
+			}
+			this.$snotify.confirm('Service created!', null, options);
 		},
 		addService() {
 			// ToDo: Request what user wants to add
 			try {
-				this.$OpenEO.Services.create(null, null, {});
+				this.openEO.Services.create(null, null, {});
 			} catch (e) {
 				this.$utils.error(this, e.message);
 			}
 		},
 		serviceInfo(id) {
 			try {
-				var serviceApi = this.$OpenEO.Services.getObject(id);
+				var serviceApi = this.openEO.Services.getObject(id);
 				serviceApi.get();
 			} catch (e) {
 				this.$utils.error(this, e.message);
@@ -101,7 +107,7 @@ export default {
 		editService(id) {
 			// ToDo: Request what user wants to change
 			try {
-				var serviceApi = this.$OpenEO.Services.getObject(id);
+				var serviceApi = this.openEO.Services.getObject(id);
 				serviceApi.modify(null, null, {});
 			} catch (e) {
 				this.$utils.error(this, e.message);
@@ -109,7 +115,7 @@ export default {
 		},
 		deleteService(id) {
 			try {
-				var serviceApi = this.$OpenEO.Services.getObject(id);
+				var serviceApi = this.openEO.Services.getObject(id);
 				serviceApi.delete()
 					.then(data => {
 						this.$refs.table.removeData(id);
@@ -122,6 +128,7 @@ export default {
 			}
 		},
 		viewService(service) {
+			this.$utils.info(this, 'Requesting tiles from server. Please wait...');
 			EventBus.$emit('updateMapTilesWithUrl', service.service_url);
 		}
 	}

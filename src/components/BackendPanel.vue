@@ -9,11 +9,11 @@
 		</div>
 		<hr />
 	</div>
-    <div class="data-toolbar" v-show="data.length > 0">
+    <div class="data-toolbar" v-show="showDataSelector()">
       Data: <select id="data" ref="data"></select>
 	  <button id="insertData" @click="insertDataToEditor" title="Insert into script"><i class="fas fa-plus"></i></button>
     </div>
-    <div class="processes-toolbar" v-show="processes.length > 0">
+    <div class="processes-toolbar" v-show="showProcessSelector()">
       Processes: <select id="processes" ref="processes"></select>
 	  <button id="insertProcesses" @click="insertProcessToEditor" title="Insert into script"><i class="fas fa-plus"></i></button>
     </div>
@@ -31,7 +31,7 @@ import EventBus from '../eventbus.js';
 
 export default {
 	name: 'BackendPanel',
-	props: ['serverUrl'],
+	props: ['openEO','serverUrl'],
 	data() {
 		return {
 			processes: [],
@@ -42,21 +42,29 @@ export default {
 		this.$refs.serverUrl.value = this.serverUrl;
 		this.setVisualizations();
 		this.discoverData();
-	},
-	watch: { 
-		serverUrl(newVal, oldVal) {
-			this.discoverData();
-		}
+		EventBus.$on('serverChanged', this.discoverData);
 	},
 	methods: {
 
+		showDataSelector() {
+			return this.openEO.Capabilities.data() && this.data.length > 0;
+		},
+
+		showProcessSelector() {
+			return this.openEO.Capabilities.processes() && this.processes.length > 0;
+		},
+
 		discoverData() {
-			this.$OpenEO.Data.get()
-				.then(this.setDiscoveredData)
-				.catch(error => this.setDiscoveredData([]));
-			this.$OpenEO.Processes.get()
-				.then(this.setDiscoveredProcesses)
-				.catch(error => this.setDiscoveredProcesses([]));
+			if (this.openEO.Capabilities.data()) {
+				this.openEO.Data.get()
+					.then(this.setDiscoveredData)
+					.catch(error => this.setDiscoveredData([]));
+			}
+			if (this.openEO.Capabilities.processes()) {
+				this.openEO.Processes.get()
+					.then(this.setDiscoveredProcesses)
+					.catch(error => this.setDiscoveredProcesses([]));
+			}
 		},
 
 		updateServerUrl() {
@@ -106,8 +114,8 @@ export default {
 		
 		setVisualizations() {
 			var select = document.getElementById('visualizations');
-			for (var key in this.$OpenEO.Visualizations) {
-				this._makeOption(select, key, this.$OpenEO.Visualizations[key].name);
+			for (var key in this.openEO.Visualizations) {
+				this._makeOption(select, key, this.openEO.Visualizations[key].name);
 			}
 			document.getElementById('insertVisualizations').addEventListener('click', this._insertVisualization);
 		},
@@ -146,11 +154,11 @@ OpenEO.Editor.Visualization = {
 };
 `;
 		}
-		else if (typeof this.$OpenEO.Visualizations[select.value] !== 'undefined') {
+		else if (typeof this.openEO.Visualizations[select.value] !== 'undefined') {
 			var argsCode = '';
 			var argList = [];
-			for(var key in this.$OpenEO.Visualizations[select.value].arguments) {
-				var arg = this.$OpenEO.Visualizations[select.value].arguments[key];
+			for(var key in this.openEO.Visualizations[select.value].arguments) {
+				var arg = this.openEO.Visualizations[select.value].arguments[key];
 				var value = prompt(arg.description, JSON.stringify(arg.defaultValue));
 				if (value !== null) {
 					argList.push('"' + key + '": ' + value);

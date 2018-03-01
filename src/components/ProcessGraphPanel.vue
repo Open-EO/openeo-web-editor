@@ -1,12 +1,12 @@
 <template>
 	<DataTable ref="table" :dataSource="dataSource" :columns="columns" id="ProcessGraphPanel">
 		<div slot="toolbar" slot-scope="p">
-			<button title="Add new process graph" @click="addGraph"><i class="fas fa-plus"></i> Add</button>
+			<button title="Add new process graph" @click="addGraph" v-show="openEO.Capabilities.createUserProcessGraph()"><i class="fas fa-plus"></i> Add</button>
 		</div>
 		<div slot="actions" slot-scope="p">
-			<button title="Details" @click="graphInfo(p.row[p.col.id])"><i class="fas fa-info"></i></button>
-			<button title="Edit" @click="editGraph(p.row[p.col.id])"><i class="fas fa-edit"></i></button>
-			<button title="Delete" @click="deleteGraph(p.row[p.col.id])"><i class="fas fa-trash"></i></button>
+			<button title="Details" @click="graphInfo(p.row[p.col.id])" v-show="openEO.Capabilities.userProcessGraphInfo()"><i class="fas fa-info"></i></button>
+			<button title="Edit" @click="editGraph(p.row[p.col.id])" v-show="openEO.Capabilities.updateUserProcessGraph()"><i class="fas fa-edit"></i></button>
+			<button title="Delete" @click="deleteGraph(p.row[p.col.id])" v-show="openEO.Capabilities.deleteUserProcessGraph()"><i class="fas fa-trash"></i></button>
 		</div>
 	</DataTable>
 </template>
@@ -17,7 +17,7 @@ import DataTable from './DataTable.vue';
 
 export default {
 	name: 'ProcessGraphPanel',
-	props: ['userId'],
+	props: ['openEO','userId'],
 	components: {
 		DataTable
 	},
@@ -48,11 +48,14 @@ export default {
 	},
 	methods: {
 		dataSource() {
-			let users = this.$OpenEO.Users.getObject(this.userId);
+			let users = this.openEO.Users.getObject(this.userId);
 			return users.getProcessGraphs();
 		},
 		updateData() {
-			if (typeof this.userId !== 'string' && typeof this.userId !== 'number') {
+			if (typeof this.$refs.table === 'undefined') {
+				return;
+			}
+			else if (typeof this.userId !== 'string' && typeof this.userId !== 'number') {
 				this.$refs.table.setNoData(401);
 				return;
 			}
@@ -60,13 +63,13 @@ export default {
 		},
 		addGraph() {
 			EventBus.$emit('evalScript', (script) => {
-				var userApi = this.$OpenEO.Users.getObject(this.userId);
+				var userApi = this.openEO.Users.getObject(this.userId);
 				userApi.createProcessGraph(script.ProcessGraph);
 			});
 		},
 		graphInfo(id) {
 			try {
-				var pgApi = this.$OpenEO.Users.getObject(this.userId).getProcessGraphObject(id);
+				var pgApi = this.openEO.Users.getObject(this.userId).getProcessGraphObject(id);
 				pgApi.get();
 			} catch(e) {
 				this.$utils.error(this, e.message);
@@ -74,13 +77,13 @@ export default {
 		},
 		editGraph(id) {
 			EventBus.$emit('evalScript', (script) => {
-				var pgApi = this.$OpenEO.Users.getObject(this.userId).getProcessGraphObject(id);
+				var pgApi = this.openEO.Users.getObject(this.userId).getProcessGraphObject(id);
 				pgApi.replace(script.ProcessGraph);
 			});
 		},
 		deleteGraph(id) {
 			try {
-				var pgApi = this.$OpenEO.Users.getObject(this.userId).getProcessGraphObject(id);
+				var pgApi = this.openEO.Users.getObject(this.userId).getProcessGraphObject(id);
 				pgApi.delete()
 					.then(data => {
 						this.$refs.table.removeData(id);

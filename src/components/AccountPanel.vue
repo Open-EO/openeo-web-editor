@@ -3,7 +3,7 @@
 		<h3>User '{{ userName }}'</h3>
 		<br>
 		<ul>
-			<li>Credits: {{ credits === null ? 'N/A' : credits }} <button id="topUpCredits" v-if="credits !== null" @click="topUpCredits">Top up</button></li>
+			<li v-if="openEO.Capabilities.userCredits()">Credits: {{ credits === null ? 'N/A' : credits }} <button id="topUpCredits" v-if="credits !== null" @click="topUpCredits">Top up</button></li>
 		</ul>
 	</div>
 </template>
@@ -14,7 +14,7 @@ import DataTable from './DataTable.vue';
 
 export default {
 	name: 'FilePanel',
-	props: ['userId'],
+	props: ['openEO','userId'],
 	components: {
 		DataTable
 	},
@@ -30,6 +30,9 @@ export default {
 	watch: { 
 		userId(newVal, oldVal) {
 			this.updateData();
+		},
+		openEO(newVal, oldVal) {
+			console.log(newVal.Capabilities);
 		}
 	},
 	computed: {
@@ -51,10 +54,12 @@ export default {
 				return;
 			}
 
-			let user = this.$OpenEO.Users.getObject(this.userId);
-			user.getCredits()
-				.then(data => {this.credits = data})
-				.catch(errorCode => {this.credits = null; });
+			if (this.openEO.Capabilities.userCredits()) {
+				let user = this.openEO.Users.getObject(this.userId);
+				user.getCredits()
+					.then(data => {this.credits = data})
+					.catch(errorCode => {this.credits = null; });
+			}
 		},
 		topUpCredits() {
 			this.$utils.error(this, 'Not implemented!');
