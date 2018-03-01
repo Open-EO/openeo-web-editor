@@ -97,7 +97,7 @@ export default {
 				this.openEO.API.driver = 'openeo-r-backend';
 			}
 			else {
-				this.openEO.API.driver = 'openeo-sentinelhub-driver';
+				this.openEO.API.driver = 'other';
 			}
 			// Request authentication
 			// ToDo: Problem: Auth is fired to late, BackendPanel updates earlier...

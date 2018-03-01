@@ -47,7 +47,6 @@ OpenEO.Editor.ProcessGraph = OpenEO.ImageCollection.create('Sentinel2A-L1C')
 		this.editor.setValue(this.defaultScript);
 		EventBus.$on('addToSource', this.insertToEditor);
 		EventBus.$on('evalScript', this.evalScript);
-		EventBus.$on('jobCreated', this.jobCreated);
 	},
 	methods: {
 		evalScript(callback) {
@@ -83,20 +82,6 @@ OpenEO.Editor.ProcessGraph = OpenEO.ImageCollection.create('Sentinel2A-L1C')
 			}
 
 			callback(OpenEO.Editor);
-		},
-
-		jobCreated(data) {
-			if (this.openEO.API.driver == 'openeo-sentinelhub-driver') {
-				// ToDo: Make compatible with /services endpoint and the urls generated there
-				var url = '';
-				if (this.openEO.API.driver == 'openeo-sentinelhub-driver') {
-					url = this.openEO.API.baseUrl + '/wms/' + data.job_id;
-				}
-				EventBus.$emit('updateMapTilesWithUrl', url);
-			}
-			else {
-				// ToDo
-			}
 		},
 
 		clearEditor() {
