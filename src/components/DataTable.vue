@@ -1,6 +1,6 @@
 <template>
 	<div class="dataTable" :id="id">
-		<div class="dataTableMenu" v-if="data !== null">
+		<div class="dataTableMenu" v-if="data.length > 0">
 			<div class="dataTableToolbar">
 				<slot name="toolbar"></slot>
 			</div>
@@ -10,7 +10,7 @@
 				<button @click="clearFilter"><i class="fas fa-times-circle"></i></button>
 			</div>
 		</div>
-		<table v-if="data !== null">
+		<table v-if="data.length > 0">
 			<tr>
 				<th v-for="(col, id) in columns" :key="id" :class="id">{{ col.name }}</th>
 			</tr>
@@ -21,11 +21,11 @@
 					</slot>
 				</td>
 			</tr>
-			<tr v-if="view.length === 0" class="noSearchResults">
+			<tr v-if="data.length > 0 && view.length == 0" class="noSearchResults">
 				<td :colspan="columnCount">Sorry, no element matches your search criteria.</td>
 			</tr>
 		</table>
-		<div class="noDataMessage" v-if="data === null">{{ noDataMessage }}</div>
+		<div class="noDataMessage" v-if="data.length == 0">{{ noDataMessage }}</div>
 	</div>
 </template>
 
@@ -37,7 +37,7 @@ export default {
 	props: ['id', 'columns', 'dataSource'],
 	data() {
 		return {
-			data: null,
+			data: [],
 			view: [],
 			primaryKey: null,
 			noDataMessage: 'Loading data...'
@@ -66,7 +66,7 @@ export default {
 	},
 	methods: {
 		setNoData(error) {
-			this.data = null;
+			this.data = [];
 			if (typeof error === 'number') {
 				switch(error) {
 					case 401:
@@ -89,11 +89,11 @@ export default {
 			}
 		},
 		retrieveData() {
-			this.data = null;
+			this.data = [];
 			if (typeof this.dataSource === 'function') {
 				this.dataSource()
 					.then(data => {
-						if (Array.isArray(data)) {
+						if (Array.isArray(data) && data.length > 0) {
 							this.data = data;
 						}
 						else {
@@ -104,7 +104,7 @@ export default {
 						this.setNoData(errorCode);
 					});
 			}
-			else if(Array.isArray(this.dataSource)) {
+			else if(Array.isArray(this.dataSource) && this.dataSource.length > 0) {
 				this.data = this.dataSource;
 			}
 			else {
@@ -115,7 +115,7 @@ export default {
 			if (this.primaryKey === null) {
 				throw new Error('No primary key specified.');
 			}
-			this.data = this.data.filter(row => { row[this.primaryKey] != id });
+			this.data = this.data.filter(row => row[this.primaryKey] != id);
 		},
 		addData(data) {
 			if (!data.hasOwnProperty(this.primaryKey)) {

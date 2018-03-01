@@ -9,11 +9,11 @@
 		</div>
 		<hr />
 	</div>
-    <div class="data-toolbar" v-if="data.length > 0">
+    <div class="data-toolbar" v-show="data.length > 0">
       Data: <select id="data" ref="data"></select>
 	  <button id="insertData" @click="insertDataToEditor" title="Insert into script"><i class="fas fa-plus"></i></button>
     </div>
-    <div class="processes-toolbar" v-if="processes.length > 0">
+    <div class="processes-toolbar" v-show="processes.length > 0">
       Processes: <select id="processes" ref="processes"></select>
 	  <button id="insertProcesses" @click="insertProcessToEditor" title="Insert into script"><i class="fas fa-plus"></i></button>
     </div>
@@ -79,25 +79,27 @@ export default {
 		},
 	
 		setDiscoveredData(data) {
-			this.data = data;
+			this.data = [];
 			var select = document.getElementById('data');
 			this._truncateList(select);
 			for (var i in data) {
 				if (typeof data[i].product_id === 'undefined') {
 					continue;
 				}
+				this.data.push(data[i]);
 				this._makeOption(select, null, data[i].product_id, data[i].description);
 			}
 		},
 		
 		setDiscoveredProcesses(processes) {
-			this.processes = processes;
+			this.processes = [];
 			var select = document.getElementById('processes');
 			this._truncateList(select);
 			for (var i in processes) {
 				if (typeof processes[i].process_id === 'undefined') {
 					continue;
 				}
+				this.processes.push(processes[i]);
 				this._makeOption(select, null, processes[i].process_id, processes[i].description);
 			}
 		},

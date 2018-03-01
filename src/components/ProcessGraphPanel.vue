@@ -62,7 +62,7 @@ export default {
 			EventBus.$emit('evalScript', (script) => {
 				var userApi = this.$OpenEO.Users.getObject(this.userId);
 				userApi.createProcessGraph(script.ProcessGraph);
-			} , false);
+			});
 		},
 		graphInfo(id) {
 			try {
@@ -76,7 +76,7 @@ export default {
 			EventBus.$emit('evalScript', (script) => {
 				var pgApi = this.$OpenEO.Users.getObject(this.userId).getProcessGraphObject(id);
 				pgApi.replace(script.ProcessGraph);
-			} , false);
+			});
 		},
 		deleteGraph(id) {
 			try {

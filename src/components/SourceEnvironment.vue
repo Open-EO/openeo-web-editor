@@ -2,7 +2,6 @@
 	<div id="SourceEnvironment">
 		<h3>Script: <em id="scriptName">{{ scriptName }}</em></h3>
 		<div id="sourceCodeEditor"></div>
-		<button @click="runScript" title="Run (selected) script"><i class="fas fa-play"></i> Run</button>
 		<button @click="newScript" title="Clear current script / New script"><i class="fas fa-file"></i> New</button>
 		<button @click="loadScript" title="Load script from local storage"><i class="fas fa-folder-open"></i> Load</button>
 		<button @click="saveScript" title="Save script to local storage"><i class="fas fa-save"></i> Save</button>
@@ -50,7 +49,7 @@ OpenEO.Editor.ProcessGraph = OpenEO.ImageCollection.create('Sentinel2A-L1C')
 		EventBus.$on('jobCreated', this.jobCreated);
 	},
 	methods: {
-		evalScript(callback, selected) {
+		evalScript(callback) {
 			var OpenEO = this.$OpenEO;
 			OpenEO.Editor = {
 				ProcessGraph: {},
@@ -59,46 +58,30 @@ OpenEO.Editor.ProcessGraph = OpenEO.ImageCollection.create('Sentinel2A-L1C')
 					args: {}
 				}
 			};
-			var script;
-			if (selected) {
-				script = this.editor.getSelection();
-			}
+			var script = this.editor.getSelection();
 			if (!script) {
 				script = this.editor.getValue();
 			}
 			if (script) {
 				eval(script);
 			}
-			callback(OpenEO.Editor);
-		},
 
-		runScript() {
-			EventBus.$emit('evalScript', this.runJob, true);
-		},
-
-		runJob(job) {
-			job.Visualization.args = job.Visualization.args || {};
+			OpenEO.Editor.Visualization.args = OpenEO.Editor.Visualization.args || {};
 			// Modify visualization when user specified a pre-defined visualization
-			if (typeof job.Visualization.function === 'object') {
-				var vis = job.Visualization.function;
-				job.Visualization.function = vis.callback;
+			if (typeof OpenEO.Editor.Visualization.function === 'object') {
+				var vis = OpenEO.Editor.Visualization.function;
+				OpenEO.Editor.Visualization.function = vis.callback;
 				// Set default arguments when not given by user
 				if (typeof vis.arguments !== 'undefined') {
 					for(var key in vis.arguments) {
-						if (typeof job.Visualization.args[key] === 'undefined') {
-							job.Visualization.args[key] = vis.arguments[key].defaultValue;
+						if (typeof OpenEO.Editor.Visualization.args[key] === 'undefined') {
+							OpenEO.Editor.Visualization.args[key] = vis.arguments[key].defaultValue;
 						}
 					}
 				}
 			}
 
-			// Execute job
-			this.$OpenEO.Jobs.create(job.ProcessGraph)
-				.then(data => {
-					EventBus.$emit('jobCreated', data);
-				}).catch(errorCode => {
-					this.$utils.error(this, 'Sorry, could not create an OpenEO job. (' + errorCode + ')');
-				});
+			callback(OpenEO.Editor);
 		},
 
 		jobCreated(data) {
@@ -106,7 +89,7 @@ OpenEO.Editor.ProcessGraph = OpenEO.ImageCollection.create('Sentinel2A-L1C')
 				// ToDo: Make compatible with /services endpoint and the urls generated there
 				var url = '';
 				if (this.$OpenEO.API.driver == 'openeo-sentinelhub-driver') {
-					url = this.$OpenEO.API.baseUrl + '/wcs/' + data.job_id;
+					url = this.$OpenEO.API.baseUrl + '/wms/' + data.job_id;
 				}
 				EventBus.$emit('updateMapTilesWithUrl', url);
 			}
@@ -175,9 +158,6 @@ OpenEO.Editor.ProcessGraph = OpenEO.ImageCollection.create('Sentinel2A-L1C')
 }
 h3 {
 	padding: 5px;
-}
-#runScript {
-	font-weight: bold;
 }
 #newScript {
 	margin-left: 3%;

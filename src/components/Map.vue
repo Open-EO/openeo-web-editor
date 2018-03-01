@@ -50,7 +50,7 @@ export default {
 
 			this.tiles = L.tileLayer.wms(url, {
 				request: 'GetCoverage',
-				service: 'WCS',
+				service: 'WMS',
 				coverage: 'CUSTOM',
 				format: 'image/jpeg',
 				tileSize: 256,
@@ -85,19 +85,21 @@ export default {
 		},
 
 		recolor(tile) {
-			if (!tile.originalImage || !this.$OpenEO.Editor.Visualization || !this.$OpenEO.Editor.Visualization.function) {
-				return;
-			}
-			
-			const ctx = tile.getContext('2d');
-			const tgtData = ctx.getImageData(0, 0, tile.width, tile.height);
+			EventBus.$emit('evalScript', function(script) {
+				if (!tile.originalImage || !script.Visualization || !script.Visualization.function) {
+					return;
+				}
+				
+				const ctx = tile.getContext('2d');
+				const tgtData = ctx.getImageData(0, 0, tile.width, tile.height);
 
-			for (var i = 0; i < tgtData.data.length; i += 4) {
-				const input = tile.originalImage.data.slice(i, i + 4);
-				const es = this.$OpenEO.Editor.Visualization.function(input, this.$OpenEO.Editor.Visualization.args);
-				tgtData.data.set(es, i);
-			}
-			ctx.putImageData(tgtData, 0, 0);
+				for (var i = 0; i < tgtData.data.length; i += 4) {
+					const input = tile.originalImage.data.slice(i, i + 4);
+					const es = script.Visualization.function(input, script.Visualization.args);
+					tgtData.data.set(es, i);
+				}
+				ctx.putImageData(tgtData, 0, 0);
+			});
 		}
 	}
 

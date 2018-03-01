@@ -15,7 +15,7 @@
 					<JobPanel :userId="userId" />
 				</div>
 				<div class="tabContent" id="servicesTab">
-					<ServicePanel :userId="userId" />
+					<ServicePanel ref="servicePanel" :userId="userId" />
 				</div>
 				<div class="tabContent" id="processGraphsTab">
 					<ProcessGraphPanel :userId="userId" />
@@ -89,6 +89,13 @@ export default {
 			// Request authentication
 			// ToDo: Problem: Auth is fired to late, BackendPanel updates earlier...
 			this.requestAuth();
+			this.requestCapabilities();
+		},
+
+		requestCapabilities() {
+			this.$OpenEO.API.getCapabilities().then((info) => {
+				this.$capabilities = info;
+			});
 		},
 
 		requestAuth() {

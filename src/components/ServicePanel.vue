@@ -1,9 +1,10 @@
 <template>
 	<DataTable ref="table" :dataSource="dataSource" :columns="columns" id="ServicePanel">
 		<div slot="toolbar" slot-scope="p">
-			<button title="Add new service" @click="addService"><i class="fas fa-plus"></i> Add</button>
+			<!-- <button title="Add new service" @click="addService"><i class="fas fa-plus"></i> Add</button> -->
 		</div>
 		<div slot="actions" slot-scope="p">
+			<button title="View on map" @click="viewService(p.row)"><i class="fas fa-map"></i></button>
 			<button title="Details" @click="serviceInfo(p.row[p.col.id])"><i class="fas fa-info"></i></button>
 			<button title="Edit" @click="editService(p.row[p.col.id])"><i class="fas fa-edit"></i></button>
 			<button title="Delete" @click="deleteService(p.row[p.col.id])"><i class="fas fa-trash"></i></button>
@@ -31,6 +32,9 @@ export default {
 				service_type: {
 					name: 'Type'
 				},
+				job_id: {
+					name: 'Job'
+				},
 				actions: {
 					name: 'Actions',
 					format: 'Actions',
@@ -43,6 +47,7 @@ export default {
 	mounted() {
 		this.updateData();
 		EventBus.$on('serverChanged', this.updateData);
+		EventBus.$on('serviceCreated', this.serviceCreated);
 	},
 	watch: { 
 		userId(newVal, oldVal) {
@@ -60,6 +65,22 @@ export default {
 				return;
 			}
 			this.$refs.table.retrieveData();
+		},
+		serviceCreated(data) {
+			this.$refs.table.addData(data);
+
+			var buttons = [];
+			buttons.push({text: 'View', action: () => this.viewService(data)});
+			buttons.push({text: 'Details', action: () => this.serviceInfo(data.job_id)});
+			buttons.push({text: 'Edit', action: () => this.editService(data.job_id)});
+			buttons.push({text: 'Delete', action: () => this.deleteService(data.job_id)});
+			this.$snotify.confirm('Service created!', null, {
+				timeout: 10000,
+				showProgressBar: true,
+				closeOnClick: false,
+				pauseOnHover: true,
+				buttons: buttons
+			});
 		},
 		addService() {
 			// ToDo: Request what user wants to add
@@ -94,11 +115,14 @@ export default {
 						this.$refs.table.removeData(id);
 					})
 					.catch(errorCode => {
-						// ToDo
+						this.$utils.error(this, 'Sorry, could not delete service.');
 					});
 			} catch (e) {
 				this.$utils.error(this, e.message);
 			}
+		},
+		viewService(service) {
+			EventBus.$emit('updateMapTilesWithUrl', service.service_url);
 		}
 	}
 }
@@ -106,9 +130,12 @@ export default {
 
 <style>
 #ServicePanel .service_id {
-	width: 30%;
+	width: 35%;
 }
 #ServicePanel .service_type {
-	width: 20%;
+	width: 10%;
+}
+#ServicePanel .job_id {
+	width: 35%;
 }
 </style>

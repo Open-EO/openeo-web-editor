@@ -20,6 +20,7 @@ Vue.use(Snotify);
 
 Vue.prototype.$config = Config;
 Vue.prototype.$OpenEO = OpenEO;
+Vue.prototype.$capabilities = {};
 Vue.prototype.$utils = utils;
 
 Vue.config.productionTip = false;

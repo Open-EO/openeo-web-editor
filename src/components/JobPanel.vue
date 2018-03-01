@@ -1,7 +1,7 @@
 <template>
 	<DataTable ref="table" :dataSource="dataSource" :columns="columns" id="JobPanel">
 		<div slot="toolbar" slot-scope="p">
-			<button title="Add new job" @click="addJob(p.row[p.col.id])"><i class="fas fa-plus"></i> Add</button>
+			<button title="Add new job" @click="createJobFromScript"><i class="fas fa-plus"></i> Add</button>
 		</div>
 		<div slot="actions" slot-scope="p">
 			<button title="Details" @click="showJobInfo(p.row[p.col.id])"><i class="fas fa-info"></i></button>
@@ -80,20 +80,32 @@ export default {
 			this.$refs.table.retrieveData();
 		},
 		jobCreated(data) {
-			this.$snotify.confirm('Stored with job ID: ' + data.job_id, 'Job created!', {
-				timeout: 20000,
+			this.$refs.table.addData(data);
+
+			var buttons = [];
+			buttons.push({text: 'Download', action: () => this.downloadJob(data.job_id)});
+			this.$snotify.confirm('Job created!', null, {
+				timeout: 10000,
 				showProgressBar: true,
 				closeOnClick: false,
 				pauseOnHover: true,
-				buttons: [
-					{text: 'Download', action: () => this.downloadJob(data.job_id)}
-				]
+				buttons: buttons
 			});
 		},
-		addJob(id) {
+		createJob(job) {
+			// Todo: Output formats
+			this.$OpenEO.Jobs.create(job.ProcessGraph, {})
+				.then(data => {
+					EventBus.$emit('jobCreated', data);
+				}).catch(errorCode => {
+					this.$utils.error(this, 'Sorry, could not create an OpenEO job. (' + errorCode + ')');
+				});
+		},
+		createJobFromScript(id) {
+			// Todo: Output formats
 			EventBus.$emit('evalScript', (script) => {
-				 this.$OpenEO.Jobs.create(script.ProcessGraph, {});
-			} , false);
+				this.createJob(script);
+			});
 		},
 		showJobInfo(id) {
 			try {
@@ -151,9 +163,17 @@ export default {
 			}
 		},
 		createServiceFromJob(id) {
-			// ToDo: Request what user wants to add
+			var type = prompt('Please specify the service type you want to create:', 'wms');
+			if (!type) {
+				return;
+			}
 			try {
-				this.$OpenEO.Services.create(id, null, {});
+				// ToDo: Ask user for service arguments
+				this.$OpenEO.Services.create(id, type, {}).then(data => {
+					EventBus.$emit('serviceCreated', data);
+				}).catch(error => {
+					this.$utils.error(this, e.message);
+				});
 			} catch (e) {
 				this.$utils.error(this, e.message);
 			}

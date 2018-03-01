@@ -15,12 +15,14 @@ Adds the code to the source code editor.
 ## updateMapTilesWithUrl(string $url)
 might change later...
 
-## evalScript(callback $callback, boolean selected = true)
+## evalScript(callback $callback)
 Triggers the script currently in the editor to be evaluated runs the callback using the data from the evaluation.
-Might only run on the selected part of the script.
 
 ## jobCreated(object $data)
 Triggered when a job was created successfully.
+
+## serviceCreated(object $data)
+Triggered when a service was created successfully.
 
 */
 export default new Vue();
