@@ -12,10 +12,12 @@
     <div class="data-toolbar" v-show="showDataSelector()">
       Data: <select id="data" ref="data"></select>
 	  <button id="insertData" @click="insertDataToEditor" title="Insert into script"><i class="fas fa-plus"></i></button>
+	  <button @click="showDataInfo" title="Show details" v-show="openEO.Capabilities.dataInfo()"><i class="fas fa-info"></i></button>
     </div>
     <div class="processes-toolbar" v-show="showProcessSelector()">
       Processes: <select id="processes" ref="processes"></select>
 	  <button id="insertProcesses" @click="insertProcessToEditor" title="Insert into script"><i class="fas fa-plus"></i></button>
+	  <button @click="showProcessInfo" title="Show details" v-show="openEO.Capabilities.processInfo()"><i class="fas fa-info"></i></button>
     </div>
     <div class="vis-toolbar">
       Visualizations: <select id="visualizations">
@@ -72,6 +74,22 @@ export default {
 			if (typeof url === 'string' && url != this.serverUrl) {
 				EventBus.$emit('changeServerUrl', url);
 			}
+		},
+
+		showDataInfo() {
+			this.openEO.Data.getById(this.$refs.data.value)
+				.then(data => {
+					EventBus.$emit('showModal', 'Data: ' + this.$refs.data.value, data);
+				})
+				.catch(error => this.$utils.error('Sorry, can\'t load process details.'));
+		},
+
+		showProcessInfo() {
+			this.openEO.Processes.getById(this.$refs.processes.value)
+				.then(data => {
+					EventBus.$emit('showModal', 'Process: ' + this.$refs.processes.value, data);
+				})
+				.catch(error => this.$utils.error('Sorry, can\'t load process details.'));
 		},
 
 		insertDataToEditor() {

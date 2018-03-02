@@ -1,7 +1,11 @@
 <template>
 	<DataTable ref="table" :dataSource="dataSource" :columns="columns" id="FilePanel">
 		<div slot="toolbar" slot-scope="p">
-			<button title="Add new file" v-show="openEO.Capabilities.uploadUserFile()"><i class="fas fa-plus"></i> Add</button>
+			<div v-show="openEO.Capabilities.uploadUserFile()">
+				<input type="file" name="uploadUserFile" id="uploadUserFile">
+				<button title="Add new file" id="uploadUserFileBtn" @click="uploadFile()"><i class="fas fa-upload"></i></button>
+				<span id="uploadUserFileStatus"></span>
+			</div>
 		</div>
 		<div slot="actions" slot-scope="p">
 			<button title="Download" @click="downloadFile(p.row[p.col.id])" v-show="openEO.Capabilities.downloadUserFile()"><i class="fas fa-download"></i></button>
@@ -38,7 +42,6 @@ export default {
 				},
 				actions: {
 					name: 'Actions',
-					format: 'Actions',
 					filterable: false,
 					id: 'name'
 				}
@@ -51,7 +54,9 @@ export default {
 	},
 	watch: { 
 		userId(newVal, oldVal) {
-			this.updateData();
+			if (newVal !== null) {
+				this.updateData();
+			}
 		}
 	},
   	methods: {
@@ -69,27 +74,46 @@ export default {
 			}
 			this.$refs.table.retrieveData();
 		},
+		uploadFile() {
+			var field = document.getElementById('uploadUserFile');
+			var status = document.getElementById('uploadUserFileStatus');
+			var file = field.files[0];
+			var fileApi = this.openEO.Users.getObject(this.userId).getFileObject(file.name);
+			fileApi.replace(file, percent => {
+				status.innerText = percent + '%';
+			}).then(data => {
+				console.log(data);
+				// ToDo: This should not be self generated
+				this.$refs.table.replaceData({
+					"name": file.name,
+					"size": file.size,
+					"modified": (new Date()).toISOString()
+				});
+				status.innerText = '';
+				field.value = '';
+				this.$utils.ok(this, 'File upload completed.');
+			}).catch(error => {
+				console.log(error);
+				status.innerText = '';
+				this.$utils.error(this, 'Sorry, file upload failed.');
+			});
+		},
 		downloadFile(id) {
-			try {
-				var fileApi = this.openEO.Users.getObject(this.userId).getFileObject(id);
-				fileApi.get();
-			} catch(e) {
-				this.$utils.error(this, e.message);
-			}
+			this.$utils.info(this, 'Download requested. Please wait...');
+			var fileApi = this.openEO.Users.getObject(this.userId).getFileObject(id);
+			fileApi.get().then(data => {
+				this.$utils.downloadData(data, id);
+			});
 		},
 		deleteFile(id) {
-			try {
-				var fileApi = this.openEO.Users.getObject(this.userId).getFileObject(id);
-				fileApi.delete()
-					.then(data => {
-						this.$refs.table.removeData(id);
-					})
-					.catch(errorCode => {
-						// ToDo
-					});
-			} catch (e) {
-				this.$utils.error(this, e.message);
-			}
+			var fileApi = this.openEO.Users.getObject(this.userId).getFileObject(id);
+			fileApi.delete()
+				.then(data => {
+					this.$refs.table.removeData(id);
+				})
+				.catch(errorCode => {
+					// ToDo
+				});
 		}
 	}
 }

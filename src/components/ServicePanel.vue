@@ -37,7 +37,6 @@ export default {
 				},
 				actions: {
 					name: 'Actions',
-					format: 'Actions',
 					filterable: false,
 					id: 'service_id'
 				}
@@ -51,7 +50,9 @@ export default {
 	},
 	watch: { 
 		userId(newVal, oldVal) {
-			this.updateData();
+			if (newVal !== null) {
+				this.updateData();
+			}
 		}
 	},
 	methods: {

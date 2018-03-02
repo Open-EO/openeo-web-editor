@@ -32,9 +32,10 @@
 			</footer>
 		</div>
 		<div id="map">
-			<Map />
+			<Map v-if="openEO.Capabilities.createService()" />
 		</div>
 		<vue-snotify></vue-snotify>
+		<Modal></Modal>
 	</div>
 </template>
 
@@ -45,6 +46,7 @@ import BackendPanel from './components/BackendPanel.vue'
 import FilePanel from './components/FilePanel.vue'
 import JobPanel from './components/JobPanel.vue'
 import Map from './components/Map.vue'
+import Modal from './components/Modal.vue'
 import ProcessGraphPanel from './components/ProcessGraphPanel.vue'
 import ServicePanel from './components/ServicePanel.vue'
 import SourceEnvironment from './components/SourceEnvironment.vue'
@@ -66,6 +68,7 @@ export default {
 		FilePanel,
 		JobPanel,
 		Map,
+		Modal,
 		ProcessGraphPanel,
 		ServicePanel,
 		SourceEnvironment
@@ -124,11 +127,11 @@ export default {
 						EventBus.$emit('serverChanged');
 					})
 					.catch(errorCode => {
-						this.openEO.Auth.userId = null;
 						EventBus.$emit('serverChanged');
 					});
 			}
 			else {
+				// ToDO: We assume we are authenticated, but this should be removed after POC.
 				this.openEO.Auth.userId = 'me';
 				EventBus.$emit('serverChanged');
 			}

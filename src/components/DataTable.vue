@@ -117,25 +117,25 @@ export default {
 			}
 			this.data = this.data.filter(row => row[this.primaryKey] != id);
 		},
-		addData(data) {
-			if (!data.hasOwnProperty(this.primaryKey)) {
+		addData(newData) {
+			if (!newData.hasOwnProperty(this.primaryKey)) {
 				throw new Error('Object does not contain a value for the primary key.');
 			}
-			this.data.push(data);
+			this.data.push(newData);
 		},
-		replaceData(id, data) {
+		replaceData(newData) {
 			if (this.primaryKey === null) {
 				throw new Error('No primary key specified.');
 			}
-			else if (!data.hasOwnProperty(this.primaryKey)) {
+			else if (!newData.hasOwnProperty(this.primaryKey)) {
 				throw new Error('Object does not contain a value for the primary key.');
 			}
-			const index = array1.findIndex(row => { row[this.primaryKey] == id });
+			const index = this.data.findIndex(row => { row[this.primaryKey] == newData[this.primaryKey] });
 			if (index >= 0) {
-				this.data[index] = data;
+				this.data[index] = newData;
 			}
 			else {
-				throw new Error('No element with id "' + id + '" found.');
+				this.data.push(newData);
 			}
 		},
 		value(row, col, id) {
@@ -203,7 +203,12 @@ export default {
 		},
 		format(value, col) {
 			if (typeof col.format === 'string') {
-				value = this['format' + col.format](value, col);
+				if (typeof this['format' + col.format] === 'function') {
+					value = this['format' + col.format](value, col);
+				}
+				else {
+					console.log(col.format + ' is an invalid formatter.');
+				}
 			}
 			else if (typeof col.format === 'function') {
 				value = col.format.call(this, value, col);
@@ -211,14 +216,18 @@ export default {
 			return value;
 		},
 		formatFileSize(value, col) {
+			if (!value) {
+				return '';
+			}
 			var i = value == 0 ? 0 : Math.floor( Math.log(value) / Math.log(1024) );
 			return ( value / Math.pow(1024, i) ).toFixed(2) * 1 + ' ' + ['B', 'kB', 'MB', 'GB', 'TB'][i];
 		},
 		formatDateTime(value, col) {
-			return value.replace('T', ' ').replace('Z', '');
-		},
-		formatActions(value, col) {
-			return value;
+			if (!value) {
+				return '';
+			}
+			let date = new Date(value);
+			return date.toISOString().replace('T', ' ').replace('Z', '');
 		}
 	}
 }

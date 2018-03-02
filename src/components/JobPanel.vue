@@ -50,7 +50,6 @@ export default {
 				},
 				actions: {
 					name: 'Actions',
-					format: 'Actions',
 					filterable: false,
 					id: 'job_id'
 				}
@@ -64,7 +63,9 @@ export default {
 	},
 	watch: { 
 		userId(newVal, oldVal) {
-			this.updateData();
+			if (newVal !== null) {
+				this.updateData();
+			}
 		}
 	},
 	methods: {
@@ -113,12 +114,12 @@ export default {
 			});
 		},
 		showJobInfo(id) {
-			try {
-				var jobApi = this.openEO.Jobs.getObject(id);
-				jobApi.get();
-			} catch (e) {
-				this.$utils.error(this, e.message);
-			}
+			var jobApi = this.openEO.Jobs.getObject(id);
+			jobApi.get()
+				.then(data => {
+					EventBus.$emit('showModal', 'Job: ' + id, data);
+				})
+				.catch(error => this.$utils.error('Sorry, can\'t load job details.'));
 		},
 		editJob(id) {
 			EventBus.$emit('evalScript', (script) => {
@@ -153,35 +154,27 @@ export default {
 		},
 		downloadJob(id) {
 			var format = prompt('Please specify the file format you need or leave empty for default format.', '');
-			try {
-				this.$utils.info(this, 'Download requested. Please wait...');
-				var jobApi = this.openEO.Jobs.getObject(id);
-				jobApi.download(format).then(data => {
-					var ext = '';
-					if (format) {
-						ext = "." + format;
-					}
-					this.$utils.downloadData(data, id + ext);
-				});
-			} catch (e) {
-				this.$utils.error(this, e.message);
-			}
+			this.$utils.info(this, 'Download requested. Please wait...');
+			var jobApi = this.openEO.Jobs.getObject(id);
+			jobApi.download(format).then(data => {
+				var ext = '';
+				if (format) {
+					ext = "." + format;
+				}
+				this.$utils.downloadData(data, id + ext);
+			});
 		},
 		createServiceFromJob(id) {
 			var type = prompt('Please specify the service type you want to create:', 'wms');
 			if (!type) {
 				return;
 			}
-			try {
-				// ToDo: Ask user for service arguments
-				this.openEO.Services.create(id, type, {}).then(data => {
-					EventBus.$emit('serviceCreated', data);
-				}).catch(error => {
-					this.$utils.error(this, e.message);
-				});
-			} catch (e) {
+			// ToDo: Ask user for service arguments
+			this.openEO.Services.create(id, type, {}).then(data => {
+				EventBus.$emit('serviceCreated', data);
+			}).catch(error => {
 				this.$utils.error(this, e.message);
-			}
+			});
 		}
 	}
 }

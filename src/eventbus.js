@@ -24,5 +24,8 @@ Triggered when a job was created successfully.
 ## serviceCreated(object $data)
 Triggered when a service was created successfully.
 
+## showModal(string $title, $body)
+Shows a modal with the specified title and body contents. Body can be a string or an object. Objects are converted to a more readable list.
+
 */
 export default new Vue();

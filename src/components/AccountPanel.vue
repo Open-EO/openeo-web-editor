@@ -29,7 +29,9 @@ export default {
 	},
 	watch: { 
 		userId(newVal, oldVal) {
-			this.updateData();
+			if (newVal !== null) {
+				this.updateData();
+			}
 		},
 		openEO(newVal, oldVal) {
 			console.log(newVal.Capabilities);
