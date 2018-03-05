@@ -35,7 +35,7 @@ export default {
 				modal.style.display = "none";
 			}
 			if (typeof body === 'object') {
-				body = this.makeList(body);
+				body = this.$utils.makeList(body);
 			}
 			document.getElementById('modal-content').innerHTML = body;
 			window.onclick = function(event) {
@@ -43,26 +43,6 @@ export default {
 					modal.style.display = "none";
 				}
 			}
-		},
-		makeList(data, level) {
-			var items = [];
-			var callback = (val, key) => {
-				var type = typeof val;
-				if (type === "array" || type === "object") {
-					val = this.makeList(val, level ? level+1 : 1);
-				}
-				if (key && (!this.isNumeric(key) || level > 0 || type !== 'string')) {
-					val = "<em>" + key + "</em>: " + val;
-				}
-				items.push("<li>" + val + "</li>");
-			};
-			for (var key in data) {
-				callback(data[key], key);
-			}
-			return "<ul>" + items.join("") + "</ul>";
-		},
-		isNumeric(n) {
-			return !isNaN(parseFloat(n)) && isFinite(n);
 		}
 	}
 };

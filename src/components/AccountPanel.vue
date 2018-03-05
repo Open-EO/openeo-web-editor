@@ -31,9 +31,6 @@ export default {
 			if (newVal !== null) {
 				this.updateData();
 			}
-		},
-		openEO(newVal, oldVal) {
-			console.log(newVal.Capabilities);
 		}
 	},
 	computed: {

@@ -100,7 +100,7 @@ export default {
 </script>
 
 <style>
-#ProcessGraphPanel td {
+#ProcessGraphPanel th {
 	width: 50%;
 }
 </style>

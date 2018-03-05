@@ -1,5 +1,5 @@
 <template>
-  <div id="mapCanvas"></div>
+	<div id="mapCanvas"></div>
 </template>
 
 <script>
@@ -9,7 +9,7 @@ import "leaflet/dist/leaflet.css"
 import L from "leaflet"
 
 export default {
-	name: 'Map',
+	name: 'MapViewer',
 
 	data() {
 		return {
@@ -108,6 +108,6 @@ export default {
 
 <style scoped>
 #mapCanvas {
-	height: 100vh;
+	height: 100%;
 }
 </style>

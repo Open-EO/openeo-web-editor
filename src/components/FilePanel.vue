@@ -81,7 +81,6 @@ export default {
 			fileApi.replace(file, percent => {
 				status.innerText = percent + '%';
 			}).then(data => {
-				console.log(data);
 				// ToDo: This should not be self generated
 				this.$refs.table.replaceData({
 					"name": file.name,
@@ -92,7 +91,6 @@ export default {
 				field.value = '';
 				this.$utils.ok(this, 'File upload completed.');
 			}).catch(error => {
-				console.log(error);
 				status.innerText = '';
 				this.$utils.error(this, 'Sorry, file upload failed.');
 			});

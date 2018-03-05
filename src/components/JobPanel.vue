@@ -10,7 +10,7 @@
 			<button title="Pause batch job" @click="pauseJob(p.row[p.col.id])" v-show="openEO.Capabilities.pauseJob()"><i class="fas fa-pause-circle"></i></button>
 			<button title="Disable" @click="cancelJob(p.row[p.col.id])" v-show="openEO.Capabilities.cancelJob()"><i class="fas fa-stop-circle"></i></button>
 			<button title="Download" @click="downloadJob(p.row[p.col.id])" v-show="openEO.Capabilities.downloadJob()"><i class="fas fa-download"></i></button>
-			<button title="Create Service" @click="createServiceFromJob(p.row[p.col.id])" v-show="openEO.Capabilities.createService()"><i class="fas fa-plus"></i> <i class="fas fa-map"></i></button>
+			<button title="Create Service" @click="createServiceFromJob(p.row[p.col.id])" v-show="openEO.Capabilities.createService()"><i class="fas fa-plus"></i> <i class="fas fa-cloud"></i></button>
 		</div>
 	</DataTable>
 </template>
@@ -103,7 +103,7 @@ export default {
 				.then(data => {
 					EventBus.$emit('jobCreated', data);
 				}).catch(errorCode => {
-					this.$utils.error(this, 'Sorry, could not create an OpenEO job. (' + errorCode + ')');
+					this.$utils.error(this, 'Sorry, could not create an OpenEO job.');
 				});
 		},
 		createJobFromScript(id) {
@@ -118,7 +118,7 @@ export default {
 				.then(data => {
 					EventBus.$emit('showModal', 'Job: ' + id, data);
 				})
-				.catch(error => this.$utils.error('Sorry, can\'t load job details.'));
+				.catch(error => this.$utils.error(this, 'Sorry, could not load job details.'));
 		},
 		editJob(id) {
 			EventBus.$emit('evalScript', (script) => {
@@ -153,6 +153,9 @@ export default {
 		},
 		downloadJob(id) {
 			var format = prompt('Please specify the file format you need or leave empty for default format.', '');
+			if (format === null) {
+				return;
+			}
 			this.$utils.info(this, 'Download requested. Please wait...');
 			var jobApi = this.openEO.Jobs.getObject(id);
 			jobApi.download(format).then(data => {

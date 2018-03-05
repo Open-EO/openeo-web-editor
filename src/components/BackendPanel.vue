@@ -101,7 +101,7 @@ export default {
 				.then(data => {
 					EventBus.$emit('showModal', 'Data: ' + this.$refs.data.value, data);
 				})
-				.catch(error => this.$utils.error('Sorry, can\'t load process details.'));
+				.catch(error => this.$utils.error(this, 'Sorry, can\'t load process details.'));
 		},
 
 		showProcessInfo() {
@@ -109,7 +109,7 @@ export default {
 				.then(data => {
 					EventBus.$emit('showModal', 'Process: ' + this.$refs.processes.value, data);
 				})
-				.catch(error => this.$utils.error('Sorry, can\'t load process details.'));
+				.catch(error => this.$utils.error(this, 'Sorry, can\'t load process details.'));
 		},
 
 		insertDataToEditor() {

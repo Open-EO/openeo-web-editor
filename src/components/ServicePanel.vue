@@ -1,10 +1,7 @@
 <template>
 	<DataTable ref="table" :dataSource="dataSource" :columns="columns" id="ServicePanel">
-		<div slot="toolbar" slot-scope="p">
-			<!-- <button title="Add new service" @click="addService"><i class="fas fa-plus"></i> Add</button> -->
-		</div>
 		<div slot="actions" slot-scope="p">
-			<button title="View on map" @click="viewService(p.row)"><i class="fas fa-eye"></i></button>
+			<button title="View on map" @click="viewService(p.row)"><i class="fas fa-map"></i></button>
 			<button title="Details" @click="serviceInfo(p.row[p.col.id])" v-show="openEO.Capabilities.serviceInfo()"><i class="fas fa-info"></i></button>
 			<button title="Edit" @click="editService(p.row[p.col.id])" v-show="openEO.Capabilities.updateService()"><i class="fas fa-edit"></i></button>
 			<button title="Delete" @click="deleteService(p.row[p.col.id])" v-show="openEO.Capabilities.deleteService()"><i class="fas fa-trash"></i></button>
@@ -88,18 +85,14 @@ export default {
 			}
 			this.$snotify.confirm('Service created!', null, options);
 		},
-		addService() {
-			// ToDo: Request what user wants to add
-			try {
-				this.openEO.Services.create(null, null, {});
-			} catch (e) {
-				this.$utils.error(this, e.message);
-			}
-		},
 		serviceInfo(id) {
 			try {
 				var serviceApi = this.openEO.Services.getObject(id);
-				serviceApi.get();
+				serviceApi.get().then(data => {
+					this.$utils.error(this, 'Not implemented');
+				}).catch(error => {
+					this.$utils.error(this, 'Not implemented');
+				});
 			} catch (e) {
 				this.$utils.error(this, e.message);
 			}
@@ -108,7 +101,11 @@ export default {
 			// ToDo: Request what user wants to change
 			try {
 				var serviceApi = this.openEO.Services.getObject(id);
-				serviceApi.modify(null, null, {});
+				serviceApi.modify(null, null, {}).then(data => {
+					this.$utils.error(this, 'Not implemented');
+				}).catch(error => {
+					this.$utils.error(this, 'Not implemented');
+				});
 			} catch (e) {
 				this.$utils.error(this, e.message);
 			}
@@ -130,6 +127,7 @@ export default {
 		viewService(service) {
 			this.$utils.info(this, 'Requesting tiles from server. Please wait...');
 			EventBus.$emit('updateMapTilesWithUrl', service.service_url);
+			EventBus.$emit('showMapViewer');
 		}
 	}
 }

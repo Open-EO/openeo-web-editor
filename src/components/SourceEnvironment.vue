@@ -2,6 +2,7 @@
 	<div id="SourceEnvironment">
 		<h3>Script: <em id="scriptName">{{ scriptName }}</em></h3>
 		<div id="sourceCodeEditor"></div>
+		<button @click="executeScript" title="Run current script and view results"><!-- v-if="openEO.Capabilities.executeJob()" --><i class="fas fa-play"></i> Execute</button>
 		<button @click="newScript" title="Clear current script / New script"><i class="fas fa-file"></i> New</button>
 		<button @click="loadScript" title="Load script from local storage"><i class="fas fa-folder-open"></i> Load</button>
 		<button @click="saveScript" title="Save script to local storage"><i class="fas fa-save"></i> Save</button>
@@ -89,6 +90,27 @@ OpenEO.Editor.ProcessGraph = OpenEO.ImageCollection.create('Sentinel2A-L1C')
 			this.scriptName = '';
 		},
 
+		storageName(name) {
+			return "script." + name.replace('.', '_');
+		},
+
+		executeScript() {
+			var format = prompt('Please specify the file format you need or leave empty for default format.', '');
+			if (format === null) {
+				return;
+			}
+			EventBus.$emit('evalScript', (script) => {
+				this.$utils.info(this, 'Data requested. Please wait...');
+				script.ProcessGraph.execute({format: format})
+					.then(data => {
+						EventBus.$emit('showInViewer', data);
+					})
+					.catch(error => {
+						this.$utils.error(this, 'Sorry, could not execute script.');
+					});
+			});
+		},
+
 		newScript() {
 			var confirmed = confirm("Do you really want to clear the existing script to create a new one?");
 			if (confirmed) {
@@ -101,7 +123,7 @@ OpenEO.Editor.ProcessGraph = OpenEO.ImageCollection.create('Sentinel2A-L1C')
 			if (!name) {
 				return;
 			}
-			var code = localStorage.getItem(name);
+			var code = localStorage.getItem(this.storageName(name));
 			if (code) {
 				this.editor.setValue(code);
 				this.scriptName = name;
@@ -116,7 +138,7 @@ OpenEO.Editor.ProcessGraph = OpenEO.ImageCollection.create('Sentinel2A-L1C')
 			if (!name) {
 				return;
 			}
-			localStorage.setItem(name, this.editor.getValue());
+			localStorage.setItem(this.storageName(name), this.editor.getValue());
 			this.scriptName = name;
 		},
 		
