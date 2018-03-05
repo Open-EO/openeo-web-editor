@@ -2,7 +2,7 @@
 	<div id="SourceEnvironment">
 		<h3>Script: <em id="scriptName">{{ scriptName }}</em></h3>
 		<div id="sourceCodeEditor"></div>
-		<button @click="executeScript" title="Run current script and view results"><!-- v-if="openEO.Capabilities.executeJob()" --><i class="fas fa-play"></i> Execute</button>
+		<button @click="executeScript" title="Run current script and view results" v-if="openEO.Capabilities.executeJob()"><i class="fas fa-play"></i> Execute</button>
 		<button @click="newScript" title="Clear current script / New script"><i class="fas fa-file"></i> New</button>
 		<button @click="loadScript" title="Load script from local storage"><i class="fas fa-folder-open"></i> Load</button>
 		<button @click="saveScript" title="Save script to local storage"><i class="fas fa-save"></i> Save</button>
@@ -95,7 +95,7 @@ OpenEO.Editor.ProcessGraph = OpenEO.ImageCollection.create('Sentinel2A-L1C')
 		},
 
 		executeScript() {
-			var format = prompt('Please specify the file format you need or leave empty for default format.', '');
+			var format = prompt('Please specify the file format:', '');
 			if (format === null) {
 				return;
 			}
@@ -103,7 +103,7 @@ OpenEO.Editor.ProcessGraph = OpenEO.ImageCollection.create('Sentinel2A-L1C')
 				this.$utils.info(this, 'Data requested. Please wait...');
 				script.ProcessGraph.execute({format: format})
 					.then(data => {
-						EventBus.$emit('showInViewer', data);
+						EventBus.$emit('showInViewer', data, script);
 					})
 					.catch(error => {
 						this.$utils.error(this, 'Sorry, could not execute script.');

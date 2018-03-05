@@ -55,6 +55,25 @@ export default {
 
 	isNumeric(n) {
 		return !isNaN(parseFloat(n)) && isFinite(n);
+	},
+
+	recolorImage(canvas, script) {
+		if (!canvas.originalImage || !script.Visualization || !script.Visualization.function) {
+			return;
+		}
+		
+		try {
+			const ctx = canvas.getContext('2d');
+			const tgtData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+			for (var i = 0; i < tgtData.data.length; i += 4) {
+				const input = canvas.originalImage.data.slice(i, i + 4);
+				const es = script.Visualization.function(input, script.Visualization.args);
+				tgtData.data.set(es, i);
+			}
+			ctx.putImageData(tgtData, 0, 0);
+		} catch(e) {
+			console.log(e);
+		}
 	}
 
 };

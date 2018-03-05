@@ -25,7 +25,9 @@
       Visualizations: <select id="visualizations">
         <option value="">None</option>
         <option value="custom">Custom function</option>
+		<optgroup label="Pre-defined">
 		<option v-for="(v, k) in openEO.Visualizations" :key="k" :value="k">{{ v.name }}</option>
+		</optgroup>
       </select> <button id="insertVisualizations" title="Insert into script" @click="insertVisualization"><i class="fas fa-plus"></i></button>
     </div>
   </div>

@@ -10,6 +10,7 @@
 			<button title="Pause batch job" @click="pauseJob(p.row[p.col.id])" v-show="openEO.Capabilities.pauseJob()"><i class="fas fa-pause-circle"></i></button>
 			<button title="Disable" @click="cancelJob(p.row[p.col.id])" v-show="openEO.Capabilities.cancelJob()"><i class="fas fa-stop-circle"></i></button>
 			<button title="Download" @click="downloadJob(p.row[p.col.id])" v-show="openEO.Capabilities.downloadJob()"><i class="fas fa-download"></i></button>
+			<button title="View results" @click="downloadJob(p.row[p.col.id], true)" v-show="openEO.Capabilities.downloadJob()"><i class="fas fa-eye"></i></button>
 			<button title="Create Service" @click="createServiceFromJob(p.row[p.col.id])" v-show="openEO.Capabilities.createService()"><i class="fas fa-plus"></i> <i class="fas fa-cloud"></i></button>
 		</div>
 	</DataTable>
@@ -151,19 +152,28 @@ export default {
 				this.$utils.error(this, e.message);
 			}
 		},
-		downloadJob(id) {
+		downloadJob(id, view = false) {
 			var format = prompt('Please specify the file format you need or leave empty for default format.', '');
 			if (format === null) {
 				return;
 			}
-			this.$utils.info(this, 'Download requested. Please wait...');
+			this.$utils.info(this, (view ? 'Data' : 'Download') + ' requested. Please wait...');
 			var jobApi = this.openEO.Jobs.getObject(id);
 			jobApi.download(format).then(data => {
-				var ext = '';
-				if (format) {
-					ext = "." + format;
+				if (view) {
+					// View in browser
+					EventBus.$emit('evalScript', (script) => {
+						EventBus.$emit('showInViewer', data, script);
+					});
 				}
-				this.$utils.downloadData(data, id + ext);
+				else {
+					// Download to computer
+					var ext = '';
+					if (format) {
+						ext = "." + format;
+					}
+					this.$utils.downloadData(data, id + ext);
+				}
 			}).catch(error => {
 				this.$utils.error(this, "Sorry, an error occured.");
 			});

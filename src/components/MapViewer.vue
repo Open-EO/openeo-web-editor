@@ -85,22 +85,11 @@ export default {
 		},
 
 		recolor(tile) {
-			EventBus.$emit('evalScript', function(script) {
-				if (!tile.originalImage || !script.Visualization || !script.Visualization.function) {
-					return;
-				}
-				
-				const ctx = tile.getContext('2d');
-				const tgtData = ctx.getImageData(0, 0, tile.width, tile.height);
-
-				for (var i = 0; i < tgtData.data.length; i += 4) {
-					const input = tile.originalImage.data.slice(i, i + 4);
-					const es = script.Visualization.function(input, script.Visualization.args);
-					tgtData.data.set(es, i);
-				}
-				ctx.putImageData(tgtData, 0, 0);
+			EventBus.$emit('evalScript', (script) => {
+				this.$utils.recolorImage(tile, script);
 			});
 		}
+
 	}
 
 }

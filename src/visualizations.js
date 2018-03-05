@@ -49,6 +49,18 @@ var Visualizations = {
 				defaultValue: [ 10,  70, 230, 255]
 			}
 		}
+	},
+
+	invertColors: {
+		name: 'Invert colors',
+		callback: function(input, o) {
+			input[0] = 255 - input[0];
+			input[1] = 255 - input[1];
+			input[2] = 255 - input[2];
+			input[3] = 255;
+			return input;
+		},
+		arguments: {}
 	}
 
 };

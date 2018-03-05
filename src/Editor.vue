@@ -217,16 +217,16 @@ export default {
 			this.showTab('viewer', 'dataTab');
 		},
 
-		showInViewer(blob) {
+		showInViewer(blob, script) {
 			if (!(blob instanceof Blob)) {
 				throw 'No blob specified.';
 			}
-			console.log(blob);
 			switch(blob.type) {
 				case 'image/png':
 				case 'image/jpg':
 				case 'image/jpeg':
 				case 'image/gif':
+					this.$refs.imageViewer.setScript(script);
 					this.$refs.imageViewer.showImageBlob(blob);
 					break;
 				case 'text/plain':
