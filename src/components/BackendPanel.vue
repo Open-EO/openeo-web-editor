@@ -1,21 +1,23 @@
 <template>
-  <div id="backendPanel" class="toolbar">
-	<div v-show="$config.allowServerChange">
-		<div class="server-toolbar">
-		<h3>Server: <input type="text" id="serverUrl" ref="serverUrl" value="" />
-		<button  @click="updateServerUrl" title="Change server"><i class="fas fa-check"></i></button></h3>
-		</div>
-		<div class="auth-toolbar">
-		</div>
-		<hr />
+  <div id="backendPanel">
+	<div class="server-toolbar" v-show="$config.allowServerChange">
+		<h3>Server: <input id="serverUrl" ref="serverUrl" list="serverUrls" value="" autocomplete="off" />
+		<datalist id="serverUrls">
+		  <option v-for="url in serverUrls" :key="url" :value="url" />
+		</datalist>
+		<button  @click="updateServerUrlFromInput" title="Change server"><i class="fas fa-check"></i></button></h3>
 	</div>
     <div class="data-toolbar" v-show="showDataSelector()">
-      Data: <select id="data" ref="data"></select>
+      Data: <select id="data" ref="data">
+	    <option v-for="d in data" :key="d.product_id" :value="d.product_id" :title="d.description">{{ d.product_id }}</option>
+	  </select>
 	  <button id="insertData" @click="insertDataToEditor" title="Insert into script"><i class="fas fa-plus"></i></button>
 	  <button @click="showDataInfo" title="Show details" v-show="openEO.Capabilities.dataInfo()"><i class="fas fa-info"></i></button>
     </div>
     <div class="processes-toolbar" v-show="showProcessSelector()">
-      Processes: <select id="processes" ref="processes"></select>
+      Processes: <select id="processes" ref="processes">
+	    <option v-for="p in processes" :key="p.process_id" :value="p.process_id" :title="p.description">{{ p.process_id }}</option>
+	  </select>
 	  <button id="insertProcesses" @click="insertProcessToEditor" title="Insert into script"><i class="fas fa-plus"></i></button>
 	  <button @click="showProcessInfo" title="Show details" v-show="openEO.Capabilities.processInfo()"><i class="fas fa-info"></i></button>
     </div>
@@ -23,7 +25,8 @@
       Visualizations: <select id="visualizations">
         <option value="">None</option>
         <option value="custom">Custom function</option>
-      </select> <button id="insertVisualizations" title="Insert into script"><i class="fas fa-plus"></i></button>
+		<option v-for="(v, k) in openEO.Visualizations" :key="k" :value="k">{{ v.name }}</option>
+      </select> <button id="insertVisualizations" title="Insert into script" @click="insertVisualization"><i class="fas fa-plus"></i></button>
     </div>
   </div>
 </template>
@@ -33,18 +36,28 @@ import EventBus from '../eventbus.js';
 
 export default {
 	name: 'BackendPanel',
-	props: ['openEO','serverUrl'],
+	props: ['openEO'],
 	data() {
 		return {
 			processes: [],
-			data: []
+			data: [],
+			serverUrls: []
 		};
 	},
-	mounted() {
-		this.$refs.serverUrl.value = this.serverUrl;
-		this.setVisualizations();
-		this.discoverData();
+	watch: {
+		serverUrls: function(newVal, oldVal) {
+			localStorage.setItem("serverUrls", JSON.stringify(newVal));
+		}
+	},
+	created() {
+		EventBus.$on('changeServerUrl', this.changeServer);
 		EventBus.$on('serverChanged', this.discoverData);
+	},
+	mounted() {
+		var storedServers = localStorage.getItem("serverUrls");
+		if (storedServers !== null) {
+			this.serverUrls = JSON.parse(storedServers);
+		}
 	},
 	methods: {
 
@@ -54,6 +67,13 @@ export default {
 
 		showProcessSelector() {
 			return this.openEO.Capabilities.processes() && this.processes.length > 0;
+		},
+
+		changeServer(url) {
+			this.$refs.serverUrl.value = url;
+			if (this.serverUrls.indexOf(url) === -1) {
+				this.serverUrls.push(url);
+			}
 		},
 
 		discoverData() {
@@ -69,10 +89,10 @@ export default {
 			}
 		},
 
-		updateServerUrl() {
-			var url = this.$refs.serverUrl.value;
-			if (typeof url === 'string' && url != this.serverUrl) {
-				EventBus.$emit('changeServerUrl', url);
+		updateServerUrlFromInput() {
+			var newUrl = this.$refs.serverUrl.value;
+			if (typeof newUrl === 'string' && newUrl != this.openEO.API.baseUrl) {
+				EventBus.$emit('changeServerUrl', newUrl);
 			}
 		},
 
@@ -106,61 +126,25 @@ export default {
 	
 		setDiscoveredData(data) {
 			this.data = [];
-			var select = document.getElementById('data');
-			this._truncateList(select);
 			for (var i in data) {
 				if (typeof data[i].product_id === 'undefined') {
 					continue;
 				}
 				this.data.push(data[i]);
-				this._makeOption(select, null, data[i].product_id, data[i].description);
 			}
 		},
 		
 		setDiscoveredProcesses(processes) {
 			this.processes = [];
-			var select = document.getElementById('processes');
-			this._truncateList(select);
 			for (var i in processes) {
 				if (typeof processes[i].process_id === 'undefined') {
 					continue;
 				}
 				this.processes.push(processes[i]);
-				this._makeOption(select, null, processes[i].process_id, processes[i].description);
 			}
-		},
-		
-		setVisualizations() {
-			var select = document.getElementById('visualizations');
-			for (var key in this.openEO.Visualizations) {
-				this._makeOption(select, key, this.openEO.Visualizations[key].name);
-			}
-			document.getElementById('insertVisualizations').addEventListener('click', this._insertVisualization);
-		},
-
-		_truncateList(select) {
-			while (select.firstChild) {
-				select.removeChild(select.firstChild);
-			}
-		},
-
-		_makeOption(select, key, title, description) {
-			var option = document.createElement("option");
-			var text = document.createTextNode(title);
-			option.appendChild(text);
-			if (!key) {
-				option.value = title;
-			}
-			else {
-				option.value = key;
-			}
-			if (description) {
-				option.title = description;
-			}
-			select.appendChild(option);
 		},
 	
-	_insertVisualization() {
+	insertVisualization() {
 		var select = document.getElementById('visualizations');
 		var code;
 		if (select.value === 'custom') {
@@ -180,6 +164,10 @@ OpenEO.Editor.Visualization = {
 				var value = prompt(arg.description, JSON.stringify(arg.defaultValue));
 				if (value !== null) {
 					argList.push('"' + key + '": ' + value);
+				}
+				else {
+					// User clicked 'Cancel' -> Abort inserting visualization
+					return;
 				}
 			}
 			if (argList.length > 0) {
@@ -206,8 +194,24 @@ OpenEO.Editor.Visualization = {
 </script>
 
 <style scoped>
+#backendPanel {
+	border: solid 1px #676767;
+	background-color: #f7f7f7;
+    margin: 1%;
+	padding: 5px;
+	vertical-align: middle;
+}
 #serverUrl {
-	width: 300px;
+	width: 60%;
 	font-family: monospace;
+}
+.server-toolbar {
+	margin-bottom: 5px;
+	padding-bottom: 5px;
+	border-bottom: 1px dotted #ddd;
+}
+.data-toolbar, .processes-toolbar, .vis-toolbar {
+	display: inline-block;
+	margin-right: 3%;
 }
 </style>

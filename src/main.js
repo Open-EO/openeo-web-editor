@@ -8,9 +8,9 @@ import utils from './utils.js';
 
 Vue.use(Snotify, {
 	toast: {
-	  timeout: 5000
+		timeout: 5000
 	}
-  });
+});
 
 Vue.prototype.$config = Config;
 Vue.prototype.$utils = utils;

@@ -54,17 +54,17 @@ export default {
 		}
 	},
 	created() {
-		for(var col in this.columns) {
-			if (this.columns[col].primaryKey) {
-				this.primaryKey = col;
-				break;
-			}
-		}
-	},
-	mounted() {
-		this.retrieveData();
+		this.determinePrimaryKey();
 	},
 	methods: {
+		determinePrimaryKey() {
+			for(var col in this.columns) {
+				if (this.columns[col].primaryKey) {
+					this.primaryKey = col;
+					break;
+				}
+			}
+		},
 		setNoData(error) {
 			this.data = [];
 			if (typeof error === 'number') {
@@ -161,7 +161,7 @@ export default {
 			if (typeof this.$refs.filterInput === 'undefined') {
 				return;
 			}
-			var searchTerm = this.$refs.filterInput.value;
+			var searchTerm = this.$refs.filterInput.value.toLowerCase();
 			if (searchTerm.length < 1) {
 				return;
 			}
@@ -179,7 +179,7 @@ export default {
 					else {
 						continue;
 					}
-					if (value.indexOf(searchTerm) !== -1) {
+					if (value.toLowerCase().indexOf(searchTerm) !== -1) {
 						return true;
 					}
 				}

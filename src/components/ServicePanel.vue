@@ -4,7 +4,7 @@
 			<!-- <button title="Add new service" @click="addService"><i class="fas fa-plus"></i> Add</button> -->
 		</div>
 		<div slot="actions" slot-scope="p">
-			<button title="View on map" @click="viewService(p.row)"><i class="fas fa-map"></i></button>
+			<button title="View on map" @click="viewService(p.row)"><i class="fas fa-eye"></i></button>
 			<button title="Details" @click="serviceInfo(p.row[p.col.id])" v-show="openEO.Capabilities.serviceInfo()"><i class="fas fa-info"></i></button>
 			<button title="Edit" @click="editService(p.row[p.col.id])" v-show="openEO.Capabilities.updateService()"><i class="fas fa-edit"></i></button>
 			<button title="Delete" @click="deleteService(p.row[p.col.id])" v-show="openEO.Capabilities.deleteService()"><i class="fas fa-trash"></i></button>
@@ -43,8 +43,7 @@ export default {
 			}
 		};
 	},
-	mounted() {
-		this.updateData();
+	created() {
 		EventBus.$on('serverChanged', this.updateData);
 		EventBus.$on('serviceCreated', this.serviceCreated);
 	},
@@ -61,7 +60,7 @@ export default {
 			return users.getServices();
 		},
 		updateData() {
-			if (typeof this.$refs.table === 'undefined') {
+			if (!this.openEO.Capabilities.createService()) {
 				return;
 			}
 			else if (typeof this.userId !== 'string' && typeof this.userId !== 'number') {

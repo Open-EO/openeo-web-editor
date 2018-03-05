@@ -23,8 +23,7 @@ export default {
 			credits: null
 		}
 	},
-	mounted() {
-		this.updateData();
+	created() {
 		EventBus.$on('serverChanged', this.updateData);
 	},
 	watch: { 

@@ -36,8 +36,7 @@ export default {
 			}
 		};
 	},
-	mounted() {
-		this.updateData();
+	created() {
 		EventBus.$on('serverChanged', this.updateData);
 	},
 	watch: { 
@@ -53,7 +52,7 @@ export default {
 			return users.getProcessGraphs();
 		},
 		updateData() {
-			if (typeof this.$refs.table === 'undefined') {
+			if (!this.openEO.Capabilities.userProcessGraphs()) {
 				return;
 			}
 			else if (typeof this.userId !== 'string' && typeof this.userId !== 'number') {

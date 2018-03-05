@@ -56,8 +56,7 @@ export default {
 			}
 		};
 	},
-	mounted() {
-		this.updateData();
+	created() {
 		EventBus.$on('jobCreated', this.jobCreated);
 		EventBus.$on('serverChanged', this.updateData);
 	},
@@ -162,6 +161,8 @@ export default {
 					ext = "." + format;
 				}
 				this.$utils.downloadData(data, id + ext);
+			}).catch(error => {
+				this.$utils.error(this, "Sorry, an error occured.");
 			});
 		},
 		createServiceFromJob(id) {
@@ -173,7 +174,7 @@ export default {
 			this.openEO.Services.create(id, type, {}).then(data => {
 				EventBus.$emit('serviceCreated', data);
 			}).catch(error => {
-				this.$utils.error(this, e.message);
+				this.$utils.error(this, "Sorry, an error occured.");
 			});
 		}
 	}

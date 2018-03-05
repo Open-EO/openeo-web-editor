@@ -1,26 +1,26 @@
 <template>
 	<div id="container">
 		<div id="ide">
-			<BackendPanel :serverUrl="openEO.API.baseUrl" :openEO="openEO" />
+			<BackendPanel :openEO="openEO" />
 			<SourceEnvironment :openEO="openEO" />
 			<div class="userTabs">
 				<div class="tabsHeader">
 					<button class="tabItem" name="jobsTab" @click="changeTab"><i class="fas fa-tasks"></i> Jobs</button>
-					<button class="tabItem" name="servicesTab" @click="changeTab" v-if="supportsServices()"><i class="fas fa-map"></i> Services</button>
-					<button class="tabItem" name="processGraphsTab" @click="changeTab" v-if="supportsUserProcessGraphs()"><i class="fas fa-code-branch"></i> Process Graphs</button>
-					<button class="tabItem" name="filesTab" @click="changeTab" v-if="supportsUserFiles()"><i class="fas fa-file"></i> Files</button>
+					<button class="tabItem" name="servicesTab" @click="changeTab" v-show="this.openEO.Capabilities.createService()"><i class="fas fa-map"></i> Services</button>
+					<button class="tabItem" name="processGraphsTab" @click="changeTab" v-show="this.openEO.Capabilities.userProcessGraphs()"><i class="fas fa-code-branch"></i> Process Graphs</button>
+					<button class="tabItem" name="filesTab" @click="changeTab" v-show="this.openEO.Capabilities.userFiles()"><i class="fas fa-file"></i> Files</button>
 					<button class="tabItem" name="accountTab" @click="changeTab"><i class="fas fa-user"></i> Account</button>
 				</div>
 				<div class="tabContent" id="jobsTab">
 					<JobPanel :userId="openEO.Auth.userId" :openEO="openEO" />
 				</div>
-				<div class="tabContent" id="servicesTab" v-if="supportsServices()">
+				<div class="tabContent" id="servicesTab" v-show="this.openEO.Capabilities.createService()">
 					<ServicePanel ref="servicePanel" :userId="openEO.Auth.userId" :openEO="openEO" />
 				</div>
-				<div class="tabContent" id="processGraphsTab" v-if="supportsUserProcessGraphs()">
+				<div class="tabContent" id="processGraphsTab" v-show="this.openEO.Capabilities.userProcessGraphs()">
 					<ProcessGraphPanel :userId="openEO.Auth.userId" :openEO="openEO" />
 				</div>
-				<div class="tabContent" id="filesTab" v-if="supportsUserFiles()">
+				<div class="tabContent" id="filesTab" v-show="this.openEO.Capabilities.userFiles()">
 					<FilePanel :userId="openEO.Auth.userId" :openEO="openEO" />
 				</div>
 				<div class="tabContent" id="accountTab">
@@ -31,7 +31,7 @@
 				<a href="http://www.openeo.org" target="_blank"><img src="./assets/logo.png" id="openeoLogo" /></a>
 			</footer>
 		</div>
-		<div id="map">
+		<div id="viewer">
 			<Map v-if="openEO.Capabilities.createService()" />
 		</div>
 		<vue-snotify></vue-snotify>
@@ -41,15 +41,15 @@
 
 <script>
 import EventBus from './eventbus.js';
-import AccountPanel from './components/AccountPanel.vue'
-import BackendPanel from './components/BackendPanel.vue'
-import FilePanel from './components/FilePanel.vue'
-import JobPanel from './components/JobPanel.vue'
-import Map from './components/Map.vue'
-import Modal from './components/Modal.vue'
-import ProcessGraphPanel from './components/ProcessGraphPanel.vue'
-import ServicePanel from './components/ServicePanel.vue'
-import SourceEnvironment from './components/SourceEnvironment.vue'
+import AccountPanel from './components/AccountPanel.vue';
+import BackendPanel from './components/BackendPanel.vue';
+import FilePanel from './components/FilePanel.vue';
+import JobPanel from './components/JobPanel.vue';
+import Map from './components/Map.vue';
+import Modal from './components/Modal.vue';
+import ProcessGraphPanel from './components/ProcessGraphPanel.vue';
+import ServicePanel from './components/ServicePanel.vue';
+import SourceEnvironment from './components/SourceEnvironment.vue';
 import axios from 'axios';
 import { OpenEO, Capabilities } from 'openeo-js-client/openeo.js';
 import OpenEOVisualizations from './visualizations.js';
@@ -79,12 +79,11 @@ export default {
 		};
 	},
 	created() {
-		this.changeServer(this.$config.serverUrl);
 		EventBus.$on('changeServerUrl', this.changeServer);
 		EventBus.$on('serverChanged', this.serverChanged);
 	},
 	mounted() {
-		this.resetActiveTab();
+		EventBus.$emit('changeServerUrl', this.$config.serverUrl);
 	},
 	methods: {
 
@@ -158,24 +157,13 @@ export default {
 			}
 			document.getElementById(tabName).style.display = "block";
 			evt.currentTarget.className += " tabActive";
-		},
-
-		supportsServices() {
-			return this.openEO.Capabilities.createService();
-		},
-		supportsUserProcessGraphs() {
-			return this.openEO.Capabilities.userProcessGraphs();
-		},
-		supportsUserFiles() {
-			return this.openEO.Capabilities.userFiles();
 		}
-
 	}
 }
 </script>
 
 <style>
-html, body, #app, #container, #ide, #map {
+html, body, #app, #container, #ide, #viewer {
 	height:100%;
 }
 body {
@@ -190,7 +178,7 @@ ul, ol {
 	padding-bottom: 0;
 	padding-top: 0;
 }
-#map {
+#viewer {
 	position: absolute;
 	top: 0px;
 	left: 50%;
@@ -202,17 +190,6 @@ ul, ol {
 	left: 0px;
 	width: 50%;
 	overflow-y: auto;
-}
-.toolbar {
-	border: solid 1px #676767;
-	background-color: #f7f7f7;
-    margin: 1%;
-	padding: 5px;
-	vertical-align: middle;
-}
-.data-toolbar, .processes-toolbar, .server-toolbar, .vis-toolbar, .auth-toolbar {
-	display: inline-block;
-	margin-right: 3%;
 }
 #SourceEnvironment, .userTabs {
 	border: solid 1px #676767;
@@ -257,9 +234,6 @@ button.tabActive {
 h3 {
 	margin: 0;
 	padding: 0;
-}
-.running, .active {
-	color: green;
 }
 footer {
 	text-align: center;
