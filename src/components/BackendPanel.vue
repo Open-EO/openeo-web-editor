@@ -2,9 +2,12 @@
   <div id="backendPanel">
 	<div class="server-toolbar" v-show="$config.allowServerChange">
 		<h3>Server: <input id="serverUrl" ref="serverUrl" list="serverUrls" value="" autocomplete="off" />
-		<datalist id="serverUrls">
-		  <option v-for="url in serverUrls" :key="url" :value="url" />
-		</datalist>
+		<span id="serverUrlsContainer" title="Select previously used server">
+			<select id="serverUrls" ref="serverUrls" @change="updateServerUrlFromSelect">
+				<option v-for="url in serverUrls" :key="url" :value="url">{{ url }}</option>
+			</select>
+			<i class="fas fa-book" id="serverUrlsIcon"></i>
+		</span>
 		<button  @click="updateServerUrlFromInput" title="Change server"><i class="fas fa-check"></i></button></h3>
 	</div>
     <div class="data-toolbar" v-show="showDataSelector()">
@@ -94,6 +97,12 @@ export default {
 			if (typeof newUrl === 'string' && newUrl != this.openEO.API.baseUrl) {
 				EventBus.$emit('changeServerUrl', newUrl);
 			}
+		},
+
+		updateServerUrlFromSelect() {
+			var newUrl = this.$refs.serverUrls.value;
+			this.$refs.serverUrl.value = newUrl;
+			this.updateServerUrlFromInput();
 		},
 
 		showDataInfo() {
@@ -204,6 +213,19 @@ OpenEO.Editor.Visualization = {
 #serverUrl {
 	width: 60%;
 	font-family: monospace;
+}
+#serverUrls {
+	width: 10px;
+}
+#serverUrlsContainer {
+	position: relative;
+}
+#serverUrlsIcon {
+	position: absolute;
+	left: 8px;
+	top: 3px;
+	background-color: white;
+	pointer-events: none;
 }
 .server-toolbar {
 	margin-bottom: 5px;
