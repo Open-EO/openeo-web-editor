@@ -1,14 +1,15 @@
 <template>
   <div id="backendPanel">
 	<div class="server-toolbar" v-show="$config.allowServerChange">
-		<h3>Server: <input id="serverUrl" ref="serverUrl" list="serverUrls" value="" autocomplete="off" />
+		<h3>Server:</h3>
+		<input id="serverUrl" ref="serverUrl" list="serverUrls" value="" autocomplete="off" />
 		<span id="serverUrlsContainer" title="Select previously used server">
 			<select id="serverUrls" ref="serverUrls" @change="updateServerUrlFromSelect">
 				<option v-for="url in serverUrls" :key="url" :value="url">{{ url }}</option>
 			</select>
 			<i class="fas fa-book" id="serverUrlsIcon"></i>
 		</span>
-		<button  @click="updateServerUrlFromInput" title="Change server"><i class="fas fa-check"></i></button></h3>
+		<button @click="updateServerUrlFromInput" title="Change server"><i class="fas fa-check"></i></button>
 	</div>
     <div class="data-toolbar" v-show="showDataSelector()">
       Data: <select id="data" ref="data">
@@ -203,6 +204,10 @@ OpenEO.Editor.Visualization = {
 </script>
 
 <style scoped>
+h3 {
+	display: inline;
+	padding-right: 5px;
+}
 #backendPanel {
 	border: solid 1px #676767;
 	background-color: #f7f7f7;
