@@ -7,7 +7,8 @@ import EventBus from '../eventbus.js';
 
 import "leaflet/dist/leaflet.css"
 import L from "leaflet"
-import leafletGeotiff from "leaflet-geotiff/leaflet-geotiff.js"
+import { leafletGeotiff } from "leaflet-geotiff/leaflet-geotiff.js"
+import { plotty } from "leaflet-geotiff/leaflet-geotiff-plotty.js"
 
 export default {
 	name: 'MapViewer',
@@ -66,7 +67,7 @@ export default {
 			if (!this.layer.tiff) {
 				var opts = {
 					name: 'GeoTiff',
-					band: 0
+					renderer: plotty()
 				};
 				this.layer.tiff = leafletGeotiff(url, opts);
 				this.layer.tiff.addTo(this.map);
