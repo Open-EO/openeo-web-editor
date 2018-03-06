@@ -7,8 +7,8 @@ import EventBus from '../eventbus.js';
 
 import "leaflet/dist/leaflet.css"
 import L from "leaflet"
-import { leafletGeotiff } from "leaflet-geotiff/leaflet-geotiff.js"
-import { plotty } from "leaflet-geotiff/leaflet-geotiff-plotty.js"
+import { leafletGeotiff, LeafletGeotiffRenderer } from "leaflet-geotiff/leaflet-geotiff.js"
+import customRenderer from "../leaflet-geotiff-customrenderer.js"
 
 export default {
 	name: 'MapViewer',
@@ -65,12 +65,16 @@ export default {
 		updateTiffLayer(url) {
 			this.removeOldLayer(this.layer.tiff);
 			if (!this.layer.tiff) {
+				var renderer = customRenderer();
 				var opts = {
 					name: 'GeoTiff',
-					renderer: plotty()
+					renderer: renderer
 				};
 				this.layer.tiff = leafletGeotiff(url, opts);
 				this.layer.tiff.addTo(this.map);
+				EventBus.$emit('evalScript', (script) => {
+					renderer.setScript(script);
+				});
 			}
 			else {
 				this.layer.tiff.setURL(url);
