@@ -7,6 +7,7 @@ import EventBus from '../eventbus.js';
 
 import "leaflet/dist/leaflet.css"
 import L from "leaflet"
+import leafletGeotiff from "leaflet-geotiff/leaflet-geotiff.js"
 
 export default {
 	name: 'MapViewer',
@@ -18,13 +19,16 @@ export default {
 				zoom: 8
 			},
 			map: null,
-			tiles: null
+			layer: {
+				wms: null,
+				tiff: null
+			}
 		}
 	},
 
 	mounted() {
 		this.createMap();
-		EventBus.$on('updateMapTilesWithUrl', this.updateTileLayer);
+		EventBus.$on('viewWebService', this.viewWebService);
 	},
 
 	methods: {
@@ -35,20 +39,57 @@ export default {
 			}).addTo(this.map);
 		},
 
-		updateTileLayer(url) {
-			if (!this.tiles) {
-				this.createTileLayer(url);
+		viewWebService(service) {
+			if (service.service_type.toLowerCase() == 'wms') {
+				this.updateWMSLayer(service.service_url);
 			}
 			else {
-				this.tiles.setUrl(url, false);
-				this.tiles.recolor();
+				this.$utils.error('Sorry, the requested service type is not supported by the map.');
 			}
 		},
 
-		createTileLayer(url) {
+		removeOldLayer(except) {
+			for(var i in this.layer) {
+				if (this.layer[i] !== null && this.layer[i] !== except) {
+					this.map.removeLayer(this.layer[i]);
+					this.layer[i] = null;
+				}
+			}
+		},
+
+		updateTiffLayerBlob(blob) {
+			this.updateTiffLayer(URL.createObjectURL(blob));
+		},
+
+		updateTiffLayer(url) {
+			this.removeOldLayer(this.layer.tiff);
+			if (!this.layer.tiff) {
+				var opts = {
+					name: 'GeoTiff'
+				};
+				this.layer.tiff = leafletGeotiff(url, opts);
+				this.layer.tiff.addTo(this.map);
+			}
+			else {
+				this.layer.tiff.setURL(url);
+			}
+		},
+
+		updateWMSLayer(url) {
+			this.removeOldLayer(this.layer.wms);
+			if (!this.layer.wms) {
+				this.createWMSLayer(url);
+			}
+			else {
+				this.layer.wms.setUrl(url, false);
+				this.layer.wms.recolor();
+			}
+		},
+
+		createWMSLayer(url) {
 			var self = this;
 
-			this.tiles = L.tileLayer.wms(url, {
+			this.layer.wms = L.tileLayer.wms(url, {
 				request: 'GetCoverage',
 				service: 'WMS',
 				coverage: 'CUSTOM',
@@ -57,14 +98,14 @@ export default {
 				minZoom: 8
 			});
 
-			this.tiles.recolor = function () {
+			this.layer.wms.recolor = function () {
 				for (var key in this._tiles) {
 					var tile = this._tiles[key];
 					self.recolor(tile.el);
 				}
 			};
 
-			this.tiles.createTile = function (coords) {
+			this.layer.wms.createTile = function (coords) {
 				const tile = L.DomUtil.create('canvas', 'leaflet-tile');
 				tile.width = tile.height = this.options.tileSize;
 
@@ -80,7 +121,7 @@ export default {
 				return tile;
 			};
 
-			this.tiles.addTo(this.map);
+			this.layer.wms.addTo(this.map);
 
 		},
 

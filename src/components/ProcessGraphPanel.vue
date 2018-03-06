@@ -52,14 +52,15 @@ export default {
 			return users.getProcessGraphs();
 		},
 		updateData() {
-			if (!this.openEO.Capabilities.userProcessGraphs()) {
+			if (!this.$refs.table || !this.openEO.Capabilities.userProcessGraphs()) {
 				return;
 			}
 			else if (typeof this.userId !== 'string' && typeof this.userId !== 'number') {
 				this.$refs.table.setNoData(401);
-				return;
 			}
-			this.$refs.table.retrieveData();
+			else {
+				this.$refs.table.retrieveData();
+			}
 		},
 		addGraph() {
 			EventBus.$emit('evalScript', (script) => {

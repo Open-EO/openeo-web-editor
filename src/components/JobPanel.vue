@@ -74,12 +74,13 @@ export default {
 			return users.getJobs();
 		},
 		updateData() {
-			if (typeof this.userId !== 'string' && typeof this.userId !== 'number') {
-				this.$refs.table.setNoData(401);
+			if (!this.$refs.table) {
 				return;
 			}
-
-			if (this.openEO.Capabilities.userJobs()) {
+			else if (typeof this.userId !== 'string' && typeof this.userId !== 'number') {
+				this.$refs.table.setNoData(401);
+			}
+			else if (this.openEO.Capabilities.userJobs()) {
 				this.$refs.table.retrieveData();
 			}
 			else {

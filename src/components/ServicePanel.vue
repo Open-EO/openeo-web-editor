@@ -57,14 +57,15 @@ export default {
 			return users.getServices();
 		},
 		updateData() {
-			if (!this.openEO.Capabilities.createService()) {
+			if (!this.$refs.table || !this.openEO.Capabilities.createService()) {
 				return;
 			}
 			else if (typeof this.userId !== 'string' && typeof this.userId !== 'number') {
 				this.$refs.table.setNoData(401);
-				return;
 			}
-			this.$refs.table.retrieveData();
+			else {
+				this.$refs.table.retrieveData();
+			}
 		},
 		serviceCreated(data) {
 			this.$refs.table.addData(data);
@@ -126,7 +127,7 @@ export default {
 		},
 		viewService(service) {
 			this.$utils.info(this, 'Requesting tiles from server. Please wait...');
-			EventBus.$emit('updateMapTilesWithUrl', service.service_url);
+			EventBus.$emit('viewWebService', service);
 			EventBus.$emit('showMapViewer');
 		}
 	}

@@ -64,14 +64,15 @@ export default {
 			return users.getFiles();
 		},
 		updateData() {
-			if (!this.openEO.Capabilities.userFiles()) {
+			if (!this.$refs.table || !this.openEO.Capabilities.userFiles()) {
 				return;
 			}
 			else if (typeof this.userId !== 'string' && typeof this.userId !== 'number') {
 				this.$refs.table.setNoData(401);
-				return;
 			}
-			this.$refs.table.retrieveData();
+			else {
+				this.$refs.table.retrieveData();
+			}
 		},
 		uploadFile() {
 			var field = document.getElementById('uploadUserFile');

@@ -42,7 +42,7 @@
 				</div>
 				<div class="tabsBody">
 					<div class="tabContent tabActive" id="mapTab">
-						<MapViewer />
+						<MapViewer ref="mapViewer" />
 					</div>
 					<div class="tabContent" id="imageTab">
 						<ImageViewer ref="imageViewer" />
@@ -239,6 +239,14 @@ export default {
 				case 'text/plain':
 				case 'application/json':
 					this.$refs.dataViewer.showBlob(blob);
+					break;
+				case 'image/tif':
+				case 'image/tiff':
+					// ToDo: This should only execute when it's a GTiff, but for POC let every tiff pass
+//					if (originalOutputFormat.format.toLowerCase() == 'gtiff') {
+						this.$refs.mapViewer.updateTiffLayerBlob(blob);
+						break;
+//					}
 				default:
 					this.$utils.error(this, "Sorry, the returned content type is not supported to view.");
 			}
@@ -255,6 +263,10 @@ export default {
 				case 'jpg':
 				case 'gif':
 					return 'image/' + type;
+				case 'tif':
+				case 'tiff':
+				case 'gtiff':
+					return 'image/tiff';
 				case 'json':
 					return 'application/json';
 				default:

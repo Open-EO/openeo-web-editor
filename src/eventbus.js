@@ -12,8 +12,8 @@ The server has changed and the UI should be updated.
 ## addToSource(string $code)
 Adds the code to the source code editor.
 
-## updateMapTilesWithUrl(string $url)
-might change later...
+## viewWebService(object $service)
+Shows a web service on the map.
 
 ## evalScript(callback $callback)
 Triggers the script currently in the editor to be evaluated runs the callback using the data from the evaluation.

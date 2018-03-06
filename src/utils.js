@@ -47,8 +47,14 @@ export default {
 			}
 			items.push("<li>" + val + "</li>");
 		};
+		var i = 0;
 		for (var key in data) {
+			i++;
 			callback(data[key], key);
+			if (i > 100) {
+				items.push("<li><em>Following entries omitted...</em></li>");
+				break;
+			}
 		}
 		return "<ul>" + items.join("") + "</ul>";
 	},
