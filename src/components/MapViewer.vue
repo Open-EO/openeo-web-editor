@@ -15,8 +15,8 @@ export default {
 	data() {
 		return {
 			options: {
-				center: [45,15],
-				zoom: 8
+				center: [50.1725,9.15],
+				zoom: 4
 			},
 			map: null,
 			layer: {
@@ -65,7 +65,8 @@ export default {
 			this.removeOldLayer(this.layer.tiff);
 			if (!this.layer.tiff) {
 				var opts = {
-					name: 'GeoTiff'
+					name: 'GeoTiff',
+					band: 0
 				};
 				this.layer.tiff = leafletGeotiff(url, opts);
 				this.layer.tiff.addTo(this.map);
