@@ -18,6 +18,9 @@ var Visualizations = {
 	rampColors: {
 		name: "Color ramp",
 		callback: function(input, o) {
+			if (input[o.band] < o.valMin || input[o.band] > o.valMax) {
+				return [0,0,0,0];
+			}
 			if (typeof o.clrMin === 'string') {
 				o.clrMin = o.clrMin.split(',');
 			}

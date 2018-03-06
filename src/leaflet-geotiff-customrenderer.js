@@ -15,23 +15,16 @@ L.LeafletGeotiff.CustomRenderer = L.LeafletGeotiffRenderer.extend({
         this.parent._reset();
 	},
 	render(raster, canvas, ctx, args) {
+		var hasScript = (this.options.script && this.options.script.Visualization && this.options.script.Visualization.function) ? true : false;
 		var imageData = ctx.createImageData(raster.width, raster.height);
 		for (var y = 0; y < raster.height; y++) {
 			for (var x = 0; x < raster.width; x++) {
 				var i = (y*raster.width)+x;
-				var index = ((y*raster.width)+x)*4;
-				imageData.data[index+0] = raster.data[i];
-				imageData.data[index+1] = raster.data[i];
-				imageData.data[index+2] = raster.data[i];
-				imageData.data[index+3] = 255;
-			}
-		}
-
-		if (this.options.script && this.options.script.Visualization && this.options.script.Visualization.function) {
-			for (var i = 0; i < imageData.data.length; i += 4) {
-				const input = imageData.data.slice(i, i + 4);
-				const es = this.options.script.Visualization.function(input, this.options.script.Visualization.args);
-				imageData.data.set(es, i);
+				var input = [raster.data[i], raster.data[i], raster.data[i], 255];
+				if (hasScript) {
+					input = this.options.script.Visualization.function(input, this.options.script.Visualization.args);
+				}
+				imageData.data.set(input, ((y*raster.width)+x)*4);
 			}
 		}
 		ctx.putImageData(this.parent.transform(imageData, args), args.xStart, args.yStart); 
