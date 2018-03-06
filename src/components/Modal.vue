@@ -1,11 +1,12 @@
 <template>
-<div id="modal" class="modal">
+<div id="modal" class="modal" v-if="shown" @click="possiblyClose">
 	<div class="modal-container">
 		<h2 class="modal-header">
 			{{ title }}
-			<span class="close">&times;</span>
+			<span class="close" @click="close">&times;</span>
 		</h2>
-		<div class="modal-content" id="modal-content"></div>
+		<div class="modal-content" id="modal-content" v-html="body">
+		</div>
 	</div>
 </div>
 </template>
@@ -18,33 +19,40 @@ export default {
 	data() {
 		return {
 			title: null,
-			body: null
+			body: null,
+			shown: false
 		};
 	},
 	mounted() {
-		EventBus.$on('showModal', this.show);
+		EventBus.$on('showModal', this.setDataAndShow);
 	},
 	methods: {
-		show(title, body) {
-			this.title = title;
+		show() {
+			this.shown = true;
+		},
 
-			var modal = document.getElementById('modal');
-			modal.style.display = "block";
-			var span = document.getElementsByClassName("close")[0];
-			span.onclick = function() {
-				modal.style.display = "none";
-			}
-			if (typeof body === 'object') {
-				body = this.makeList(body);
-			}
-			document.getElementById('modal-content').innerHTML = body;
-			window.onclick = function(event) {
-				if (event.target == modal) {
-					modal.style.display = "none";
-				}
+		close() {
+			this.shown = false;
+		},
+
+		possiblyClose(event) {
+			if(event.target == document.getElementById('modal')) {
+				this.close();
 			}
 		},
+
+		setData(title, body) {
+			this.title = title;
+			this.body = (typeof body === 'object' ? this.makeList(body) : body);
+		},
+
+		setDataAndShow(title, body) {
+			this.setData(title, body);
+			this.show();
+		},
+
 		makeList(data, level) {
+			
 			var items = [];
 			var callback = (val, key) => {
 				var type = typeof val;
@@ -61,6 +69,7 @@ export default {
 			}
 			return "<ul>" + items.join("") + "</ul>";
 		},
+
 		isNumeric(n) {
 			return !isNaN(parseFloat(n)) && isFinite(n);
 		}
@@ -70,7 +79,6 @@ export default {
 
 <style>
 .modal {
-    display: none;
     position: fixed;
     z-index: 10000;
     left: 0;
