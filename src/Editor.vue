@@ -217,16 +217,23 @@ export default {
 			this.showTab('viewer', 'dataTab');
 		},
 
-		showInViewer(blob, script) {
+		showInViewer(blob, script = null, originalOutputFormat = null) {
 			if (!(blob instanceof Blob)) {
 				throw 'No blob specified.';
 			}
-			switch(blob.type) {
+			var mimeType = blob.type;
+			// Try to detect invalid mime types
+			if (!mimeType || mimeType.indexOf('/') === -1 || mimeType.indexOf('*') !== -1) {
+				mimeType = this.getMimeTypeForOutputFormat(originalOutputFormat);
+			}
+			switch(mimeType.toLowerCase()) {
 				case 'image/png':
 				case 'image/jpg':
 				case 'image/jpeg':
 				case 'image/gif':
-					this.$refs.imageViewer.setScript(script);
+					if (script) {
+						this.$refs.imageViewer.setScript(script);
+					}
 					this.$refs.imageViewer.showImageBlob(blob);
 					break;
 				case 'text/plain':
@@ -234,6 +241,24 @@ export default {
 					this.$refs.dataViewer.showBlob(blob);
 				default:
 					this.$utils.error(this, "Sorry, the returned content type is not supported to view.");
+			}
+		},
+
+		getMimeTypeForOutputFormat(originalOutputFormat) {
+			if (!originalOutputFormat.format) {
+				return null;
+			}
+			var type = originalOutputFormat.format.toLowerCase();
+			switch(type) {
+				case 'png':
+				case 'jpeg':
+				case 'jpg':
+				case 'gif':
+					return 'image/' + type;
+				case 'json':
+					return 'application/json';
+				default:
+					return null;
 			}
 		}
 

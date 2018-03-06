@@ -83,7 +83,7 @@ export default {
 				this.$refs.table.retrieveData();
 			}
 			else {
-				this.$refs.table.setNoData(501);
+				this.$refs.table.setNoData(this.openEO.Capabilities.createJob() ? '' : 501);
 			}
 		},
 		jobCreated(data) {
@@ -163,7 +163,7 @@ export default {
 				if (view) {
 					// View in browser
 					EventBus.$emit('evalScript', (script) => {
-						EventBus.$emit('showInViewer', data, script);
+						EventBus.$emit('showInViewer', data, script, {format: format});
 					});
 				}
 				else {

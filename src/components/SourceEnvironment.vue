@@ -101,9 +101,10 @@ OpenEO.Editor.ProcessGraph = OpenEO.ImageCollection.create('Sentinel2A-L1C')
 			}
 			EventBus.$emit('evalScript', (script) => {
 				this.$utils.info(this, 'Data requested. Please wait...');
-				script.ProcessGraph.execute({format: format})
+				var output = {format: format};
+				script.ProcessGraph.execute(output)
 					.then(data => {
-						EventBus.$emit('showInViewer', data, script);
+						EventBus.$emit('showInViewer', data, script, output);
 					})
 					.catch(error => {
 						this.$utils.error(this, 'Sorry, could not execute script.');

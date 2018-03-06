@@ -27,8 +27,10 @@ Triggered when a service was created successfully.
 ## showModal(string $title, $body)
 Shows a modal with the specified title and body contents. Body can be a string or an object. Objects are converted to a more readable list.
 
-## showInViewer(Blob $blob, object $script)
+## showInViewer(Blob $blob, object $script, object $output_args)
 Shows the data with the specified content type in the appropriate area of the viewer.
+The script can be specified if any visualization should be applied.
+Also to enhance viewing experience the "original" output format arguments can be given.
 
 ## showMapViewer()
 Shows the map in the viewer area.
