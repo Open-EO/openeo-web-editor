@@ -1,48 +1,60 @@
 <template>
-<div id="modal" class="modal">
+<div id="modal" class="modal" v-if="shown" @click="possiblyClose">
 	<div class="modal-container">
 		<h2 class="modal-header">
 			{{ title }}
-			<span class="close">&times;</span>
+			<span class="close" @click="close">&times;</span>
 		</h2>
-		<div class="modal-content" id="modal-content"></div>
+		<div class="modal-content" id="modal-content">
+			<template v-if="typeof body === 'string'">{{ body }}</template>
+			<List v-else :data="body"></List>
+		</div>
 	</div>
 </div>
 </template>
 
 <script>
 import EventBus from '../eventbus.js';
+import List from './List.vue';
 
 export default {
 	name: 'Modal',
+	components:  {
+		List
+	},
 	data() {
 		return {
 			title: null,
-			body: null
+			body: null,
+			shown: false
 		};
 	},
 	mounted() {
-		EventBus.$on('showModal', this.show);
+		EventBus.$on('showModal', this.setDataAndShow);
 	},
 	methods: {
-		show(title, body) {
-			this.title = title;
+		show() {
+			this.shown = true;
+		},
 
-			var modal = document.getElementById('modal');
-			modal.style.display = "block";
-			var span = document.getElementsByClassName("close")[0];
-			span.onclick = function() {
-				modal.style.display = "none";
+		close() {
+			this.shown = false;
+		},
+
+		possiblyClose(event) {
+			if(event.target == document.getElementById('modal')) {
+				this.close();
 			}
-			if (typeof body === 'object') {
-				body = this.$utils.makeList(body);
-			}
-			document.getElementById('modal-content').innerHTML = body;
-			window.onclick = function(event) {
-				if (event.target == modal) {
-					modal.style.display = "none";
-				}
-			}
+		},
+
+		setData(title, body) {
+			this.title = title;
+			this.body = body;
+		},
+
+		setDataAndShow(title, body) {
+			this.setData(title, body);
+			this.show();
 		}
 	}
 };
@@ -50,7 +62,6 @@ export default {
 
 <style>
 .modal {
-    display: none;
     position: fixed;
     z-index: 10000;
     left: 0;
@@ -92,4 +103,3 @@ export default {
     cursor: pointer;
 }
 </style>
-
