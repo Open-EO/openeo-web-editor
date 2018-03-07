@@ -16,8 +16,8 @@ export default {
 	data() {
 		return {
 			options: {
-				center: [50.1725,9.15],
-				zoom: 4
+				center: [45,15], // [50.1725,9.15]
+				zoom: 8 // 4
 			},
 			map: null,
 			layer: {
@@ -42,7 +42,7 @@ export default {
 
 		viewWebService(service) {
 			if (service.service_type.toLowerCase() == 'wms') {
-				this.updateWMSLayer(service.service_url);
+				this.updateWMSLayer(service);
 			}
 			else {
 				this.$utils.error('Sorry, the requested service type is not supported by the map.');
@@ -81,21 +81,21 @@ export default {
 			}
 		},
 
-		updateWMSLayer(url) {
+		updateWMSLayer(service) {
 			this.removeOldLayer(this.layer.wms);
 			if (!this.layer.wms) {
-				this.createWMSLayer(url);
+				this.createWMSLayer(service);
 			}
 			else {
-				this.layer.wms.setUrl(url, false);
+				this.layer.wms.setUrl(service.service_url, false);
 				this.layer.wms.recolor();
 			}
 		},
 
-		createWMSLayer(url) {
+		createWMSLayer(service) {
 			var self = this;
 
-			this.layer.wms = L.tileLayer.wms(url, {
+			this.layer.wms = L.tileLayer.wms(service.service_url, {
 				request: 'GetCoverage',
 				service: 'WMS',
 				coverage: 'CUSTOM',
