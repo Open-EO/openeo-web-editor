@@ -118,7 +118,7 @@ export default {
 			var jobApi = this.openEO.Jobs.getObject(id);
 			jobApi.get()
 				.then(data => {
-					EventBus.$emit('showModal', 'Job: ' + id, data);
+					EventBus.$emit('showDataDisplayModal', 'Job: ' + id, data);
 				})
 				.catch(error => this.$utils.error(this, 'Sorry, could not load job details.'));
 		},

@@ -118,13 +118,13 @@ export default {
 				supportedWebServices: this.openEO.SupportedServices,
 				supportedOutputFormats: this.openEO.SupportedOutputFormats
 			};
-			EventBus.$emit('showModal', 'Server information', info);
+			EventBus.$emit('showDataDisplayModal', 'Server information', info);
 		},
 
 		showDataInfo() {
 			this.openEO.Data.getById(this.$refs.data.value)
 				.then(data => {
-					EventBus.$emit('showModal', 'Data: ' + this.$refs.data.value, data);
+					EventBus.$emit('showDataDisplayModal', 'Data: ' + this.$refs.data.value, data);
 				})
 				.catch(error => this.$utils.error(this, 'Sorry, can\'t load process details.'));
 		},
@@ -132,7 +132,7 @@ export default {
 		showProcessInfo() {
 			this.openEO.Processes.getById(this.$refs.processes.value)
 				.then(data => {
-					EventBus.$emit('showModal', 'Process: ' + this.$refs.processes.value, data);
+					EventBus.$emit('showDataDisplayModal', 'Process: ' + this.$refs.processes.value, data);
 				})
 				.catch(error => this.$utils.error(this, 'Sorry, can\'t load process details.'));
 		},
