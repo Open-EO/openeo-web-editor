@@ -80,6 +80,8 @@ window.axios = axios;
 
 OpenEO.Visualizations = OpenEOVisualizations;
 OpenEO.Capabilities = new Capabilities();
+OpenEO.SupportedOutputFormats = {};
+OpenEO.SupportedServices = [];
 
 export default {
 	name: 'openeo-web-editor',
@@ -117,6 +119,8 @@ export default {
 
 		changeServer(url) {
 			this.openEO.Capabilities = new Capabilities();
+			this.openEO.SupportedOutputFormats = {};
+			this.openEO.SupportedServices = [];
 
 			// Update server url
 			this.openEO.API.baseUrl = url;
@@ -141,8 +145,26 @@ export default {
 		requestCapabilities() {
 			this.openEO.API.getCapabilities().then(info => {
 				this.openEO.Capabilities = info;
+				this.requestSupportedOutputFormats();
+				this.requestSupportedServices();
 				this.requestAuth();
 			});
+		},
+
+		requestSupportedOutputFormats() {
+			if (this.openEO.Capabilities.outputFormatCapabilities()) {
+				this.openEO.API.getOutputFormats().then(info => {
+					this.openEO.SupportedOutputFormats = info;
+				});
+			}
+		},
+
+		requestSupportedServices() {
+			if (this.openEO.Capabilities.serviceCapabilities()) {
+				this.openEO.Services.getCapabilities().then(info => {
+					this.openEO.SupportedServices = info;
+				});
+			}
 		},
 
 		requestAuth() {

@@ -5,7 +5,11 @@
 		<datalist id="serverUrls">
 		  <option v-for="url in serverUrls" :key="url" :value="url" />
 		</datalist>
-		<button  @click="updateServerUrlFromInput" title="Change server"><i class="fas fa-check"></i></button></h3>
+		<button  @click="updateServerUrlFromInput" title="Change server"><i class="fas fa-check"></i></button>
+		</h3>
+	</div>
+	<div class="info-toolbar">
+		<button  @click="getServerInfo" title="Get server information"><i class="fas fa-info"></i></button>
 	</div>
     <div class="data-toolbar" v-show="showDataSelector()">
       Data: <select id="data" ref="data">
@@ -96,6 +100,16 @@ export default {
 			if (typeof newUrl === 'string' && newUrl != this.openEO.API.baseUrl) {
 				EventBus.$emit('changeServerUrl', newUrl);
 			}
+		},
+
+		getServerInfo() {
+			var info = {
+				url: this.openEO.API.baseUrl,
+				supportedEndpoints: this.openEO.Capabilities.rawData,
+				supportedWebServices: this.openEO.SupportedServices,
+				supportedOutputFormats: this.openEO.SupportedOutputFormats
+			};
+			EventBus.$emit('showModal', 'Server information', info);
 		},
 
 		showDataInfo() {
@@ -212,7 +226,7 @@ OpenEO.Editor.Visualization = {
 	padding-bottom: 5px;
 	border-bottom: 1px dotted #ddd;
 }
-.data-toolbar, .processes-toolbar, .vis-toolbar {
+.data-toolbar, .processes-toolbar, .vis-toolbar, .info-toolbar {
 	display: inline-block;
 	margin-right: 3%;
 }

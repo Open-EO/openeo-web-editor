@@ -180,9 +180,18 @@ export default {
 			});
 		},
 		createServiceFromJob(id) {
-			var type = prompt('Please specify the service type you want to create:', 'wms');
-			if (!type) {
-				return;
+			var type;
+			if (this.openEO.SupportedServices.length == 1) {
+				type = this.openEO.SupportedServices[0];
+			}
+			else {
+				var type = prompt('Please specify the service type you want to create:', '');
+				if (type === null) {
+					return;
+				}
+				else if (this.openEO.SupportedServices.indexOf(type.toLowerCase()) === -1) {
+					this.$utils.error(this, 'Invalid service type specified.');
+				}
 			}
 			// ToDo: Ask user for service arguments
 			this.openEO.Services.create(id, type, {}).then(data => {

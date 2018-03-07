@@ -162,7 +162,6 @@ OpenEO.Editor.ProcessGraph = OpenEO.ImageCollection.create('Sentinel2A-L1C')
 <style scoped>
 #SourceEnvironment button {
 	margin: 5px;
-	width: 10%;
 	min-width: 100px;
 }
 h3 {
