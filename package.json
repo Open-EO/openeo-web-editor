@@ -29,17 +29,18 @@
     "test": "vue-cli-service test"
   },
   "dependencies": {
-	"codemirror": "^5.33.0",
-	"datalist-polyfill": "^1.11.1",
+    "codemirror": "^5.33.0",
+    "datalist-polyfill": "^1.11.1",
     "fontawesome-web": "^5.0.2",
     "leaflet": "^1.2.0",
+    "leaflet-geotiff": "git+https://github.com/m-mohr/leaflet-geotiff.git",
     "openeo-js-client": "git+https://github.com/Open-EO/openeo-js-client.git",
     "vue": "^2.5.13",
     "vue-snotify": "^2.0.1"
   },
   "devDependencies": {
-    "@vue/cli-plugin-babel": "^3.0.0-beta.1",
-    "@vue/cli-service": "^3.0.0-beta.1",
+    "@vue/cli-plugin-babel": "^3.0.0-beta.5",
+    "@vue/cli-service": "^3.0.0-beta.5",
     "vue-template-compiler": "^2.5.13"
   },
   "browserslist": [

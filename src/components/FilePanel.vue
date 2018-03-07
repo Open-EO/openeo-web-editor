@@ -64,14 +64,15 @@ export default {
 			return users.getFiles();
 		},
 		updateData() {
-			if (!this.openEO.Capabilities.userFiles()) {
+			if (!this.$refs.table || !this.openEO.Capabilities.userFiles()) {
 				return;
 			}
 			else if (typeof this.userId !== 'string' && typeof this.userId !== 'number') {
 				this.$refs.table.setNoData(401);
-				return;
 			}
-			this.$refs.table.retrieveData();
+			else {
+				this.$refs.table.retrieveData();
+			}
 		},
 		uploadFile() {
 			var field = document.getElementById('uploadUserFile');
@@ -81,7 +82,6 @@ export default {
 			fileApi.replace(file, percent => {
 				status.innerText = percent + '%';
 			}).then(data => {
-				console.log(data);
 				// ToDo: This should not be self generated
 				this.$refs.table.replaceData({
 					"name": file.name,
@@ -92,7 +92,6 @@ export default {
 				field.value = '';
 				this.$utils.ok(this, 'File upload completed.');
 			}).catch(error => {
-				console.log(error);
 				status.innerText = '';
 				this.$utils.error(this, 'Sorry, file upload failed.');
 			});

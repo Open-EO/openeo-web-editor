@@ -227,7 +227,7 @@ export default {
 				return '';
 			}
 			let date = new Date(value);
-			return date.toISOString().replace('T', ' ').replace('Z', '');
+			return date.toISOString().replace('T', ' ').replace('Z', '').substring(0,19);
 		}
 	}
 }

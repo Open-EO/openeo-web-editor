@@ -18,6 +18,9 @@ var Visualizations = {
 	rampColors: {
 		name: "Color ramp",
 		callback: function(input, o) {
+			if (input[o.band] < o.valMin || input[o.band] > o.valMax) {
+				return [0,0,0,0];
+			}
 			if (typeof o.clrMin === 'string') {
 				o.clrMin = o.clrMin.split(',');
 			}
@@ -49,6 +52,18 @@ var Visualizations = {
 				defaultValue: [ 10,  70, 230, 255]
 			}
 		}
+	},
+
+	invertColors: {
+		name: 'Invert colors',
+		callback: function(input, o) {
+			input[0] = 255 - input[0];
+			input[1] = 255 - input[1];
+			input[2] = 255 - input[2];
+			input[3] = input[3];
+			return input;
+		},
+		arguments: {}
 	}
 
 };

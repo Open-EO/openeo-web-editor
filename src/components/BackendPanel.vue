@@ -1,38 +1,43 @@
 <template>
-  <div id="backendPanel">
-	<div class="server-toolbar" v-show="$config.allowServerChange">
-		<h3>Server:</h3>
-		<input id="serverUrl" ref="serverUrl" list="serverUrls" value="" autocomplete="off" />
-		<span id="serverUrlsContainer" title="Select previously used server">
-			<select id="serverUrls" ref="serverUrls" @change="updateServerUrlFromSelect">
-				<option v-for="url in serverUrls" :key="url" :value="url">{{ url }}</option>
+	<div id="backendPanel">
+		<div class="server-toolbar" v-show="$config.allowServerChange">
+			<h3>Server:</h3>
+			<input id="serverUrl" ref="serverUrl" list="serverUrls" value="" />
+			<span id="serverUrlsContainer" title="Select previously used server">
+				<select id="serverUrls" ref="serverUrls" @change="updateServerUrlFromSelect">
+					<option v-for="url in serverUrls" :key="url" :value="url">{{ url }}</option>
+				</select>
+				<i class="fas fa-book" id="serverUrlsIcon"></i>
+			</span>
+			<button @click="updateServerUrlFromInput" title="Change server"><i class="fas fa-check"></i></button>
+		</div>
+		<div class="info-toolbar">
+			<button @click="getServerInfo" title="Get server information"><i class="fas fa-info"></i></button>
+		</div>
+		<div class="data-toolbar" v-show="showDataSelector()">
+			Data: <select id="data" ref="data">
+				<option v-for="d in data" :key="d.product_id" :value="d.product_id" :title="d.description">{{ d.product_id }}</option>
 			</select>
-			<i class="fas fa-book" id="serverUrlsIcon"></i>
-		</span>
-		<button @click="updateServerUrlFromInput" title="Change server"><i class="fas fa-check"></i></button>
+			<button id="insertData" @click="insertDataToEditor" title="Insert into script"><i class="fas fa-plus"></i></button>
+			<button @click="showDataInfo" title="Show details" v-show="openEO.Capabilities.dataInfo()"><i class="fas fa-info"></i></button>
+		</div>
+		<div class="processes-toolbar" v-show="showProcessSelector()">
+			Processes: <select id="processes" ref="processes">
+				<option v-for="p in processes" :key="p.process_id" :value="p.process_id" :title="p.description">{{ p.process_id }}</option>
+			</select>
+			<button id="insertProcesses" @click="insertProcessToEditor" title="Insert into script"><i class="fas fa-plus"></i></button>
+			<button @click="showProcessInfo" title="Show details" v-show="openEO.Capabilities.processInfo()"><i class="fas fa-info"></i></button>
+		</div>
+		<div class="vis-toolbar">
+			Visualizations: <select id="visualizations">
+				<option value="">None</option>
+				<option value="custom">Custom function</option>
+				<optgroup label="Pre-defined">
+					<option v-for="(v, k) in openEO.Visualizations" :key="k" :value="k">{{ v.name }}</option>
+				</optgroup>
+			</select> <button id="insertVisualizations" title="Insert into script" @click="insertVisualization"><i class="fas fa-plus"></i></button>
+		</div>
 	</div>
-    <div class="data-toolbar" v-show="showDataSelector()">
-      Data: <select id="data" ref="data">
-	    <option v-for="d in data" :key="d.product_id" :value="d.product_id" :title="d.description">{{ d.product_id }}</option>
-	  </select>
-	  <button id="insertData" @click="insertDataToEditor" title="Insert into script"><i class="fas fa-plus"></i></button>
-	  <button @click="showDataInfo" title="Show details" v-show="openEO.Capabilities.dataInfo()"><i class="fas fa-info"></i></button>
-    </div>
-    <div class="processes-toolbar" v-show="showProcessSelector()">
-      Processes: <select id="processes" ref="processes">
-	    <option v-for="p in processes" :key="p.process_id" :value="p.process_id" :title="p.description">{{ p.process_id }}</option>
-	  </select>
-	  <button id="insertProcesses" @click="insertProcessToEditor" title="Insert into script"><i class="fas fa-plus"></i></button>
-	  <button @click="showProcessInfo" title="Show details" v-show="openEO.Capabilities.processInfo()"><i class="fas fa-info"></i></button>
-    </div>
-    <div class="vis-toolbar">
-      Visualizations: <select id="visualizations">
-        <option value="">None</option>
-        <option value="custom">Custom function</option>
-		<option v-for="(v, k) in openEO.Visualizations" :key="k" :value="k">{{ v.name }}</option>
-      </select> <button id="insertVisualizations" title="Insert into script" @click="insertVisualization"><i class="fas fa-plus"></i></button>
-    </div>
-  </div>
 </template>
 
 <script>
@@ -106,12 +111,22 @@ export default {
 			this.updateServerUrlFromInput();
 		},
 
+		getServerInfo() {
+			var info = {
+				url: this.openEO.API.baseUrl,
+				supportedEndpoints: this.openEO.Capabilities.rawData,
+				supportedWebServices: this.openEO.SupportedServices,
+				supportedOutputFormats: this.openEO.SupportedOutputFormats
+			};
+			EventBus.$emit('showModal', 'Server information', info);
+		},
+
 		showDataInfo() {
 			this.openEO.Data.getById(this.$refs.data.value)
 				.then(data => {
 					EventBus.$emit('showModal', 'Data: ' + this.$refs.data.value, data);
 				})
-				.catch(error => this.$utils.error('Sorry, can\'t load process details.'));
+				.catch(error => this.$utils.error(this, 'Sorry, can\'t load process details.'));
 		},
 
 		showProcessInfo() {
@@ -119,7 +134,7 @@ export default {
 				.then(data => {
 					EventBus.$emit('showModal', 'Process: ' + this.$refs.processes.value, data);
 				})
-				.catch(error => this.$utils.error('Sorry, can\'t load process details.'));
+				.catch(error => this.$utils.error(this, 'Sorry, can\'t load process details.'));
 		},
 
 		insertDataToEditor() {
@@ -211,7 +226,7 @@ h3 {
 #backendPanel {
 	border: solid 1px #676767;
 	background-color: #f7f7f7;
-    margin: 1%;
+	margin: 1%;
 	padding: 5px;
 	vertical-align: middle;
 }
@@ -237,7 +252,7 @@ h3 {
 	padding-bottom: 5px;
 	border-bottom: 1px dotted #ddd;
 }
-.data-toolbar, .processes-toolbar, .vis-toolbar {
+.data-toolbar, .processes-toolbar, .vis-toolbar, .info-toolbar {
 	display: inline-block;
 	margin-right: 3%;
 }
