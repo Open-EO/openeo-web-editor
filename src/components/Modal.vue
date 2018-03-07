@@ -5,7 +5,9 @@
 			{{ title }}
 			<span class="close" @click="close">&times;</span>
 		</h2>
-		<div class="modal-content" id="modal-content" v-html="body">
+		<div class="modal-content" id="modal-content">
+			<template v-if="typeof body === 'string'">{{ body }}</template>
+			<List v-else :data="body"></List>
 		</div>
 	</div>
 </div>
@@ -13,9 +15,13 @@
 
 <script>
 import EventBus from '../eventbus.js';
+import List from './List.vue';
 
 export default {
 	name: 'Modal',
+	components:  {
+		List
+	},
 	data() {
 		return {
 			title: null,
@@ -43,35 +49,12 @@ export default {
 
 		setData(title, body) {
 			this.title = title;
-			this.body = (typeof body === 'object' ? this.makeList(body) : body);
+			this.body = body;
 		},
 
 		setDataAndShow(title, body) {
 			this.setData(title, body);
 			this.show();
-		},
-
-		makeList(data, level) {
-			
-			var items = [];
-			var callback = (val, key) => {
-				var type = typeof val;
-				if (type === "array" || type === "object") {
-					val = this.makeList(val, level ? level+1 : 1);
-				}
-				if (key && (!this.isNumeric(key) || level > 0 || type !== 'string')) {
-					val = "<em>" + key + "</em>: " + val;
-				}
-				items.push("<li>" + val + "</li>");
-			};
-			for (var key in data) {
-				callback(data[key], key);
-			}
-			return "<ul>" + items.join("") + "</ul>";
-		},
-
-		isNumeric(n) {
-			return !isNaN(parseFloat(n)) && isFinite(n);
 		}
 	}
 };
@@ -120,4 +103,3 @@ export default {
     cursor: pointer;
 }
 </style>
-
