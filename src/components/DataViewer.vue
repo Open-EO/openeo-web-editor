@@ -1,30 +1,44 @@
 <template>
-	<div id="dataViewer" ref="data"></div>
+	<div id="dataViewer">
+		<span v-if="isText()">{{ nl2br(content) }}</span>
+		<ObjectTree v-else :data="content"></ObjectTree>
+	</div>
 </template>
 
 <script>
 import EventBus from '../eventbus.js';
+import ObjectTree from './ObjectTree.vue';
 
 export default {
 	name: 'DataViewer',
-
+	components:  {
+		ObjectTree
+	},
+	data() {
+		return {
+			content: null,
+		};
+	},
 	mounted() {
 		this.reset();
 	},
-
 	methods: {
 
+		isText() {
+			return (typeof this.content === 'string');
+		},
+
 		reset() {
-			this.$refs.data.innerText = 'Nothing to show.';
+			this.content = 'Nothing to show.';
 		},
 
 		showJson(data) {
-			this.$refs.data.innerHTML = this.$utils.makeList(data);
+			this.content = data;
 			EventBus.$emit('showDataViewer');
 		},
 
 		showText(data) {
-			this.$refs.data.innerText = this.nl2br(data);
+			this.content = data;
 			EventBus.$emit('showDataViewer');
 		},
 

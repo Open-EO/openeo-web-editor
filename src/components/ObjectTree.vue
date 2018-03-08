@@ -1,30 +1,48 @@
 <template>
-<em v-if="isEmpty(data)">None</em>
-<ul v-else>
-    <li v-for="(value, key) in data" :key="key">
-        <template v-if="!isArrayOfPrimitives(data)"><em>{{ prettifyKey(key) }}</em></template>
-        <ObjectTree v-if="typeof value === 'object'" :data="value"></ObjectTree>
-        <template v-else>{{ value }}</template>
-    </li>
-</ul>
+	<em v-if="isEmpty">None</em>
+	<em v-else-if="collapsed">... (<a @click="toggle()">show all {{ data.length }} entries</a>)</em>
+	<ul v-else>
+		<li v-for="(value, key) in data" :key="key">
+			<template v-if="shouldShowKey"><em>{{ prettifyKey(key) }}</em>: </template>
+			<ObjectTree v-if="showObjectTree(value)" :data="value"></ObjectTree>
+			<template v-else>{{ value }}</template>
+		</li>
+	</ul>
 </template>
 
 <script>
 export default {
     name: 'ObjectTree',
-    props: ['data'],
-    methods: {
-        isEmpty(data) {
-            return data == null
-                || Array.isArray(data) && data.length == 0
-                || typeof data == 'object' && Object.keys(data).length == 0;
-        },
-        isArrayOfPrimitives(data) {
+	props: ['data'],
+	data() {
+		return {
+			collapsed: false,
+			isObjectTree: true
+		};
+	},
+	created() {
+		this.collapsed = (Array.isArray(this.data) && this.data.length > 50 && this.$parent.isObjectTree);
+	},
+	computed: {
+		shouldShowKey() {
             // the first item's type is regarded as representative for the whole array despite arrays of mixed types being possible in JS
-            return Array.isArray(data) && data.length > 0 && typeof data[0] !== 'object';
-        },
+            return !(Array.isArray(this.data) && this.data.length > 0 && typeof this.data[0] !== 'object');
+		},
+        isEmpty() {
+            return this.data == null
+                || Array.isArray(this.data) && this.data.length == 0
+                || typeof this.data == 'object' && Object.keys(this.data).length == 0;
+		},
+	},
+    methods: {
+		toggle() {
+			this.collapsed = !this.collapsed;
+		},
+		showObjectTree(value) {
+			return (typeof value === 'object') && !this.collapsed;
+		},
         prettifyKey(key) {
-            if(this.isNumeric(key)) {
+            if(this.$utils.isNumeric(key)) {
                 return key;
             } else {
                 return key
@@ -35,16 +53,7 @@ export default {
                     // join with spaces
                     .join(' ');
             }
-        },
-        isNumeric(n) {
-            return !isNaN(parseFloat(n)) && isFinite(n);
-        },
+        }
     }
 };
 </script>
-
-<style>
-li > em:first-child:after {
-    content: ": ";
-}
-</style>
