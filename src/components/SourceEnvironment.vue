@@ -18,10 +18,6 @@
 import EventBus from '../eventbus.js';
 
 import 'codemirror/lib/codemirror.css';
-import 'codemirror/addon/hint/show-hint.css';
-
-import 'codemirror/addon/hint/show-hint.js';
-import 'codemirror/addon/hint/javascript-hint.js';
 import 'codemirror/mode/javascript/javascript.js';
 import CodeMirror from 'codemirror';
 
@@ -34,10 +30,7 @@ export default {
 			editorOptions: {
 				mode: 'javascript',
 				indentUnit: 4,
-				lineNumbers: true,
-				extraKeys: {
-					"Ctrl-Space": "autocomplete"
-				}
+				lineNumbers: true
 			},
 			editor: null,
 			defaultScript: this.$config.defaultScript
