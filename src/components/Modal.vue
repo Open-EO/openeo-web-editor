@@ -34,9 +34,8 @@ export default {
 		};
 	},
 	mounted() {
-		EventBus.$on('showTextModal', this.showTextModal);
+		EventBus.$on('showModal', this.showModal);
 		EventBus.$on('showComponentModal', this.showComponentModal);
-		EventBus.$on('showDataDisplayModal', this.showDataDisplayModal);
 	},
 	methods: {
 		show() {
@@ -71,18 +70,19 @@ export default {
 			this.props = props;
 		},
 
-		showTextModal(title, body) {
-			this.initTextModal(title, body);
-			this.show();
+		showModal(title, data) {
+			if (typeof data === 'string') {
+				this.initTextModal(title, body);
+				this.show();
+			}
+			else {
+				this.showComponentModal(title, 'List', {data: data});
+			}
 		},
 
 		showComponentModal(title, compname, props) {
 			this.initComponentModal(title, compname, props);
 			this.show();
-		},
-
-		showDataDisplayModal(title, data) {
-			this.showComponentModal(title, 'List', {data: data});
 		}
 	}
 };

@@ -24,17 +24,16 @@ Triggered when a job was created successfully.
 ## serviceCreated(object $data)
 Triggered when a service was created successfully.
 
-## showTextModal(string $title, string $body)
-Shows a modal with the specified title and body contents. $body must be a string. The string is treated as raw text, so HTML in it will NOT be rendered.
+## showModal(string $title, string $contents)
+Shows a modal with the specified title and contents.
+If $content is a string, it is treated as raw text, so HTML in it will NOT be rendered.
+If $content object is an object, it is rendered as a more readable list via the List component.
+The last case is a shorthand for showComponentModal($title, 'List', {data: $data})
 
 ## showComponentModal(string $title, string $compname, object $props)
 Shows a modal with the specified title and an instance of the $compname component.
 The component can be supplied with props by passing them as an object with the props' names as the keys and the props' contents as the values, e.g. {propname1: 'content', propname2: {foo: 'bar'}}
 The component to be used must be known (i.e. imported and declared) in the Modal component.
-
-## showDataDisplayModal(string $title, object $data)
-Shows a modal with the specified title and the contents of the data object as the body, but rendered as a more readable list via the List component.
-This is a shorthand for showComponentModal($title, 'List', {data: $data})
 
 ## showInViewer(Blob $blob, object $script, object $output_args)
 Shows the data with the specified content type in the appropriate area of the viewer.
