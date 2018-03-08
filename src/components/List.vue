@@ -1,50 +1,31 @@
 <template>
-<em v-if="isEmpty(data)">empty</em>
-<ul v-else>
-    <li v-for="(value, key) in data" :key="key">
-        <template v-if="!isArrayOfPrimitives(data)"><em>{{ prettifyKey(key) }}</em></template>
-        <List v-if="typeof value === 'object'" :data="value"></List>
-        <template v-else>{{ value }}</template>
-    </li>
-</ul>
+    <ul>
+        <li v-for="url in serverUrls" :key="url">
+            <span @click="submit(url)">{{ url }}</span>
+        </li>
+    </ul>
 </template>
 
 <script>
 export default {
-    name: 'List',
-    props: ['data'],
+    name: 'ServerSelector',
+    props: ['serverUrls', 'callback'],
     methods: {
-        isEmpty(data) {
-            return data == null
-                || Array.isArray(data) && data.length == 0
-                || typeof data == 'object' && Object.keys(data).length == 0;
-        },
-        isArrayOfPrimitives(data) {
-            // the first item's type is regarded as representative for the whole array despite arrays of mixed types being possible in JS
-            return Array.isArray(data) && data.length > 0 && typeof data[0] !== 'object';
-        },
-        prettifyKey(key) {
-            if(this.isNumeric(key)) {
-                return key;
-            } else {
-                return key
-                    // split at each underscore (removing that underscore) and at each upper case letter (leaving that letter)
-                    .split(/_|(?=[A-Z])/)
-                    // capitalize each word that is longer than 2 characters
-                    .map((e) => e.length <= 2 ? e : e.charAt(0).toUpperCase() + e.substr(1))
-                    // join with spaces
-                    .join(' ');
+        submit(url) {
+            this.callback(url);
+            if(this.$parent && this.$parent.$options.name == 'Modal') {
+                this.$parent.close();
             }
-        },
-        isNumeric(n) {
-            return !isNaN(parseFloat(n)) && isFinite(n);
-        },
+        }
     }
 };
 </script>
 
 <style>
-li > em:first-child:after {
-    content: ": ";
-}
+    li {
+        padding: 5px 0px;
+    }
+    li span {
+        cursor: pointer;
+    }
 </style>

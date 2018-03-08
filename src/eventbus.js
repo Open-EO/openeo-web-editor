@@ -27,8 +27,8 @@ Triggered when a service was created successfully.
 ## showModal(string $title, string $contents)
 Shows a modal with the specified title and contents.
 If $content is a string, it is treated as raw text, so HTML in it will NOT be rendered.
-If $content object is an object, it is rendered as a more readable list via the List component.
-The last case is a shorthand for showComponentModal($title, 'List', {data: $data})
+If $content object is an object, it is rendered as a more readable list via the ObjectTree component.
+The last case is a shorthand for showComponentModal($title, 'ObjectTree', {data: $data})
 
 ## showComponentModal(string $title, string $compname, object $props)
 Shows a modal with the specified title and an instance of the $compname component.

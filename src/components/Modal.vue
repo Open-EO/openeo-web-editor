@@ -15,14 +15,14 @@
 
 <script>
 import EventBus from '../eventbus.js';
+import ObjectTree from './ObjectTree.vue';
 import List from './List.vue';
-import ServerSelector from './ServerSelector.vue';
 
 export default {
 	name: 'Modal',
 	components:  {
-		List,
-		ServerSelector
+		ObjectTree,
+		List
 	},
 	data() {
 		return {
@@ -76,7 +76,7 @@ export default {
 				this.show();
 			}
 			else {
-				this.showComponentModal(title, 'List', {data: data});
+				this.showComponentModal(title, 'ObjectTree', {data: data});
 			}
 		},
 

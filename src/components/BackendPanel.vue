@@ -74,7 +74,7 @@ export default {
 		},
 
 		showServerSelector() {
-			EventBus.$emit('showComponentModal', 'Select previously used server', 'ServerSelector', {serverUrls: this.serverUrls, callback: this.updateServerUrlTo})
+			EventBus.$emit('showComponentModal', 'Select previously used server', 'List', {serverUrls: this.serverUrls, callback: this.updateServerUrlTo})
 		},
 
 		changeServer(url) {
