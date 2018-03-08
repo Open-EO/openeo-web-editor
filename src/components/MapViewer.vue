@@ -5,10 +5,14 @@
 <script>
 import EventBus from '../eventbus.js';
 
-import "leaflet/dist/leaflet.css"
-import L from "leaflet"
-import { leafletGeotiff, LeafletGeotiffRenderer } from "leaflet-geotiff/leaflet-geotiff.js"
-import customRenderer from "../leaflet-geotiff-customrenderer.js"
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
+import { leafletGeotiff, LeafletGeotiffRenderer } from "leaflet-geotiff/leaflet-geotiff.js";
+import customRenderer from "../leaflet-geotiff-customrenderer.js";
+import "leaflet.control.layers.tree/L.Control.Layers.Tree.css";
+import layerControl from "leaflet.control.layers.tree";
+import "leaflet-fullscreen/dist/leaflet.fullscreen.css";
+import fullscreen from "leaflet-fullscreen";
 
 export default {
 	name: 'MapViewer',
@@ -16,14 +20,19 @@ export default {
 	data() {
 		return {
 			options: {
+				fullscreenControl: true,
 				center: [45,15], // [50.1725,9.15]
 				zoom: 8 // 4
 			},
 			map: null,
+			baseLayer: {
+				osm: null
+			},
 			layer: {
 				wms: null,
 				tiff: null
-			}
+			},
+			layerControl: null
 		}
 	},
 
@@ -35,9 +44,53 @@ export default {
 	methods: {
 		createMap() {
 			this.map = new L.Map('mapCanvas', this.options);
-			L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+
+			// Add layer control
+			this.layerControl = L.control.layers.tree({});
+			this.layerControl.addTo(this.map);
+			this.layerControl.expandTree();
+			this.map.on('layeradd', this.updateLayerTree);
+			this.map.on('layerremove', this.updateLayerTree);
+
+			// Add base layers
+			this.baseLayer.osm = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+				name: 'OpenStreetMap',
 				attribution: 'Map data &copy; <a href="http://www.osm.org">OpenStreetMap</a>'
-			}).addTo(this.map);
+			});
+			this.baseLayer.osm.addTo(this.map);
+		},
+
+		updateLayerTree() {
+			var baseLayer = {
+				label: 'Base Layer',
+				children: [],
+			};
+			for(var i in this.baseLayer) {
+				baseLayer.children.push({
+					label: this.baseLayer[i].options.name,
+					layer: this.baseLayer[i]
+				});
+			}
+
+			var dataLayer = {
+				label: 'Data Layers',
+				children: [],
+			};
+			for(var i in this.layer) {
+				if (this.layer[i] === null) {
+					continue;
+				}
+				dataLayer.children.push({
+					label: this.layer[i].options.name,
+					layer: this.layer[i]
+				});
+			}
+
+			var tree = [baseLayer];
+			if (dataLayer.children.length > 0) {
+				tree.push(dataLayer);
+			}
+			this.layerControl.setBaseTree(tree);
 		},
 
 		viewWebService(service) {
@@ -96,6 +149,7 @@ export default {
 			var self = this;
 
 			this.layer.wms = L.tileLayer.wms(service.service_url, {
+				name: 'WMS',
 				request: 'GetCoverage',
 				service: 'WMS',
 				coverage: 'CUSTOM',
@@ -128,7 +182,6 @@ export default {
 			};
 
 			this.layer.wms.addTo(this.map);
-
 		},
 
 		recolor(tile) {
