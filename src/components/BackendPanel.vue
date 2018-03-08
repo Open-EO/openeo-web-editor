@@ -3,12 +3,7 @@
 		<div class="server-toolbar" v-show="$config.allowServerChange">
 			<h3>Server:</h3>
 			<input id="serverUrl" ref="serverUrl" list="serverUrls" value="" />
-			<span id="serverUrlsContainer" title="Select previously used server">
-				<select id="serverUrls" ref="serverUrls" @change="updateServerUrlFromSelect">
-					<option v-for="url in serverUrls" :key="url" :value="url">{{ url }}</option>
-				</select>
-				<i class="fas fa-book" id="serverUrlsIcon"></i>
-			</span>
+			<button @click="showServerSelector" title="Select previously used server"><i class="fas fa-book"></i></button>
 			<button @click="updateServerUrlFromInput" title="Change server"><i class="fas fa-check"></i></button>
 		</div>
 		<div class="info-toolbar">
@@ -78,6 +73,10 @@ export default {
 			return this.openEO.Capabilities.processes() && this.processes.length > 0;
 		},
 
+		showServerSelector() {
+			EventBus.$emit('showComponentModal', 'Select previously used server', 'ServerSelector', {serverUrls: this.serverUrls, callback: this.updateServerUrlTo})
+		},
+
 		changeServer(url) {
 			this.$refs.serverUrl.value = url;
 			if (this.serverUrls.indexOf(url) === -1) {
@@ -105,8 +104,7 @@ export default {
 			}
 		},
 
-		updateServerUrlFromSelect() {
-			var newUrl = this.$refs.serverUrls.value;
+		updateServerUrlTo(newUrl) {
 			this.$refs.serverUrl.value = newUrl;
 			this.updateServerUrlFromInput();
 		},
@@ -233,19 +231,6 @@ h3 {
 #serverUrl {
 	width: 60%;
 	font-family: monospace;
-}
-#serverUrls {
-	width: 10px;
-}
-#serverUrlsContainer {
-	position: relative;
-}
-#serverUrlsIcon {
-	position: absolute;
-	left: 8px;
-	top: 3px;
-	background-color: white;
-	pointer-events: none;
 }
 .server-toolbar {
 	margin-bottom: 5px;

@@ -16,11 +16,13 @@
 <script>
 import EventBus from '../eventbus.js';
 import List from './List.vue';
+import ServerSelector from './ServerSelector.vue';
 
 export default {
 	name: 'Modal',
 	components:  {
-		List
+		List,
+		ServerSelector
 	},
 	data() {
 		return {
