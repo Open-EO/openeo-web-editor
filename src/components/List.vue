@@ -1,31 +1,39 @@
 <template>
     <ul>
-        <li v-for="url in serverUrls" :key="url">
-            <span @click="submit(url)">{{ url }}</span>
+        <li v-for="item in items" :key="item">
+            <a @click="doMainAction(item)">{{ item }}</a>
+            <button v-for="action in actions" :key="action.icon" :title="action.title" @click="doAction(action.callback, item)">
+                <i :class="'fas fa-'+action.icon"></i>
+            </button>
         </li>
     </ul>
 </template>
 
 <script>
 export default {
-    name: 'ServerSelector',
-    props: ['serverUrls', 'callback'],
+    name: 'List',
+    props: ['items', 'actions'],
     methods: {
-        submit(url) {
-            this.callback(url);
-            if(this.$parent && this.$parent.$options.name == 'Modal') {
+        doAction(callback, item) {
+            const closeAfterCompletion = callback(item);
+            if(closeAfterCompletion === true && this.$parent && this.$parent.$options.name == 'Modal') {
                 this.$parent.close();
+            }
+        },
+        doMainAction(item) {
+            if(this.actions.length > 0) {
+                this.doAction(this.actions[0].callback, item);
             }
         }
     }
 };
 </script>
 
-<style>
+<style scoped>
     li {
-        padding: 5px 0px;
+        padding-bottom: 0.3em;
     }
-    li span {
-        cursor: pointer;
+    li a {
+        margin-right: 5px;
     }
 </style>
