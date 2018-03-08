@@ -30,6 +30,7 @@ Shows a modal with the specified title and body contents. $body must be a string
 ## showComponentModal(string $title, string $compname, object $props)
 Shows a modal with the specified title and an instance of the $compname component.
 The component can be supplied with props by passing them as an object with the props' names as the keys and the props' contents as the values, e.g. {propname1: 'content', propname2: {foo: 'bar'}}
+The component to be used must be known (i.e. imported and declared) in the Modal component.
 
 ## showDataDisplayModal(string $title, object $data)
 Shows a modal with the specified title and the contents of the data object as the body, but rendered as a more readable list via the List component.
