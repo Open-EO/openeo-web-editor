@@ -30,7 +30,6 @@
   },
   "dependencies": {
     "codemirror": "^5.33.0",
-    "datalist-polyfill": "^1.11.1",
     "fontawesome-web": "^5.0.2",
     "leaflet": "^1.2.0",
     "leaflet-geotiff": "git+https://github.com/m-mohr/leaflet-geotiff.git",
