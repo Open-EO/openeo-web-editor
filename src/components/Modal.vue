@@ -7,7 +7,7 @@
 		</h2>
 		<div class="modal-content" id="modal-content">
 			<template v-if="typeof body === 'string'">{{ body }}</template>
-			<List v-else :data="body"></List>
+			<component v-else :is="compname" v-bind="props"></component>
 		</div>
 	</div>
 </div>
@@ -24,13 +24,17 @@ export default {
 	},
 	data() {
 		return {
-			title: null,
+			title: '',
 			body: null,
+			props: null,
+			compname: null,
 			shown: false
 		};
 	},
 	mounted() {
-		EventBus.$on('showModal', this.setDataAndShow);
+		EventBus.$on('showTextModal', this.showTextModal);
+		EventBus.$on('showComponentModal', this.showComponentModal);
+		EventBus.$on('showDataDisplayModal', this.showDataDisplayModal);
 	},
 	methods: {
 		show() {
@@ -47,14 +51,36 @@ export default {
 			}
 		},
 
-		setData(title, body) {
+		initCommonModal(title) {
 			this.title = title;
-			this.body = body;
 		},
 
-		setDataAndShow(title, body) {
-			this.setData(title, body);
+		initTextModal(title, body) {
+			this.initCommonModal(title);
+			this.body = body;
+			this.compname = null;
+			this.props = null;
+		},
+
+		initComponentModal(title, compname, props) {
+			this.initCommonModal(title);
+			this.body = null;
+			this.compname = compname;
+			this.props = props;
+		},
+
+		showTextModal(title, body) {
+			this.initTextModal(title, body);
 			this.show();
+		},
+
+		showComponentModal(title, compname, props) {
+			this.initComponentModal(title, compname, props);
+			this.show();
+		},
+
+		showDataDisplayModal(title, data) {
+			this.showComponentModal(title, 'List', {data: data});
 		}
 	}
 };
