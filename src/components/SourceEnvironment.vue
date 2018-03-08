@@ -1,12 +1,16 @@
 <template>
 	<div id="SourceEnvironment">
-		<h3>Script: <em id="scriptName">{{ scriptName }}</em></h3>
+		<div class="sourceHeader">
+			<h3>Script: <em id="scriptName">{{ scriptName }}</em></h3>
+			<div class="sourceToolbar">
+				<button @click="executeScript" title="Run current script and view results" v-if="openEO.Capabilities.executeJob()" class="executeScript"><i class="fas fa-play"></i></button>
+				<button @click="newScript" title="Clear current script / New script"><i class="fas fa-file"></i></button>
+				<button @click="loadScript" title="Load script from local storage"><i class="fas fa-folder-open"></i></button>
+				<button @click="saveScript" title="Save script to local storage"><i class="fas fa-save"></i></button>
+				<button @click="downloadScript" title="Download script"><i class="fas fa-download"></i></button>
+			</div>
+		</div>
 		<div id="sourceCodeEditor"></div>
-		<button @click="executeScript" title="Run current script and view results" v-if="openEO.Capabilities.executeJob()"><i class="fas fa-play"></i> Execute</button>
-		<button @click="newScript" title="Clear current script / New script"><i class="fas fa-file"></i> New</button>
-		<button @click="loadScript" title="Load script from local storage"><i class="fas fa-folder-open"></i> Load</button>
-		<button @click="saveScript" title="Save script to local storage"><i class="fas fa-save"></i> Save</button>
-		<button @click="downloadScript" title="Download script"><i class="fas fa-download"></i> Download</button>
 	</div>
 </template>
 
@@ -160,14 +164,27 @@ OpenEO.Editor.ProcessGraph = OpenEO.ImageCollection.create('Sentinel2A-L1C')
 </script>
 
 <style scoped>
-#SourceEnvironment button {
-	margin: 5px;
-	min-width: 100px;
+.executeScript {
+	margin-right: 3%;
 }
-h3 {
+.sourceHeader h3 {
+	margin-top: 1px;
+	float: left;
+	width: 70%;
+}
+.sourceToolbar {
+	text-align: right;
+	float: right;
+	width: 30%;
+}
+.sourceHeader {
 	padding: 5px;
 }
-#newScript {
-	margin-left: 3%;
+.sourceHeader:after {
+    content: ".";
+    clear: both;
+    display: block;
+    visibility: hidden;
+    height: 0px;
 }
 </style>

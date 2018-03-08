@@ -1,5 +1,5 @@
 <template>
-<em v-if="isEmpty(data)">empty</em>
+<em v-if="isEmpty(data)">None</em>
 <ul v-else>
     <li v-for="(value, key) in data" :key="key">
         <template v-if="!isArrayOfPrimitives(data)"><em>{{ prettifyKey(key) }}</em></template>

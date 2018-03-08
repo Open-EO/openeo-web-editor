@@ -232,7 +232,8 @@ OpenEO.Editor.Visualization = {
 
 <style scoped>
 h3 {
-	display: inline;
+	margin-top: 1px;
+	display: inline-block;
 	padding-right: 5px;
 }
 #backendPanel {
@@ -244,7 +245,6 @@ h3 {
 }
 #serverUrl {
 	width: 60%;
-	font-family: monospace;
 }
 .server-toolbar {
 	margin-bottom: 5px;

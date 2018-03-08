@@ -5,7 +5,7 @@
 				<slot name="toolbar"></slot>
 			</div>
 			<div class="dataTableFilter" v-if="data.length > 0">
-				<i class="fas fa-search"></i>
+				<i class="fas fa-search filter-icon"></i>
 				<input type="text" value="" ref="filterInput" placeholder="Search term" @keyup="updateView">
 				<button @click="clearFilter"><i class="fas fa-times-circle"></i></button>
 			</div>
@@ -234,6 +234,9 @@ export default {
 </script>
 
 <style>
+.filter-icon {
+	margin-right: 3px;
+}
 .noDataMessage {
 	text-align: center;
 	margin: 1em;

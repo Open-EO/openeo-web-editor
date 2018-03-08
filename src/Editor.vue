@@ -314,6 +314,17 @@ body {
 	font-family: sans-serif;
 	font-size: 90%;
 }
+a {
+	color: #2F649A;
+	text-decoration: none;
+	cursor: pointer;
+}
+a:hover {
+	color: black;
+}
+button {
+	margin: 1px;
+}
 ul, ol {
 	margin-bottom: 0;
 	margin-top: 0;
