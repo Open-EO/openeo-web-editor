@@ -74,7 +74,21 @@ export default {
 		},
 
 		showServerSelector() {
-			EventBus.$emit('showComponentModal', 'Select previously used server', 'ServerSelector', {serverUrls: this.serverUrls, callback: this.updateServerUrlTo})
+			EventBus.$emit('showComponentModal', 'Select previously used server', 'List', {
+				items: this.serverUrls,
+				actions: [
+					{
+						callback: (url) => this.updateServerUrlTo(url) || true,  // return true to close the modal
+						icon: 'check',
+						title: 'Select this server'
+					},
+					{
+						callback: (url) => this.serverUrls.splice(this.serverUrls.indexOf(url), 1),
+						icon: 'trash',
+						title: 'Delete entry from history'
+					}
+				]
+			});
 		},
 
 		changeServer(url) {
