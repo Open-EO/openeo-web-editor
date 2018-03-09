@@ -251,8 +251,11 @@ h3 {
 	padding-bottom: 5px;
 	border-bottom: 1px dotted #ddd;
 }
-.data-toolbar, .processes-toolbar, .vis-toolbar, .info-toolbar {
+.data-toolbar, .processes-toolbar, .info-toolbar {
 	display: inline-block;
 	margin-right: 3%;
+}
+.vis-toolbar {
+	display: inline-block;
 }
 </style>

@@ -1,11 +1,12 @@
 <template>
 	<DataTable ref="table" :dataSource="dataSource" :columns="columns" id="FilePanel">
 		<div slot="toolbar" slot-scope="p">
-			<div v-show="openEO.Capabilities.uploadUserFile()">
+			<span v-show="openEO.Capabilities.uploadUserFile()">
 				<input type="file" name="uploadUserFile" id="uploadUserFile">
 				<button title="Add new file" id="uploadUserFileBtn" @click="uploadFile()"><i class="fas fa-upload"></i></button>
 				<span id="uploadUserFileStatus"></span>
-			</div>
+			</span>
+			<button title="Refresh files" @click="updateData()"><i class="fas fa-sync-alt"></i></button> <!-- ToDo: Should be done automatically later -->
 		</div>
 		<div slot="actions" slot-scope="p">
 			<button title="Download" @click="downloadFile(p.row[p.col.id])" v-show="openEO.Capabilities.downloadUserFile()"><i class="fas fa-download"></i></button>
@@ -109,8 +110,8 @@ export default {
 				.then(data => {
 					this.$refs.table.removeData(id);
 				})
-				.catch(errorCode => {
-					// ToDo
+				.catch(error => {
+					this.$utils.error(this, 'Sorry, could not delete file.');
 				});
 		}
 	}

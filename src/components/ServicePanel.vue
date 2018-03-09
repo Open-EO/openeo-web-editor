@@ -1,5 +1,8 @@
 <template>
 	<DataTable ref="table" :dataSource="dataSource" :columns="columns" id="ServicePanel">
+		<div slot="toolbar" slot-scope="p">
+			<button title="Refresh services" @click="updateData()"><i class="fas fa-sync-alt"></i></button> <!-- ToDo: Should be done automatically later -->
+		</div>
 		<div slot="actions" slot-scope="p">
 			<button title="View on map" @click="viewService(p.row)"><i class="fas fa-map"></i></button>
 			<button title="Details" @click="serviceInfo(p.row[p.col.id])" v-show="openEO.Capabilities.serviceInfo()"><i class="fas fa-info"></i></button>
@@ -118,7 +121,7 @@ export default {
 					.then(data => {
 						this.$refs.table.removeData(id);
 					})
-					.catch(errorCode => {
+					.catch(error => {
 						this.$utils.error(this, 'Sorry, could not delete service.');
 					});
 			} catch (e) {

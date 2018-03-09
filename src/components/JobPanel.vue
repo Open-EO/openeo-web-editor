@@ -2,6 +2,7 @@
 	<DataTable ref="table" :dataSource="dataSource" :columns="columns" id="JobPanel">
 		<div slot="toolbar" slot-scope="p">
 			<button title="Add new job" @click="createJobFromScript" v-show="openEO.Capabilities.createJob()"><i class="fas fa-plus"></i> Add</button>
+			<button title="Refresh jobs" @click="updateData()"><i class="fas fa-sync-alt"></i></button> <!-- ToDo: Should be done automatically later -->
 		</div>
 		<div slot="actions" slot-scope="p">
 			<button title="Details" @click="showJobInfo(p.row[p.col.id])" v-show="openEO.Capabilities.jobInfo()"><i class="fas fa-info"></i></button>
@@ -99,19 +100,26 @@ export default {
 			}
 			this.$snotify.confirm('Job created!', null, options);
 		},
-		createJob(job) {
-			// Todo: Output formats
-			this.openEO.Jobs.create(job.ProcessGraph, {})
+		createJob(job, output) {
+			this.openEO.Jobs.create(job.ProcessGraph, output)
 				.then(data => {
 					EventBus.$emit('jobCreated', data);
-				}).catch(errorCode => {
+				}).catch(error => {
 					this.$utils.error(this, 'Sorry, could not create an OpenEO job.');
 				});
 		},
 		createJobFromScript(id) {
 			// Todo: Output formats
+			var output = {};
+			var format = prompt('Please specify the file format you need or leave empty for default format.', '');
+			if (format === null) {
+				return;
+			}
+			else if (format.length > 0) {
+				output = {format: format};
+			}
 			EventBus.$emit('evalScript', (script) => {
-				this.createJob(script);
+				this.createJob(script, output);
 			});
 		},
 		showJobInfo(id) {

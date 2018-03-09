@@ -179,7 +179,7 @@ export default {
 						this.openEO.Auth.userId = data.user_id;
 						EventBus.$emit('serverChanged');
 					})
-					.catch(errorCode => {
+					.catch(error => {
 						EventBus.$emit('serverChanged');
 					});
 			}
@@ -262,8 +262,26 @@ export default {
 					}
 					this.$refs.imageViewer.showImageBlob(blob);
 					break;
-				case 'text/plain':
 				case 'application/json':
+					// ToDo: For now we support both direct downloading and download URLs (only one for now).
+					// Implementation is not very nice and needs improvement, but it's a prototype...
+					this.$refs.dataViewer.blobToText(blob, (event) => {
+						var json = JSON.parse(event.target.result);
+						if (Array.isArray(json) && json.length == 1 && typeof json[0] === 'string' && json[0].indexOf('://') !== -1) {
+							// Download file
+							this.openEO.HTTP.download(json[0]).then(blob => {
+								this.$refs.dataViewer.showBlob(blob);
+							}).catch(e => {
+								this.$utils.error(e);
+							});
+						}
+						else {
+							// Show json
+							this.$refs.dataViewer.showJson(json);
+						}
+					});
+					break;
+				case 'text/plain':
 					this.$refs.dataViewer.showBlob(blob);
 					break;
 				case 'image/tif':

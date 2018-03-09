@@ -6,7 +6,7 @@
 			</div>
 			<div class="dataTableFilter" v-if="data.length > 0">
 				<i class="fas fa-search filter-icon"></i>
-				<input type="text" value="" ref="filterInput" placeholder="Search term" @keyup="updateView">
+				<input type="text" placeholder="Search term" v-model="filterValue">
 				<button @click="clearFilter"><i class="fas fa-times-circle"></i></button>
 			</div>
 		</div>
@@ -39,12 +39,16 @@ export default {
 		return {
 			data: [],
 			view: [],
+			filterValue: null,
 			primaryKey: null,
 			noDataMessage: 'Loading data...'
 		};
 	},
 	watch: {
 		data(newVal, oldVal) {
+			this.updateView();
+		},
+		filterValue(newVal, oldVal) {
 			this.updateView();
 		}
 	},
@@ -100,8 +104,8 @@ export default {
 							this.setNoData('Sorry, no data found.');
 						}
 					})
-					.catch(errorCode => {
-						this.setNoData(errorCode);
+					.catch(error => {
+						this.setNoData(error);
 					});
 			}
 			else if(Array.isArray(this.dataSource) && this.dataSource.length > 0) {
@@ -158,10 +162,10 @@ export default {
 			// Sort this.view...
 		},
 		filter() {
-			if (typeof this.$refs.filterInput === 'undefined') {
+			if (!this.filterValue) {
 				return;
 			}
-			var searchTerm = this.$refs.filterInput.value.toLowerCase();
+			var searchTerm = this.filterValue.toLowerCase();
 			if (searchTerm.length < 1) {
 				return;
 			}
@@ -187,7 +191,7 @@ export default {
 			});
 		},
 		clearFilter() {
-			this.$refs.filterInput.value = '';
+			this.filterValue = '';
 			this.updateView();
 		},
 		updateView() {

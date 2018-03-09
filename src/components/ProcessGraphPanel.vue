@@ -2,6 +2,7 @@
 	<DataTable ref="table" :dataSource="dataSource" :columns="columns" id="ProcessGraphPanel">
 		<div slot="toolbar" slot-scope="p">
 			<button title="Add new process graph" @click="addGraph" v-show="openEO.Capabilities.createUserProcessGraph()"><i class="fas fa-plus"></i> Add</button>
+			<button title="Refresh process graphs" @click="updateData()"><i class="fas fa-sync-alt"></i></button> <!-- ToDo: Should be done automatically later -->
 		</div>
 		<div slot="actions" slot-scope="p">
 			<button title="Details" @click="graphInfo(p.row[p.col.id])" v-show="openEO.Capabilities.userProcessGraphInfo()"><i class="fas fa-info"></i></button>
@@ -89,8 +90,8 @@ export default {
 					.then(data => {
 						this.$refs.table.removeData(id);
 					})
-					.catch(errorCode => {
-						// ToDo
+					.catch(error => {
+						this.$utils.error(this, 'Sorry, could not delete process graph.');
 					});
 			} catch(e) {
 				this.$utils.error(this, e.message);
