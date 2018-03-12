@@ -1,0 +1,21 @@
+language: node_js
+
+node_js:
+  - "stable"
+
+sudo: false
+
+script:
+  - npm run build
+  - mkdir gh-pages
+  - mv dist gh-pages/demo
+  
+deploy:
+  provider: pages
+  skip-cleanup: true
+  github-token: $GITHUB_TOKEN
+  local-dir: gh-pages
+  committer-from-gh: true
+  keep-history: true
+  on:
+    branch: master
