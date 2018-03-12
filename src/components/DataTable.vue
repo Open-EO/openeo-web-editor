@@ -7,7 +7,7 @@
 			<div class="dataTableFilter" v-if="data.length > 0">
 				<i class="fas fa-search filter-icon"></i>
 				<input type="text" placeholder="Search term" v-model="filterValue">
-				<button @click="clearFilter"><i class="fas fa-times-circle"></i></button>
+				<button @click="clearFilter" :disabled="!hasFilter"><i class="fas fa-times-circle"></i></button>
 			</div>
 		</div>
 		<table v-if="data.length > 0">
@@ -55,7 +55,10 @@ export default {
 	computed: {
 		columnCount() {
 			return Object.keys(this.columns).length;
-		}
+		},
+		hasFilter() {
+			return (typeof this.filterValue === 'string' && this.filterValue.length > 0) ? true : false;
+		},
 	},
 	created() {
 		this.determinePrimaryKey();
@@ -162,13 +165,10 @@ export default {
 			// Sort this.view...
 		},
 		filter() {
-			if (!this.filterValue) {
+			if (!this.hasFilter) {
 				return;
 			}
 			var searchTerm = this.filterValue.toLowerCase();
-			if (searchTerm.length < 1) {
-				return;
-			}
 
 			this.view = this.view.filter(row => {
 				for(var key in row) {

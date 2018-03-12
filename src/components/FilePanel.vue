@@ -1,17 +1,17 @@
 <template>
 	<DataTable ref="table" :dataSource="dataSource" :columns="columns" id="FilePanel">
-		<div slot="toolbar" slot-scope="p">
+		<template slot="toolbar" slot-scope="p">
 			<span v-show="openEO.Capabilities.uploadUserFile()">
 				<input type="file" name="uploadUserFile" id="uploadUserFile">
 				<button title="Add new file" id="uploadUserFileBtn" @click="uploadFile()"><i class="fas fa-upload"></i></button>
 				<span id="uploadUserFileStatus"></span>
 			</span>
 			<button title="Refresh files" @click="updateData()"><i class="fas fa-sync-alt"></i></button> <!-- ToDo: Should be done automatically later -->
-		</div>
-		<div slot="actions" slot-scope="p">
+		</template>
+		<template slot="actions" slot-scope="p">
 			<button title="Download" @click="downloadFile(p.row[p.col.id])" v-show="openEO.Capabilities.downloadUserFile()"><i class="fas fa-download"></i></button>
 			<button title="Delete" @click="deleteFile(p.row[p.col.id])" v-show="openEO.Capabilities.deleteUserFile()"><i class="fas fa-trash"></i></button>
-		</div>
+		</template>
 	</DataTable>
 </template>
 

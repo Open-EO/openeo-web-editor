@@ -92,8 +92,8 @@ export default {
 			if (format === null) {
 				return;
 			}
+			this.$utils.info(this, 'Data requested. Please wait...');
 			EventBus.$emit('evalScript', (script) => {
-				this.$utils.info(this, 'Data requested. Please wait...');
 				var output = {format: format};
 				script.ProcessGraph.execute(output)
 					.then(data => {

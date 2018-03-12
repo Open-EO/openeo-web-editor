@@ -1,10 +1,10 @@
 <template>
 	<DataTable ref="table" :dataSource="dataSource" :columns="columns" id="JobPanel">
-		<div slot="toolbar" slot-scope="p">
+		<template slot="toolbar" slot-scope="p">
 			<button title="Add new job" @click="createJobFromScript" v-show="openEO.Capabilities.createJob()"><i class="fas fa-plus"></i> Add</button>
-			<button title="Refresh jobs" @click="updateData()"><i class="fas fa-sync-alt"></i></button> <!-- ToDo: Should be done automatically later -->
-		</div>
-		<div slot="actions" slot-scope="p">
+			<button title="Refresh jobs" @click="updateData()" v-show="openEO.Capabilities.userJobs()"><i class="fas fa-sync-alt"></i></button> <!-- ToDo: Should be done automatically later -->
+		</template>
+		<template slot="actions" slot-scope="p">
 			<button title="Details" @click="showJobInfo(p.row[p.col.id])" v-show="openEO.Capabilities.jobInfo()"><i class="fas fa-info"></i></button>
 			<button title="Edit" @click="editJob(p.row[p.col.id])" v-show="openEO.Capabilities.updateJob()"><i class="fas fa-edit"></i></button>
 			<button title="Queue as batch job" @click="queueJob(p.row[p.col.id])" v-show="openEO.Capabilities.queueJob()"><i class="fas fa-play-circle"></i></button>
@@ -13,7 +13,7 @@
 			<button title="Download" @click="downloadJob(p.row[p.col.id])" v-show="openEO.Capabilities.downloadJob()"><i class="fas fa-download"></i></button>
 			<button title="View results" @click="downloadJob(p.row[p.col.id], true)" v-show="openEO.Capabilities.downloadJob()"><i class="fas fa-eye"></i></button>
 			<button title="Create Service" @click="createServiceFromJob(p.row[p.col.id])" v-show="openEO.Capabilities.createService()"><i class="fas fa-plus"></i> <i class="fas fa-cloud"></i></button>
-		</div>
+		</template>
 	</DataTable>
 </template>
 
