@@ -7,8 +7,9 @@ sudo: false
 
 script:
   - npm run build
-  - mkdir gh-pages
-  - mv dist gh-pages/demo
+  - rm -rf page
+  - mkdir -p page
+  - mv dist page/demo
   
 deploy:
   provider: pages
