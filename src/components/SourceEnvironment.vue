@@ -5,7 +5,7 @@
 			<div class="sourceToolbar">
 				<button @click="executeScript" title="Run current script and view results" v-if="openEO.Capabilities.executeJob()" class="executeScript"><i class="fas fa-play"></i></button>
 				<button @click="newScript" title="Clear current script / New script"><i class="fas fa-file"></i></button>
-				<button @click="loadScript" title="Load script from local storage"><i class="fas fa-folder-open"></i></button>
+				<button @click="loadScript()" title="Load script from local storage"><i class="fas fa-folder-open"></i></button>
 				<button @click="saveScript" title="Save script to local storage"><i class="fas fa-save"></i></button>
 				<button @click="downloadScript" title="Download script"><i class="fas fa-download"></i></button>
 			</div>
@@ -28,6 +28,11 @@ import CodeMirror from 'codemirror';
 export default {
 	name: 'SourceEnvironment',
 	props: ['openEO'],
+	computed: {
+		savedScriptNames() {
+			return Object.keys(this.savedScripts);
+		}
+	},
 	data() {
 		return {
 			scriptName: '',
@@ -136,18 +141,34 @@ OpenEO.Editor.ProcessGraph = OpenEO.ImageCollection.create('Sentinel2A-L1C')
 			}
 		},
 		
-		loadScript() {
-			var name = prompt("Name of the script to load:");
-			if (!name) {
-				return;
-			}
-			if (code) {
-				this.editor.setValue(code);
-				this.scriptName = name;
-			}
-			else {
-				this.$utils.info(this, 'No script with the name "' + name + '" found.');
+		loadScript(name = undefined) {
+			if(name != undefined) {
 				var code = this.savedScripts[name];
+				if (code) {
+					this.editor.setValue(code);
+					this.scriptName = name;
+					return true;  // to close the modal
+				}
+				else {
+					this.$utils.info(this, 'No script with the name "' + name + '" found.');
+					return false;  // to keep the modal open
+				}
+			} else {
+				EventBus.$emit('showComponentModal', 'Select script to load', 'List', {
+					items: this.savedScriptNames,
+					actions: [
+						{
+							callback: this.loadScript,
+							icon: 'check',
+							title: 'Load script'
+						},
+						{
+							callback: this.deleteScript,
+							icon: 'trash',
+							title: 'Delete script'
+						}
+					]
+				});
 			}
 		},
 		
