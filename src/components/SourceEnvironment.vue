@@ -31,6 +31,7 @@ export default {
 	data() {
 		return {
 			scriptName: '',
+			savedScripts: {},
 			editorOptions: {
 				mode: 'javascript',
 				indentUnit: 4,
@@ -47,11 +48,23 @@ OpenEO.Editor.ProcessGraph = OpenEO.ImageCollection.create('Sentinel2A-L1C')
 	.max_time();`
 		}
 	},
+	watch: {
+		savedScripts: {
+			handler: function(newVal, oldVal) {
+				localStorage.setItem("savedScripts", JSON.stringify(newVal));
+			},
+			deep: true
+		}
+	},
 	mounted() {
 		this.editor = CodeMirror(document.getElementById('sourceCodeEditor'), this.editorOptions);
 		this.editor.setValue(this.defaultScript);
 		EventBus.$on('addToSource', this.insertToEditor);
 		EventBus.$on('evalScript', this.evalScript);
+		var storedScripts = localStorage.getItem("savedScripts");
+		if (storedScripts !== null) {
+			this.savedScripts = JSON.parse(storedScripts);
+		}
 	},
 	methods: {
 		evalScript(callback) {
@@ -95,7 +108,7 @@ OpenEO.Editor.ProcessGraph = OpenEO.ImageCollection.create('Sentinel2A-L1C')
 		},
 
 		storageName(name) {
-			return "script." + name.replace('.', '_');
+			return name.replace('.', '_');
 		},
 
 		executeScript() {
@@ -128,13 +141,13 @@ OpenEO.Editor.ProcessGraph = OpenEO.ImageCollection.create('Sentinel2A-L1C')
 			if (!name) {
 				return;
 			}
-			var code = localStorage.getItem(this.storageName(name));
 			if (code) {
 				this.editor.setValue(code);
 				this.scriptName = name;
 			}
 			else {
 				this.$utils.info(this, 'No script with the name "' + name + '" found.');
+				var code = this.savedScripts[name];
 			}
 		},
 		
@@ -143,7 +156,7 @@ OpenEO.Editor.ProcessGraph = OpenEO.ImageCollection.create('Sentinel2A-L1C')
 			if (!name) {
 				return;
 			}
-			localStorage.setItem(this.storageName(name), this.editor.getValue());
+			this.$set(this.savedScripts, this.storageName(name), this.editor.getValue());
 			this.scriptName = name;
 		},
 		
@@ -153,6 +166,10 @@ OpenEO.Editor.ProcessGraph = OpenEO.ImageCollection.create('Sentinel2A-L1C')
 				name = "openeo-script";
 			}
 			this.$utils.downloadData(this.editor.getValue(), name + ".js", "text/javascript");
+		},
+
+		deleteScript(name) {
+			this.$delete(this.savedScripts, name);
 		},
 
 		insertToEditor(text) {
@@ -170,12 +187,12 @@ OpenEO.Editor.ProcessGraph = OpenEO.ImageCollection.create('Sentinel2A-L1C')
 .sourceHeader h3 {
 	margin-top: 1px;
 	float: left;
-	width: 70%;
+	width: 65%;
 }
 .sourceToolbar {
 	text-align: right;
 	float: right;
-	width: 30%;
+	width: 35%;
 }
 .sourceHeader {
 	padding: 5px;
