@@ -115,11 +115,8 @@ export default {
 			if (format === null) {
 				return;
 			}
-			else if (format.length > 0) {
-				output = {format: format};
-			}
 			EventBus.$emit('evalScript', (script) => {
-				this.createJob(script, output);
+				this.createJob(script, format);
 			});
 		},
 		showJobInfo(id) {

@@ -94,8 +94,7 @@ export default {
 			}
 			this.$utils.info(this, 'Data requested. Please wait...');
 			EventBus.$emit('evalScript', (script) => {
-				var output = {format: format};
-				script.ProcessGraph.execute(output)
+				script.ProcessGraph.execute(format)
 					.then(data => {
 						EventBus.$emit('showInViewer', data, script, output);
 					})
