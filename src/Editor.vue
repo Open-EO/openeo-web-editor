@@ -108,12 +108,10 @@ export default {
 		EventBus.$on('serverChanged', this.serverChanged);
 	},
 	mounted() {
-		EventBus.$emit('changeServerUrl', this.$config.serverUrl);
-
-		EventBus.$on('showInViewer', this.showInViewer);
-		EventBus.$on('showMapViewer', this.showMapViewer);
-		EventBus.$on('showImageViewer', this.showImageViewer);
-		EventBus.$on('showDataViewer', this.showDataViewer);
+		if (typeof this.$config.serverUrl === 'string' && this.$config.serverUrl.length > 0) {
+			EventBus.$emit('changeServerUrl', this.$config.serverUrl);
+		}
+		this.resetActiveTab('userContent');
 	},
 	methods: {
 
@@ -148,6 +146,8 @@ export default {
 				this.requestSupportedOutputFormats();
 				this.requestSupportedServices();
 				this.requestAuth();
+			}).catch(error => {
+				this.$utils.error(this, 'Sorry, server is not responding.');
 			});
 		},
 

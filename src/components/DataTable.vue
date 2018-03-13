@@ -41,7 +41,7 @@ export default {
 			view: [],
 			filterValue: null,
 			primaryKey: null,
-			noDataMessage: 'Loading data...'
+			noDataMessage: 'No data specified.'
 		};
 	},
 	watch: {
@@ -96,6 +96,7 @@ export default {
 			}
 		},
 		retrieveData() {
+			this.setNoData('Loading data...');
 			this.data = [];
 			if (typeof this.dataSource === 'function') {
 				this.dataSource()
@@ -104,7 +105,7 @@ export default {
 							this.data = data;
 						}
 						else {
-							this.setNoData('Sorry, no data found.');
+							this.setNoData('Sorry, no data available.');
 						}
 					})
 					.catch(error => {
@@ -115,7 +116,7 @@ export default {
 				this.data = this.dataSource;
 			}
 			else {
-				this.setNoData('Sorry, no data available.');
+				this.setNoData('No data specified.');
 			}
 		},
 		removeData(id) {

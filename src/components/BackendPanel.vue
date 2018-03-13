@@ -113,8 +113,13 @@ export default {
 
 		updateServerUrlFromInput() {
 			var newUrl = this.$refs.serverUrl.value;
-			if (typeof newUrl === 'string' && newUrl != this.openEO.API.baseUrl) {
-				EventBus.$emit('changeServerUrl', newUrl);
+			if (typeof newUrl === 'string' && newUrl.length > 0) {
+				if (newUrl != this.openEO.API.baseUrl) {
+					EventBus.$emit('changeServerUrl', newUrl);
+				}
+			}
+			else {
+				this.$utils.error(this, 'Please specify a valid server URL.');
 			}
 		},
 

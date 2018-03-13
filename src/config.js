@@ -1,10 +1,14 @@
-export default {
+module.exports = {
 
-	serverUrl: 'http://localhost:8000/',
+	// Path where this instance of the web editor is hosted (string)
+	clientPath: '/',
+	// Port where the dev server runs (int)
+	devPort: 80,
+	// URL of the back-end to start with (string)
+	serverUrl: '',
+	// Whether changing the server in the UI is allowed (boolean)
 	allowServerChange: true,
-	defaultScript: `// Create the process graph
-OpenEO.Editor.ProcessGraph = OpenEO.ImageCollection.create('Sentinel2A-L1C')
-	.filter_daterange("2018-01-01","2018-01-31")
-	.NDVI("B04","B08")
-	.max_time();`
+	// The default script to load in the editor (string)
+	defaultScript: ``
+
 };
