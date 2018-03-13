@@ -45,13 +45,12 @@ export default {
             if(this.$utils.isNumeric(key)) {
                 return key;
             } else {
-                return key
-                    // split at each underscore (removing that underscore) and at each upper case letter (leaving that letter)
-                    .split(/_|(?=[A-Z])/)
-                    // capitalize each word that is longer than 2 characters
-                    .map((e) => e.length <= 2 ? e : e.charAt(0).toUpperCase() + e.substr(1))
-                    // join with spaces
-                    .join(' ');
+				// Camelcase converter
+				key = key.replace(/([a-z])([A-Z])/g, '$1 $2')
+				// Kebab case converter
+				key = key.replace(/([a-zA-Z\d])_([a-zA-Z\d])/g, '$1 $2');
+				// Uppercase the first letter in the first word
+                return key.charAt(0).toUpperCase() + key.substr(1);
             }
         }
     }
