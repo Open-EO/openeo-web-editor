@@ -119,11 +119,19 @@ export default {
 				this.createJob(script, format);
 			});
 		},
+		updateJobDataById(id) {
+			var jobApi = this.openEO.Jobs.getObject(id);
+			jobApi.get().then(data => this.updateJobData(data));
+		},
+		updateJobData(data) {
+			this.$refs.table.replaceData(data);
+		},
 		showJobInfo(id) {
 			var jobApi = this.openEO.Jobs.getObject(id);
 			jobApi.get()
 				.then(data => {
 					EventBus.$emit('showModal', 'Job: ' + id, data);
+					this.updateJobData(data);
 				})
 				.catch(error => this.$utils.error(this, 'Sorry, could not load job details.'));
 		},
@@ -131,21 +139,22 @@ export default {
 			EventBus.$emit('evalScript', (script) => {
 				var jobApi = this.openEO.Jobs.getObject(id);
 				jobApi.modify(script.ProcessGraph, {});
+				this.updateJobDataById(id);
 			} , false);
-			
 		},
 		queueJob(id) {
-			try {
-				var jobApi = this.openEO.Jobs.getObject(id);
-				jobApi.queue();
-			} catch (e) {
-				this.$utils.error(this, e.message);
-			}
+			var jobApi = this.openEO.Jobs.getObject(id);
+			jobApi.queue()
+				.then(data => {
+					this.$utils.ok(this, "Job successfully queued.");
+					this.updateJobDataById(id);
+				})
+				.catch(error => this.$utils.error(this, "Sorry, could not queue job."));
 		},
 		pauseJob(id) {
 			try {
 				var jobApi = this.openEO.Jobs.getObject(id);
-				jobApi.pause();
+				jobApi.pause(); // ToDo
 			} catch (e) {
 				this.$utils.error(this, e.message);
 			}
@@ -153,7 +162,7 @@ export default {
 		cancelJob(id) {
 			try {
 				var jobApi = this.openEO.Jobs.getObject(id);
-				jobApi.cancel();
+				jobApi.cancel(); // ToDo
 			} catch (e) {
 				this.$utils.error(this, e.message);
 			}
@@ -165,24 +174,36 @@ export default {
 			}
 			this.$utils.info(this, (view ? 'Data' : 'Download') + ' requested. Please wait...');
 			var jobApi = this.openEO.Jobs.getObject(id);
-			jobApi.download(format).then(data => {
-				if (view) {
-					// View in browser
-					EventBus.$emit('evalScript', (script) => {
-						EventBus.$emit('showInViewer', data, script, {format: format});
-					});
-				}
-				else {
-					// Download to computer
-					var ext = '';
-					if (format) {
-						ext = "." + format;
+			jobApi.download(format).then(blob => {
+				// ToDo: For now we support both direct downloading and download URLs (only one for now).
+				// Implementation is not very nice and needs improvement, but it's a prototype...
+				this.$utils.blobToText(blob, (event) => {
+					var json = JSON.parse(event.target.result);
+					if (Array.isArray(json) && json.length == 1 && typeof json[0] === 'string' && json[0].indexOf('://') !== -1) {
+						// Download file
+						var filename = json[0].substring(json[0].lastIndexOf('/')+1);
+						this.openEO.HTTP.download(json[0])
+							.then(blob => this.handleDownloadedData(blob, view, filename))
+							.catch(e => this.$utils.error(this, "Sorry, could not send file to browser."));
 					}
-					this.$utils.downloadData(data, id + ext);
-				}
+					else {
+						this.handleDownloadedData(blob, view);
+					}
+				});
 			}).catch(error => {
 				this.$utils.error(this, "Sorry, an error occured.");
 			});
+		},
+		handleDownloadedData(blob, view, filename = null) {
+			if (view) {
+				// View in browser
+				EventBus.$emit('evalScript', (script) => {
+					EventBus.$emit('showInViewer', blob, script, format);
+				});
+			}
+			else {
+				this.$utils.downloadData(blob, filename, blob.type);
+			}
 		},
 		createServiceFromJob(id) {
 			var type;

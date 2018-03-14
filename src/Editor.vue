@@ -112,6 +112,11 @@ export default {
 			EventBus.$emit('changeServerUrl', this.$config.serverUrl);
 		}
 		this.resetActiveTab('userContent');
+
+		EventBus.$on('showInViewer', this.showInViewer);
+		EventBus.$on('showMapViewer', this.showMapViewer);
+		EventBus.$on('showImageViewer', this.showImageViewer);
+		EventBus.$on('showDataViewer', this.showDataViewer);
 	},
 	methods: {
 
@@ -249,10 +254,13 @@ export default {
 			}
 			var mimeType = blob.type;
 			// Try to detect invalid mime types
-			if (!mimeType || mimeType.indexOf('/') === -1 || mimeType.indexOf('*') !== -1) {
+			if (originalOutputFormat !== null && (!mimeType || mimeType.indexOf('/') === -1 || mimeType.indexOf('*') !== -1)) {
 				mimeType = this.getMimeTypeForOutputFormat(originalOutputFormat);
 			}
-			switch(mimeType.toLowerCase()) {
+			if (typeof mimeType === 'string') {
+				mimeType = mimeType.toLowerCase();
+			}
+			switch(mimeType) {
 				case 'image/png':
 				case 'image/jpg':
 				case 'image/jpeg':
@@ -263,26 +271,8 @@ export default {
 					this.$refs.imageViewer.showImageBlob(blob);
 					break;
 				case 'application/json':
-					// ToDo: For now we support both direct downloading and download URLs (only one for now).
-					// Implementation is not very nice and needs improvement, but it's a prototype...
-					this.$refs.dataViewer.blobToText(blob, (event) => {
-						var json = JSON.parse(event.target.result);
-						if (Array.isArray(json) && json.length == 1 && typeof json[0] === 'string' && json[0].indexOf('://') !== -1) {
-							// Download file
-							this.openEO.HTTP.download(json[0]).then(blob => {
-								this.$refs.dataViewer.showBlob(blob);
-							}).catch(e => {
-								this.$utils.error(e);
-							});
-						}
-						else {
-							// Show json
-							this.$refs.dataViewer.showJson(json);
-						}
-					});
-					break;
 				case 'text/plain':
-					this.$refs.dataViewer.showBlob(blob);
+					this.$refs.dataViewer.showBlob(blob, mimeType);
 					break;
 				case 'image/tif':
 				case 'image/tiff':

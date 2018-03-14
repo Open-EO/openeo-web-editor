@@ -35,6 +35,12 @@ export default {
 		};
 	}()),
 
+	blobToText(blob, callback) {
+		var reader = new FileReader();
+		reader.onload = callback;
+		reader.readAsText(blob);
+	},
+
 	isNumeric(n) {
 		return !isNaN(parseFloat(n)) && isFinite(n);
 	},

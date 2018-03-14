@@ -138,7 +138,7 @@ export default {
 			else if (!newData.hasOwnProperty(this.primaryKey)) {
 				throw new Error('Object does not contain a value for the primary key.');
 			}
-			const index = this.data.findIndex(row => { row[this.primaryKey] == newData[this.primaryKey] });
+			const index = this.data.findIndex(row => row[this.primaryKey] == newData[this.primaryKey]);
 			if (index >= 0) {
 				this.data[index] = newData;
 			}

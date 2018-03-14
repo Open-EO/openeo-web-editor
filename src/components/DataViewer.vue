@@ -42,16 +42,19 @@ export default {
 			EventBus.$emit('showDataViewer');
 		},
 
-		showBlob(blob) {
-			switch(blob.type) {
+		showBlob(blob, mimeType = null) {
+			if (mimeType == null) {
+				mimeType = blob.type;
+			}
+			switch(mimeType) {
 				case 'application/json':
-					this.blobToText(blob, (event) => {
+					this.$utils.blobToText(blob, (event) => {
 						var json = JSON.parse(event.target.result);
 						this.showJson(json);
 					});
 					break;
 				case 'text/plain':
-					this.blobToText(blob, (event) => {
+					this.$utils.blobToText(blob, (event) => {
 						this.showText(event.target.result);
 					});
 					break;
@@ -63,12 +66,6 @@ export default {
 				return '';
 			}
 			return (str + '').replace(/([^>\r\n]?)(\r\n|\n\r|\r|\n)/g, '$1<br>$2');
-		},
-
-		blobToText(blob, callback) {
-			var reader = new FileReader();
-			reader.onload = callback;
-			reader.readAsText(blob);
 		}
 
 	}
