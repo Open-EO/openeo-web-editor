@@ -4,8 +4,8 @@
         <input id="username" type="text" v-model="username"/>
         <label for="username">Password:</label>
         <input id="password" type="password" v-model="password"/>
-        <button @click="submitCallback(username, password)">OK</button>
-        <button @click="cancelCallback()">Cancel</button>
+        <button @click="submit">OK</button>
+        <button @click="cancel">Cancel</button>
     </div>
 </template>
 
@@ -22,6 +22,20 @@ export default {
     },
     mounted() {
         EventBus.$on('modalClosed', this.cancelCallback);
+    },
+    methods: {
+        submit() {
+            const closeAfterCompletion = this.submitCallback(this.username, this.password);
+            if(closeAfterCompletion === true && this.$utils.isChildOfModal(this)) {
+                EventBus.$emit('closeModal');
+            }
+        },
+        cancel() {
+            this.cancelCallback();
+            if(this.$utils.isChildOfModal(this)) {
+                EventBus.$emit('closeModal');
+            }
+        }
     }
 };
 </script>

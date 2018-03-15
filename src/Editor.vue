@@ -176,10 +176,13 @@ export default {
 							.then(data => {
 								that.openEO.Auth.userId = data.user_id;
 								EventBus.$emit('serverChanged');
+								this.$utils.ok(this, 'Login successful.');
 							})
 							.catch(error => {
 								EventBus.$emit('serverChanged');
+								this.$utils.error(this, 'Sorry, credentials are wrong.');
 							});
+						return true; // to close the modal
 					},
 					cancelCallback: function() {
 						EventBus.$emit('serverChanged');
