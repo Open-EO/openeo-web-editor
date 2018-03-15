@@ -21,6 +21,12 @@ Triggers the script currently in the editor to be evaluated runs the callback us
 ## jobCreated(object $data)
 Triggered when a job was created successfully.
 
+## closeModal()
+Closes the modal
+
+## modalClosed()
+A modal has been closed, which might be of relevance to its subcomponents (they may treat this as a "cancel")
+
 ## serviceCreated(object $data)
 Triggered when a service was created successfully.
 

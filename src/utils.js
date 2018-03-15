@@ -62,6 +62,9 @@ export default {
 		} catch(e) {
 			console.log(e);
 		}
-	}
+	},
 
+	isChildOfModal(that) {
+		return that.$parent && that.$parent.$options.name == 'Modal';
+	}
 };

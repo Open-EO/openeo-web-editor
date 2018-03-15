@@ -173,20 +173,25 @@ export default {
 		},
 
 		requestAuth() {
-			// ToDo: Request credentials from user and authenticate him
-			var credentials = [];
-			if (this.openEO.API.driver == 'openeo-r-backend') {
-				credentials = ['test', 'test'];
-			}
-			if (credentials.length === 2) {
-				this.openEO.Auth.login(credentials[0], credentials[1])
-					.then(data => {
-						this.openEO.Auth.userId = data.user_id;
+			if (this.openEO.Capabilities.userLogin()) {
+				EventBus.$emit('showComponentModal', 'Enter your credentials', 'CredentialsForm', {
+					submitCallback: (user, password) => {
+						this.openEO.Auth.login(user, password)
+							.then(data => {
+								this.openEO.Auth.userId = data.user_id;
+								EventBus.$emit('serverChanged');
+								this.$utils.ok(this, 'Login successful.');
+							})
+							.catch(error => {
+								EventBus.$emit('serverChanged');
+								this.$utils.error(this, 'Sorry, credentials are wrong.');
+							});
+						return true; // to close the modal
+					},
+					cancelCallback: () => {
 						EventBus.$emit('serverChanged');
-					})
-					.catch(error => {
-						EventBus.$emit('serverChanged');
-					});
+					}
+				});
 			}
 			else {
 				// ToDO: We assume we are authenticated, but this should be removed after POC.
