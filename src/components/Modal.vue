@@ -38,6 +38,7 @@ export default {
 	mounted() {
 		EventBus.$on('showModal', this.showModal);
 		EventBus.$on('showComponentModal', this.showComponentModal);
+		EventBus.$on('closeModal', this.close);
 	},
 	methods: {
 		show() {

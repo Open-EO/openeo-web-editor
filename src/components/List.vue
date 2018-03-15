@@ -10,14 +10,15 @@
 </template>
 
 <script>
+import EventBus from '../eventbus.js';
 export default {
     name: 'List',
     props: ['items', 'actions'],
     methods: {
         doAction(callback, item) {
             const closeAfterCompletion = callback(item);
-            if(closeAfterCompletion === true && this.$parent && this.$parent.$options.name == 'Modal') {
-                this.$parent.close();
+            if(closeAfterCompletion === true && this.$utils.isChildOfModal(this)) {
+                EventBus.$emit('closeModal');
             }
         },
         doMainAction(item) {
