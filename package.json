@@ -25,12 +25,10 @@
   },
   "scripts": {
     "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build",
-    "test": "vue-cli-service test"
+    "build": "vue-cli-service build"
   },
   "dependencies": {
     "codemirror": "^5.33.0",
-    "fontawesome-web": "^5.0.2",
     "leaflet": "^1.2.0",
     "leaflet.control.layers.tree": "0.0.3",
     "leaflet-fullscreen": "1.0.2",
@@ -40,8 +38,8 @@
     "vue-snotify": "^2.0.1"
   },
   "devDependencies": {
-    "@vue/cli-plugin-babel": "^3.0.0-beta.5",
-    "@vue/cli-service": "^3.0.0-beta.5",
+    "@vue/cli-plugin-babel": "^3.0.0-beta.6",
+    "@vue/cli-service": "^3.0.0-beta.6",
     "vue-template-compiler": "^2.5.13"
   },
   "browserslist": [

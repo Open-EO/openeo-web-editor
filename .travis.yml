@@ -1,0 +1,24 @@
+language: node_js
+
+node_js:
+  - "stable"
+
+sudo: false
+
+script:
+  - npm run build
+  - rm -rf page
+  - mkdir -p page
+  - mv dist page/demo
+  
+deploy:
+  edge:
+    branch: v1.8.47
+  provider: pages
+  skip-cleanup: true
+  github-token: $GITHUB_TOKEN
+  local-dir: page
+  committer-from-gh: true
+  keep-history: true
+  on:
+    branch: master

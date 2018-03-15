@@ -6,8 +6,8 @@
 			</div>
 			<div class="dataTableFilter" v-if="data.length > 0">
 				<i class="fas fa-search filter-icon"></i>
-				<input type="text" value="" ref="filterInput" placeholder="Search term" @keyup="updateView">
-				<button @click="clearFilter"><i class="fas fa-times-circle"></i></button>
+				<input type="text" placeholder="Search term" v-model="filterValue">
+				<button @click="clearFilter" :disabled="!hasFilter"><i class="fas fa-times-circle"></i></button>
 			</div>
 		</div>
 		<table v-if="data.length > 0">
@@ -39,19 +39,26 @@ export default {
 		return {
 			data: [],
 			view: [],
+			filterValue: null,
 			primaryKey: null,
-			noDataMessage: 'Loading data...'
+			noDataMessage: 'No data specified.'
 		};
 	},
 	watch: {
 		data(newVal, oldVal) {
+			this.updateView();
+		},
+		filterValue(newVal, oldVal) {
 			this.updateView();
 		}
 	},
 	computed: {
 		columnCount() {
 			return Object.keys(this.columns).length;
-		}
+		},
+		hasFilter() {
+			return (typeof this.filterValue === 'string' && this.filterValue.length > 0) ? true : false;
+		},
 	},
 	created() {
 		this.determinePrimaryKey();
@@ -89,6 +96,7 @@ export default {
 			}
 		},
 		retrieveData() {
+			this.setNoData('Loading data...');
 			this.data = [];
 			if (typeof this.dataSource === 'function') {
 				this.dataSource()
@@ -97,18 +105,18 @@ export default {
 							this.data = data;
 						}
 						else {
-							this.setNoData('Sorry, no data found.');
+							this.setNoData('Sorry, no data available.');
 						}
 					})
-					.catch(errorCode => {
-						this.setNoData(errorCode);
+					.catch(error => {
+						this.setNoData(error);
 					});
 			}
 			else if(Array.isArray(this.dataSource) && this.dataSource.length > 0) {
 				this.data = this.dataSource;
 			}
 			else {
-				this.setNoData('Sorry, no data available.');
+				this.setNoData('No data specified.');
 			}
 		},
 		removeData(id) {
@@ -130,7 +138,7 @@ export default {
 			else if (!newData.hasOwnProperty(this.primaryKey)) {
 				throw new Error('Object does not contain a value for the primary key.');
 			}
-			const index = this.data.findIndex(row => { row[this.primaryKey] == newData[this.primaryKey] });
+			const index = this.data.findIndex(row => row[this.primaryKey] == newData[this.primaryKey]);
 			if (index >= 0) {
 				this.data[index] = newData;
 			}
@@ -158,13 +166,10 @@ export default {
 			// Sort this.view...
 		},
 		filter() {
-			if (typeof this.$refs.filterInput === 'undefined') {
+			if (!this.hasFilter) {
 				return;
 			}
-			var searchTerm = this.$refs.filterInput.value.toLowerCase();
-			if (searchTerm.length < 1) {
-				return;
-			}
+			var searchTerm = this.filterValue.toLowerCase();
 
 			this.view = this.view.filter(row => {
 				for(var key in row) {
@@ -187,7 +192,7 @@ export default {
 			});
 		},
 		clearFilter() {
-			this.$refs.filterInput.value = '';
+			this.filterValue = '';
 			this.updateView();
 		},
 		updateView() {

@@ -35,38 +35,10 @@ export default {
 		};
 	}()),
 
-	makeList(data, level) {
-		var items = [];
-		var callback = (val, key) => {
-			var typeOfVal = typeof val;
-			if (typeOfVal === "object") {
-				if (val === null || Array.isArray(val) && val.length == 0 || Object.keys(val).length == 0) {
-					val = '<em>None</em>';
-				}
-				else {
-					val = this.makeList(val, level ? level+1 : 1);
-				}
-			}
-			if (!this.isNumeric(key) || typeOfVal === 'object') {
-				if (typeof key === 'string') {
-					key = key.replace(/([a-z\d])([A-Z])/g, '$1 $2');
-					key = key.replace(/([a-zA-Z\d])_([a-zA-Z\d])/g, '$1 $2');
-					key = key.charAt(0).toUpperCase() + key.substr(1);
-				}
-				val = "<em>" + key + "</em>: " + val;
-			}
-			items.push("<li>" + val + "</li>");
-		};
-		var i = 0;
-		for (var key in data) {
-			i++;
-			callback(data[key], key);
-			if (i > 100) {
-				items.push("<li><em>Following entries omitted...</em></li>");
-				break;
-			}
-		}
-		return "<ul>" + items.join("") + "</ul>";
+	blobToText(blob, callback) {
+		var reader = new FileReader();
+		reader.onload = callback;
+		reader.readAsText(blob);
 	},
 
 	isNumeric(n) {
@@ -90,6 +62,9 @@ export default {
 		} catch(e) {
 			console.log(e);
 		}
-	}
+	},
 
+	isChildOfModal(that) {
+		return that.$parent && that.$parent.$options.name == 'Modal';
+	}
 };

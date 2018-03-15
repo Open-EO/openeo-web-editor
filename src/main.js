@@ -1,7 +1,6 @@
 import Vue from 'vue';
 import Config from './config.js';
 import Editor from './Editor.vue';
-import 'fontawesome-web/css/fontawesome-all.css'
 import Snotify from 'vue-snotify';
 import 'vue-snotify/styles/simple.css';
 import utils from './utils.js';

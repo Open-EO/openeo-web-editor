@@ -1,43 +1,60 @@
 <template>
-	<div id="dataViewer" ref="data"></div>
+	<div id="dataViewer">
+		<span v-if="isText()">{{ nl2br(content) }}</span>
+		<ObjectTree v-else :data="content"></ObjectTree>
+	</div>
 </template>
 
 <script>
 import EventBus from '../eventbus.js';
+import ObjectTree from './ObjectTree.vue';
 
 export default {
 	name: 'DataViewer',
-
+	components:  {
+		ObjectTree
+	},
+	data() {
+		return {
+			content: null,
+		};
+	},
 	mounted() {
 		this.reset();
 	},
-
 	methods: {
 
+		isText() {
+			return (typeof this.content === 'string');
+		},
+
 		reset() {
-			this.$refs.data.innerText = 'Nothing to show.';
+			this.content = 'Nothing to show.';
 		},
 
 		showJson(data) {
-			this.$refs.data.innerHTML = this.$utils.makeList(data);
+			this.content = data;
 			EventBus.$emit('showDataViewer');
 		},
 
 		showText(data) {
-			this.$refs.data.innerText = this.nl2br(data);
+			this.content = data;
 			EventBus.$emit('showDataViewer');
 		},
 
-		showBlob(blob) {
-			switch(blob.type) {
+		showBlob(blob, mimeType = null) {
+			if (mimeType == null) {
+				mimeType = blob.type;
+			}
+			switch(mimeType) {
 				case 'application/json':
-					this.blobToText(blob, (event) => {
+					this.$utils.blobToText(blob, (event) => {
 						var json = JSON.parse(event.target.result);
 						this.showJson(json);
 					});
 					break;
 				case 'text/plain':
-					this.blobToText(blob, (event) => {
+					this.$utils.blobToText(blob, (event) => {
 						this.showText(event.target.result);
 					});
 					break;
@@ -49,12 +66,6 @@ export default {
 				return '';
 			}
 			return (str + '').replace(/([^>\r\n]?)(\r\n|\n\r|\r|\n)/g, '$1<br>$2');
-		},
-
-		blobToText(blob, callback) {
-			var reader = new FileReader();
-			reader.onload = callback;
-			reader.readAsText(blob);
 		}
 
 	}

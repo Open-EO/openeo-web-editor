@@ -1,3 +1,8 @@
+var Config = require('./src/config.js');
+
 module.exports = {
-  lintOnSave: true
+	baseUrl: Config.clientUrl,
+	devServer: {
+		port: Config.devPort
+	}
 }

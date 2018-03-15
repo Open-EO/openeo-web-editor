@@ -56,7 +56,7 @@ export default {
 				let user = this.openEO.Users.getObject(this.userId);
 				user.getCredits()
 					.then(data => {this.credits = data})
-					.catch(errorCode => {this.credits = null; });
+					.catch(error => {this.credits = null; });
 			}
 		},
 		topUpCredits() {

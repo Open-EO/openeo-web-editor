@@ -1,13 +1,14 @@
 <template>
 	<DataTable ref="table" :dataSource="dataSource" :columns="columns" id="ProcessGraphPanel">
-		<div slot="toolbar" slot-scope="p">
+		<template slot="toolbar" slot-scope="p">
 			<button title="Add new process graph" @click="addGraph" v-show="openEO.Capabilities.createUserProcessGraph()"><i class="fas fa-plus"></i> Add</button>
-		</div>
-		<div slot="actions" slot-scope="p">
+			<button title="Refresh process graphs" @click="updateData()"><i class="fas fa-sync-alt"></i></button> <!-- ToDo: Should be done automatically later -->
+		</template>
+		<template slot="actions" slot-scope="p">
 			<button title="Details" @click="graphInfo(p.row[p.col.id])" v-show="openEO.Capabilities.userProcessGraphInfo()"><i class="fas fa-info"></i></button>
 			<button title="Edit" @click="editGraph(p.row[p.col.id])" v-show="openEO.Capabilities.updateUserProcessGraph()"><i class="fas fa-edit"></i></button>
 			<button title="Delete" @click="deleteGraph(p.row[p.col.id])" v-show="openEO.Capabilities.deleteUserProcessGraph()"><i class="fas fa-trash"></i></button>
-		</div>
+		</template>
 	</DataTable>
 </template>
 
@@ -89,8 +90,8 @@ export default {
 					.then(data => {
 						this.$refs.table.removeData(id);
 					})
-					.catch(errorCode => {
-						// ToDo
+					.catch(error => {
+						this.$utils.error(this, 'Sorry, could not delete process graph.');
 					});
 			} catch(e) {
 				this.$utils.error(this, e.message);

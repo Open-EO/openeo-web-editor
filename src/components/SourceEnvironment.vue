@@ -18,10 +18,6 @@
 import EventBus from '../eventbus.js';
 
 import 'codemirror/lib/codemirror.css';
-import 'codemirror/addon/hint/show-hint.css';
-
-import 'codemirror/addon/hint/show-hint.js';
-import 'codemirror/addon/hint/javascript-hint.js';
 import 'codemirror/mode/javascript/javascript.js';
 import CodeMirror from 'codemirror';
 
@@ -40,17 +36,10 @@ export default {
 			editorOptions: {
 				mode: 'javascript',
 				indentUnit: 4,
-				lineNumbers: true,
-				extraKeys: {
-					"Ctrl-Space": "autocomplete"
-				}
+				lineNumbers: true
 			},
 			editor: null,
-			defaultScript: `// Create the process graph
-OpenEO.Editor.ProcessGraph = OpenEO.ImageCollection.create('Sentinel2A-L1C')
-	.filter_daterange("2018-01-01","2018-01-31")
-	.NDVI("B04","B08")
-	.max_time();`
+			defaultScript: this.$config.defaultScript
 		}
 	},
 	watch: {
@@ -121,16 +110,11 @@ OpenEO.Editor.ProcessGraph = OpenEO.ImageCollection.create('Sentinel2A-L1C')
 			if (format === null) {
 				return;
 			}
+			this.$utils.info(this, 'Data requested. Please wait...');
 			EventBus.$emit('evalScript', (script) => {
-				this.$utils.info(this, 'Data requested. Please wait...');
-				var output = {format: format};
-				script.ProcessGraph.execute(output)
-					.then(data => {
-						EventBus.$emit('showInViewer', data, script, output);
-					})
-					.catch(error => {
-						this.$utils.error(this, 'Sorry, could not execute script.');
-					});
+				script.ProcessGraph.execute(format)
+					.then(data => EventBus.$emit('showInViewer', data, script, format))
+					.catch(error => this.$utils.error(this, 'Sorry, could not execute script.'));
 			});
 		},
 

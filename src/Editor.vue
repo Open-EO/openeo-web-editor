@@ -108,7 +108,10 @@ export default {
 		EventBus.$on('serverChanged', this.serverChanged);
 	},
 	mounted() {
-		EventBus.$emit('changeServerUrl', this.$config.serverUrl);
+		if (typeof this.$config.serverUrl === 'string' && this.$config.serverUrl.length > 0) {
+			EventBus.$emit('changeServerUrl', this.$config.serverUrl);
+		}
+		this.resetActiveTab('userContent');
 
 		EventBus.$on('showInViewer', this.showInViewer);
 		EventBus.$on('showMapViewer', this.showMapViewer);
@@ -148,6 +151,8 @@ export default {
 				this.requestSupportedOutputFormats();
 				this.requestSupportedServices();
 				this.requestAuth();
+			}).catch(error => {
+				this.$utils.error(this, 'Sorry, server is not responding.');
 			});
 		},
 
@@ -168,20 +173,25 @@ export default {
 		},
 
 		requestAuth() {
-			// ToDo: Request credentials from user and authenticate him
-			var credentials = [];
-			if (this.openEO.API.driver == 'openeo-r-backend') {
-				credentials = ['test', 'test'];
-			}
-			if (credentials.length === 2) {
-				this.openEO.Auth.login(credentials[0], credentials[1])
-					.then(data => {
-						this.openEO.Auth.userId = data.user_id;
+			if (this.openEO.Capabilities.userLogin()) {
+				EventBus.$emit('showComponentModal', 'Enter your credentials', 'CredentialsForm', {
+					submitCallback: (user, password) => {
+						this.openEO.Auth.login(user, password)
+							.then(data => {
+								this.openEO.Auth.userId = data.user_id;
+								EventBus.$emit('serverChanged');
+								this.$utils.ok(this, 'Login successful.');
+							})
+							.catch(error => {
+								EventBus.$emit('serverChanged');
+								this.$utils.error(this, 'Sorry, credentials are wrong.');
+							});
+						return true; // to close the modal
+					},
+					cancelCallback: () => {
 						EventBus.$emit('serverChanged');
-					})
-					.catch(errorCode => {
-						EventBus.$emit('serverChanged');
-					});
+					}
+				});
 			}
 			else {
 				// ToDO: We assume we are authenticated, but this should be removed after POC.
@@ -249,10 +259,13 @@ export default {
 			}
 			var mimeType = blob.type;
 			// Try to detect invalid mime types
-			if (!mimeType || mimeType.indexOf('/') === -1 || mimeType.indexOf('*') !== -1) {
+			if (originalOutputFormat !== null && (!mimeType || mimeType.indexOf('/') === -1 || mimeType.indexOf('*') !== -1)) {
 				mimeType = this.getMimeTypeForOutputFormat(originalOutputFormat);
 			}
-			switch(mimeType.toLowerCase()) {
+			if (typeof mimeType === 'string') {
+				mimeType = mimeType.toLowerCase();
+			}
+			switch(mimeType) {
 				case 'image/png':
 				case 'image/jpg':
 				case 'image/jpeg':
@@ -262,9 +275,9 @@ export default {
 					}
 					this.$refs.imageViewer.showImageBlob(blob);
 					break;
-				case 'text/plain':
 				case 'application/json':
-					this.$refs.dataViewer.showBlob(blob);
+				case 'text/plain':
+					this.$refs.dataViewer.showBlob(blob, mimeType);
 					break;
 				case 'image/tif':
 				case 'image/tiff':
