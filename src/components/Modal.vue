@@ -17,12 +17,14 @@
 import EventBus from '../eventbus.js';
 import ObjectTree from './ObjectTree.vue';
 import List from './List.vue';
+import CredentialsForm from './CredentialsForm.vue';
 
 export default {
 	name: 'Modal',
 	components:  {
-		ObjectTree,
-		List
+		CredentialsForm,
+		List,
+		ObjectTree
 	},
 	data() {
 		return {
@@ -44,6 +46,7 @@ export default {
 
 		close() {
 			this.shown = false;
+			EventBus.$emit('modalClosed');
 		},
 
 		possiblyClose(event) {
