@@ -169,12 +169,11 @@ export default {
 
 		requestAuth() {
 			if (this.openEO.Capabilities.userLogin()) {
-				const that = this;
 				EventBus.$emit('showComponentModal', 'Enter your credentials', 'CredentialsForm', {
-					submitCallback: function(user, password) {
-						that.openEO.Auth.login(user, password)
+					submitCallback: (user, password) => {
+						this.openEO.Auth.login(user, password)
 							.then(data => {
-								that.openEO.Auth.userId = data.user_id;
+								this.openEO.Auth.userId = data.user_id;
 								EventBus.$emit('serverChanged');
 								this.$utils.ok(this, 'Login successful.');
 							})
@@ -184,7 +183,7 @@ export default {
 							});
 						return true; // to close the modal
 					},
-					cancelCallback: function() {
+					cancelCallback: () => {
 						EventBus.$emit('serverChanged');
 					}
 				});
