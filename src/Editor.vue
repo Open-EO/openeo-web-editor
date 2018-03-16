@@ -128,7 +128,7 @@ export default {
 			// Update server url
 			this.openEO.API.baseUrl = url;
 			// Invalidate old user id
-			this.openEO.Auth.userId = null;
+			this.openEO.Auth.reset();
 			// ToDo: Remove the driver switch after proof-of-concept
 			if (url.indexOf('/api') !== -1) {
 				this.openEO.API.driver = 'openeo-r-backend';
@@ -152,6 +152,7 @@ export default {
 				this.requestSupportedServices();
 				this.requestAuth();
 			}).catch(error => {
+				console.log(error);
 				this.$utils.error(this, 'Sorry, server is not responding.');
 			});
 		},
@@ -178,7 +179,6 @@ export default {
 					submitCallback: (user, password) => {
 						this.openEO.Auth.login(user, password)
 							.then(data => {
-								this.openEO.Auth.userId = data.user_id;
 								EventBus.$emit('serverChanged');
 								this.$utils.ok(this, 'Login successful.');
 							})
