@@ -178,13 +178,18 @@ export default {
 				// ToDo: For now we support both direct downloading and download URLs (only one for now).
 				// Implementation is not very nice and needs improvement, but it's a prototype...
 				this.$utils.blobToText(blob, (event) => {
-					var json = JSON.parse(event.target.result);
-					if (Array.isArray(json) && json.length == 1 && typeof json[0] === 'string' && json[0].indexOf('://') !== -1) {
-						// Download file
-						var filename = json[0].substring(json[0].lastIndexOf('/')+1);
-						this.openEO.HTTP.download(json[0])
-							.then(blob => this.handleDownloadedData(blob, view, filename))
-							.catch(e => this.$utils.error(this, "Sorry, could not send file to browser."));
+					if (blob.type == 'application/json' || format == 'json') {
+						var json = JSON.parse(event.target.result);
+						if (Array.isArray(json) && json.length == 1 && typeof json[0] === 'string' && json[0].indexOf('://') !== -1) {
+							// Download file
+							var filename = json[0].substring(json[0].lastIndexOf('/')+1);
+							this.openEO.HTTP.download(json[0])
+								.then(blob => this.handleDownloadedData(blob, view, filename))
+								.catch(e => this.$utils.error(this, "Sorry, could not send file to browser."));
+						}
+						else {
+							this.handleDownloadedData(blob, view);
+						}
 					}
 					else {
 						this.handleDownloadedData(blob, view);
