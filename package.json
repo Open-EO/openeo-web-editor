@@ -32,8 +32,8 @@
     "leaflet": "^1.2.0",
     "leaflet.control.layers.tree": "0.0.3",
     "leaflet-fullscreen": "1.0.2",
-    "leaflet-geotiff": "git+https://github.com/stuartmatthews/leaflet-geotiff.git#be529e0a658bf4f4cdbc528bb7b440dd77f65895",
-    "openeo-js-client": "git+https://github.com/Open-EO/openeo-js-client.git#0.0.2",
+    "leaflet-geotiff": "git+https://github.com/m-mohr/leaflet-geotiff.git",
+    "openeo-js-client": "git+https://github.com/Open-EO/openeo-js-client.git",
     "vue": "^2.5.13",
     "vue-snotify": "^2.0.1"
   },
