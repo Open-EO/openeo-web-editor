@@ -13,7 +13,12 @@
 import EventBus from '../eventbus.js';
 export default {
     name: 'List',
-    props: ['items', 'actions'],
+    props: ['dataSource', 'actions'],
+    computed: {
+        items() {
+            return (typeof this.dataSource == 'function' ? this.dataSource() : this.dataSource);
+        }
+    },
     methods: {
         doAction(callback, item) {
             const closeAfterCompletion = callback(item);

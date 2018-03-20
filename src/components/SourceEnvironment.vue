@@ -139,7 +139,7 @@ export default {
 				}
 			} else {
 				EventBus.$emit('showComponentModal', 'Select script to load', 'List', {
-					items: this.savedScriptNames,
+					dataSource: () => this.savedScriptNames,
 					actions: [
 						{
 							callback: this.loadScript,

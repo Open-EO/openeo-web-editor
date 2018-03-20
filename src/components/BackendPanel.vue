@@ -75,7 +75,7 @@ export default {
 
 		showServerSelector() {
 			EventBus.$emit('showComponentModal', 'Select previously used server', 'List', {
-				items: this.serverUrls,
+				dataSource: this.serverUrls,
 				actions: [
 					{
 						callback: (url) => this.updateServerUrlTo(url) || true,  // return true to close the modal
