@@ -66,5 +66,16 @@ export default {
 
 	isChildOfModal(that) {
 		return that.$parent && that.$parent.$options.name == 'Modal';
+	},
+
+	getFileNameFromURL(url) {
+		//this removes the anchor at the end, if there is one
+		url = url.substring(0, (url.indexOf("#") == -1) ? url.length : url.indexOf("#"));
+		//this removes the query after the file name, if there is one
+		url = url.substring(0, (url.indexOf("?") == -1) ? url.length : url.indexOf("?"));
+		//this removes everything before the last slash in the path
+		url = url.substring(url.lastIndexOf("/") + 1, url.length);
+		return url;
 	}
+
 };
