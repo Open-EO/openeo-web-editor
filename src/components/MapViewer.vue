@@ -148,15 +148,18 @@ export default {
 		createWMSLayer(service) {
 			var self = this;
 
-			this.layer.wms = L.tileLayer.wms(service.service_url, {
-				name: 'WMS',
-				request: 'GetCoverage',
-				service: 'WMS',
-				coverage: 'CUSTOM',
-				format: 'image/jpeg',
-				tileSize: 256,
-				minZoom: 8
-			});
+			var args = service.service_args;
+			if (!args.name) {
+				args.name = 'WMS';
+			}
+			if (!args.service) {
+				args.service = 'WMS';
+			}
+			if (!args.format) {
+				args.format = 'image/jpeg';
+			}
+
+			this.layer.wms = L.tileLayer.wms(service.service_url, args);
 
 			this.layer.wms.recolor = function () {
 				for (var key in this._tiles) {
