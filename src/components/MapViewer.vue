@@ -30,6 +30,7 @@ export default {
 			},
 			layer: {
 				wms: null,
+				xyz: null,
 				tiff: null
 			},
 			layerControl: null
@@ -97,6 +98,9 @@ export default {
 			if (service.service_type.toLowerCase() == 'wms') {
 				this.updateWMSLayer(service);
 			}
+			else if (service.service_type.toLowerCase() == 'xyz') {
+				this.updateXYZLayer(service);
+			}
 			else {
 				this.$utils.error('Sorry, the requested service type is not supported by the map.');
 			}
@@ -134,10 +138,33 @@ export default {
 			}
 		},
 
+		updateXYZLayer(service) {
+			this.removeOldLayer(this.layer.xyz);
+			var url = service.service_url + "/{z}/{x}/{y}";
+			if (!this.layer.xyz) {
+				var opts = {
+					name: 'XYZ ' + service.service_id
+				};
+				this.layer.xyz = new L.TileLayer(url, opts);
+				this.extendTileLayerForVisualizations(this.layer.xyz);
+				this.layer.xyz.addTo(this.map);
+			}
+			else {
+				this.layer.xyz.setUrl(url, false);
+				this.layer.xyz.recolor();
+			}
+		},
+
 		updateWMSLayer(service) {
 			this.removeOldLayer(this.layer.wms);
 			if (!this.layer.wms) {
-				this.createWMSLayer(service);
+				var args = service.service_args;
+				args.name = args.name || 'WMS ' + service.service_id;
+				args.service = args.service || 'WMS';
+				args.format = args.format || 'image/jpeg';
+				this.layer.wms = L.tileLayer.wms(service.service_url, args);
+				this.extendTileLayerForVisualizations(this.layer.wms);
+				this.layer.wms.addTo(this.map);
 			}
 			else {
 				this.layer.wms.setUrl(service.service_url, false);
@@ -145,30 +172,17 @@ export default {
 			}
 		},
 
-		createWMSLayer(service) {
+		extendTileLayerForVisualizations(layer) {
 			var self = this;
 
-			var args = service.service_args;
-			if (!args.name) {
-				args.name = 'WMS';
-			}
-			if (!args.service) {
-				args.service = 'WMS';
-			}
-			if (!args.format) {
-				args.format = 'image/jpeg';
-			}
-
-			this.layer.wms = L.tileLayer.wms(service.service_url, args);
-
-			this.layer.wms.recolor = function () {
+			layer.recolor = function () {
 				for (var key in this._tiles) {
 					var tile = this._tiles[key];
 					self.recolor(tile.el);
 				}
 			};
 
-			this.layer.wms.createTile = function (coords) {
+			layer.createTile = function (coords) {
 				const tile = L.DomUtil.create('canvas', 'leaflet-tile');
 				tile.width = tile.height = this.options.tileSize;
 
@@ -183,8 +197,6 @@ export default {
 				imageObj.src = this.getTileUrl(coords);
 				return tile;
 			};
-
-			this.layer.wms.addTo(this.map);
 		},
 
 		recolor(tile) {
