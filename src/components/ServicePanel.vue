@@ -90,43 +90,29 @@ export default {
 			this.$snotify.confirm('Service created!', null, options);
 		},
 		serviceInfo(id) {
-			try {
-				var serviceApi = this.openEO.Services.getObject(id);
-				serviceApi.get().then(data => {
-					this.$utils.error(this, 'Not implemented');
+			var serviceApi = this.openEO.Services.getObject(id);
+			serviceApi.get()
+				.then(data => {
+					EventBus.$emit('showModal', 'Service: ' + id, data);
 				}).catch(error => {
-					this.$utils.error(this, 'Not implemented');
+					this.$utils.error(this, 'Sorry, could not load service information.');
 				});
-			} catch (e) {
-				this.$utils.error(this, e.message);
-			}
 		},
 		editService(id) {
+			var serviceApi = this.openEO.Services.getObject(id);
+			// serviceApi.modify(null, null, {});
+			this.$utils.error(this, 'Not implemented');
 			// ToDo: Request what user wants to change
-			try {
-				var serviceApi = this.openEO.Services.getObject(id);
-				serviceApi.modify(null, null, {}).then(data => {
-					this.$utils.error(this, 'Not implemented');
-				}).catch(error => {
-					this.$utils.error(this, 'Not implemented');
-				});
-			} catch (e) {
-				this.$utils.error(this, e.message);
-			}
 		},
 		deleteService(id) {
-			try {
-				var serviceApi = this.openEO.Services.getObject(id);
-				serviceApi.delete()
-					.then(data => {
-						this.$refs.table.removeData(id);
-					})
-					.catch(error => {
-						this.$utils.error(this, 'Sorry, could not delete service.');
-					});
-			} catch (e) {
-				this.$utils.error(this, e.message);
-			}
+			var serviceApi = this.openEO.Services.getObject(id);
+			serviceApi.delete()
+				.then(data => {
+					this.$refs.table.removeData(id);
+				})
+				.catch(error => {
+					this.$utils.error(this, 'Sorry, could not delete service.');
+				});
 		},
 		viewService(service) {
 			this.$utils.info(this, 'Requesting tiles from server. Please wait...');
