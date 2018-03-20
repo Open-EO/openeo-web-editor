@@ -1,5 +1,5 @@
 <template>
-	<DataTable ref="table" :dataSource="dataSource" :columns="columns" id="ProcessGraphPanel">
+	<DataTable ref="table" :dataSource="dataSource" :preprocessor="dataPreprocessor" :columns="columns" id="ProcessGraphPanel">
 		<template slot="toolbar" slot-scope="p">
 			<button title="Add new process graph" @click="addGraph" v-show="openEO.Capabilities.createUserProcessGraph()"><i class="fas fa-plus"></i> Add</button>
 			<button title="Refresh process graphs" @click="updateData()"><i class="fas fa-sync-alt"></i></button> <!-- ToDo: Should be done automatically later -->
@@ -25,13 +25,13 @@ export default {
 	data() {
 		return {
 			columns: {
-				$: {
+				id: {
 					name: 'ID',
 					primaryKey: true
 				},
 				actions: {
 					name: 'Actions',
-					id: '$',
+					id: 'id',
 					filterable: false
 				}
 			}
@@ -52,6 +52,9 @@ export default {
 			let users = this.openEO.Users.getObject(this.userId);
 			return users.getProcessGraphs();
 		},
+		dataPreprocessor(data) {
+			return { id: data };
+		},
 		updateData() {
 			if (!this.$refs.table || !this.openEO.Capabilities.userProcessGraphs()) {
 				return;
@@ -66,36 +69,44 @@ export default {
 		addGraph() {
 			EventBus.$emit('evalScript', (script) => {
 				var userApi = this.openEO.Users.getObject(this.userId);
-				userApi.createProcessGraph(script.ProcessGraph);
+				userApi.createProcessGraph(script.ProcessGraph)
+					.then(data => {
+						this.$refs.table.addData(data.process_graph_id);
+						this.$utils.ok(this, 'Process Graph saved!');
+					}).catch(error => {
+						console.log(error);
+						this.$utils.error(this, 'Sorry, could not create a process graph.');
+					});
 			});
 		},
 		graphInfo(id) {
-			try {
-				var pgApi = this.openEO.Users.getObject(this.userId).getProcessGraphObject(id);
-				pgApi.get();
-			} catch(e) {
-				this.$utils.error(this, e.message);
-			}
+			var pgApi = this.openEO.Users.getObject(this.userId).getProcessGraphObject(id);
+			pgApi.get()
+				.then(data => {
+					EventBus.$emit('showModal', 'Process Graph: ' + id, data);
+				})
+				.catch(error => this.$utils.error(this, 'Sorry, could not load process graph.'));
 		},
 		editGraph(id) {
 			EventBus.$emit('evalScript', (script) => {
 				var pgApi = this.openEO.Users.getObject(this.userId).getProcessGraphObject(id);
-				pgApi.replace(script.ProcessGraph);
+				pgApi.replace(script.ProcessGraph)
+					.then(data => {
+						this.$utils.ok(this, 'Process Graph updated!');
+					}).catch(error => {
+						this.$utils.error(this, 'Sorry, could not update the process graph.');
+					});
 			});
 		},
 		deleteGraph(id) {
-			try {
-				var pgApi = this.openEO.Users.getObject(this.userId).getProcessGraphObject(id);
-				pgApi.delete()
-					.then(data => {
-						this.$refs.table.removeData(id);
-					})
-					.catch(error => {
-						this.$utils.error(this, 'Sorry, could not delete process graph.');
-					});
-			} catch(e) {
-				this.$utils.error(this, e.message);
-			}
+			var pgApi = this.openEO.Users.getObject(this.userId).getProcessGraphObject(id);
+			pgApi.delete()
+				.then(data => {
+					this.$refs.table.removeData(id);
+				})
+				.catch(error => {
+					this.$utils.error(this, 'Sorry, could not delete process graph.');
+				});
 		}
 	}
 }

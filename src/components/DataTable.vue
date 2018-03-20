@@ -34,7 +34,7 @@ import EventBus from '../eventbus.js';
 
 export default {
 	name: 'DataTable',
-	props: ['id', 'columns', 'dataSource'],
+	props: ['id', 'columns', 'dataSource', 'preprocessor'],
 	data() {
 		return {
 			data: [],
@@ -102,7 +102,7 @@ export default {
 				this.dataSource()
 					.then(data => {
 						if (Array.isArray(data) && data.length > 0) {
-							this.data = data;
+							this.setData(data);
 						}
 						else {
 							this.setNoData('Sorry, no data available.');
@@ -113,10 +113,18 @@ export default {
 					});
 			}
 			else if(Array.isArray(this.dataSource) && this.dataSource.length > 0) {
-				this.data = this.dataSource;
+				this.setData(this.dataSource);
 			}
 			else {
 				this.setNoData('No data specified.');
+			}
+		},
+		setData(data) {
+			if (typeof this.preprocessor === 'function') {
+				this.data = data.map(this.preprocessor);
+			}
+			else {
+				this.data = data;
 			}
 		},
 		removeData(id) {
@@ -126,6 +134,9 @@ export default {
 			this.data = this.data.filter(row => row[this.primaryKey] != id);
 		},
 		addData(newData) {
+			if (typeof this.preprocessor === 'function') {
+				newData = this.preprocessor(newData);
+			}
 			if (!newData.hasOwnProperty(this.primaryKey)) {
 				throw new Error('Object does not contain a value for the primary key.');
 			}
@@ -135,7 +146,10 @@ export default {
 			if (this.primaryKey === null) {
 				throw new Error('No primary key specified.');
 			}
-			else if (!newData.hasOwnProperty(this.primaryKey)) {
+			if (typeof this.preprocessor === 'function') {
+				newData = this.preprocessor(newData);
+			}
+			if (!newData.hasOwnProperty(this.primaryKey)) {
 				throw new Error('Object does not contain a value for the primary key.');
 			}
 			const index = this.data.findIndex(row => row[this.primaryKey] == newData[this.primaryKey]);
@@ -151,12 +165,7 @@ export default {
 				return row[id];
 			}
 			else {
-				if (id === '$') {
-					return row;
-				}
-				else {
-					return null;
-				}
+				return row;
 			}
 		},
 		formattedValue(row, col, id) {
