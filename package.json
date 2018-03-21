@@ -30,9 +30,9 @@
   "dependencies": {
     "codemirror": "^5.33.0",
     "leaflet": "^1.2.0",
-    "leaflet.control.layers.tree": "0.0.3",
     "leaflet-fullscreen": "1.0.2",
     "leaflet-geotiff": "git+https://github.com/m-mohr/leaflet-geotiff.git",
+    "leaflet-side-by-side": "^2.1.0",
     "openeo-js-client": "git+https://github.com/Open-EO/openeo-js-client.git",
     "vue": "^2.5.13",
     "vue-snotify": "^2.0.1"

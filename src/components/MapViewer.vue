@@ -9,10 +9,9 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { leafletGeotiff, LeafletGeotiffRenderer } from "leaflet-geotiff/leaflet-geotiff.js";
 import customRenderer from "../leaflet-geotiff-customrenderer.js";
-import "leaflet.control.layers.tree/L.Control.Layers.Tree.css";
-import layerControl from "leaflet.control.layers.tree";
 import "leaflet-fullscreen/dist/leaflet.fullscreen.css";
 import fullscreen from "leaflet-fullscreen";
+import sideBySide from "leaflet-side-by-side";
 
 export default {
 	name: 'MapViewer',
@@ -28,12 +27,9 @@ export default {
 			baseLayer: {
 				osm: null
 			},
-			layer: {
-				wms: null,
-				xyz: null,
-				tiff: null
-			},
-			layerControl: null
+			layer: {},
+			layerControl: null,
+			sideBySideComponent: null
 		}
 	},
 
@@ -47,11 +43,8 @@ export default {
 			this.map = new L.Map('mapCanvas', this.options);
 
 			// Add layer control
-			this.layerControl = L.control.layers.tree({});
+			this.layerControl = L.control.layers();
 			this.layerControl.addTo(this.map);
-			this.layerControl.expandTree();
-			this.map.on('layeradd', this.updateLayerTree);
-			this.map.on('layerremove', this.updateLayerTree);
 
 			// Add base layers
 			this.baseLayer.osm = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -59,39 +52,36 @@ export default {
 				attribution: 'Map data &copy; <a href="http://www.osm.org">OpenStreetMap</a>'
 			});
 			this.baseLayer.osm.addTo(this.map);
+			this.layerControl.addBaseLayer(this.baseLayer.osm, this.baseLayer.osm.options.name);
+
+			this.map.on('layeradd', this.oNLayerAdd);
+			this.map.on('overlayremove', this.onOverlayRemove);
 		},
 
-		updateLayerTree() {
-			var baseLayer = {
-				label: 'Base Layer',
-				children: [],
-			};
-			for(var i in this.baseLayer) {
-				baseLayer.children.push({
-					label: this.baseLayer[i].options.name,
-					layer: this.baseLayer[i]
-				});
+		oNLayerAdd(evt) {
+			var shownLayers = this.getShownLayers();
+			if (shownLayers.length == 2 && this.sideBySideComponent === null) {
+				this.sideBySideComponent = L.control.sideBySide(shownLayers[0], shownLayers[1]);
+				this.sideBySideComponent.addTo(this.map);
 			}
+		},
 
-			var dataLayer = {
-				label: 'Data Layers',
-				children: [],
-			};
+		onOverlayRemove(evt) {
+			var shownLayers = this.getShownLayers();
+			if (shownLayers.length != 2 && this.sideBySideComponent !== null) {
+				this.map.removeControl(this.sideBySideComponent);
+				this.sideBySideComponent = null;
+			}
+		},
+
+		getShownLayers() {
+			var shownLayers = [];
 			for(var i in this.layer) {
-				if (this.layer[i] === null) {
-					continue;
+				if (this.map.hasLayer(this.layer[i])) {
+					shownLayers.push(this.layer[i]);
 				}
-				dataLayer.children.push({
-					label: this.layer[i].options.name,
-					layer: this.layer[i]
-				});
 			}
-
-			var tree = [baseLayer];
-			if (dataLayer.children.length > 0) {
-				tree.push(dataLayer);
-			}
-			this.layerControl.setBaseTree(tree);
+			return shownLayers;
 		},
 
 		viewWebService(service) {
@@ -104,6 +94,11 @@ export default {
 			else {
 				this.$utils.error('Sorry, the requested service type is not supported by the map.');
 			}
+		},
+
+		addLayerToMap(layer) {
+			layer.addTo(this.map);
+			this.layerControl.addOverlay(layer, layer.options.name);
 		},
 
 		removeOldLayer(except) {
@@ -120,55 +115,55 @@ export default {
 		},
 
 		updateTiffLayer(url) {
-			this.removeOldLayer(this.layer.tiff);
-			if (!this.layer.tiff) {
+			var id = this.$utils.formatDateTime(Date.now());
+			if (typeof this.layer[id] === 'undefined') {
 				var renderer = customRenderer();
 				var opts = {
-					name: 'GeoTiff',
+					name: id + ' (GeoTiff)',
 					renderer: renderer
 				};
-				this.layer.tiff = leafletGeotiff(url, opts);
-				this.layer.tiff.addTo(this.map);
+				this.layer[id] = leafletGeotiff(url, opts);
+				this.addLayerToMap(this.layer[id]);
 				EventBus.$emit('evalScript', (script) => {
 					renderer.setScript(script);
 				});
 			}
 			else {
-				this.layer.tiff.setURL(url);
+				this.layer[id].setURL(url);
 			}
 		},
 
 		updateXYZLayer(service) {
-			this.removeOldLayer(this.layer.xyz);
+			var id = service.service_id;
 			var url = service.service_url + "/{z}/{x}/{y}";
-			if (!this.layer.xyz) {
+			if (typeof this.layer[id] === 'undefined') {
 				var opts = {
-					name: 'XYZ ' + service.service_id
+					name: id + " (XYZ)"
 				};
-				this.layer.xyz = new L.TileLayer(url, opts);
-				this.extendTileLayerForVisualizations(this.layer.xyz);
-				this.layer.xyz.addTo(this.map);
+				this.layer[id] = new L.TileLayer(url, opts);
+				this.extendTileLayerForVisualizations(this.layer[id]);
+				this.addLayerToMap(this.layer[id]);
 			}
 			else {
-				this.layer.xyz.setUrl(url, false);
-				this.layer.xyz.recolor();
+				this.layer[id].setUrl(url, false);
+				this.layer[id].recolor();
 			}
 		},
 
 		updateWMSLayer(service) {
-			this.removeOldLayer(this.layer.wms);
-			if (!this.layer.wms) {
+			var id = service.service_id;
+			if (typeof this.layer[id] === 'undefined') {
 				var args = service.service_args;
-				args.name = args.name || 'WMS ' + service.service_id;
+				args.name = id + " (WMS)";
 				args.service = args.service || 'WMS';
 				args.format = args.format || 'image/jpeg';
-				this.layer.wms = L.tileLayer.wms(service.service_url, args);
-				this.extendTileLayerForVisualizations(this.layer.wms);
-				this.layer.wms.addTo(this.map);
+				this.layer[id] = L.tileLayer.wms(service.service_url, args);
+				this.extendTileLayerForVisualizations(this.layer[id]);
+				this.addLayerToMap(this.layer[id]);
 			}
 			else {
-				this.layer.wms.setUrl(service.service_url, false);
-				this.layer.wms.recolor();
+				this.layer[id].setUrl(service.service_url, false);
+				this.layer[id].recolor();
 			}
 		},
 

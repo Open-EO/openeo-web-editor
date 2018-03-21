@@ -237,11 +237,7 @@ export default {
 			return ( value / Math.pow(1024, i) ).toFixed(2) * 1 + ' ' + ['B', 'kB', 'MB', 'GB', 'TB'][i];
 		},
 		formatDateTime(value, col) {
-			if (!value) {
-				return '';
-			}
-			let date = new Date(value);
-			return date.toISOString().replace('T', ' ').replace('Z', '').substring(0,19);
+			return this.$utils.formatDateTime(value);
 		}
 	}
 }

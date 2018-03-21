@@ -76,6 +76,14 @@ export default {
 		//this removes everything before the last slash in the path
 		url = url.substring(url.lastIndexOf("/") + 1, url.length);
 		return url;
+	},
+
+	formatDateTime(value) {
+		if (!value) {
+			return '';
+		}
+		let date = new Date(value);
+		return date.toISOString().replace('T', ' ').replace('Z', '').substring(0,19);
 	}
 
 };
