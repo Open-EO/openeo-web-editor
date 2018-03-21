@@ -96,7 +96,6 @@ export default {
 			};
 			if (this.openEO.Capabilities.downloadJob()) {
 				options.buttons.push({text: 'Download', action: () => this.downloadJob(data.job_id)});
-				options.timeout = 10000;
 			}
 			this.$snotify.confirm('Job created!', null, options);
 		},

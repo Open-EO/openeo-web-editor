@@ -175,23 +175,37 @@ export default {
 
 		requestAuth() {
 			if (this.openEO.Capabilities.userLogin()) {
-				EventBus.$emit('showComponentModal', 'Enter your credentials', 'CredentialsForm', {
-					submitCallback: (user, password) => {
-						this.openEO.Auth.login(user, password)
+				var opts = {
+					submitLoginCallback: (user, password) => {
+						return this.openEO.Auth.login(user, password)
 							.then(data => {
 								EventBus.$emit('serverChanged');
 								this.$utils.ok(this, 'Login successful.');
+								return data;
 							})
 							.catch(error => {
-								EventBus.$emit('serverChanged');
 								this.$utils.error(this, 'Sorry, credentials are wrong.');
+								throw error;
 							});
-						return true; // to close the modal
 					},
 					cancelCallback: () => {
 						EventBus.$emit('serverChanged');
 					}
-				});
+				};
+				if (this.openEO.Capabilities.userRegister()) {
+					opts.submitRegisterCallback = (password) => {
+						return this.openEO.Auth.register(password)
+							.then(data => {
+								this.$utils.ok(this, 'Registration successful. Your new username is: ' + data.user_id);
+								return data;
+							})
+							.catch(error => {
+								this.$utils.error(this, 'Sorry, registration failed. Try to choose another password.');
+								throw error;
+							});
+					};
+				}
+				EventBus.$emit('showComponentModal', 'Enter your credentials', 'CredentialsForm', opts);
 			}
 			else {
 				// ToDO: We assume we are authenticated, but this should be removed after POC.

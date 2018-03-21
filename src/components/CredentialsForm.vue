@@ -1,11 +1,19 @@
 <template>
     <div>
-        <label for="username">Username:</label>
-        <input id="username" type="text" v-model="username"/>
-        <label for="username">Password:</label>
-        <input id="password" type="password" v-model="password"/>
-        <button @click="submit">OK</button>
-        <button @click="cancel">Cancel</button>
+		<form id="loginForm" action="#" @submit="submitLogin">
+			<h3>Login</h3>
+			<label for="username">Username:</label>
+			<input id="username" type="text" v-model="username"/>
+			<label for="password">Password:</label>
+			<input id="password" type="password" v-model="password"/>
+			<button type="submit">Login</button>
+		</form>
+		<form id="registerForm" action="#" @submit="submitRegister" v-if="showRegistration">
+			<h3>Register</h3>
+			<label for="registerPassword">Password:</label>
+			<input id="registerPassword" type="password" ref="registerPassword"/>
+			<button type="submit">Register</button>
+		</form>
     </div>
 </template>
 
@@ -13,23 +21,42 @@
 import EventBus from '../eventbus.js';
 export default {
     name: 'CredentialsForm',
-    props: ['submitCallback', 'cancelCallback'],
+    props: ['submitLoginCallback', 'submitRegisterCallback', 'cancelCallback'],
     data() {
         return {
             username: '',
-            password: ''
+			password: '',
+			registered: false
         };
-    },
+	},
+	computed: {
+		showRegistration() {
+			return (!this.registered && typeof this.submitRegisterCallback === 'function') ? true : false;
+		}
+	},
     mounted() {
         EventBus.$on('modalClosed', this.cancelCallback);
     },
     methods: {
-        submit() {
-            const closeAfterCompletion = this.submitCallback(this.username, this.password);
-            if(closeAfterCompletion === true && this.$utils.isChildOfModal(this)) {
-                EventBus.$emit('closeModal');
-            }
-        },
+        submitLogin() {
+            this.submitLoginCallback(this.username, this.password)
+				.then(data => {
+					if(this.$utils.isChildOfModal(this)) {
+						EventBus.$emit('closeModal');
+					}
+				})
+				.catch(error => {});
+		},
+		submitRegister() {
+			var password = this.$refs.registerPassword.value;
+			this.submitRegisterCallback(password)
+				.then(data => {
+					this.registered = true;
+					this.username = data.user_id;
+					this.password = password;
+				})
+				.catch(error => {});
+		},
         cancel() {
             this.cancelCallback();
             if(this.$utils.isChildOfModal(this)) {
@@ -41,10 +68,13 @@ export default {
 </script>
 
 <style scoped>
-    input {
-        margin-right: 10px;
-    }
-    label {
-        margin-right: 5px;
-    }
+#registerForm {
+	margin-top: 1em;
+}
+input {
+	margin-right: 15px;
+}
+label {
+	margin-right: 5px;
+}
 </style>

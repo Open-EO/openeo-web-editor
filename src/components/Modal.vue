@@ -95,7 +95,7 @@ export default {
 <style>
 .modal {
     position: fixed;
-    z-index: 10000;
+    z-index: 9000; /* Snotify has 9999 and is intentionally above the modals */
     left: 0;
     top: 0;
     width: 100%;

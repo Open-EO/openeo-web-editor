@@ -74,7 +74,6 @@ export default {
 			this.$refs.table.addData(data);
 
 			var options = {
-				timeout: 10000,
 				buttons: []
 			};
 			options.buttons.push({text: 'View', action: () => this.viewService(data)});
