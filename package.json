@@ -1,6 +1,6 @@
 {
-  "name": "openeo-web-editor",
-  "version": "0.0.2",
+  "name": "@openeo/web-editor",
+  "version": "0.2.0",
   "author": "OpenEO Team",
   "contributors": [
     {
@@ -15,7 +15,7 @@
   ],
   "description": "A web-based editor for interactive usage of the OpenEO API (proof-of-concept).",
   "license": "Apache-2.0",
-  "homepage": "https://github.com/Open-EO/openeo-web-editor",
+  "homepage": "http://openeo.org",
   "bugs": {
     "url": "https://github.com/Open-EO/openeo-web-editor/issues"
   },
@@ -30,10 +30,10 @@
   "dependencies": {
     "codemirror": "^5.33.0",
     "leaflet": "^1.2.0",
-    "leaflet-fullscreen": "1.0.2",
-    "leaflet-geotiff": "git+https://github.com/m-mohr/leaflet-geotiff.git",
+    "leaflet-fullscreen": "^1.0.2",
+    "leaflet-geotiff": "^0.2.0",
     "leaflet-side-by-side": "^2.1.0",
-    "openeo-js-client": "git+https://github.com/Open-EO/openeo-js-client.git",
+    "openeo-js-client": "^0.2.0",
     "vue": "^2.5.13",
     "vue-snotify": "^2.0.1"
   },
