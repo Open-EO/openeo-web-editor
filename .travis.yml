@@ -5,6 +5,9 @@ node_js:
 
 sudo: false
 
+env:
+  - CLIENT_URL="/openeo-web-editor/demo/"
+
 script:
   - npm run build
   - rm -rf page
