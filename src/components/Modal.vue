@@ -58,18 +58,18 @@ export default {
 
 		initCommonModal(title) {
 			this.title = title;
+			this.body = null;
+			this.compname = null;
+			this.props = null;
 		},
 
 		initTextModal(title, body) {
 			this.initCommonModal(title);
 			this.body = body;
-			this.compname = null;
-			this.props = null;
 		},
 
 		initComponentModal(title, compname, props) {
 			this.initCommonModal(title);
-			this.body = null;
 			this.compname = compname;
 			this.props = props;
 		},

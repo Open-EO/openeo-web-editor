@@ -37,6 +37,9 @@ export default {
     mounted() {
         EventBus.$on('modalClosed', this.cancelCallback);
     },
+    destroyed() {
+        EventBus.$off('modalClosed', this.cancelCallback);
+    },
     methods: {
         submitLogin() {
             this.submitLoginCallback(this.username, this.password)
@@ -56,13 +59,7 @@ export default {
 					this.password = password;
 				})
 				.catch(error => {});
-		},
-        cancel() {
-            this.cancelCallback();
-            if(this.$utils.isChildOfModal(this)) {
-                EventBus.$emit('closeModal');
-            }
-        }
+		}
     }
 };
 </script>
