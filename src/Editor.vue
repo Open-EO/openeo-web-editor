@@ -72,7 +72,7 @@ import ProcessGraphPanel from './components/ProcessGraphPanel.vue';
 import ServicePanel from './components/ServicePanel.vue';
 import SourceEnvironment from './components/SourceEnvironment.vue';
 import axios from 'axios';
-import { OpenEO, Capabilities } from 'openeo-js-client/openeo.js';
+import { OpenEO, Capabilities } from '@openeo/js-client';
 import OpenEOVisualizations from './visualizations.js';
 
 // Making axios available globally for the OpenEO JS client

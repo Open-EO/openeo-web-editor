@@ -1,6 +1,0 @@
-{
-  "extends": [
-    "plugin:vue/essential",
-    "eslint:recommended"
-  ]
-}
