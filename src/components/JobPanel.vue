@@ -104,7 +104,7 @@ export default {
 				.then(data => {
 					EventBus.$emit('jobCreated', data);
 				}).catch(error => {
-					this.$utils.error(this, 'Sorry, could not create an OpenEO job.');
+					this.$utils.error(this, 'Sorry, could not create an openEO job.');
 				});
 		},
 		createJobFromScript(id) {

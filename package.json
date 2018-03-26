@@ -1,7 +1,7 @@
 {
   "name": "@openeo/web-editor",
   "version": "0.2.0",
-  "author": "OpenEO Team",
+  "author": "openEO Consortium",
   "contributors": [
     {
       "name": "Matthias Mohr"
@@ -13,7 +13,7 @@
       "name": "Miha Kadunc"
     }
   ],
-  "description": "A web-based editor for interactive usage of the OpenEO API (proof-of-concept).",
+  "description": "A web-based editor for interactive usage of the openEO API (proof-of-concept).",
   "license": "Apache-2.0",
   "homepage": "http://openeo.org",
   "bugs": {

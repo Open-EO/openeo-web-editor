@@ -1,5 +1,5 @@
-# OpenEO Web Editor
-A web-based editor for interactive usage of the OpenEO API (proof-of-concept).
+# openEO Web Editor
+A web-based editor for interactive usage of the openEO API (proof-of-concept).
 
 ## Usage
 You can use the **[demo](https://open-eo.github.io/openeo-web-editor/demo/)** or build the files yourself (see Development section) and deploy them to any web host.
@@ -12,4 +12,4 @@ You can use the **[demo](https://open-eo.github.io/openeo-web-editor/demo/)** or
     * or build the project by executing `npm run build` and uploading the content of the `dist` folder to your server.
 
 ## Important dependencies
-Built with [Vue.js](https://vuejs.org/), [Leaflet](http://leafletjs.com/), [CodeMirror](https://codemirror.net/) and the [OpenEO JS Client](https://github.com/Open-EO/openeo-js-client), of course.
+Built with [Vue.js](https://vuejs.org/), [Leaflet](http://leafletjs.com/), [CodeMirror](https://codemirror.net/) and the [openEO JS Client](https://github.com/Open-EO/openeo-js-client), of course.
