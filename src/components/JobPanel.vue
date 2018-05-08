@@ -55,12 +55,18 @@ export default {
 					filterable: false,
 					id: 'job_id'
 				}
-			}
+			},
+			// Watchers are available until the job subscription works
+			// ToDo: Afterwards everything related to this property can be removed.
+			watchers: []
 		};
 	},
 	created() {
 		EventBus.$on('jobCreated', this.jobCreated);
 		EventBus.$on('serverChanged', this.updateData);
+	},
+	mounted() {
+		window.setInterval(this.executeWatchers, 5000);
 	},
 	watch: { 
 		userId(newVal, oldVal) {
@@ -89,6 +95,10 @@ export default {
 			}
 		},
 		jobCreated(data) {
+			if (!this.$refs.table) {
+				return;
+			}
+
 			this.$refs.table.addData(data);
 
 			var options = {
@@ -124,6 +134,24 @@ export default {
 		},
 		updateJobData(data) {
 			this.$refs.table.replaceData(data);
+
+			// Watchers
+			var index = this.watchers.indexOf(data.job_id);
+			if (data.status.toLowerCase() == 'running' || data.status.toLowerCase() == 'queued') {
+				if (index === -1) {
+					this.watchers.push(data.job_id);
+				}
+			}
+			else {
+				delete this.watchers[index];
+			}
+		},
+		executeWatchers() {
+			console.log("Watcher running for...");
+			for(var i in this.watchers) {
+			console.log(this.watchers[i]);
+				this.updateJobDataById(this.watchers[i]);
+			}
 		},
 		showJobInfo(id) {
 			var jobApi = this.openEO.Jobs.getObject(id);
@@ -153,7 +181,12 @@ export default {
 		pauseJob(id) {
 			try {
 				var jobApi = this.openEO.Jobs.getObject(id);
-				jobApi.pause(); // ToDo
+				jobApi.pause()
+				.then(data => {
+					this.$utils.ok(this, "Job successfully paused.");
+					this.updateJobDataById(id);
+				})
+				.catch(error => this.$utils.error(this, "Sorry, could not pause job."));
 			} catch (e) {
 				this.$utils.error(this, e.message);
 			}
@@ -161,7 +194,12 @@ export default {
 		cancelJob(id) {
 			try {
 				var jobApi = this.openEO.Jobs.getObject(id);
-				jobApi.cancel(); // ToDo
+				jobApi.cancel()
+				.then(data => {
+					this.$utils.ok(this, "Job successfully canceled.");
+					this.updateJobDataById(id);
+				})
+				.catch(error => this.$utils.error(this, "Sorry, could not cancel job."));
 			} catch (e) {
 				this.$utils.error(this, e.message);
 			}

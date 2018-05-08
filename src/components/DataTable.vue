@@ -154,7 +154,7 @@ export default {
 			}
 			const index = this.data.findIndex(row => row[this.primaryKey] == newData[this.primaryKey]);
 			if (index >= 0) {
-				this.data[index] = newData;
+				this.$set(this.data, index, newData);
 			}
 			else {
 				this.data.push(newData);
