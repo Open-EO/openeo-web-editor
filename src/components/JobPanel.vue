@@ -137,19 +137,20 @@ export default {
 
 			// Watchers
 			var index = this.watchers.indexOf(data.job_id);
-			if (data.status.toLowerCase() == 'running' || data.status.toLowerCase() == 'queued') {
-				if (index === -1) {
-					this.watchers.push(data.job_id);
-				}
-			}
-			else {
-				delete this.watchers[index];
+			switch(data.status.toLowerCase()) {
+				case 'running':
+				case 'queued':
+				case 'unknown':
+					if (index === -1) {
+						this.watchers.push(data.job_id);
+					}
+					break;
+				default:
+					delete this.watchers[index];
 			}
 		},
 		executeWatchers() {
-			console.log("Watcher running for...");
 			for(var i in this.watchers) {
-			console.log(this.watchers[i]);
 				this.updateJobDataById(this.watchers[i]);
 			}
 		},
@@ -179,30 +180,20 @@ export default {
 				.catch(error => this.$utils.error(this, "Sorry, could not queue job."));
 		},
 		pauseJob(id) {
-			try {
-				var jobApi = this.openEO.Jobs.getObject(id);
-				jobApi.pause()
-				.then(data => {
+			var jobApi = this.openEO.Jobs.getObject(id);
+			jobApi.pause().then(data => {
 					this.$utils.ok(this, "Job successfully paused.");
 					this.updateJobDataById(id);
 				})
 				.catch(error => this.$utils.error(this, "Sorry, could not pause job."));
-			} catch (e) {
-				this.$utils.error(this, e.message);
-			}
 		},
 		cancelJob(id) {
-			try {
-				var jobApi = this.openEO.Jobs.getObject(id);
-				jobApi.cancel()
-				.then(data => {
+			var jobApi = this.openEO.Jobs.getObject(id);
+			jobApi.cancel().then(data => {
 					this.$utils.ok(this, "Job successfully canceled.");
 					this.updateJobDataById(id);
 				})
 				.catch(error => this.$utils.error(this, "Sorry, could not cancel job."));
-			} catch (e) {
-				this.$utils.error(this, e.message);
-			}
 		},
 		downloadJob(id, view = false) {
 			var format = prompt('Please specify the file format you need or leave empty for default format.', '');
