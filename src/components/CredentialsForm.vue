@@ -1,6 +1,6 @@
 <template>
     <div>
-		<form id="loginForm" @submit="submitLogin($event)">
+		<form id="loginForm" @submit.prevent="submitLogin">
 			<h3>Login</h3>
 			<label for="username">Username:</label>
 			<input id="username" type="text" v-model="username"/>
@@ -8,7 +8,7 @@
 			<input id="password" type="password" v-model="password"/>
 			<button type="submit">Login</button>
 		</form>
-		<form id="registerForm" @submit="submitRegister($event)" v-if="showRegistration">
+		<form id="registerForm" @submit.prevent="submitRegister" v-if="showRegistration">
 			<h3>Register</h3>
 			<label for="registerPassword">Password:</label>
 			<input id="registerPassword" type="password" ref="registerPassword"/>
@@ -49,11 +49,6 @@ export default {
 					}
 				})
 				.catch(error => {});
-			// Disable that the form action is executed.
-			if (event) {
-				event.preventDefault();
-			}
-			return false;
 		},
 		submitRegister(event) {
 			var password = this.$refs.registerPassword.value;
@@ -64,11 +59,6 @@ export default {
 					this.password = password;
 				})
 				.catch(error => {});
-			// Disable that the form action is executed.
-			if (event) {
-				event.preventDefault();
-			}
-			return false;
 		}
     }
 };
