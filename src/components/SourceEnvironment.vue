@@ -112,7 +112,7 @@ export default {
 			}
 			this.$utils.info(this, 'Data requested. Please wait...');
 			EventBus.$emit('evalScript', (script) => {
-				script.ProcessGraph.execute(format)
+				this.openEO.Jobs.executeSync(script.ProcessGraph, format)
 					.then(data => EventBus.$emit('showInViewer', data, script, format))
 					.catch(error => this.$utils.error(this, 'Sorry, could not execute script.'));
 			});
