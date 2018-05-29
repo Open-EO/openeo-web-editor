@@ -1,6 +1,6 @@
 <template>
     <div>
-		<form id="loginForm" action="#" @submit="submitLogin">
+		<form id="loginForm" @submit="submitLogin($event)">
 			<h3>Login</h3>
 			<label for="username">Username:</label>
 			<input id="username" type="text" v-model="username"/>
@@ -8,7 +8,7 @@
 			<input id="password" type="password" v-model="password"/>
 			<button type="submit">Login</button>
 		</form>
-		<form id="registerForm" action="#" @submit="submitRegister" v-if="showRegistration">
+		<form id="registerForm" @submit="submitRegister($event)" v-if="showRegistration">
 			<h3>Register</h3>
 			<label for="registerPassword">Password:</label>
 			<input id="registerPassword" type="password" ref="registerPassword"/>
@@ -41,7 +41,7 @@ export default {
         EventBus.$off('modalClosed', this.cancelCallback);
     },
     methods: {
-        submitLogin() {
+        submitLogin(event) {
             this.submitLoginCallback(this.username, this.password)
 				.then(data => {
 					if(this.$utils.isChildOfModal(this)) {
@@ -49,8 +49,13 @@ export default {
 					}
 				})
 				.catch(error => {});
+			// Disable that the form action is executed.
+			if (event) {
+				event.preventDefault();
+			}
+			return false;
 		},
-		submitRegister() {
+		submitRegister(event) {
 			var password = this.$refs.registerPassword.value;
 			this.submitRegisterCallback(password)
 				.then(data => {
@@ -59,6 +64,11 @@ export default {
 					this.password = password;
 				})
 				.catch(error => {});
+			// Disable that the form action is executed.
+			if (event) {
+				event.preventDefault();
+			}
+			return false;
 		}
     }
 };
