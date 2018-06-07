@@ -3,7 +3,7 @@
 		<h3>User '{{ userName }}'</h3>
 		<br>
 		<ul>
-			<li v-if="openEO.Capabilities.userCredits()">Credits: {{ credits === null ? 'N/A' : credits }} <button id="topUpCredits" v-if="credits !== null" @click="topUpCredits">Top up</button></li>
+			<li v-if="openEO.Capabilities.userCredits()">Credits: {{ credits === null ? 'N/A' : credits }}</li>
 		</ul>
 	</div>
 </template>
@@ -58,9 +58,6 @@ export default {
 					.then(data => {this.credits = data})
 					.catch(error => {this.credits = null; });
 			}
-		},
-		topUpCredits() {
-			this.$utils.error(this, 'Not implemented!');
 		}
 	}
 }
