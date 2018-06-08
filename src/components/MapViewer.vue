@@ -36,6 +36,7 @@ export default {
 	mounted() {
 		this.createMap();
 		EventBus.$on('viewWebService', this.viewWebService);
+		EventBus.$on('removeWebService', this.removeWebService);
 	},
 
 	methods: {
@@ -76,9 +77,9 @@ export default {
 
 		getShownLayers() {
 			var shownLayers = [];
-			for(var i in this.layer) {
-				if (this.map.hasLayer(this.layer[i])) {
-					shownLayers.push(this.layer[i]);
+			for(var id in this.layer) {
+				if (this.map.hasLayer(this.layer[id])) {
+					shownLayers.push(this.layer[id]);
 				}
 			}
 			return shownLayers;
@@ -96,16 +97,27 @@ export default {
 			}
 		},
 
-		addLayerToMap(layer) {
-			layer.addTo(this.map);
-			this.layerControl.addOverlay(layer, layer.options.name);
+		removeWebService(id) {
+			if(this.layer[id]) {
+				this.removeLayerFromMap(id);
+			}
+		},
+
+		addLayerToMap(id) {
+			this.layer[id].addTo(this.map);
+			this.layerControl.addOverlay(this.layer[id], this.layer[id].options.name);
+		},
+
+		removeLayerFromMap(id) {
+			this.layer[id].removeFrom(this.map);
+			this.layerControl.removeLayer(this.layer[id]);
+			delete this.layer[id];
 		},
 
 		removeOldLayer(except) {
-			for(var i in this.layer) {
-				if (this.layer[i] !== null && this.layer[i] !== except) {
-					this.map.removeLayer(this.layer[i]);
-					this.layer[i] = null;
+			for(var id in this.layer) {
+				if (this.layer[id] !== null && this.layer[id] !== except) {
+					this.removeLayerFromMap(id);
 				}
 			}
 		},
@@ -123,7 +135,7 @@ export default {
 					renderer: renderer
 				};
 				this.layer[id] = leafletGeotiff(url, opts);
-				this.addLayerToMap(this.layer[id]);
+				this.addLayerToMap(id);
 				EventBus.$emit('evalScript', (script) => {
 					renderer.setScript(script);
 				});
@@ -142,7 +154,7 @@ export default {
 				};
 				this.layer[id] = new L.TileLayer(url, opts);
 				this.extendTileLayerForVisualizations(this.layer[id]);
-				this.addLayerToMap(this.layer[id]);
+				this.addLayerToMap(id);
 			}
 			else {
 				this.layer[id].setUrl(url, false);
@@ -159,7 +171,7 @@ export default {
 				args.format = args.format || 'image/jpeg';
 				this.layer[id] = L.tileLayer.wms(service.service_url, args);
 				this.extendTileLayerForVisualizations(this.layer[id]);
-				this.addLayerToMap(this.layer[id]);
+				this.addLayerToMap(id);
 			}
 			else {
 				this.layer[id].setUrl(service.service_url, false);
