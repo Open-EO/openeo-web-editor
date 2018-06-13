@@ -132,6 +132,9 @@ export default {
 				throw new Error('No primary key specified.');
 			}
 			this.data = this.data.filter(row => row[this.primaryKey] != id);
+			if(this.data.length == 0) {
+				this.setNoData('');  // empty
+			}
 		},
 		addData(newData) {
 			if (typeof this.preprocessor === 'function') {
