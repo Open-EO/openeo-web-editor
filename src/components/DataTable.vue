@@ -10,7 +10,7 @@
 				<button @click="clearFilter" :disabled="!hasFilter"><i class="fas fa-times-circle"></i></button>
 			</div>
 		</div>
-		<table v-if="data.length > 0">
+		<table v-if="data.length > 0 || noDataMessage == undefined || noDataMessage == ''">
 			<tr>
 				<th v-for="(col, id) in columns" :key="id" :class="id">{{ col.name }}</th>
 			</tr>
@@ -104,6 +104,9 @@ export default {
 						if (Array.isArray(data) && data.length > 0) {
 							this.setData(data);
 						}
+						else if (Array.isArray(data) && data.length == 0) {
+							this.setNoData('');
+						}
 						else {
 							this.setNoData('Sorry, no data available.');
 						}
@@ -120,6 +123,7 @@ export default {
 			}
 		},
 		setData(data) {
+			this.noDataMessage = undefined;
 			if (typeof this.preprocessor === 'function') {
 				this.data = data.map(this.preprocessor);
 			}
