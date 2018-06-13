@@ -108,6 +108,7 @@ export default {
 			serviceApi.delete()
 				.then(data => {
 					this.$refs.table.removeData(id);
+					EventBus.$emit('removeWebService', id);
 				})
 				.catch(error => {
 					this.$utils.error(this, 'Sorry, could not delete service.');
