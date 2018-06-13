@@ -84,14 +84,17 @@ export default {
 			if (!this.$refs.table) {
 				return;
 			}
-			else if (typeof this.userId !== 'string' && typeof this.userId !== 'number') {
-				this.$refs.table.setNoData(401);
+			else if (!this.openEO.Capabilities.createJob()) {
+				this.$refs.table.setNoData(501);  // "feature not supported"
 			}
-			else if (this.openEO.Capabilities.userJobs()) {
-				this.$refs.table.retrieveData();
+			else if (!this.openEO.Capabilities.userJobs()) {
+				this.$refs.table.setNoData('Feature supported, but retrieval of stored data of this feature not supported.');
+			}
+			else if (typeof this.userId !== 'string' && typeof this.userId !== 'number') {
+				this.$refs.table.setNoData(401);  // "please authenticate"
 			}
 			else {
-				this.$refs.table.setNoData(this.openEO.Capabilities.createJob() ? '' : 501);
+				this.$refs.table.retrieveData();
 			}
 		},
 		jobCreated(data) {

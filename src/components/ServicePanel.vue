@@ -64,7 +64,7 @@ export default {
 				return;
 			}
 			else if (typeof this.userId !== 'string' && typeof this.userId !== 'number') {
-				this.$refs.table.setNoData(401);
+				this.$refs.table.setNoData(401);  // "please authenticate"
 			}
 			else {
 				this.$refs.table.retrieveData();
