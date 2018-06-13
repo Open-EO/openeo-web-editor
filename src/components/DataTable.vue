@@ -10,7 +10,7 @@
 				<button @click="clearFilter" :disabled="!hasFilter"><i class="fas fa-times-circle"></i></button>
 			</div>
 		</div>
-		<table v-if="data.length > 0">
+		<table v-if="data.length > 0 || noDataMessage == undefined || noDataMessage == ''">
 			<tr>
 				<th v-for="(col, id) in columns" :key="id" :class="id">{{ col.name }}</th>
 			</tr>
@@ -101,25 +101,33 @@ export default {
 			if (typeof this.dataSource === 'function') {
 				this.dataSource()
 					.then(data => {
-						if (Array.isArray(data) && data.length > 0) {
-							this.setData(data);
+						if (!Array.isArray(data)) {
+							this.setNoData('Invalid response from data source.');
+						}
+						else if(data.length == 0) {
+							this.setNoData('');  // empty
 						}
 						else {
-							this.setNoData('Sorry, no data available.');
+							this.setData(data);
 						}
 					})
 					.catch(error => {
 						this.setNoData(error);
 					});
 			}
-			else if(Array.isArray(this.dataSource) && this.dataSource.length > 0) {
-				this.setData(this.dataSource);
+			else if(Array.isArray(this.dataSource)) {
+				if(this.dataSource.length == 0) {
+					this.setNoData('');  // empty
+				} else {
+					this.setData(this.dataSource);
+				}
 			}
 			else {
-				this.setNoData('No data specified.');
+				this.setNoData('No valid data source specified.');
 			}
 		},
 		setData(data) {
+			this.noDataMessage = undefined;
 			if (typeof this.preprocessor === 'function') {
 				this.data = data.map(this.preprocessor);
 			}
@@ -132,6 +140,9 @@ export default {
 				throw new Error('No primary key specified.');
 			}
 			this.data = this.data.filter(row => row[this.primaryKey] != id);
+			if(this.data.length == 0) {
+				this.setNoData('');  // empty
+			}
 		},
 		addData(newData) {
 			if (typeof this.preprocessor === 'function') {
