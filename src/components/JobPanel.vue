@@ -234,7 +234,7 @@ export default {
 			if (view) {
 				// View in browser
 				EventBus.$emit('evalScript', (script) => {
-					EventBus.$emit('showInViewer', blob, script, format);
+					EventBus.$emit('showInViewer', blob, script);
 				});
 			}
 			else {
