@@ -2,7 +2,20 @@
 	<div id="container">
 		<div id="ide">
 			<BackendPanel :openEO="openEO" />
-			<SourceEnvironment :openEO="openEO" />
+			<div class="tabs" id="processGraphContent">
+				<div class="tabsHeader">
+					<button class="tabItem" name="graphTab" @click="changeProcessGraphTab"><i class="fas fa-code-branch"></i> Visual Builder</button>
+					<button class="tabItem" name="sourceTab" @click="changeProcessGraphTab"><i class="fas fa-code"></i> Source Code</button>
+				</div>
+				<div class="tabsBody">
+					<div class="tabContent" id="graphTab">
+						<GraphBuilderEnvironment :openEO="openEO" />
+					</div>
+					<div class="tabContent" id="sourceTab">
+						<SourceEnvironment :openEO="openEO" />
+					</div>
+				</div>
+			</div>
 			<div class="tabs" id="userContent">
 				<div class="tabsHeader">
 					<button class="tabItem" name="jobsTab" @click="changeUserTab"><i class="fas fa-tasks"></i> Jobs</button>
@@ -68,6 +81,7 @@ import ImageViewer from './components/ImageViewer.vue';
 import JobPanel from './components/JobPanel.vue';
 import MapViewer from './components/MapViewer.vue';
 import Modal from './components/Modal.vue';
+import GraphBuilderEnvironment from './components/GraphBuilderEnvironment.vue';
 import ProcessGraphPanel from './components/ProcessGraphPanel.vue';
 import ServicePanel from './components/ServicePanel.vue';
 import SourceEnvironment from './components/SourceEnvironment.vue';
@@ -89,6 +103,7 @@ export default {
 		AccountPanel,
 		BackendPanel,
 		DataViewer,
+		GraphBuilderEnvironment,
 		ImageViewer,
 		FilePanel,
 		JobPanel,
@@ -112,7 +127,9 @@ export default {
 			EventBus.$emit('changeServerUrl', this.$config.serverUrl);
 		}
 		this.resetActiveTab('userContent');
+		this.resetActiveTab('processGraphContent');
 
+		EventBus.$on('showEditor', this.showEditor);
 		EventBus.$on('showInViewer', this.showInViewer);
 		EventBus.$on('showMapViewer', this.showMapViewer);
 		EventBus.$on('showImageViewer', this.showImageViewer);
@@ -228,6 +245,10 @@ export default {
 		changeUserTab(evt) {
 			this.changeTab('userContent', evt);
 		},
+	
+		changeProcessGraphTab(evt) {
+			this.changeTab('processGraphContent', evt);
+		},
 
 		changeViewerTab(evt) {
 			this.changeTab('viewer', evt);
@@ -253,6 +274,10 @@ export default {
 					this.setTabActive(tablinks[i]);
 				}
 			}
+		},
+
+		showEditor() {
+			this.showTab('processGraphContent', 'sourceTab');
 		},
 
 		showMapViewer() {
@@ -371,7 +396,7 @@ ul, ol {
 	width: 50%;
 	overflow-y: auto;
 }
-#SourceEnvironment, #userContent, #viewer .tabs {
+#SourceEnvironment, #userContent, #viewer .tabs, #GraphBuilderEnvironment {
 	border: solid 1px #676767;
     margin: 1%;
 	background-color: #f7f7f7;

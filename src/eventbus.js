@@ -9,7 +9,13 @@ Fired when the server URL has been changed in the front-end and needs to update 
 ## serverChanged()
 The server has changed and the UI should be updated.
 
-## addToSource(string $code)
+## addDataToEditor(string $code)
+Adds the dataset to the editor.
+
+## addProcessToEditor(string $code)
+Adds the process to the editor.
+
+## addSourceCode(string $code, boolean $replace = false)
 Adds the code to the source code editor.
 
 ## viewWebService(object $service)

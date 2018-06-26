@@ -38,13 +38,14 @@ export default {
         EventBus.$on('modalClosed', this.cancelCallback);
     },
     destroyed() {
-        EventBus.$off('modalClosed', this.cancelCallback);
+     	EventBus.$off('modalClosed', this.cancelCallback);
     },
     methods: {
         submitLogin(event) {
             this.submitLoginCallback(this.username, this.password)
 				.then(data => {
 					if(this.$utils.isChildOfModal(this)) {
+     					EventBus.$off('modalClosed', this.cancelCallback);
 						EventBus.$emit('closeModal');
 					}
 				})

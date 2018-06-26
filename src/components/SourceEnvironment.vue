@@ -53,7 +53,9 @@ export default {
 	mounted() {
 		this.editor = CodeMirror(document.getElementById('sourceCodeEditor'), this.editorOptions);
 		this.editor.setValue(this.defaultScript);
-		EventBus.$on('addToSource', this.insertToEditor);
+		EventBus.$on('addSourceCode', this.insertToEditor);
+		EventBus.$on('addProcessToEditor', this.insertToEditor);
+		EventBus.$on('addDataToEditor', this.insertToEditor);
 		EventBus.$on('evalScript', this.evalScript);
 		var storedScripts = localStorage.getItem("savedScripts");
 		if (storedScripts !== null) {
@@ -177,8 +179,14 @@ export default {
 			this.$delete(this.savedScripts, name);
 		},
 
-		insertToEditor(text) {
-			this.editor.replaceSelection(text);
+		insertToEditor(text, replace = false) {
+			if (replace) {
+				this.editor.setValue(text);
+				this.scriptName = '';
+			}
+			else {
+				this.editor.replaceSelection(text);
+			}
 		}
 
 	}

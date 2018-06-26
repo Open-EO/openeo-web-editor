@@ -155,15 +155,11 @@ export default {
 		},
 
 		insertDataToEditor() {
-			this.insertToEditor(this.$refs.data.value);
+			EventBus.$emit('addDataToEditor', this.$refs.data.value);
 		},
 
 		insertProcessToEditor() {
-			this.insertToEditor(this.$refs.processes.value);
-		},
-
-		insertToEditor(code) {
-			EventBus.$emit('addToSource', code);
+			EventBus.$emit('addProcessToEditor', this.$refs.processes.value);
 		},
 	
 		setDiscoveredData(data) {
@@ -174,6 +170,7 @@ export default {
 				}
 				this.data.push(data[i]);
 			}
+			EventBus.$emit('propagateData', this.data);
 		},
 		
 		setDiscoveredProcesses(processes) {
@@ -184,6 +181,7 @@ export default {
 				}
 				this.processes.push(processes[i]);
 			}
+			EventBus.$emit('propagateProcesses', this.processes);
 		},
 	
 	insertVisualization() {
@@ -228,7 +226,7 @@ OpenEO.Editor.Visualization = {
 		else {
 			code = '';
 		}
-		this.insertToEditor(code);
+		EventBus.$emit('addSourceCode', code);
 	},
 
 	}
