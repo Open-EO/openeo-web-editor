@@ -13,23 +13,20 @@
 <script>
 import EventBus from '../eventbus.js';
 
-import Dracula from 'graphdracula';
-
 export default {
 	name: 'GraphBuilderEnvironment',
 	props: ['openEO'],
 	data() {
 		return {
-			blocks: null,
-			dataCounter: 0
+			blocks: null
 		};
 	},
 	mounted() {
 		EventBus.$on('propagateData', this.propagateData);
 		EventBus.$on('propagateProcesses', this.propagateProcesses);
+		EventBus.$on('serverChanged', this.resetBlocks);
 		
-		this.blocks = new Blocks();
-		this.blocks.run("#pgEditor");
+		this.resetBlocks();
 	},
 	methods: {
 		run() {
@@ -64,6 +61,16 @@ export default {
 			EventBus.$emit('addSourceCode', "OpenEO.Editor.ProcessGraph = " + JSON.stringify(pg, null, 2), true);
 			EventBus.$emit('showEditor');
 			console.log(JSON.stringify(pg, null, 2));
+		},
+
+		resetBlocks() {
+			if (this.blocks == null) {
+				this.blocks = new Blocks();
+				this.blocks.run("#pgEditor");
+			}
+			else {
+				this.blocks.meta = [];
+			}
 		},
 
 		makeProcessGraph(edges, currentNode) {
@@ -151,6 +158,7 @@ export default {
 }
 .sourceHeader {
 	padding: 5px;
+	border-bottom: dotted 1px #676767;
 }
 .sourceHeader:after {
     content: ".";
@@ -160,6 +168,6 @@ export default {
     height: 0px;
 }
 #pgEditor {
-	height: 500px;
+	height: 400px;
 }
 </style>

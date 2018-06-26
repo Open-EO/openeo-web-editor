@@ -19,6 +19,7 @@ import EventBus from '../eventbus.js';
 
 import 'codemirror/lib/codemirror.css';
 import 'codemirror/mode/javascript/javascript.js';
+import 'codemirror/addon/display/autorefresh.js';
 import CodeMirror from 'codemirror';
 
 export default {
@@ -36,7 +37,8 @@ export default {
 			editorOptions: {
 				mode: 'javascript',
 				indentUnit: 4,
-				lineNumbers: true
+				lineNumbers: true,
+				autoRefresh: true
 			},
 			editor: null,
 			defaultScript: this.$config.defaultScript
@@ -209,6 +211,7 @@ export default {
 }
 .sourceHeader {
 	padding: 5px;
+	border-bottom: dotted 1px #676767;
 }
 .sourceHeader:after {
     content: ".";
