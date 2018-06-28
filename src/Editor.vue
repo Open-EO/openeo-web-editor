@@ -504,17 +504,12 @@ footer {
 
 .blocks_js_editor .contextmenu,
 .blocks_js_editor .childs {
-    width:120px;
+    width:200px;
     padding:0px;
     position:absolute;
     display:none;
     float:left;
     z-index:99;
-}
-
-.blocks_js_editor .contextmenu,
-.blocks_js_editor .childs
-{
     box-shadow:0px 0px 5px #666;
     border:1px solid #aaa;
     background-color:#fff;
@@ -522,9 +517,6 @@ footer {
 
 .blocks_js_editor .menubar .add span {
     color:green;
-}
-
-.blocks_js_editor .contextmenu .types {
 }
 
 .blocks_js_editor .contextmenu .type,
@@ -535,7 +527,6 @@ footer {
     cursor:pointer;
     background-color:#fff;
     height:18px;
-    background-image:url('http://gregwar.com/blocks.js/build/gfx/menufade.png');
     color:#666;
     border-left:1px solid #aaa;
     border-right:1px solid #aaa;
@@ -569,7 +560,7 @@ footer {
 .blocks_js_editor .contextmenu .family:hover,
 .blocks_js_editor .contextmenu .menuentry:hover,
 .blocks_js_editor .contextmenu .type:hover {
-    background-image:url('http://gregwar.com/blocks.js/build/gfx/menufadeOver.png');
+    background-color: #f7f7f7;
     color:black;
 }
 
