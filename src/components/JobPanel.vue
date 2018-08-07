@@ -13,7 +13,7 @@
 			<button title="Download" @click="downloadJob(p.row[p.col.id])" v-show="openEO.Capabilities.downloadJob()"><i class="fas fa-download"></i></button>
 			<button title="View results" @click="downloadJob(p.row[p.col.id], true)" v-show="openEO.Capabilities.downloadJob()"><i class="fas fa-eye"></i></button>
 			<button title="Create Service" @click="createServiceFromJob(p.row[p.col.id])" v-show="openEO.Capabilities.createService()"><i class="fas fa-plus"></i> <i class="fas fa-cloud"></i></button>
-			<button title="Subscribe" @click="subscribeToJob(p.row[p.col.id])" v-show="openEO.Capabilities.subscribeToJob()"><i class="fas fa-plus"></i> <i class="fas fa-bell"></i></button>
+			<button title="Subscribe" @click="subscribeToJob(p.row[p.col.id])" v-show="openEO.Capabilities.subscription()"><i class="fas fa-bell"></i></button>
 		</template>
 	</DataTable>
 </template>
@@ -264,8 +264,14 @@ export default {
 			});
 		},
 		subscribeToJob(id) {
-			var jobApi = this.openEO.Jobs.getObject(id);
-			jobApi.subscribe();
+			this.openEO.API.subscribe(
+				() => {
+					console.log('WebSocket connection has been opened successfully.');
+				},
+				(event) => {
+					console.log("Received: " + event.data);
+				}
+			);
 		}
 	}
 }
