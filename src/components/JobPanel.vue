@@ -265,11 +265,12 @@ export default {
 		},
 		subscribeToJob(id) {
 			this.openEO.API.subscribe(
-				() => {
-					console.log('WebSocket connection has been opened successfully.');
+				'openeo.jobs.debug',
+				{
+					job_id: id
 				},
-				(event) => {
-					console.log("Received: " + event.data);
+				(data, info) => {
+					console.log("Debugging information for job " + id + ": " + JSON.stringify(data));
 				}
 			);
 		}
