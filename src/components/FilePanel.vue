@@ -7,6 +7,8 @@
 				<span id="uploadUserFileStatus"></span>
 			</span>
 			<button title="Refresh files" @click="updateData()"><i class="fas fa-sync-alt"></i></button> <!-- ToDo: Should be done automatically later -->
+			<button title="Subscribe to all changes to the file directory" @click="subscribeToFileChanges()"><i class="fas fa-bell"></i></button>
+			<button title="Unsubscribe from all changes to the file directory" @click="unsubscribeFromFileChanges()"><i class="fas fa-bell-slash"></i></button>
 		</template>
 		<template slot="actions" slot-scope="p">
 			<button title="Download" @click="downloadFile(p.row[p.col.id])" v-show="openEO.Capabilities.downloadUserFile()"><i class="fas fa-download"></i></button>
@@ -113,6 +115,18 @@ export default {
 				.catch(error => {
 					this.$utils.error(this, 'Sorry, could not delete file.');
 				});
+		},
+		subscribeToFileChanges() {
+			this.openEO.API.subscribe(
+				'openeo.files',
+				{},
+				(data, info) => {
+					console.log("File change: " + JSON.stringify(data));
+				}
+			);
+		},
+		unsubscribeFromFileChanges(id) {
+			this.openEO.API.unsubscribe('openeo.files', {});
 		}
 	}
 }
