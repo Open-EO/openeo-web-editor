@@ -7,12 +7,15 @@
 					<button class="tabItem" name="graphTab" @click="changeProcessGraphTab"><i class="fas fa-code-branch"></i> Visual Builder</button>
 					<button class="tabItem" name="sourceTab" @click="changeProcessGraphTab"><i class="fas fa-code"></i> Source Code</button>
 				</div>
+				<div class="tabsActions">
+					<button @click="executeProcessGraph" title="Run current process graph and view results" v-if="openEO.Capabilities.executeJob()"><i class="fas fa-play"></i></button>
+				</div>
 				<div class="tabsBody">
 					<div class="tabContent" id="graphTab">
-						<GraphBuilderEnvironment :openEO="openEO" />
+						<GraphBuilderEnvironment ref="graphBuilder" :openEO="openEO" />
 					</div>
 					<div class="tabContent" id="sourceTab">
-						<SourceEnvironment :openEO="openEO" />
+						<SourceEnvironment ref="sourceEditor" :openEO="openEO" />
 					</div>
 				</div>
 			</div>
@@ -134,6 +137,7 @@ export default {
 		EventBus.$on('showMapViewer', this.showMapViewer);
 		EventBus.$on('showImageViewer', this.showImageViewer);
 		EventBus.$on('showDataViewer', this.showDataViewer);
+		EventBus.$on('getProcessGraph', this.getProcessGraph);
 	},
 	methods: {
 
@@ -276,6 +280,20 @@ export default {
 			}
 		},
 
+		isTabActive(tabName) {
+			var elem = document.getElementById(tabName);
+			if (elem.className && elem.className.indexOf(' tabActive') !== -1) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		},
+
+		isVisualBuilderActive() {
+			return this.isTabActive('graphTab');
+		},
+
 		showEditor() {
 			this.showTab('processGraphContent', 'sourceTab');
 		},
@@ -328,6 +346,28 @@ export default {
 				default:
 					this.$utils.error(this, "Sorry, the returned content type is not supported to view.");
 			}
+		},
+
+		getProcessGraph(callback) {
+			if (this.isVisualBuilderActive()) {
+				this.$refs.graphBuilder.getProcessGraph(callback);
+			}
+			else {
+				this.$refs.sourceEditor.getProcessGraph(callback);
+			}
+		},
+
+		executeProcessGraph() {
+			var format = prompt('Please specify the file format:', '');
+			if (format === null) {
+				return;
+			}
+			this.$utils.info(this, 'Data requested. Please wait...');
+			EventBus.$emit('getProcessGraph', (script) => {
+				this.openEO.Jobs.executeSync(script.ProcessGraph, format)
+					.then(data => EventBus.$emit('showInViewer', data, script, format))
+					.catch(error => this.$utils.error(this, 'Sorry, could not execute script.'));
+			});
 		},
 
 		getMimeTypeForOutputFormat(originalOutputFormat) {
@@ -410,6 +450,19 @@ ul, ol {
 }
 #viewer .tabsHeader {
 	height: calc(1em + 16px);
+}
+#processGraphContent .tabsHeader {
+	float: left;
+	width: 80%;
+}
+#processGraphContent .tabsActions {
+	text-align: right;
+	float: right;
+	width: 10%;
+	padding: 4px 5px 0px 0px;
+}
+#processGraphContent .tabsBody {
+	clear: both;
 }
 #viewer .tabs {
 	height: 97%;

@@ -2,8 +2,8 @@
 	<div id="GraphBuilderEnvironment">
 		<div class="sourceHeader">
 			<h3>Visual Process Graph Builder</h3>
-			<div class="sourceToolbar">	
-				<button @click="run()">Generate Process Graph</button>
+			<div class="sourceToolbar">
+				<button @click="convertModel" title="Generate Process Graph"><i class="fas fa-code"></i></button>
 			</div>
 		</div>
 		<div id="pgEditor"></div>
@@ -29,7 +29,37 @@ export default {
 		this.resetBlocks();
 	},
 	methods: {
-		run() {
+		getProcessGraph(callback) {
+			var instructions = {
+				ProcessGraph: this.makeProcessGraph(),
+				Visualization: {
+					function: undefined, // Don't use null, typeof null is object in JS.
+					args: {}
+				}
+			};
+
+			callback(instructions);
+		},
+
+		convertModel() {
+			var pg = this.makeProcessGraph();
+
+			// ToDo: Don't emit separately
+			EventBus.$emit('addSourceCode', "OpenEO.Editor.ProcessGraph = " + JSON.stringify(pg, null, 2), true);
+			EventBus.$emit('showEditor');
+		},
+
+		resetBlocks() {
+			if (this.blocks == null) {
+				this.blocks = new Blocks();
+				this.blocks.run("#pgEditor");
+			}
+			else {
+				this.blocks.meta = [];
+			}
+		},
+
+		makeProcessGraph() {
 			var data = this.blocks.export();
 			var edges = data.edges;
 			var nodes = data.blocks;
@@ -56,28 +86,16 @@ export default {
 			var startBlockId = nodeIdList[0];
 
 			// Create Process Graph
-			var pg = this.makeProcessGraph(edges, nodesById[startBlockId]);
-			// ToDo: Don't emit separately
-			EventBus.$emit('addSourceCode', "OpenEO.Editor.ProcessGraph = " + JSON.stringify(pg, null, 2), true);
-			EventBus.$emit('showEditor');
+			var pg = this.makeProcessGraphFromEdges(edges, nodesById[startBlockId]);
 			console.log(JSON.stringify(pg, null, 2));
+			return pg;
 		},
 
-		resetBlocks() {
-			if (this.blocks == null) {
-				this.blocks = new Blocks();
-				this.blocks.run("#pgEditor");
-			}
-			else {
-				this.blocks.meta = [];
-			}
-		},
-
-		makeProcessGraph(edges, currentNode) {
+		makeProcessGraphFromEdges(edges, currentNode) {
 			var parents = [];
 			for(var i in edges) {
 				if (edges[i].block2 == currentNode.id) {
-					parents.push(this.makeProcessGraph(edges, edges[i].block1ref));
+					parents.push(this.makeProcessGraphFromEdges(edges, edges[i].block1ref));
 				}
 			}
 			if (currentNode.module == 'Data') {

@@ -3,7 +3,6 @@
 		<div class="sourceHeader">
 			<h3>Script: <em id="scriptName">{{ scriptName }}</em></h3>
 			<div class="sourceToolbar">
-				<button @click="executeScript" title="Run current script and view results" v-if="openEO.Capabilities.executeJob()" class="executeScript"><i class="fas fa-play"></i></button>
 				<button @click="newScript" title="Clear current script / New script"><i class="fas fa-file"></i></button>
 				<button @click="loadScript()" title="Load script from local storage"><i class="fas fa-folder-open"></i></button>
 				<button @click="saveScript" title="Save script to local storage"><i class="fas fa-save"></i></button>
@@ -58,14 +57,13 @@ export default {
 		EventBus.$on('addSourceCode', this.insertToEditor);
 		EventBus.$on('addProcessToEditor', this.insertToEditor);
 		EventBus.$on('addDataToEditor', this.insertToEditor);
-		EventBus.$on('evalScript', this.evalScript);
 		var storedScripts = localStorage.getItem("savedScripts");
 		if (storedScripts !== null) {
 			this.savedScripts = JSON.parse(storedScripts);
 		}
 	},
 	methods: {
-		evalScript(callback) {
+		getProcessGraph(callback) {
 			var OpenEO = this.openEO;
 			OpenEO.Editor = {
 				ProcessGraph: {},
@@ -107,19 +105,6 @@ export default {
 
 		storageName(name) {
 			return name.replace('.', '_');
-		},
-
-		executeScript() {
-			var format = prompt('Please specify the file format:', '');
-			if (format === null) {
-				return;
-			}
-			this.$utils.info(this, 'Data requested. Please wait...');
-			EventBus.$emit('evalScript', (script) => {
-				this.openEO.Jobs.executeSync(script.ProcessGraph, format)
-					.then(data => EventBus.$emit('showInViewer', data, script, format))
-					.catch(error => this.$utils.error(this, 'Sorry, could not execute script.'));
-			});
 		},
 
 		newScript() {
@@ -196,9 +181,6 @@ export default {
 </script>
 
 <style scoped>
-.executeScript {
-	margin-right: 3%;
-}
 .sourceHeader h3 {
 	margin-top: 1px;
 	float: left;

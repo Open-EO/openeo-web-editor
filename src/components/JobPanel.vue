@@ -127,7 +127,7 @@ export default {
 			if (format === null) {
 				return;
 			}
-			EventBus.$emit('evalScript', (script) => {
+			EventBus.$emit('getProcessGraph', (script) => {
 				this.createJob(script, format);
 			});
 		},
@@ -167,7 +167,7 @@ export default {
 				.catch(error => this.$utils.error(this, 'Sorry, could not load job details.'));
 		},
 		editJob(id) {
-			EventBus.$emit('evalScript', (script) => {
+			EventBus.$emit('getProcessGraph', (script) => {
 				var jobApi = this.openEO.Jobs.getObject(id);
 				jobApi.modify(script.ProcessGraph, {});
 				this.updateJobDataById(id);
@@ -233,7 +233,7 @@ export default {
 		handleDownloadedData(blob, view, filename = null) {
 			if (view) {
 				// View in browser
-				EventBus.$emit('evalScript', (script) => {
+				EventBus.$emit('getProcessGraph', (script) => {
 					EventBus.$emit('showInViewer', blob, script);
 				});
 			}

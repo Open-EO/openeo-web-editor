@@ -24,8 +24,8 @@ Shows a web service on the map.
 ## removeWebService(string $id)
 Removes a web service from the map.
 
-## evalScript(callback $callback)
-Triggers the script currently in the editor to be evaluated runs the callback using the data from the evaluation.
+## getProcessGraph(callback $callback)
+Triggers the script/model currently in the editor to be evaluated runs the callback using the data from the evaluation.
 
 ## jobCreated(object $data)
 Triggered when a job was created successfully.
