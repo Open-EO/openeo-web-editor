@@ -136,7 +136,7 @@ export default {
 				};
 				this.layer[id] = leafletGeotiff(url, opts);
 				this.addLayerToMap(id);
-				EventBus.$emit('getProcessGraph', (script) => {
+				EventBus.$emit('getVisualization', (script) => {
 					renderer.setScript(script);
 				});
 			}
@@ -207,7 +207,7 @@ export default {
 		},
 
 		recolor(tile) {
-			EventBus.$emit('getProcessGraph', (script) => {
+			EventBus.$emit('getVisualization', (script) => {
 				this.$utils.recolorImage(tile, script);
 			});
 		}

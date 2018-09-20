@@ -57,6 +57,7 @@ export default {
 		EventBus.$on('addSourceCode', this.insertToEditor);
 		EventBus.$on('addProcessToEditor', this.insertToEditor);
 		EventBus.$on('addDataToEditor', this.insertToEditor);
+		EventBus.$on('getVisualization', this.getProcessGraph);
 		var storedScripts = localStorage.getItem("savedScripts");
 		if (storedScripts !== null) {
 			this.savedScripts = JSON.parse(storedScripts);

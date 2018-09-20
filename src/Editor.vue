@@ -138,6 +138,7 @@ export default {
 		EventBus.$on('showImageViewer', this.showImageViewer);
 		EventBus.$on('showDataViewer', this.showDataViewer);
 		EventBus.$on('getProcessGraph', this.getProcessGraph);
+//		EventBus.$on('getVisualization', ...);
 	},
 	methods: {
 

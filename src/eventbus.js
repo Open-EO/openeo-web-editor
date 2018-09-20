@@ -27,6 +27,9 @@ Removes a web service from the map.
 ## getProcessGraph(callback $callback)
 Triggers the script/model currently in the editor to be evaluated runs the callback using the data from the evaluation.
 
+## getVisualization(callback $callback)
+Get the visualization script from the editor.
+
 ## jobCreated(object $data)
 Triggered when a job was created successfully.
 
