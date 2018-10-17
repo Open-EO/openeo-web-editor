@@ -1,6 +1,6 @@
 {
   "name": "@openeo/web-editor",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "author": "openEO Consortium",
   "contributors": [
     {
@@ -11,6 +11,9 @@
     },
     {
       "name": "Miha Kadunc"
+    },
+    {
+      "name": "Christoph Friedrich"
     }
   ],
   "description": "A web-based editor for interactive usage of the openEO API (proof-of-concept).",
@@ -38,8 +41,8 @@
     "vue-snotify": "^2.0.1"
   },
   "devDependencies": {
-    "@vue/cli-plugin-babel": "^3.0.0-beta.12",
-    "@vue/cli-service": "^3.0.0-beta.12",
+    "@vue/cli-plugin-babel": "^3.0.4",
+    "@vue/cli-service": "^3.0.4",
     "vue-template-compiler": "^2.5.16"
   },
   "browserslist": [
