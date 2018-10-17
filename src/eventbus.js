@@ -9,7 +9,13 @@ Fired when the server URL has been changed in the front-end and needs to update 
 ## serverChanged()
 The server has changed and the UI should be updated.
 
-## addToSource(string $code)
+## addDataToEditor(string $code)
+Adds the dataset to the editor.
+
+## addProcessToEditor(string $code)
+Adds the process to the editor.
+
+## addSourceCode(string $code, boolean $replace = false)
 Adds the code to the source code editor.
 
 ## viewWebService(object $service)
@@ -18,8 +24,11 @@ Shows a web service on the map.
 ## removeWebService(string $id)
 Removes a web service from the map.
 
-## evalScript(callback $callback)
-Triggers the script currently in the editor to be evaluated runs the callback using the data from the evaluation.
+## getProcessGraph(callback $callback)
+Triggers the script/model currently in the editor to be evaluated runs the callback using the data from the evaluation.
+
+## getVisualization(callback $callback)
+Get the visualization script from the editor.
 
 ## jobCreated(object $data)
 Triggered when a job was created successfully.

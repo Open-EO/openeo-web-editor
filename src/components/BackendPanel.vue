@@ -23,7 +23,8 @@
 			<button id="insertProcesses" @click="insertProcessToEditor" title="Insert into script"><i class="fas fa-plus"></i></button>
 			<button @click="showProcessInfo" title="Show details" v-show="openEO.Capabilities.processInfo()"><i class="fas fa-info"></i></button>
 		</div>
-		<div class="vis-toolbar">
+		<!-- ToDo: Move to Source/Model environment and make a modal, not adapted to visual model builder yet -->
+<!--	<div class="vis-toolbar">
 			Visualizations: <select id="visualizations">
 				<option value="">None</option>
 				<option value="custom">Custom function</option>
@@ -31,7 +32,7 @@
 					<option v-for="(v, k) in openEO.Visualizations" :key="k" :value="k">{{ v.name }}</option>
 				</optgroup>
 			</select> <button id="insertVisualizations" title="Insert into script" @click="insertVisualization"><i class="fas fa-plus"></i></button>
-		</div>
+		</div> -->
 	</div>
 </template>
 
@@ -155,15 +156,11 @@ export default {
 		},
 
 		insertDataToEditor() {
-			this.insertToEditor(this.$refs.data.value);
+			EventBus.$emit('addDataToEditor', this.$refs.data.value);
 		},
 
 		insertProcessToEditor() {
-			this.insertToEditor(this.$refs.processes.value);
-		},
-
-		insertToEditor(code) {
-			EventBus.$emit('addToSource', code);
+			EventBus.$emit('addProcessToEditor', this.$refs.processes.value);
 		},
 	
 		setDiscoveredData(data) {
@@ -174,6 +171,7 @@ export default {
 				}
 				this.data.push(data[i]);
 			}
+			EventBus.$emit('propagateData', this.data);
 		},
 		
 		setDiscoveredProcesses(processes) {
@@ -184,6 +182,7 @@ export default {
 				}
 				this.processes.push(processes[i]);
 			}
+			EventBus.$emit('propagateProcesses', this.processes);
 		},
 	
 	insertVisualization() {
@@ -228,7 +227,7 @@ OpenEO.Editor.Visualization = {
 		else {
 			code = '';
 		}
-		this.insertToEditor(code);
+		EventBus.$emit('addSourceCode', code);
 	},
 
 	}

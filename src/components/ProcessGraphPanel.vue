@@ -67,7 +67,7 @@ export default {
 			}
 		},
 		addGraph() {
-			EventBus.$emit('evalScript', (script) => {
+			EventBus.$emit('getProcessGraph', (script) => {
 				var userApi = this.openEO.Users.getObject(this.userId);
 				userApi.createProcessGraph(script.ProcessGraph)
 					.then(data => {
@@ -88,7 +88,7 @@ export default {
 				.catch(error => this.$utils.error(this, 'Sorry, could not load process graph.'));
 		},
 		editGraph(id) {
-			EventBus.$emit('evalScript', (script) => {
+			EventBus.$emit('getProcessGraph', (script) => {
 				var pgApi = this.openEO.Users.getObject(this.userId).getProcessGraphObject(id);
 				pgApi.replace(script.ProcessGraph)
 					.then(data => {
