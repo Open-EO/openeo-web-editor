@@ -13,6 +13,8 @@
 			<button title="Download" @click="downloadJob(p.row[p.col.id])" v-show="openEO.Capabilities.downloadJob()"><i class="fas fa-download"></i></button>
 			<button title="View results" @click="downloadJob(p.row[p.col.id], true)" v-show="openEO.Capabilities.downloadJob()"><i class="fas fa-eye"></i></button>
 			<button title="Create Service" @click="createServiceFromJob(p.row[p.col.id])" v-show="openEO.Capabilities.createService()"><i class="fas fa-plus"></i> <i class="fas fa-cloud"></i></button>
+			<button title="Subscribe" @click="subscribeToJob(p.row[p.col.id])" v-show="openEO.Capabilities.subscription() && !jobSubscriptions.includes(p.row[p.col.id])"><i class="fas fa-bell"></i></button>
+			<button title="Unsubscribe" @click="unsubscribeFromJob(p.row[p.col.id])" v-show="openEO.Capabilities.subscription() && jobSubscriptions.includes(p.row[p.col.id])"><i class="fas fa-bell-slash"></i></button>
 		</template>
 	</DataTable>
 </template>
@@ -56,6 +58,7 @@ export default {
 					id: 'job_id'
 				}
 			},
+			jobSubscriptions: [],
 			// Watchers are available until the job subscription works
 			// ToDo: Afterwards everything related to this property can be removed.
 			watchers: []
@@ -261,6 +264,27 @@ export default {
 			}).catch(error => {
 				this.$utils.error(this, "Sorry, an error occured.");
 			});
+		},
+		subscribeToJob(id) {
+			this.openEO.API.subscribe(
+				'openeo.jobs.debug',
+				{
+					job_id: id
+				},
+				(data, info) => {
+					console.log("Debugging information for job " + id + ": " + JSON.stringify(data));
+				}
+			);
+			this.jobSubscriptions.push(id);
+		},
+		unsubscribeFromJob(id) {
+			this.openEO.API.unsubscribe(
+				'openeo.jobs.debug',
+				{
+					job_id: id
+				}
+			);
+			this.jobSubscriptions.splice(this.jobSubscriptions.indexOf(id), 1);
 		}
 	}
 }
