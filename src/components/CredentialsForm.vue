@@ -8,12 +8,6 @@
 			<input id="password" type="password" v-model="password"/>
 			<button type="submit">Login</button>
 		</form>
-		<form id="registerForm" @submit.prevent="submitRegister" v-if="showRegistration">
-			<h3>Register</h3>
-			<label for="registerPassword">Password:</label>
-			<input id="registerPassword" type="password" ref="registerPassword"/>
-			<button type="submit">Register</button>
-		</form>
     </div>
 </template>
 
@@ -21,18 +15,12 @@
 import EventBus from '../eventbus.js';
 export default {
     name: 'CredentialsForm',
-    props: ['submitLoginCallback', 'submitRegisterCallback', 'cancelCallback'],
+    props: ['submitLoginCallback', 'cancelCallback'],
     data() {
         return {
             username: '',
-			password: '',
-			registered: false
+			password: ''
         };
-	},
-	computed: {
-		showRegistration() {
-			return (!this.registered && typeof this.submitRegisterCallback === 'function') ? true : false;
-		}
 	},
     mounted() {
         EventBus.$on('modalClosed', this.cancelCallback);
@@ -50,25 +38,12 @@ export default {
 					}
 				})
 				.catch(error => {});
-		},
-		submitRegister(event) {
-			var password = this.$refs.registerPassword.value;
-			this.submitRegisterCallback(password)
-				.then(data => {
-					this.registered = true;
-					this.username = data.user_id;
-					this.password = password;
-				})
-				.catch(error => {});
 		}
     }
 };
 </script>
 
 <style scoped>
-#registerForm {
-	margin-top: 1em;
-}
 input {
 	margin-right: 15px;
 }

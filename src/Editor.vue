@@ -214,19 +214,6 @@ export default {
 						EventBus.$emit('serverChanged');
 					}
 				};
-				if (this.openEO.Capabilities.userRegister()) {
-					opts.submitRegisterCallback = (password) => {
-						return this.openEO.Auth.register(password)
-							.then(data => {
-								this.$utils.ok(this, 'Registration successful. Your new username is: ' + data.user_id);
-								return data;
-							})
-							.catch(error => {
-								this.$utils.error(this, 'Sorry, registration failed. Try to choose another password.');
-								throw error;
-							});
-					};
-				}
 				EventBus.$emit('showComponentModal', 'Enter your credentials', 'CredentialsForm', opts);
 			}
 			else {
