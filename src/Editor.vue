@@ -8,7 +8,7 @@
 					<button class="tabItem" name="sourceTab" @click="changeProcessGraphTab"><i class="fas fa-code"></i> Source Code</button>
 				</div>
 				<div class="tabsActions">
-					<button @click="executeProcessGraph" title="Run current process graph and view results" v-if="openEO.Capabilities.executeJob()"><i class="fas fa-play"></i></button>
+					<button @click="executeProcessGraph" title="Run current process graph and view results" v-if="this.capabilities && this.capabilities.hasFeature('startJob')"><i class="fas fa-play"></i></button>
 				</div>
 				<div class="tabsBody">
 					<div class="tabContent" id="graphTab">
@@ -22,22 +22,22 @@
 			<div class="tabs" id="userContent">
 				<div class="tabsHeader">
 					<button class="tabItem" name="jobsTab" @click="changeUserTab"><i class="fas fa-tasks"></i> Jobs</button>
-					<button class="tabItem" name="servicesTab" @click="changeUserTab" v-show="this.openEO.Capabilities.createService()"><i class="fas fa-cloud"></i> Services</button>
-					<button class="tabItem" name="processGraphsTab" @click="changeUserTab" v-show="this.openEO.Capabilities.userProcessGraphs()"><i class="fas fa-code-branch"></i> Process Graphs</button>
-					<button class="tabItem" name="filesTab" @click="changeUserTab" v-show="this.openEO.Capabilities.userFiles()"><i class="fas fa-file"></i> Files</button>
+					<button class="tabItem" name="servicesTab" @click="changeUserTab" v-show="this.capabilities && this.capabilities.hasFeature('createService')"><i class="fas fa-cloud"></i> Services</button>
+					<button class="tabItem" name="processGraphsTab" @click="changeUserTab" v-show="this.capabilities && this.capabilities.hasFeature('createProcessGraph')"><i class="fas fa-code-branch"></i> Process Graphs</button>
+					<button class="tabItem" name="filesTab" @click="changeUserTab" v-show="this.capabilities && this.capabilities.hasFeature('uploadFile')"><i class="fas fa-file"></i> Files</button>
 					<button class="tabItem" name="accountTab" @click="changeUserTab"><i class="fas fa-user"></i> Account</button>
 				</div>
 				<div class="tabsBody">
 					<div class="tabContent" id="jobsTab">
 						<JobPanel :userId="openEO.Auth.userId" :openEO="openEO" />
 					</div>
-					<div class="tabContent" id="servicesTab" v-show="this.openEO.Capabilities.createService()">
+					<div class="tabContent" id="servicesTab" v-show="this.capabilities && this.capabilities.hasFeature('createService')">
 						<ServicePanel ref="servicePanel" :userId="openEO.Auth.userId" :openEO="openEO" />
 					</div>
-					<div class="tabContent" id="processGraphsTab" v-show="this.openEO.Capabilities.userProcessGraphs()">
+					<div class="tabContent" id="processGraphsTab" v-show="this.capabilities && this.capabilities.hasFeature('createProcessGraph')">
 						<ProcessGraphPanel :userId="openEO.Auth.userId" :openEO="openEO" />
 					</div>
-					<div class="tabContent" id="filesTab" v-show="this.openEO.Capabilities.userFiles()">
+					<div class="tabContent" id="filesTab" v-show="this.capabilities && this.capabilities.hasFeature('uploadFile')">
 						<FilePanel :userId="openEO.Auth.userId" :openEO="openEO" />
 					</div>
 					<div class="tabContent" id="accountTab">
