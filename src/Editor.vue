@@ -151,13 +151,6 @@ export default {
 			this.openEO.API.baseUrl = url;
 			// Invalidate old user id
 			this.openEO.Auth.reset();
-			// ToDo: Remove the driver switch after proof-of-concept
-			if (url.indexOf('/api') !== -1) {
-				this.openEO.API.driver = 'openeo-r-backend';
-			}
-			else {
-				this.openEO.API.driver = 'other';
-			}
 			// Request authentication
 			// ToDo: Problem: Auth is fired to late, BackendPanel updates earlier...
 			this.requestCapabilities();
