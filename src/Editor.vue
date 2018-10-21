@@ -89,16 +89,11 @@ import ProcessGraphPanel from './components/ProcessGraphPanel.vue';
 import ServicePanel from './components/ServicePanel.vue';
 import SourceEnvironment from './components/SourceEnvironment.vue';
 import axios from 'axios';
-import { OpenEO, Capabilities } from '@openeo/js-client';
+import { OpenEO } from '@openeo/js-client';
 import OpenEOVisualizations from './visualizations.js';
 
 // Making axios available globally for the OpenEO JS client
 window.axios = axios;
-
-OpenEO.Visualizations = OpenEOVisualizations;
-OpenEO.Capabilities = new Capabilities();
-OpenEO.SupportedOutputFormats = {};
-OpenEO.SupportedServices = [];
 
 export default {
 	name: 'openeo-web-editor',
@@ -118,7 +113,12 @@ export default {
 	},
 	data() {
 		return {
-			openEO: OpenEO
+			openEO: new OpenEO(),
+			connection: undefined,
+			capabilities: undefined,
+			supportedOutputFormats: undefined,
+			supportedServices: undefined,
+			visualizations: OpenEOVisualizations
 		};
 	},
 	created() {
@@ -143,14 +143,10 @@ export default {
 	methods: {
 
 		changeServer(url) {
-			this.openEO.Capabilities = new Capabilities();
-			this.openEO.SupportedOutputFormats = {};
-			this.openEO.SupportedServices = [];
+			this.connection = this.openEO.connect(url);
+			this.supportedOutputFormats = {}
+			this.supportedServices = [];
 
-			// Update server url
-			this.openEO.API.baseUrl = url;
-			// Invalidate old user id
-			this.openEO.Auth.reset();
 			// Request authentication
 			// ToDo: Problem: Auth is fired to late, BackendPanel updates earlier...
 			this.requestCapabilities();
@@ -161,8 +157,8 @@ export default {
 		},
 
 		requestCapabilities() {
-			this.openEO.API.getCapabilities().then(info => {
-				this.openEO.Capabilities = info;
+			this.connection.capabilities().then(response => {
+				this.capabilities = response;
 				this.requestSupportedOutputFormats();
 				this.requestSupportedServices();
 				this.requestAuth();
@@ -173,26 +169,27 @@ export default {
 		},
 
 		requestSupportedOutputFormats() {
-			if (this.openEO.Capabilities.outputFormatCapabilities()) {
-				this.openEO.API.getOutputFormats().then(info => {
-					this.openEO.SupportedOutputFormats = info;
-				});
+			if (this.capabilities.hasFeature('listFileTypes')) {
+				this.connection.listFileTypes().then(response => 
+					this.supportedOutputFormats = response
+				);
 			}
 		},
 
 		requestSupportedServices() {
-			if (this.openEO.Capabilities.serviceCapabilities()) {
-				this.openEO.Services.getCapabilities().then(info => {
-					this.openEO.SupportedServices = info;
-				});
+			if (this.capabilities.hasFeature('listServiceTypes')) {
+				this.connection.listServiceTypes().then(response => 
+					this.supportedServices = response
+				);
 			}
 		},
 
 		requestAuth() {
-			if (this.openEO.Capabilities.userLogin()) {
+			// TODO-CF: authenticateOIDC is missing
+			if (this.capabilities.hasFeature('authenticateBasic')) {
 				var opts = {
 					submitLoginCallback: (user, password) => {
-						return this.openEO.Auth.login(user, password)
+						return this.connection.authenticateBasic(user, password)
 							.then(data => {
 								EventBus.$emit('serverChanged');
 								this.$utils.ok(this, 'Login successful.');
