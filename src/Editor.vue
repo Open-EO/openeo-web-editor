@@ -28,6 +28,7 @@
 					<button class="tabItem" name="accountTab" @click="changeUserTab"><i class="fas fa-user"></i> Account</button>
 				</div>
 				<div class="tabsBody">
+					<!-- TODO-CF: Put these elements back in once they're upgraded enough to not break the whole app
 					<div class="tabContent" id="jobsTab">
 						<JobPanel :userId="openEO.Auth.userId" :openEO="openEO" />
 					</div>
@@ -43,6 +44,7 @@
 					<div class="tabContent" id="accountTab">
 						<AccountPanel :userId="openEO.Auth.userId" :openEO="openEO" />
 					</div>
+					-->				
 				</div>
 			</div>
 			<footer>
