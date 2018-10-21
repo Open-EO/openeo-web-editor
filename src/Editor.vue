@@ -1,7 +1,7 @@
 <template>
 	<div id="container">
 		<div id="ide">
-			<BackendPanel :openEO="openEO" />
+			<BackendPanel :connection="connection" :capabilities="capabilities" :supportedOutputFormats="supportedOutputFormats" :supportedServices="supportedServices" :visualizations="visualizations" :visualization="visualization" />
 			<div class="tabs" id="processGraphContent">
 				<div class="tabsHeader">
 					<button class="tabItem" name="graphTab" @click="changeProcessGraphTab"><i class="fas fa-code-branch"></i> Visual Builder</button>
@@ -15,7 +15,7 @@
 						<GraphBuilderEnvironment ref="graphBuilder" :openEO="openEO" />
 					</div>
 					<div class="tabContent" id="sourceTab">
-						<SourceEnvironment ref="sourceEditor" :openEO="openEO" />
+						<SourceEnvironment ref="sourceEditor" :openEO="openEO" :visualization="visualization" />
 					</div>
 				</div>
 			</div>

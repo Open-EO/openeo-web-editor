@@ -23,7 +23,7 @@ import CodeMirror from 'codemirror';
 
 export default {
 	name: 'SourceEnvironment',
-	props: ['openEO'],
+	props: ['openEO', 'visualization'],
 	computed: {
 		savedScriptNames() {
 			return Object.keys(this.savedScripts);
