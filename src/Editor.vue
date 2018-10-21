@@ -207,9 +207,8 @@ export default {
 				EventBus.$emit('showComponentModal', 'Enter your credentials', 'CredentialsForm', opts);
 			}
 			else {
-				// ToDO: We assume we are authenticated, but this should be removed after POC.
-				this.openEO.Auth.userId = 'me';
-				EventBus.$emit('serverChanged');
+				this.$utils.error(this, 'No authentication method available');
+				throw 'The server provides no authentication method that the web editor suppors';
 			}
 		},
 
