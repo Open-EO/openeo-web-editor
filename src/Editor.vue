@@ -19,7 +19,7 @@
 					</div>
 				</div>
 			</div>
-			<div class="tabs" id="userContent">
+			<div class="tabs" id="userContent" v-show="this.connection">
 				<div class="tabsHeader">
 					<button class="tabItem" name="jobsTab" @click="changeUserTab"><i class="fas fa-tasks"></i> Jobs</button>
 					<button class="tabItem" name="servicesTab" @click="changeUserTab" v-show="this.capabilities && this.capabilities.hasFeature('createService')"><i class="fas fa-cloud"></i> Services</button>
