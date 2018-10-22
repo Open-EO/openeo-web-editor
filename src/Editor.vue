@@ -93,6 +93,7 @@ import SourceEnvironment from './components/SourceEnvironment.vue';
 import axios from 'axios';
 import { OpenEO } from '@openeo/js-client';
 import OpenEOVisualizations from './visualizations.js';
+import Vue from 'vue';
 
 // Making axios available globally for the OpenEO JS client
 window.axios = axios;
@@ -209,8 +210,12 @@ export default {
 				EventBus.$emit('showComponentModal', 'Enter your credentials', 'CredentialsForm', opts);
 			}
 			else {
+				// if this is fired immediately, the BackendPanel hasn't yet received the capabilities -> wait until the next update cycle has finished
+				Vue.nextTick(function () {
+					EventBus.$emit('serverChanged');
+				});				
 				this.$utils.error(this, 'No authentication method available');
-				throw 'The server provides no authentication method that the web editor suppors';
+				console.log('The server provides no authentication method that the web editor suppors');
 			}
 		},
 
