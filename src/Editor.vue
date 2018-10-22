@@ -28,10 +28,10 @@
 					<button class="tabItem" name="accountTab" @click="changeUserTab"><i class="fas fa-user"></i> Account</button>
 				</div>
 				<div class="tabsBody">
-					<!-- TODO-CF: Put these elements back in once they're upgraded enough to not break the whole app
 					<div class="tabContent" id="jobsTab">
-						<JobPanel :userId="openEO.Auth.userId" :openEO="openEO" />
+						<JobPanel :connection="connection" :capabilities="capabilities" :supportedServices="supportedServices" />
 					</div>
+					<!-- TODO-CF: Put these elements back in once they're upgraded enough to not break the whole app
 					<div class="tabContent" id="servicesTab" v-show="this.capabilities && this.capabilities.hasFeature('createService')">
 						<ServicePanel ref="servicePanel" :userId="openEO.Auth.userId" :openEO="openEO" />
 					</div>
@@ -148,12 +148,10 @@ export default {
 
 		changeServer(url) {
 			this.connection = this.openEO.connect(url);
-			this.supportedOutputFormats = {}
-			this.supportedServices = [];
 
 			// Request authentication
 			// ToDo: Problem: Auth is fired to late, BackendPanel updates earlier...
-			this.requestCapabilities();
+			this.requestCapabilities();  // also requests output formats, services and auth
 		},
 
 		serverChanged() {
@@ -349,7 +347,7 @@ export default {
 			}
 			this.$utils.info(this, 'Data requested. Please wait...');
 			EventBus.$emit('getProcessGraph', (script) => {
-				this.openEO.Jobs.executeSync(script.ProcessGraph, format)
+				this.connection.execute(script.ProcessGraph, format)
 					.then(data => EventBus.$emit('showInViewer', data, script, format))
 					.catch(error => this.$utils.error(this, 'Sorry, could not execute script.'));
 			});
