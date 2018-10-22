@@ -121,7 +121,8 @@ export default {
 			capabilities: undefined,
 			supportedOutputFormats: undefined,
 			supportedServices: undefined,
-			visualizations: OpenEOVisualizations
+			visualizations: OpenEOVisualizations,
+			visualization: undefined
 		};
 	},
 	created() {
