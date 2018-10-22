@@ -33,7 +33,7 @@ export default {
 			var instructions = {
 				ProcessGraph: this.makeProcessGraph(),
 				Visualization: {
-					function: undefined, // Don't use null, typeof null is object in JS.
+					function: undefined, // Don't use null, `typeof null` is object in JS.
 					args: {}
 				}
 			};
@@ -100,7 +100,7 @@ export default {
 			}
 			if (currentNode.module == 'Collection') {
 				return {
-					product_id: currentNode.type
+					name: currentNode.type
 				};
 			}
 			else {
@@ -112,7 +112,7 @@ export default {
 					args.imagery = parents;
 				}
 				return {
-					process_id: currentNode.type,
+					name: currentNode.type,
 					args: args
 				};
 			}
@@ -131,7 +131,7 @@ export default {
 					});
 				}
 				this.blocks.register({
-					name: processes[i].process_id,
+					name: processes[i].name,
 					description: processes[i].description,
 					family: "Process",
 					module: "Process",
@@ -142,11 +142,11 @@ export default {
 	
 		propagateCollections(info) {
 			for(var i in info) {
-				if (info[i].product_id.indexOf('COPERNICUS/') === -1) {
+				if (info[i].name.indexOf('COPERNICUS/') === -1) {
 					continue;
 				}
 				this.blocks.register({
-					name: info[i].product_id,
+					name: info[i].name,
 					family: "Collection",
 					module: "Collection",
 				    fields: [
