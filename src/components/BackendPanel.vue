@@ -9,12 +9,12 @@
 		<div class="info-toolbar">
 			<button @click="getServerInfo" title="Get server information"><i class="fas fa-info"></i></button>
 		</div>
-		<div class="data-toolbar" v-show="showDataSelector()">
-			Data: <select id="data" ref="data">
-				<option v-for="d in data" :key="d.name" :value="d.name" :title="d.description">{{ d.name }}</option>
+		<div class="collections-toolbar" v-show="showCollectionSelector()">
+			Collection: <select id="collection" ref="collection">
+				<option v-for="d in collections" :key="d.name" :value="d.name" :title="d.description">{{ d.name }}</option>
 			</select>
-			<button id="insertData" @click="insertDataToEditor" title="Insert into script"><i class="fas fa-plus"></i></button>
-			<button @click="showDataInfo" title="Show details" v-show="capabilities && capabilities.hasFeature('describeCollection')"><i class="fas fa-info"></i></button>
+			<button id="insertCollection" @click="insertCollectionToEditor" title="Insert into script"><i class="fas fa-plus"></i></button>
+			<button @click="showCollectionInfo" title="Show details" v-show="capabilities && capabilities.hasFeature('describeCollection')"><i class="fas fa-info"></i></button>
 		</div>
 		<div class="processes-toolbar" v-show="showProcessSelector()">
 			Processes: <select id="processes" ref="processes">
@@ -45,7 +45,7 @@ export default {
 	data() {
 		return {
 			processes: [],
-			data: [],
+			collections: [],
 			serverUrls: []
 		};
 	},
@@ -56,7 +56,7 @@ export default {
 	},
 	created() {
 		EventBus.$on('changeServerUrl', this.changeServer);
-		EventBus.$on('serverChanged', this.discoverData);
+		EventBus.$on('serverChanged', this.discoverCollections);
 	},
 	mounted() {
 		var storedServers = localStorage.getItem("serverUrls");
@@ -66,8 +66,8 @@ export default {
 	},
 	methods: {
 
-		showDataSelector() {
-			return this.capabilities && this.capabilities.hasFeature('listCollections') && this.data.length > 0;
+		showCollectionSelector() {
+			return this.capabilities && this.capabilities.hasFeature('listCollections') && this.collections.length > 0;
 		},
 
 		showProcessSelector() {
@@ -99,11 +99,11 @@ export default {
 			}
 		},
 
-		discoverData() {
+		discoverCollections() {
 			if (this.capabilities && this.capabilities.hasFeature('listCollections')) {
 				this.connection.listCollections()
-					.then(this.setDiscoveredData)
-					.catch(error => this.setDiscoveredData([]));
+					.then(this.setDiscoveredCollections)
+					.catch(error => this.setDiscoveredCollections([]));
 			}
 			if (this.capabilities && this.capabilities.hasFeature('listProcesses') ) {
 				this.connection.listProcesses()
@@ -139,93 +139,95 @@ export default {
 			EventBus.$emit('showModal', 'Server information', info);
 		},
 
-		showDataInfo() {
-			this.connection.describeCollection(this.$refs.data.value)
-				.then(data => {
-					EventBus.$emit('showModal', 'Data: ' + this.$refs.data.value, data);
+		showCollectionInfo() {
+			const name = this.$refs.collection.value;
+			this.connection.describeCollection(name)
+				.then(info => {
+					EventBus.$emit('showModal', 'Collection: ' + name, info);
 				})
-				.catch(error => this.$utils.error(this, 'Sorry, can\'t load process details.'));
+				.catch(error => this.$utils.error(this, 'Sorry, can\'t load collection details.'));
 		},
 
 		showProcessInfo() {
-			const data = this.processes.find(p => p.name == this.$refs.processes.value);
-			EventBus.$emit('showModal', 'Process: ' + this.$refs.processes.value, data);
+			const name = this.$refs.processes.value;
+			const info = this.processes.find(p => p.name == name);
+			EventBus.$emit('showModal', 'Process: ' + name, info);
 		},
 
-		insertDataToEditor() {
-			EventBus.$emit('addDataToEditor', this.$refs.data.value);
+		insertCollectionToEditor() {
+			EventBus.$emit('addCollectionToEditor', this.$refs.collection.value);
 		},
 
 		insertProcessToEditor() {
 			EventBus.$emit('addProcessToEditor', this.$refs.processes.value);
 		},
 	
-		setDiscoveredData(data) {
-			this.data = [];
-			for (var i in data.collections) {
-				if (typeof data.collections[i].name === 'undefined') {
+		setDiscoveredCollections(info) {
+			this.collections = [];
+			for (var i in info.collections) {
+				if (typeof info.collections[i].name === 'undefined') {
 					continue;
 				}
-				this.data.push(data.collections[i]);
+				this.collections.push(info.collections[i]);
 			}
-			EventBus.$emit('propagateData', this.data);
+			EventBus.$emit('propagateCollections', this.collections);
 		},
 		
-		setDiscoveredProcesses(processes) {
+		setDiscoveredProcesses(info) {
 			this.processes = [];
-			for (var i in processes.processes) {
-				if (typeof processes.processes[i].name === 'undefined') {
+			for (var i in info.processes) {
+				if (typeof info.processes[i].name === 'undefined') {
 					continue;
 				}
-				this.processes.push(processes.processes[i]);
+				this.processes.push(info.processes[i]);
 			}
 			EventBus.$emit('propagateProcesses', this.processes);
 		},
 	
-	insertVisualization() {
-		var select = document.getElementById('visualizations');
-		var code;
-		if (select.value === 'custom') {
-			code = `
+		insertVisualization() {
+			var select = document.getElementById('visualizations');
+			var code;
+			if (select.value === 'custom') {
+				code = `
 this.visualization = {
 	function: function(input) {
 		// ToDo: Implement your custom visualization
 	}
 };
 `;
-		}
-		else if (typeof this.visualizations[select.value] !== 'undefined') {
-			var argsCode = '';
-			var argList = [];
-			for(var key in this.visualizations[select.value].arguments) {
-				var arg = this.visualizations[select.value].arguments[key];
-				var value = prompt(arg.description, JSON.stringify(arg.defaultValue));
-				if (value !== null) {
-					argList.push('"' + key + '": ' + value);
-				}
-				else {
-					// User clicked 'Cancel' -> Abort inserting visualization
-					return;
-				}
 			}
-			if (argList.length > 0) {
-				argsCode = `,
+			else if (typeof this.visualizations[select.value] !== 'undefined') {
+				var argsCode = '';
+				var argList = [];
+				for(var key in this.visualizations[select.value].arguments) {
+					var arg = this.visualizations[select.value].arguments[key];
+					var value = prompt(arg.description, JSON.stringify(arg.defaultValue));
+					if (value !== null) {
+						argList.push('"' + key + '": ' + value);
+					}
+					else {
+						// User clicked 'Cancel' -> Abort inserting visualization
+						return;
+					}
+				}
+				if (argList.length > 0) {
+					argsCode = `,
 	args: {
 		` + argList.join(",\r\n		") + `
 	}`;
-			}
+				}
 
-			code = `
+				code = `
 this.visualization = {
 	function: this.visualizations.` + select.value + argsCode + `
 };
 `;
-		}
-		else {
-			code = '';
-		}
-		EventBus.$emit('addSourceCode', code);
-	},
+			}
+			else {
+				code = '';
+			}
+			EventBus.$emit('addSourceCode', code);
+		},
 
 	}
 }
@@ -252,7 +254,7 @@ h3 {
 	padding-bottom: 5px;
 	border-bottom: 1px dotted #ddd;
 }
-.data-toolbar, .processes-toolbar, .info-toolbar {
+.collections-toolbar, .processes-toolbar, .info-toolbar {
 	display: inline-block;
 	margin-right: 3%;
 }

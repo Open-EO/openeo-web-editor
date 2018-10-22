@@ -9,8 +9,8 @@ Fired when the server URL has been changed in the front-end and needs to update 
 ## serverChanged()
 The server has changed and the UI should be updated.
 
-## addDataToEditor(string $code)
-Adds the dataset to the editor.
+## addCollectionToEditor(string $code)
+Adds the collection to the editor.
 
 ## addProcessToEditor(string $code)
 Adds the process to the editor.
@@ -66,6 +66,12 @@ Shows the image panel in the viewer area.
 
 ## showMapDataViewer()
 Shows the data panel in the viewer area.
+
+## propagateCollections(object $data)
+Forwards new collection data from BackendPanel to GraphBuilderEnvironment
+
+## propagateProcesses(object $data)
+Forwards new process data from BackendPanel to GraphBuilderEnvironment
 
 */
 export default new Vue();

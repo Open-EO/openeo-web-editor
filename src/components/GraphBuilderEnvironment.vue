@@ -22,7 +22,7 @@ export default {
 		};
 	},
 	mounted() {
-		EventBus.$on('propagateData', this.propagateData);
+		EventBus.$on('propagateCollections', this.propagateCollections);
 		EventBus.$on('propagateProcesses', this.propagateProcesses);
 		EventBus.$on('serverChanged', this.resetBlocks);
 		
@@ -98,7 +98,7 @@ export default {
 					parents.push(this.makeProcessGraphFromEdges(edges, edges[i].block1ref));
 				}
 			}
-			if (currentNode.module == 'Data') {
+			if (currentNode.module == 'Collection') {
 				return {
 					product_id: currentNode.type
 				};
@@ -140,15 +140,15 @@ export default {
 			}
 		},
 	
-		propagateData(data) {
-			for(var i in data) {
-				if (data[i].product_id.indexOf('COPERNICUS/') === -1) {
+		propagateCollections(info) {
+			for(var i in info) {
+				if (info[i].product_id.indexOf('COPERNICUS/') === -1) {
 					continue;
 				}
 				this.blocks.register({
-					name: data[i].product_id,
-					family: "Data",
-					module: "Data",
+					name: info[i].product_id,
+					family: "Collection",
+					module: "Collection",
 				    fields: [
 						{
 							name: "Output",
