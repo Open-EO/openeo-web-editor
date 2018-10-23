@@ -56,7 +56,7 @@ export default {
 	},
 	created() {
 		EventBus.$on('changeServerUrl', this.changeServer);
-		EventBus.$on('serverChanged', this.discoverCollections);
+		EventBus.$on('serverChanged', this.discoverData);
 	},
 	mounted() {
 		var storedServers = localStorage.getItem("serverUrls");
@@ -99,7 +99,7 @@ export default {
 			}
 		},
 
-		discoverCollections() {
+		discoverData() {
 			if (this.capabilities && this.capabilities.hasFeature('listCollections')) {
 				this.connection.listCollections()
 					.then(this.setDiscoveredCollections)

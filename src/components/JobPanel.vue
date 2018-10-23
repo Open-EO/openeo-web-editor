@@ -1,5 +1,5 @@
 <template>
-	<DataTable ref="table" :dataSource="connection.listJobs" :columns="columns" id="JobPanel" v-if="connection">
+	<DataTable ref="table" :dataSource="()=>connection.listJobs()" :columns="columns" id="JobPanel" v-if="connection && capabilities">
 		<template slot="toolbar" slot-scope="p">
 			<button title="Add new job" @click="createJobFromScript" v-show="capabilities.hasFeature('createJob')"><i class="fas fa-plus"></i> Add</button>
 			<button title="Refresh jobs" @click="updateData()" v-show="capabilities.hasFeature('listJobs')"><i class="fas fa-sync-alt"></i></button> <!-- ToDo: Should be done automatically later -->
