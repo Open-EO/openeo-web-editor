@@ -8,8 +8,6 @@
 			<button title="Details" @click="showJobInfo(p.row)" v-show="capabilities.hasFeature('describeJob')"><i class="fas fa-info"></i></button>
 			<button title="Edit" @click="editJob(p.row)" v-show="capabilities.hasFeature('updateJob')"><i class="fas fa-edit"></i></button>
 			<button title="Start" @click="queueJob(p.row)" v-show="capabilities.hasFeature('startJob')"><i class="fas fa-play-circle"></i></button>
-			<!-- TODO-CF: Was pausing really removed in v0.3.0? -->
-			<!--<button title="Pause batch job" @click="pauseJob(p.row)" v-show="openEO.Capabilities.pauseJob()"><i class="fas fa-pause-circle"></i></button>-->
 			<button title="Cancel" @click="cancelJob(p.row)" v-show="capabilities.hasFeature('stopJob')"><i class="fas fa-stop-circle"></i></button>
 			<button title="Download" @click="downloadJob(p.row)" v-show="capabilities.hasFeature('downloadResults')"><i class="fas fa-download"></i></button>
 			<button title="View results" @click="downloadJob(p.row, true)" v-show="capabilities.hasFeature('downloadResults')"><i class="fas fa-eye"></i></button>
@@ -191,16 +189,6 @@ export default {
 				})
 				.catch(error => this.$utils.error(this, "Sorry, could not queue job."));
 		},
-		/* TODO-CF: Was pauseJob really removed with v0.3.0?
-		pauseJob(id) {
-			var jobApi = this.openEO.Jobs.getObject(id);
-			jobApi.pause().then(data => {
-					this.$utils.ok(this, "Job successfully paused.");
-					this.updateJobDataFromServer(id);
-				})
-				.catch(error => this.$utils.error(this, "Sorry, could not pause job."));
-		},
-		*/
 		cancelJob(job) {
 			job.stopJob()
 				.then(wasSuccessful => {
@@ -238,10 +226,7 @@ export default {
 				} else {
 					this.connection.download(url)
 						.then(blob => {
-							// TODO-CF: Not completely sure what the ToDo below means...
-							// ToDo: For now we support both direct downloading and download URLs (only one for now).
-							// Implementation is not very nice and needs improvement, but it's a prototype...
-							// TODO-CF: Removed check whether answer is JSON with an URL and auto-downloading it because I think that no longer happens in v0.3.0, does it???
+							// TODO-CF: Matthias says the hacky download should be replaced (e.g. with list of URLs)
 							this.$utils.blobToText(blob, (event) => {
 								// View in browser
 								EventBus.$emit('getProcessGraph', (script) => {
