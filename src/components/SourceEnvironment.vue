@@ -23,7 +23,7 @@ import CodeMirror from 'codemirror';
 
 export default {
 	name: 'SourceEnvironment',
-	props: ['openEO'],
+	props: ['openEO', 'visualization'],
 	computed: {
 		savedScriptNames() {
 			return Object.keys(this.savedScripts);
@@ -56,7 +56,7 @@ export default {
 		this.editor.setValue(this.defaultScript);
 		EventBus.$on('addSourceCode', this.insertToEditor);
 		EventBus.$on('addProcessToEditor', this.insertToEditor);
-		EventBus.$on('addDataToEditor', this.insertToEditor);
+		EventBus.$on('addCollectionToEditor', this.insertToEditor);
 		EventBus.$on('getVisualization', this.getProcessGraph);
 		var storedScripts = localStorage.getItem("savedScripts");
 		if (storedScripts !== null) {

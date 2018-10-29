@@ -1,48 +1,50 @@
 <template>
 	<div id="container">
 		<div id="ide">
-			<BackendPanel :openEO="openEO" />
+			<BackendPanel :connection="connection" :capabilities="capabilities" :supportedOutputFormats="supportedOutputFormats" :supportedServices="supportedServices" :visualizations="visualizations" :visualization="visualization" />
 			<div class="tabs" id="processGraphContent">
 				<div class="tabsHeader">
 					<button class="tabItem" name="graphTab" @click="changeProcessGraphTab"><i class="fas fa-code-branch"></i> Visual Builder</button>
 					<button class="tabItem" name="sourceTab" @click="changeProcessGraphTab"><i class="fas fa-code"></i> Source Code</button>
 				</div>
 				<div class="tabsActions">
-					<button @click="executeProcessGraph" title="Run current process graph and view results" v-if="openEO.Capabilities.executeJob()"><i class="fas fa-play"></i></button>
+					<button @click="executeProcessGraph" title="Run current process graph and view results" v-if="this.capabilities && this.capabilities.hasFeature('startJob')"><i class="fas fa-play"></i></button>
 				</div>
 				<div class="tabsBody">
 					<div class="tabContent" id="graphTab">
 						<GraphBuilderEnvironment ref="graphBuilder" :openEO="openEO" />
 					</div>
 					<div class="tabContent" id="sourceTab">
-						<SourceEnvironment ref="sourceEditor" :openEO="openEO" />
+						<SourceEnvironment ref="sourceEditor" :openEO="openEO" :visualization="visualization" />
 					</div>
 				</div>
 			</div>
-			<div class="tabs" id="userContent">
+			<div class="tabs" id="userContent" v-show="this.connection">
 				<div class="tabsHeader">
 					<button class="tabItem" name="jobsTab" @click="changeUserTab"><i class="fas fa-tasks"></i> Jobs</button>
-					<button class="tabItem" name="servicesTab" @click="changeUserTab" v-show="this.openEO.Capabilities.createService()"><i class="fas fa-cloud"></i> Services</button>
-					<button class="tabItem" name="processGraphsTab" @click="changeUserTab" v-show="this.openEO.Capabilities.userProcessGraphs()"><i class="fas fa-code-branch"></i> Process Graphs</button>
-					<button class="tabItem" name="filesTab" @click="changeUserTab" v-show="this.openEO.Capabilities.userFiles()"><i class="fas fa-file"></i> Files</button>
+					<button class="tabItem" name="servicesTab" @click="changeUserTab" v-show="this.capabilities && this.capabilities.hasFeature('createService')"><i class="fas fa-cloud"></i> Services</button>
+					<button class="tabItem" name="processGraphsTab" @click="changeUserTab" v-show="this.capabilities && this.capabilities.hasFeature('createProcessGraph')"><i class="fas fa-code-branch"></i> Process Graphs</button>
+					<button class="tabItem" name="filesTab" @click="changeUserTab" v-show="this.capabilities && this.capabilities.hasFeature('uploadFile')"><i class="fas fa-file"></i> Files</button>
 					<button class="tabItem" name="accountTab" @click="changeUserTab"><i class="fas fa-user"></i> Account</button>
 				</div>
 				<div class="tabsBody">
 					<div class="tabContent" id="jobsTab">
-						<JobPanel :userId="openEO.Auth.userId" :openEO="openEO" />
+						<JobPanel :connection="connection" :capabilities="capabilities" :supportedServices="supportedServices" />
 					</div>
-					<div class="tabContent" id="servicesTab" v-show="this.openEO.Capabilities.createService()">
+					<!-- TODO-CF: Put these elements back in once they're upgraded enough to not break the whole app
+					<div class="tabContent" id="servicesTab" v-show="this.capabilities && this.capabilities.hasFeature('createService')">
 						<ServicePanel ref="servicePanel" :userId="openEO.Auth.userId" :openEO="openEO" />
 					</div>
-					<div class="tabContent" id="processGraphsTab" v-show="this.openEO.Capabilities.userProcessGraphs()">
+					<div class="tabContent" id="processGraphsTab" v-show="this.capabilities && this.capabilities.hasFeature('createProcessGraph')">
 						<ProcessGraphPanel :userId="openEO.Auth.userId" :openEO="openEO" />
 					</div>
-					<div class="tabContent" id="filesTab" v-show="this.openEO.Capabilities.userFiles()">
+					<div class="tabContent" id="filesTab" v-show="this.capabilities && this.capabilities.hasFeature('uploadFile')">
 						<FilePanel :userId="openEO.Auth.userId" :openEO="openEO" />
 					</div>
 					<div class="tabContent" id="accountTab">
 						<AccountPanel :userId="openEO.Auth.userId" :openEO="openEO" />
 					</div>
+					-->				
 				</div>
 			</div>
 			<footer>
@@ -89,16 +91,12 @@ import ProcessGraphPanel from './components/ProcessGraphPanel.vue';
 import ServicePanel from './components/ServicePanel.vue';
 import SourceEnvironment from './components/SourceEnvironment.vue';
 import axios from 'axios';
-import { OpenEO, Capabilities } from '@openeo/js-client';
+import { OpenEO } from '@openeo/js-client';
 import OpenEOVisualizations from './visualizations.js';
+import Vue from 'vue';
 
 // Making axios available globally for the OpenEO JS client
 window.axios = axios;
-
-OpenEO.Visualizations = OpenEOVisualizations;
-OpenEO.Capabilities = new Capabilities();
-OpenEO.SupportedOutputFormats = {};
-OpenEO.SupportedServices = [];
 
 export default {
 	name: 'openeo-web-editor',
@@ -118,7 +116,13 @@ export default {
 	},
 	data() {
 		return {
-			openEO: OpenEO
+			openEO: new OpenEO(),
+			connection: undefined,
+			capabilities: undefined,
+			supportedOutputFormats: undefined,
+			supportedServices: undefined,
+			visualizations: OpenEOVisualizations,
+			visualization: undefined
 		};
 	},
 	created() {
@@ -143,24 +147,11 @@ export default {
 	methods: {
 
 		changeServer(url) {
-			this.openEO.Capabilities = new Capabilities();
-			this.openEO.SupportedOutputFormats = {};
-			this.openEO.SupportedServices = [];
+			this.connection = this.openEO.connect(url);
 
-			// Update server url
-			this.openEO.API.baseUrl = url;
-			// Invalidate old user id
-			this.openEO.Auth.reset();
-			// ToDo: Remove the driver switch after proof-of-concept
-			if (url.indexOf('/api') !== -1) {
-				this.openEO.API.driver = 'openeo-r-backend';
-			}
-			else {
-				this.openEO.API.driver = 'other';
-			}
 			// Request authentication
 			// ToDo: Problem: Auth is fired to late, BackendPanel updates earlier...
-			this.requestCapabilities();
+			this.requestCapabilities();  // also requests output formats, services and auth
 		},
 
 		serverChanged() {
@@ -168,8 +159,8 @@ export default {
 		},
 
 		requestCapabilities() {
-			this.openEO.API.getCapabilities().then(info => {
-				this.openEO.Capabilities = info;
+			this.connection.capabilities().then(response => {
+				this.capabilities = response;
 				this.requestSupportedOutputFormats();
 				this.requestSupportedServices();
 				this.requestAuth();
@@ -180,26 +171,27 @@ export default {
 		},
 
 		requestSupportedOutputFormats() {
-			if (this.openEO.Capabilities.outputFormatCapabilities()) {
-				this.openEO.API.getOutputFormats().then(info => {
-					this.openEO.SupportedOutputFormats = info;
-				});
+			if (this.capabilities.hasFeature('listFileTypes')) {
+				this.connection.listFileTypes().then(response => 
+					this.supportedOutputFormats = response
+				);
 			}
 		},
 
 		requestSupportedServices() {
-			if (this.openEO.Capabilities.serviceCapabilities()) {
-				this.openEO.Services.getCapabilities().then(info => {
-					this.openEO.SupportedServices = info;
-				});
+			if (this.capabilities.hasFeature('listServiceTypes')) {
+				this.connection.listServiceTypes().then(response => 
+					this.supportedServices = response
+				);
 			}
 		},
 
 		requestAuth() {
-			if (this.openEO.Capabilities.userLogin()) {
+			// TODO-CF: authenticateOIDC is missing
+			if (this.capabilities.hasFeature('authenticateBasic')) {
 				var opts = {
 					submitLoginCallback: (user, password) => {
-						return this.openEO.Auth.login(user, password)
+						return this.connection.authenticateBasic(user, password)
 							.then(data => {
 								EventBus.$emit('serverChanged');
 								this.$utils.ok(this, 'Login successful.');
@@ -214,25 +206,15 @@ export default {
 						EventBus.$emit('serverChanged');
 					}
 				};
-				if (this.openEO.Capabilities.userRegister()) {
-					opts.submitRegisterCallback = (password) => {
-						return this.openEO.Auth.register(password)
-							.then(data => {
-								this.$utils.ok(this, 'Registration successful. Your new username is: ' + data.user_id);
-								return data;
-							})
-							.catch(error => {
-								this.$utils.error(this, 'Sorry, registration failed. Try to choose another password.');
-								throw error;
-							});
-					};
-				}
 				EventBus.$emit('showComponentModal', 'Enter your credentials', 'CredentialsForm', opts);
 			}
 			else {
-				// ToDO: We assume we are authenticated, but this should be removed after POC.
-				this.openEO.Auth.userId = 'me';
-				EventBus.$emit('serverChanged');
+				// if this is fired immediately, the BackendPanel hasn't yet received the capabilities -> wait until the next update cycle has finished
+				Vue.nextTick(function () {
+					EventBus.$emit('serverChanged');
+				});				
+				this.$utils.error(this, 'No authentication method available');
+				console.log('The server provides no authentication method that the web editor suppors');
 			}
 		},
 
@@ -365,7 +347,7 @@ export default {
 			}
 			this.$utils.info(this, 'Data requested. Please wait...');
 			EventBus.$emit('getProcessGraph', (script) => {
-				this.openEO.Jobs.executeSync(script.ProcessGraph, format)
+				this.connection.execute(script.ProcessGraph, format)
 					.then(data => EventBus.$emit('showInViewer', data, script, format))
 					.catch(error => this.$utils.error(this, 'Sorry, could not execute script.'));
 			});

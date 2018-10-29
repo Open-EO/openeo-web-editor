@@ -9,19 +9,19 @@
 		<div class="info-toolbar">
 			<button @click="getServerInfo" title="Get server information"><i class="fas fa-info"></i></button>
 		</div>
-		<div class="data-toolbar" v-show="showDataSelector()">
-			Data: <select id="data" ref="data">
-				<option v-for="d in data" :key="d.product_id" :value="d.product_id" :title="d.description">{{ d.product_id }}</option>
+		<div class="collections-toolbar" v-show="showCollectionSelector()">
+			Collection: <select id="collection" ref="collection">
+				<option v-for="d in collections" :key="d.name" :value="d.name" :title="d.description">{{ d.name }}</option>
 			</select>
-			<button id="insertData" @click="insertDataToEditor" title="Insert into script"><i class="fas fa-plus"></i></button>
-			<button @click="showDataInfo" title="Show details" v-show="openEO.Capabilities.dataInfo()"><i class="fas fa-info"></i></button>
+			<button id="insertCollection" @click="insertCollectionToEditor" title="Insert into script"><i class="fas fa-plus"></i></button>
+			<button @click="showCollectionInfo" title="Show details" v-show="capabilities && capabilities.hasFeature('describeCollection')"><i class="fas fa-info"></i></button>
 		</div>
 		<div class="processes-toolbar" v-show="showProcessSelector()">
 			Processes: <select id="processes" ref="processes">
-				<option v-for="p in processes" :key="p.process_id" :value="p.process_id" :title="p.description">{{ p.process_id }}</option>
+				<option v-for="p in processes" :key="p.name" :value="p.name" :title="p.description">{{ p.name }}</option>
 			</select>
 			<button id="insertProcesses" @click="insertProcessToEditor" title="Insert into script"><i class="fas fa-plus"></i></button>
-			<button @click="showProcessInfo" title="Show details" v-show="openEO.Capabilities.processInfo()"><i class="fas fa-info"></i></button>
+			<button @click="showProcessInfo" title="Show details" v-show="capabilities && capabilities.hasFeature('listProcesses')"><i class="fas fa-info"></i></button>
 		</div>
 		<!-- ToDo: Move to Source/Model environment and make a modal, not adapted to visual model builder yet -->
 <!--	<div class="vis-toolbar">
@@ -29,7 +29,7 @@
 				<option value="">None</option>
 				<option value="custom">Custom function</option>
 				<optgroup label="Pre-defined">
-					<option v-for="(v, k) in openEO.Visualizations" :key="k" :value="k">{{ v.name }}</option>
+					<option v-for="(v, k) in this.visualizations" :key="k" :value="k">{{ v.name }}</option>
 				</optgroup>
 			</select> <button id="insertVisualizations" title="Insert into script" @click="insertVisualization"><i class="fas fa-plus"></i></button>
 		</div> -->
@@ -41,11 +41,11 @@ import EventBus from '../eventbus.js';
 
 export default {
 	name: 'BackendPanel',
-	props: ['openEO'],
+	props: ['connection', 'capabilities', 'supportedOutputFormats', 'supportedServices', 'visualizations', 'visualization'],
 	data() {
 		return {
 			processes: [],
-			data: [],
+			collections: [],
 			serverUrls: []
 		};
 	},
@@ -66,12 +66,12 @@ export default {
 	},
 	methods: {
 
-		showDataSelector() {
-			return this.openEO.Capabilities.data() && this.data.length > 0;
+		showCollectionSelector() {
+			return this.capabilities && this.capabilities.hasFeature('listCollections') && this.collections.length > 0;
 		},
 
 		showProcessSelector() {
-			return this.openEO.Capabilities.processes() && this.processes.length > 0;
+			return this.capabilities && this.capabilities.hasFeature('listProcesses') && this.processes.length > 0;
 		},
 
 		showServerSelector() {
@@ -100,13 +100,13 @@ export default {
 		},
 
 		discoverData() {
-			if (this.openEO.Capabilities.data()) {
-				this.openEO.Data.get()
-					.then(this.setDiscoveredData)
-					.catch(error => this.setDiscoveredData([]));
+			if (this.capabilities && this.capabilities.hasFeature('listCollections')) {
+				this.connection.listCollections()
+					.then(this.setDiscoveredCollections)
+					.catch(error => this.setDiscoveredCollections([]));
 			}
-			if (this.openEO.Capabilities.processes()) {
-				this.openEO.Processes.get()
+			if (this.capabilities && this.capabilities.hasFeature('listProcesses') ) {
+				this.connection.listProcesses()
 					.then(this.setDiscoveredProcesses)
 					.catch(error => this.setDiscoveredProcesses([]));
 			}
@@ -115,7 +115,7 @@ export default {
 		updateServerUrlFromInput() {
 			var newUrl = this.$refs.serverUrl.value;
 			if (typeof newUrl === 'string' && newUrl.length > 0) {
-				if (newUrl != this.openEO.API.baseUrl) {
+				if (!this.connection || newUrl != this.connection.getBaseUrl()) {
 					EventBus.$emit('changeServerUrl', newUrl);
 				}
 			}
@@ -131,104 +131,103 @@ export default {
 
 		getServerInfo() {
 			var info = {
-				url: this.openEO.API.baseUrl,
-				supportedEndpoints: this.openEO.Capabilities.rawData,
-				supportedWebServices: this.openEO.SupportedServices,
-				supportedOutputFormats: this.openEO.SupportedOutputFormats
+				url: this.connection.getBaseUrl(),
+				supportedEndpoints: this.capabilities.listFeatures(),
+				supportedWebServices: this.supportedServices,
+				supportedOutputFormats: this.supportedOutputFormats
 			};
 			EventBus.$emit('showModal', 'Server information', info);
 		},
 
-		showDataInfo() {
-			this.openEO.Data.getById(this.$refs.data.value)
-				.then(data => {
-					EventBus.$emit('showModal', 'Data: ' + this.$refs.data.value, data);
+		showCollectionInfo() {
+			const name = this.$refs.collection.value;
+			this.connection.describeCollection(name)
+				.then(info => {
+					EventBus.$emit('showModal', 'Collection: ' + name, info);
 				})
-				.catch(error => this.$utils.error(this, 'Sorry, can\'t load process details.'));
+				.catch(error => this.$utils.error(this, 'Sorry, can\'t load collection details.'));
 		},
 
 		showProcessInfo() {
-			this.openEO.Processes.getById(this.$refs.processes.value)
-				.then(data => {
-					EventBus.$emit('showModal', 'Process: ' + this.$refs.processes.value, data);
-				})
-				.catch(error => this.$utils.error(this, 'Sorry, can\'t load process details.'));
+			const name = this.$refs.processes.value;
+			const info = this.processes.find(p => p.name == name);
+			EventBus.$emit('showModal', 'Process: ' + name, info);
 		},
 
-		insertDataToEditor() {
-			EventBus.$emit('addDataToEditor', this.$refs.data.value);
+		insertCollectionToEditor() {
+			EventBus.$emit('addCollectionToEditor', this.$refs.collection.value);
 		},
 
 		insertProcessToEditor() {
 			EventBus.$emit('addProcessToEditor', this.$refs.processes.value);
 		},
 	
-		setDiscoveredData(data) {
-			this.data = [];
-			for (var i in data) {
-				if (typeof data[i].product_id === 'undefined') {
+		setDiscoveredCollections(info) {
+			this.collections = [];
+			for (var i in info.collections) {
+				if (typeof info.collections[i].name === 'undefined') {
 					continue;
 				}
-				this.data.push(data[i]);
+				this.collections.push(info.collections[i]);
 			}
-			EventBus.$emit('propagateData', this.data);
+			EventBus.$emit('propagateCollections', this.collections);
 		},
 		
-		setDiscoveredProcesses(processes) {
+		setDiscoveredProcesses(info) {
 			this.processes = [];
-			for (var i in processes) {
-				if (typeof processes[i].process_id === 'undefined') {
+			for (var i in info.processes) {
+				if (typeof info.processes[i].name === 'undefined') {
 					continue;
 				}
-				this.processes.push(processes[i]);
+				this.processes.push(info.processes[i]);
 			}
 			EventBus.$emit('propagateProcesses', this.processes);
 		},
 	
-	insertVisualization() {
-		var select = document.getElementById('visualizations');
-		var code;
-		if (select.value === 'custom') {
-			code = `
-OpenEO.Editor.Visualization = {
+		insertVisualization() {
+			var select = document.getElementById('visualizations');
+			var code;
+			if (select.value === 'custom') {
+				code = `
+this.visualization = {
 	function: function(input) {
 		// ToDo: Implement your custom visualization
 	}
 };
 `;
-		}
-		else if (typeof this.openEO.Visualizations[select.value] !== 'undefined') {
-			var argsCode = '';
-			var argList = [];
-			for(var key in this.openEO.Visualizations[select.value].arguments) {
-				var arg = this.openEO.Visualizations[select.value].arguments[key];
-				var value = prompt(arg.description, JSON.stringify(arg.defaultValue));
-				if (value !== null) {
-					argList.push('"' + key + '": ' + value);
-				}
-				else {
-					// User clicked 'Cancel' -> Abort inserting visualization
-					return;
-				}
 			}
-			if (argList.length > 0) {
-				argsCode = `,
+			else if (typeof this.visualizations[select.value] !== 'undefined') {
+				var argsCode = '';
+				var argList = [];
+				for(var key in this.visualizations[select.value].arguments) {
+					var arg = this.visualizations[select.value].arguments[key];
+					var value = prompt(arg.description, JSON.stringify(arg.defaultValue));
+					if (value !== null) {
+						argList.push('"' + key + '": ' + value);
+					}
+					else {
+						// User clicked 'Cancel' -> Abort inserting visualization
+						return;
+					}
+				}
+				if (argList.length > 0) {
+					argsCode = `,
 	args: {
 		` + argList.join(",\r\n		") + `
 	}`;
-			}
+				}
 
-			code = `
-OpenEO.Editor.Visualization = {
-	function: OpenEO.Visualizations.` + select.value + argsCode + `
+				code = `
+this.visualization = {
+	function: this.visualizations.` + select.value + argsCode + `
 };
 `;
-		}
-		else {
-			code = '';
-		}
-		EventBus.$emit('addSourceCode', code);
-	},
+			}
+			else {
+				code = '';
+			}
+			EventBus.$emit('addSourceCode', code);
+		},
 
 	}
 }
@@ -255,7 +254,7 @@ h3 {
 	padding-bottom: 5px;
 	border-bottom: 1px dotted #ddd;
 }
-.data-toolbar, .processes-toolbar, .info-toolbar {
+.collections-toolbar, .processes-toolbar, .info-toolbar {
 	display: inline-block;
 	margin-right: 3%;
 }

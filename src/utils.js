@@ -13,25 +13,35 @@ export default {
 		var a = document.createElement("a");
 		document.body.appendChild(a);
 		a.style = "display: none";
-		return function (data, fileName, type) {
-			var blob;
-			if (data instanceof Blob) {
-				blob = data;
-			}
-			else {
-				if (!type) {
-					type = 'application/octet-stream';
+		return function (dataOrUrl, fileName, type, isUrl = false) {
+			var url;
+			if(isUrl) {
+				url = dataOrUrl;
+			} else {  // create ObjectURL from supplied data
+				var blob;
+				if (dataOrUrl instanceof Blob) {
+					blob = dataOrUrl;
 				}
-				blob = new Blob([data], {type: type});
+				else {
+					if (!type) {
+						type = 'application/octet-stream';
+					}
+					blob = new Blob([dataOrUrl], {type: type});
+				}
+				if (!fileName) {
+					fileName = 'unnamed-file';
+				}
+				url = window.URL.createObjectURL(blob);
 			}
-			if (!fileName) {
-				fileName = 'unnamed-file';
-			}
-			var url = window.URL.createObjectURL(blob);
+			
+			// Tell the browser to download (same for both methods)
 			a.href = url;
 			a.download = fileName;
 			a.click();
-			window.URL.revokeObjectURL(url);
+
+			if(!isUrl) {  // ObjectURL created earlier should be revoked
+				window.URL.revokeObjectURL(url);
+			}
 		};
 	}()),
 

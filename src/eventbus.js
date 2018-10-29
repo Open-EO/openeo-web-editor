@@ -9,8 +9,8 @@ Fired when the server URL has been changed in the front-end and needs to update 
 ## serverChanged()
 The server has changed and the UI should be updated.
 
-## addDataToEditor(string $code)
-Adds the dataset to the editor.
+## addCollectionToEditor(string $code)
+Adds the collection to the editor.
 
 ## addProcessToEditor(string $code)
 Adds the process to the editor.
@@ -30,8 +30,8 @@ Triggers the script/model currently in the editor to be evaluated runs the callb
 ## getVisualization(callback $callback)
 Get the visualization script from the editor.
 
-## jobCreated(object $data)
-Triggered when a job was created successfully.
+## jobCreated(object $job)
+Triggered when a job was created successfully, parameter is the Job object returned by the openeo-js-client lib.
 
 ## closeModal()
 Closes the modal
@@ -39,8 +39,8 @@ Closes the modal
 ## modalClosed()
 A modal has been closed, which might be of relevance to its subcomponents (they may treat this as a "cancel")
 
-## serviceCreated(object $data)
-Triggered when a service was created successfully.
+## serviceCreated(object $service)
+Triggered when a service was created successfully, parameter is the Service object returned by the openeo-js-client lib.
 
 ## showModal(string $title, string $contents)
 Shows a modal with the specified title and contents.
@@ -66,6 +66,12 @@ Shows the image panel in the viewer area.
 
 ## showMapDataViewer()
 Shows the data panel in the viewer area.
+
+## propagateCollections(object $data)
+Forwards new collection data from BackendPanel to GraphBuilderEnvironment
+
+## propagateProcesses(object $data)
+Forwards new process data from BackendPanel to GraphBuilderEnvironment
 
 */
 export default new Vue();
