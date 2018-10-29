@@ -1,5 +1,5 @@
 <template>
-	<DataTable ref="table" :dataSource="()=>connection.listJobs()" :columns="columns" id="JobPanel" v-if="connection && capabilities">
+	<DataTable ref="table" :dataSource="listJobs" :preprocessor="dataPreprocessor" :columns="columns" id="JobPanel" v-if="connection && capabilities">
 		<template slot="toolbar" slot-scope="p">
 			<button title="Add new job" @click="createJobFromScript" v-show="capabilities.hasFeature('createJob')"><i class="fas fa-plus"></i> Add</button>
 			<button title="Refresh jobs" @click="updateData()" v-show="capabilities.hasFeature('listJobs')"><i class="fas fa-sync-alt"></i></button> <!-- ToDo: Should be done automatically later -->
@@ -34,7 +34,11 @@ export default {
 			columns: {
 				jobId: {
 					name: 'ID',
-					primaryKey: true
+					primaryKey: true,
+					hide: true
+				},
+				title: {
+					name: 'Title'
 				},
 				status: {
 					name: 'Status',
@@ -86,6 +90,15 @@ export default {
 		}
 	},
 	methods: {
+		listJobs() {
+			return this.connection.listJobs();
+		},
+		dataPreprocessor(data, index) {
+			if (!data.title) {
+				data.title = "Job #" + data.jobId.toUpperCase().substr(-6);
+			}
+			return data;
+		},
 		updateData() {
 			if (!this.$refs.table) {
 				return;

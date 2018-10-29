@@ -12,10 +12,10 @@
 		</div>
 		<table v-if="data.length > 0 || noDataMessage == undefined || noDataMessage == ''">
 			<tr>
-				<th v-for="(col, id) in columns" :key="id" :class="id">{{ col.name }}</th>
+				<th v-for="(col, id) in columns" v-show="!col.hide" :key="id" :class="id">{{ col.name }}</th>
 			</tr>
 			<tr v-for="(row, i) in view" :key="i">
-				<td v-for="(col, id) in columns" :key="id" :class="id" :data-value="col.stylable ? value(row, col, id) : false">
+				<td v-for="(col, id) in columns" v-show="!col.hide" :key="id" :class="id" :data-value="col.stylable ? value(row, col, id) : false">
 					<slot :name="id" :row="row" :col="col" :id="id">
 						{{ formattedValue(row, col, id) }}
 					</slot>
