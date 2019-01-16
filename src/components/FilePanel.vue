@@ -1,6 +1,6 @@
 <template>
 	<DataTable ref="table" :dataSource="dataSource" :columns="columns" id="FilePanel">
-		<template slot="toolbar" slot-scope="p">
+		<template slot="toolbar">
 			<span v-show="openEO.Capabilities.uploadUserFile()">
 				<input type="file" name="uploadUserFile" id="uploadUserFile">
 				<button title="Add new file" id="uploadUserFileBtn" @click="uploadFile()"><i class="fas fa-upload"></i></button>

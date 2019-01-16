@@ -21,9 +21,11 @@ import 'codemirror/mode/javascript/javascript.js';
 import 'codemirror/addon/display/autorefresh.js';
 import CodeMirror from 'codemirror';
 
+window.ProcessGraph = {};
+
 export default {
 	name: 'SourceEnvironment',
-	props: ['openEO', 'visualization'],
+	props: ['connection'],
 	computed: {
 		savedScriptNames() {
 			return Object.keys(this.savedScripts);
@@ -57,7 +59,6 @@ export default {
 		EventBus.$on('addSourceCode', this.insertToEditor);
 		EventBus.$on('addProcessToEditor', this.insertToEditor);
 		EventBus.$on('addCollectionToEditor', this.insertToEditor);
-		EventBus.$on('getVisualization', this.getProcessGraph);
 		var storedScripts = localStorage.getItem("savedScripts");
 		if (storedScripts !== null) {
 			this.savedScripts = JSON.parse(storedScripts);
@@ -65,14 +66,6 @@ export default {
 	},
 	methods: {
 		getProcessGraph(callback) {
-			var OpenEO = this.openEO;
-			OpenEO.Editor = {
-				ProcessGraph: {},
-				Visualization: {
-					function: undefined, // Don't use null, typeof null is object in JS.
-					args: {}
-				}
-			};
 			var script = this.editor.getSelection();
 			if (!script) {
 				script = this.editor.getValue();
@@ -81,22 +74,7 @@ export default {
 				eval(script);
 			}
 
-			OpenEO.Editor.Visualization.args = OpenEO.Editor.Visualization.args || {};
-			// Modify visualization when user specified a pre-defined visualization
-			if (typeof OpenEO.Editor.Visualization.function === 'object') {
-				var vis = OpenEO.Editor.Visualization.function;
-				OpenEO.Editor.Visualization.function = vis.callback;
-				// Set default arguments when not given by user
-				if (typeof vis.arguments !== 'undefined') {
-					for(var key in vis.arguments) {
-						if (typeof OpenEO.Editor.Visualization.args[key] === 'undefined') {
-							OpenEO.Editor.Visualization.args[key] = vis.arguments[key].defaultValue;
-						}
-					}
-				}
-			}
-
-			callback(OpenEO.Editor);
+			callback(window.ProcessGraph);
 		},
 
 		clearEditor() {

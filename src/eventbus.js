@@ -27,9 +27,6 @@ Removes a web service from the map.
 ## getProcessGraph(callback $callback)
 Triggers the script/model currently in the editor to be evaluated runs the callback using the data from the evaluation.
 
-## getVisualization(callback $callback)
-Get the visualization script from the editor.
-
 ## jobCreated(object $job)
 Triggered when a job was created successfully, parameter is the Job object returned by the openeo-js-client lib.
 
@@ -55,7 +52,6 @@ The component to be used must be known (i.e. imported and declared) in the Modal
 
 ## showInViewer(Blob $blob, object $script, object $output_args)
 Shows the data with the specified content type in the appropriate area of the viewer.
-The script can be specified if any visualization should be applied.
 Also to enhance viewing experience the "original" output format arguments can be given.
 
 ## showMapViewer()

@@ -30,22 +30,14 @@ export default {
 	},
 	methods: {
 		getProcessGraph(callback) {
-			var instructions = {
-				ProcessGraph: this.makeProcessGraph(),
-				Visualization: {
-					function: undefined, // Don't use null, `typeof null` is object in JS.
-					args: {}
-				}
-			};
-
-			callback(instructions);
+			callback(this.makeProcessGraph());
 		},
 
 		convertModel() {
 			var pg = this.makeProcessGraph();
 
 			// ToDo: Don't emit separately
-			EventBus.$emit('addSourceCode', "OpenEO.Editor.ProcessGraph = " + JSON.stringify(pg, null, 2), true);
+			EventBus.$emit('addSourceCode', "window.ProcessGraph = " + JSON.stringify(pg, null, 2), true);
 			EventBus.$emit('showEditor');
 		},
 

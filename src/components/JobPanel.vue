@@ -1,6 +1,6 @@
 <template>
 	<DataTable ref="table" :dataSource="listJobs" :preprocessor="dataPreprocessor" :columns="columns" id="JobPanel" v-if="connection && capabilities">
-		<template slot="toolbar" slot-scope="p">
+		<template slot="toolbar">
 			<button title="Add new job" @click="createJobFromScript" v-show="capabilities.hasFeature('createJob')"><i class="fas fa-plus"></i> Add</button>
 			<button title="Refresh jobs" @click="updateData()" v-show="capabilities.hasFeature('listJobs')"><i class="fas fa-sync-alt"></i></button> <!-- ToDo: Should be done automatically later -->
 		</template>
@@ -147,7 +147,7 @@ export default {
 				return;
 			}
 			EventBus.$emit('getProcessGraph', (script) => {
-				this.createJob(script.ProcessGraph, format);
+				this.createJob(script, format);
 			});
 		},
 		updateJobDataFromServer(outdatedJob) {
@@ -186,7 +186,7 @@ export default {
 		editJob(job) {
 			// TODO-CF: provide more update options/don't just override the process graph and nothing else
 			EventBus.$emit('getProcessGraph', (script) => {
-				job.updateJob(script.ProcessGraph);
+				job.updateJob(script);
 				this.updateJobDataFromServer(job);
 			} , false);
 		},

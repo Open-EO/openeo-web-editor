@@ -25,10 +25,6 @@ export default {
 
 	methods: {
 
-		setScript(script) {
-			this.script = script;
-		},
-
 		reset() {
 			this.setMessage('Nothing to show.');
 		},
@@ -44,9 +40,6 @@ export default {
 			EventBus.$emit('showImageViewer');
 			this.$refs.image.onload = () => {
 				this.visibleContent = 'image';
-				if (this.script.Visualization && this.script.Visualization.function) {
-					this.updateCanvas();
-				}
 			};
 			this.$refs.image.src = src;
 		},
@@ -66,7 +59,6 @@ export default {
 			var context = this.$refs.canvas.getContext('2d');
 			context.drawImage(this.$refs.image, 0, 0);
 			this.$refs.canvas.originalImage = context.getImageData(0, 0, this.$refs.canvas.width, this.$refs.canvas.height);
-			this.$utils.recolorImage(this.$refs.canvas, this.script);
 
 			this.visibleContent = 'canvas';
 		},

@@ -1,7 +1,7 @@
 <template>
 	<div id="container">
 		<div id="ide">
-			<BackendPanel :connection="connection" :capabilities="capabilities" :supportedOutputFormats="supportedOutputFormats" :supportedServices="supportedServices" :visualizations="visualizations" :visualization="visualization" />
+			<BackendPanel :connection="connection" :capabilities="capabilities" :supportedOutputFormats="supportedOutputFormats" :supportedServices="supportedServices" />
 			<div class="tabs" id="processGraphContent">
 				<div class="tabsHeader">
 					<button class="tabItem" name="graphTab" @click="changeProcessGraphTab"><i class="fas fa-code-branch"></i> Visual Builder</button>
@@ -12,10 +12,10 @@
 				</div>
 				<div class="tabsBody">
 					<div class="tabContent" id="graphTab">
-						<GraphBuilderEnvironment ref="graphBuilder" :openEO="openEO" />
+						<GraphBuilderEnvironment ref="graphBuilder" :connection="connection" />
 					</div>
 					<div class="tabContent" id="sourceTab">
-						<SourceEnvironment ref="sourceEditor" :openEO="openEO" :visualization="visualization" />
+						<SourceEnvironment ref="sourceEditor" :connection="connection" />
 					</div>
 				</div>
 			</div>
@@ -92,7 +92,6 @@ import ServicePanel from './components/ServicePanel.vue';
 import SourceEnvironment from './components/SourceEnvironment.vue';
 import axios from 'axios';
 import { OpenEO } from '@openeo/js-client';
-import OpenEOVisualizations from './visualizations.js';
 import Vue from 'vue';
 
 // Making axios available globally for the OpenEO JS client
@@ -116,13 +115,10 @@ export default {
 	},
 	data() {
 		return {
-			openEO: new OpenEO(),
 			connection: undefined,
 			capabilities: undefined,
 			supportedOutputFormats: undefined,
-			supportedServices: undefined,
-			visualizations: OpenEOVisualizations,
-			visualization: undefined
+			supportedServices: undefined
 		};
 	},
 	created() {
@@ -142,16 +138,20 @@ export default {
 		EventBus.$on('showImageViewer', this.showImageViewer);
 		EventBus.$on('showDataViewer', this.showDataViewer);
 		EventBus.$on('getProcessGraph', this.getProcessGraph);
-//		EventBus.$on('getVisualization', ...);
 	},
 	methods: {
 
 		changeServer(url) {
-			this.connection = this.openEO.connect(url);
+			try {
+				var openEO = new OpenEO();
+				this.connection = openEO.connect(url);
+				// Request authentication
+				// ToDo: Problem: Auth is fired to late, BackendPanel updates earlier...
+				this.requestCapabilities();
+			} catch (e) {
+				this.$utils.error(this, e.getMessage());
+			}
 
-			// Request authentication
-			// ToDo: Problem: Auth is fired to late, BackendPanel updates earlier...
-			this.requestCapabilities();  // also requests output formats, services and auth
 		},
 
 		serverChanged() {
@@ -310,9 +310,6 @@ export default {
 				case 'image/jpg':
 				case 'image/jpeg':
 				case 'image/gif':
-					if (script) {
-						this.$refs.imageViewer.setScript(script);
-					}
 					this.$refs.imageViewer.showImageBlob(blob);
 					break;
 				case 'application/json':
@@ -347,7 +344,7 @@ export default {
 			}
 			this.$utils.info(this, 'Data requested. Please wait...');
 			EventBus.$emit('getProcessGraph', (script) => {
-				this.connection.execute(script.ProcessGraph, format)
+				this.connection.execute(script, format)
 					.then(data => EventBus.$emit('showInViewer', data, script, format))
 					.catch(error => this.$utils.error(this, 'Sorry, could not execute script.'));
 			});

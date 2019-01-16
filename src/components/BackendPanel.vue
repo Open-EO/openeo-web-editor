@@ -23,16 +23,6 @@
 			<button id="insertProcesses" @click="insertProcessToEditor" title="Insert into script"><i class="fas fa-plus"></i></button>
 			<button @click="showProcessInfo" title="Show details" v-show="capabilities && capabilities.hasFeature('listProcesses')"><i class="fas fa-info"></i></button>
 		</div>
-		<!-- ToDo: Move to Source/Model environment and make a modal, not adapted to visual model builder yet -->
-<!--	<div class="vis-toolbar">
-			Visualizations: <select id="visualizations">
-				<option value="">None</option>
-				<option value="custom">Custom function</option>
-				<optgroup label="Pre-defined">
-					<option v-for="(v, k) in this.visualizations" :key="k" :value="k">{{ v.name }}</option>
-				</optgroup>
-			</select> <button id="insertVisualizations" title="Insert into script" @click="insertVisualization"><i class="fas fa-plus"></i></button>
-		</div> -->
 	</div>
 </template>
 
@@ -41,7 +31,7 @@ import EventBus from '../eventbus.js';
 
 export default {
 	name: 'BackendPanel',
-	props: ['connection', 'capabilities', 'supportedOutputFormats', 'supportedServices', 'visualizations', 'visualization'],
+	props: ['connection', 'capabilities', 'supportedOutputFormats', 'supportedServices'],
 	data() {
 		return {
 			processes: [],
@@ -182,53 +172,7 @@ export default {
 				this.processes.push(info.processes[i]);
 			}
 			EventBus.$emit('propagateProcesses', this.processes);
-		},
-	
-		insertVisualization() {
-			var select = document.getElementById('visualizations');
-			var code;
-			if (select.value === 'custom') {
-				code = `
-this.visualization = {
-	function: function(input) {
-		// ToDo: Implement your custom visualization
-	}
-};
-`;
-			}
-			else if (typeof this.visualizations[select.value] !== 'undefined') {
-				var argsCode = '';
-				var argList = [];
-				for(var key in this.visualizations[select.value].arguments) {
-					var arg = this.visualizations[select.value].arguments[key];
-					var value = prompt(arg.description, JSON.stringify(arg.defaultValue));
-					if (value !== null) {
-						argList.push('"' + key + '": ' + value);
-					}
-					else {
-						// User clicked 'Cancel' -> Abort inserting visualization
-						return;
-					}
-				}
-				if (argList.length > 0) {
-					argsCode = `,
-	args: {
-		` + argList.join(",\r\n		") + `
-	}`;
-				}
-
-				code = `
-this.visualization = {
-	function: this.visualizations.` + select.value + argsCode + `
-};
-`;
-			}
-			else {
-				code = '';
-			}
-			EventBus.$emit('addSourceCode', code);
-		},
-
+		}
 	}
 }
 </script>

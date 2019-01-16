@@ -1,6 +1,6 @@
 <template>
 	<DataTable ref="table" :dataSource="dataSource" :preprocessor="dataPreprocessor" :columns="columns" id="ProcessGraphPanel">
-		<template slot="toolbar" slot-scope="p">
+		<template slot="toolbar">
 			<button title="Add new process graph" @click="addGraph" v-show="openEO.Capabilities.createUserProcessGraph()"><i class="fas fa-plus"></i> Add</button>
 			<button title="Refresh process graphs" @click="updateData()"><i class="fas fa-sync-alt"></i></button> <!-- ToDo: Should be done automatically later -->
 		</template>
@@ -69,7 +69,7 @@ export default {
 		addGraph() {
 			EventBus.$emit('getProcessGraph', (script) => {
 				var userApi = this.openEO.Users.getObject(this.userId);
-				userApi.createProcessGraph(script.ProcessGraph)
+				userApi.createProcessGraph(script)
 					.then(data => {
 						this.$refs.table.addData(data.process_graph_id);
 						this.$utils.ok(this, 'Process Graph saved!');
@@ -90,7 +90,7 @@ export default {
 		editGraph(id) {
 			EventBus.$emit('getProcessGraph', (script) => {
 				var pgApi = this.openEO.Users.getObject(this.userId).getProcessGraphObject(id);
-				pgApi.replace(script.ProcessGraph)
+				pgApi.replace(script)
 					.then(data => {
 						this.$utils.ok(this, 'Process Graph updated!');
 					}).catch(error => {
