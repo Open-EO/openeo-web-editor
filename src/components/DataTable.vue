@@ -10,7 +10,7 @@
 				<button @click="clearFilter" :disabled="!hasFilter"><i class="fas fa-times-circle"></i></button>
 			</div>
 		</div>
-		<table v-if="data.length > 0 || noDataMessage == undefined || noDataMessage == ''">
+		<table v-if="data.length > 0 || typeof noDataMessage == 'undefined' || noDataMessage == ''">
 			<tr>
 				<th v-for="(col, id) in columns" v-show="!col.hide" :key="id" :class="id">{{ col.name }}</th>
 			</tr>
@@ -34,7 +34,7 @@ import EventBus from '../eventbus.js';
 
 export default {
 	name: 'DataTable',
-	props: ['id', 'columns', 'dataSource', 'preprocessor'],
+	props: ['id', 'columns', 'dataSource'],
 	data() {
 		return {
 			data: [],
@@ -128,12 +128,7 @@ export default {
 		},
 		setData(data) {
 			this.noDataMessage = undefined;
-			if (typeof this.preprocessor === 'function') {
-				this.data = data.map(this.preprocessor);
-			}
-			else {
-				this.data = data;
-			}
+			this.data = data;
 		},
 		removeData(id) {
 			if (this.primaryKey === null) {
@@ -145,9 +140,6 @@ export default {
 			}
 		},
 		addData(newData) {
-			if (typeof this.preprocessor === 'function') {
-				newData = this.preprocessor(newData);
-			}
 			if (!newData.hasOwnProperty(this.primaryKey)) {
 				throw new Error('Object does not contain a value for the primary key.');
 			}
@@ -156,9 +148,6 @@ export default {
 		replaceData(newData) {
 			if (this.primaryKey === null) {
 				throw new Error('No primary key specified.');
-			}
-			if (typeof this.preprocessor === 'function') {
-				newData = this.preprocessor(newData);
 			}
 			if (!newData.hasOwnProperty(this.primaryKey)) {
 				throw new Error('Object does not contain a value for the primary key.');
@@ -172,12 +161,17 @@ export default {
 			}
 		},
 		value(row, col, id) {
+			var data;
 			if (typeof row === 'object') {
-				return row[id];
+				data = row[id];
 			}
 			else {
-				return row;
+				data = row;
 			}
+			if (typeof col === 'object' && typeof col.computedValue === 'function') {
+				data = col.computedValue(row, data);
+			}
+			return data;
 		},
 		formattedValue(row, col, id) {
 			return this.format(this.value(row, col, id), col);
@@ -194,7 +188,7 @@ export default {
 			this.view = this.view.filter(row => {
 				for(var key in row) {
 					var col = this.columns[key];
-					if (typeof col !== 'undefined' && col.hasOwnProperty('filterable') && col.filterable === false) {
+					if (typeof col === 'undefined' || col.hasOwnProperty('filterable') && col.filterable === false) {
 						continue;
 					}
 					var value = this.value(row, col, key);

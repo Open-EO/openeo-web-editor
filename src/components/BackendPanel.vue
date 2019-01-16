@@ -2,7 +2,7 @@
 	<div id="backendPanel">
 		<div class="server-toolbar" v-show="$config.allowServerChange">
 			<h3>Server:</h3>
-			<input id="serverUrl" ref="serverUrl" list="serverUrls" value="" />
+			<input id="serverUrl" v-model.lazy.trim="serverUrl" list="serverUrls" />
 			<button @click="showServerSelector" title="Select previously used server"><i class="fas fa-book"></i></button>
 			<button @click="updateServerUrlFromInput" title="Change server"><i class="fas fa-check"></i></button>
 		</div>
@@ -13,14 +13,14 @@
 			Collection: <select id="collection" ref="collection">
 				<option v-for="d in collections" :key="d.name" :value="d.name" :title="d.description">{{ d.name }}</option>
 			</select>
-			<button id="insertCollection" @click="insertCollectionToEditor" title="Insert into script"><i class="fas fa-plus"></i></button>
+			<button id="insertCollection" @click="insertCollection" title="Insert into script"><i class="fas fa-plus"></i></button>
 			<button @click="showCollectionInfo" title="Show details" v-show="capabilities && capabilities.hasFeature('describeCollection')"><i class="fas fa-info"></i></button>
 		</div>
 		<div class="processes-toolbar" v-show="showProcessSelector()">
 			Processes: <select id="processes" ref="processes">
 				<option v-for="p in processes" :key="p.name" :value="p.name" :title="p.description">{{ p.name }}</option>
 			</select>
-			<button id="insertProcesses" @click="insertProcessToEditor" title="Insert into script"><i class="fas fa-plus"></i></button>
+			<button id="insertProcesses" @click="insertProcess" title="Insert into script"><i class="fas fa-plus"></i></button>
 			<button @click="showProcessInfo" title="Show details" v-show="capabilities && capabilities.hasFeature('listProcesses')"><i class="fas fa-info"></i></button>
 		</div>
 	</div>
@@ -36,7 +36,8 @@ export default {
 		return {
 			processes: [],
 			collections: [],
-			serverUrls: []
+			serverUrls: [],
+			serverUrl: ''
 		};
 	},
 	watch: {
@@ -83,7 +84,7 @@ export default {
 		},
 
 		changeServer(url) {
-			this.$refs.serverUrl.value = url;
+			this.serverUrl = url;
 			if (this.serverUrls.indexOf(url) === -1) {
 				this.serverUrls.push(url);
 			}
@@ -103,10 +104,9 @@ export default {
 		},
 
 		updateServerUrlFromInput() {
-			var newUrl = this.$refs.serverUrl.value;
-			if (typeof newUrl === 'string' && newUrl.length > 0) {
-				if (!this.connection || newUrl != this.connection.getBaseUrl()) {
-					EventBus.$emit('changeServerUrl', newUrl);
+			if (typeof this.serverUrl === 'string' && this.serverUrl.length > 0) {
+				if (!this.connection || this.serverUrl != this.connection.getBaseUrl()) {
+					EventBus.$emit('changeServerUrl', this.serverUrl);
 				}
 			}
 			else {
@@ -115,11 +115,15 @@ export default {
 		},
 
 		updateServerUrlTo(newUrl) {
-			this.$refs.serverUrl.value = newUrl;
+			this.serverUrl = newUrl;
 			this.updateServerUrlFromInput();
 		},
 
 		getServerInfo() {
+			if (!this.connection) {
+				this.$utils.info(this, 'Not connected yet.');
+				return;
+			}
 			var info = {
 				url: this.connection.getBaseUrl(),
 				supportedEndpoints: this.capabilities.listFeatures(),
@@ -144,11 +148,11 @@ export default {
 			EventBus.$emit('showModal', 'Process: ' + name, info);
 		},
 
-		insertCollectionToEditor() {
+		insertCollection() {
 			EventBus.$emit('addCollectionToEditor', this.$refs.collection.value);
 		},
 
-		insertProcessToEditor() {
+		insertProcess() {
 			EventBus.$emit('addProcessToEditor', this.$refs.processes.value);
 		},
 	

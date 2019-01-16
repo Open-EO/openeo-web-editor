@@ -1,5 +1,5 @@
 <template>
-	<DataTable ref="table" :dataSource="dataSource" :preprocessor="dataPreprocessor" :columns="columns" id="ProcessGraphPanel">
+	<DataTable ref="table" :dataSource="dataSource" :columns="columns" id="ProcessGraphPanel">
 		<template slot="toolbar">
 			<button title="Add new process graph" @click="addGraph" v-show="openEO.Capabilities.createUserProcessGraph()"><i class="fas fa-plus"></i> Add</button>
 			<button title="Refresh process graphs" @click="updateData()"><i class="fas fa-sync-alt"></i></button> <!-- ToDo: Should be done automatically later -->
@@ -51,9 +51,6 @@ export default {
 		dataSource() {
 			let users = this.openEO.Users.getObject(this.userId);
 			return users.getProcessGraphs();
-		},
-		dataPreprocessor(data) {
-			return { id: data };
 		},
 		updateData() {
 			if (!this.$refs.table || !this.openEO.Capabilities.userProcessGraphs()) {

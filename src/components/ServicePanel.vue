@@ -1,6 +1,6 @@
 <template>
 	<DataTable ref="table" :dataSource="dataSource" :columns="columns" id="ServicePanel">
-		<template slot="toolbar" slot-scope="p">
+		<template slot="toolbar">
 			<button title="Refresh services" @click="updateData()"><i class="fas fa-sync-alt"></i></button> <!-- ToDo: Should be done automatically later -->
 		</template>
 		<template slot="actions" slot-scope="p">

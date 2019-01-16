@@ -12,10 +12,10 @@
 				</div>
 				<div class="tabsBody">
 					<div class="tabContent" id="graphTab">
-						<GraphBuilderEnvironment ref="graphBuilder" :connection="connection" />
+						<GraphBuilderEnvironment ref="graphBuilder" :active="isVisualBuilderActive" />
 					</div>
 					<div class="tabContent" id="sourceTab">
-						<SourceEnvironment ref="sourceEditor" :connection="connection" />
+						<SourceEnvironment ref="sourceEditor" :active="!isVisualBuilderActive" />
 					</div>
 				</div>
 			</div>
@@ -115,10 +115,11 @@ export default {
 	},
 	data() {
 		return {
-			connection: undefined,
-			capabilities: undefined,
-			supportedOutputFormats: undefined,
-			supportedServices: undefined
+			connection: null,
+			capabilities: null,
+			supportedOutputFormats: null,
+			supportedServices: null,
+			isVisualBuilderActive: true
 		};
 	},
 	created() {
@@ -144,14 +145,13 @@ export default {
 		changeServer(url) {
 			try {
 				var openEO = new OpenEO();
-				this.connection = openEO.connect(url);
-				// Request authentication
-				// ToDo: Problem: Auth is fired to late, BackendPanel updates earlier...
-				this.requestCapabilities();
+				openEO.connect(url).then(connection => {
+					this.connection = connection;
+					this.requestCapabilities();
+				});
 			} catch (e) {
-				this.$utils.error(this, e.getMessage());
+				this.$utils.error(this, e);
 			}
-
 		},
 
 		serverChanged() {
@@ -235,6 +235,7 @@ export default {
 	
 		changeProcessGraphTab(evt) {
 			this.changeTab('processGraphContent', evt);
+			this.isVisualBuilderActive = this.isTabActive('graphTab');
 		},
 
 		changeViewerTab(evt) {
@@ -265,7 +266,7 @@ export default {
 
 		isTabActive(tabName) {
 			var elem = document.getElementById(tabName);
-			if (elem.className && elem.className.indexOf(' tabActive') !== -1) {
+			if (typeof elem === 'object' && elem !== null && typeof elem.className === 'string' && elem.className.indexOf(' tabActive') !== -1) {
 				return true;
 			}
 			else {
@@ -273,12 +274,9 @@ export default {
 			}
 		},
 
-		isVisualBuilderActive() {
-			return this.isTabActive('graphTab');
-		},
-
 		showEditor() {
 			this.showTab('processGraphContent', 'sourceTab');
+			this.isVisualBuilderActive = this.isTabActive('graphTab');
 		},
 
 		showMapViewer() {
@@ -329,7 +327,7 @@ export default {
 		},
 
 		getProcessGraph(callback) {
-			if (this.isVisualBuilderActive()) {
+			if (this.isVisualBuilderActive) {
 				this.$refs.graphBuilder.getProcessGraph(callback);
 			}
 			else {
@@ -590,26 +588,14 @@ footer {
     background-image:url('http://gregwar.com/blocks.js/build/gfx/scale.png');
 }
 
-.blocks_js_editor .contextmenu .family:hover,
 .blocks_js_editor .contextmenu .menuentry:hover,
 .blocks_js_editor .contextmenu .type:hover {
     background-color: #f7f7f7;
     color:black;
 }
 
-.blocks_js_editor .contextmenu .family .childs {
-    margin-left:121px;
-    margin-top:-20px;
-}
-
-.blocks_js_editor .contextmenu .family .familyName span {
-    float:right;
-}
-
-.blocks_js_editor .contextmenu .family h3 {
-    font-size:100%;
-    font-weight:bold;
-    cursor:pointer;
+.blocks_js_editor .contextmenu .family {
+	display: none;
 }
 
 /**

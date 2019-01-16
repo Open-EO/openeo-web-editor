@@ -1,5 +1,12 @@
 export default {
 	error(vm, message, title = null) {
+		console.log(message);
+		if (typeof message === 'object' && message.code && message.message) {
+			if (message.code > 0) {
+				title = "Error #" + message.code;
+			}
+			message = message.message;
+		}
 		vm.$snotify.error(message, title);
 	},
 	info(vm, message, title = null) {

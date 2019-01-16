@@ -7,7 +7,7 @@ You can use the online **[demo](https://open-eo.github.io/openeo-web-editor/demo
 1. Install [Node.js](https://nodejs.org/)
 2. Clone or download this repository.
 3. Open a command line window and go to the directory which contains the cloned/downloaded web editor files.
-4. Optionally: Configure the web editor by editing `config.js` to suit your needs.
+4. Optionally: Configure the web editor by editing `config.js` and `vue.config.js` to suit your needs.
 6. Install the dependencies by executing `npm install` on the command line
 7. 
     * Development: Run the development server by executing `npm run serve`.

@@ -1,5 +1,5 @@
 <template>
-	<DataTable ref="table" :dataSource="listJobs" :preprocessor="dataPreprocessor" :columns="columns" id="JobPanel" v-if="connection && capabilities">
+	<DataTable ref="table" :dataSource="listJobs" :columns="columns" id="JobPanel" v-if="connection && capabilities">
 		<template slot="toolbar">
 			<button title="Add new job" @click="createJobFromScript" v-show="capabilities.hasFeature('createJob')"><i class="fas fa-plus"></i> Add</button>
 			<button title="Refresh jobs" @click="updateData()" v-show="capabilities.hasFeature('listJobs')"><i class="fas fa-sync-alt"></i></button> <!-- ToDo: Should be done automatically later -->
@@ -7,8 +7,9 @@
 		<template slot="actions" slot-scope="p">
 			<button title="Details" @click="showJobInfo(p.row)" v-show="capabilities.hasFeature('describeJob')"><i class="fas fa-info"></i></button>
 			<button title="Edit" @click="editJob(p.row)" v-show="capabilities.hasFeature('updateJob')"><i class="fas fa-edit"></i></button>
+			<button title="Delete" @click="deleteJob(p.row)" v-show="capabilities.hasFeature('deleteJob')"><i class="fas fa-trash"></i></button>&nbsp;
 			<button title="Start" @click="queueJob(p.row)" v-show="capabilities.hasFeature('startJob')"><i class="fas fa-play-circle"></i></button>
-			<button title="Cancel" @click="cancelJob(p.row)" v-show="capabilities.hasFeature('stopJob')"><i class="fas fa-stop-circle"></i></button>
+			<button title="Cancel" @click="cancelJob(p.row)" v-show="capabilities.hasFeature('stopJob')"><i class="fas fa-stop-circle"></i></button>&nbsp;
 			<button title="Download" @click="downloadJob(p.row)" v-show="capabilities.hasFeature('downloadResults')"><i class="fas fa-download"></i></button>
 			<button title="View results" @click="downloadJob(p.row, true)" v-show="capabilities.hasFeature('downloadResults')"><i class="fas fa-eye"></i></button>
 			<button title="Create Service" @click="createServiceFromJob(p.row)" v-show="capabilities.hasFeature('createService')"><i class="fas fa-plus"></i> <i class="fas fa-cloud"></i></button>
@@ -38,7 +39,13 @@ export default {
 					hide: true
 				},
 				title: {
-					name: 'Title'
+					name: 'Title',
+					computedValue: (row, value) => {
+						if (!value && row.jobId) {
+							return "Job #" + row.jobId.toUpperCase().substr(-6);
+						}
+						return value;
+					}
 				},
 				status: {
 					name: 'Status',
@@ -51,10 +58,6 @@ export default {
 				updated: {
 					name: 'Last update',
 					format: 'DateTime'
-				},
-				costs: {
-					name: 'Costs',
-					filterable: false
 				},
 				actions: {
 					name: 'Actions',
@@ -93,12 +96,6 @@ export default {
 		listJobs() {
 			return this.connection.listJobs();
 		},
-		dataPreprocessor(data, index) {
-			if (!data.title) {
-				data.title = "Job #" + data.jobId.toUpperCase().substr(-6);
-			}
-			return data;
-		},
 		updateData() {
 			if (!this.$refs.table) {
 				return;
@@ -132,11 +129,14 @@ export default {
 			this.$snotify.confirm('Job created!', null, options);
 		},
 		createJob(processGraph, outputFormat) {
+			if (!outputFormat) {
+				outputFormat = null;
+			}
 			this.connection.createJob(processGraph, outputFormat)
 				.then(job => {
 					EventBus.$emit('jobCreated', job);
 				}).catch(error => {
-					this.$utils.error(this, 'Sorry, could not create an openEO job.');
+					this.$utils.error(this, error || 'Sorry, could not create an openEO job.');
 				});
 		},
 		createJobFromScript(id) {
@@ -150,69 +150,71 @@ export default {
 				this.createJob(script, format);
 			});
 		},
-		updateJobDataFromServer(outdatedJob) {
-			outdatedJob.describeJob().then(data => this.updateJobData(data));
-		},
-		updateJobData(uptodateJob) {
-			this.$refs.table.replaceData(uptodateJob);
+		updateJobData(updatedJob) {
+			this.$refs.table.replaceData(updatedJob);
 
 			// Watchers
-			var index = this.watchers.findIndex(j => j.jobId == uptodateJob.jobId);
-			switch(data.status.toLowerCase()) {
+			var index = this.watchers.findIndex(j => j.jobId == updatedJob.jobId);
+			switch(updatedJob.status.toLowerCase()) {
 				case 'running':
 				case 'queued':
 				case 'unknown':
 					if (index === -1) {
-						this.watchers.push(uptodateJob);
+						this.watchers.push(updatedJob);
 					}
 					break;
 				default:
 					delete this.watchers[index];
 			}
 		},
+		deleteJob(job) {
+			job.deleteJob()
+				.then(() => {
+					this.$refs.table.removeData(job.jobId);
+				})
+				.catch(error => {
+					this.$utils.error(this, error || 'Sorry, could not delete job.');
+				});
+		},
 		executeWatchers() {
 			for(var i in this.watchers) {
-				this.updateJobDataFromServer(this.watchers[i]);
+				this.watchers[i].describeJob().then(data => this.updateJobData(data));
 			}
 		},
 		showJobInfo(job) {
 			job.describeJob()
-				.then(data => {
-					EventBus.$emit('showModal', 'Job: ' + data.job_id, data);
-					this.updateJobData(job);
+				.then(updatedJob => {
+					EventBus.$emit('showModal', 'Job Details', updatedJob.getAll());
+					this.updateJobData(updatedJob);
 				})
-				.catch(error => this.$utils.error(this, 'Sorry, could not load job details.'));
+				.catch(error => this.$utils.error(this, error || "Sorry, could not load job details."));
 		},
 		editJob(job) {
 			// TODO-CF: provide more update options/don't just override the process graph and nothing else
 			EventBus.$emit('getProcessGraph', (script) => {
-				job.updateJob(script);
-				this.updateJobDataFromServer(job);
+				job.updateJob(script)
+					.then(updatedJob => {
+						this.$utils.ok(this, "Job successfully updated.");
+						this.updateJobData(updatedJob);
+					})
+					.catch(error => this.$utils.error(this, error || "Sorry, could not update job."));;
 			} , false);
 		},
-		queueJob(id) {
+		queueJob(job) {
 			job.startJob()
-				.then(wasSuccessful => {
-					if (!wasSucessful) {  // switch to error handler below
-						throw 'Error while queueing job';
-						return;
-					}
+				.then(updatedJob => {
 					this.$utils.ok(this, "Job successfully queued.");
-					this.updateJobDataFromServer(id);
+					this.updateJobData(updatedJob);
 				})
-				.catch(error => this.$utils.error(this, "Sorry, could not queue job."));
+				.catch(error => this.$utils.error(this, error || "Sorry, could not queue job."));
 		},
 		cancelJob(job) {
 			job.stopJob()
-				.then(wasSuccessful => {
-					if (!wasSucessful) {  // switch to error handler below
-						throw 'Error while canceling job';
-						return;
-					}
+				.then(updatedJob => {
 					this.$utils.ok(this, "Job successfully canceled.");
-					this.updateJobDataFromServer(id);
+					this.updateJobData(updatedJob);
 				})
-				.catch(error => this.$utils.error(this, "Sorry, could not cancel job."));
+				.catch(error => this.$utils.error(this, error || "Sorry, could not cancel job."));
 		},
 		downloadJob(job, view = false) {
 			var format = prompt('Please specify the file format you need or leave empty for default format.', '');
@@ -248,7 +250,7 @@ export default {
 							});
 						})
 						.catch(error => {
-							this.$utils.error(this, "Sorry, an error occured.");
+							this.$utils.error(this, error || "Sorry, an error occured.");
 						});
 				}
 			});
@@ -277,11 +279,11 @@ export default {
 						.then(service => {
 							EventBus.$emit('serviceCreated', service);
 						}).catch(error => {
-							this.$utils.error(this, "An error occured while creating the service.");
+							this.$utils.error(this, error || "An error occured while creating the service.");
 						})
 					})
 				.catch(error => {
-					this.$utils.error(this, "An error occured while fetching the job's process graph.");
+					this.$utils.error(this, error || "An error occured while fetching the job's process graph.");
 				});
 		},
 		subscribeToJob(id) {  // TODO-CF: Upgrade when js-client supports it again

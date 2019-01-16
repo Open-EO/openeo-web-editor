@@ -1,8 +1,8 @@
-var Config = require('./src/config.js');
-
 module.exports = {
-	baseUrl: process.env.CLIENT_URL || Config.clientUrl,
+	// Path where this instance of the web editor is hosted (string)
+	publicPath: process.env.CLIENT_URL || '/',
 	devServer: {
-		port: Config.devPort
+		// Port where the dev server runs (int)
+		port: 80
 	}
 }

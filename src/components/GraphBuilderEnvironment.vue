@@ -15,7 +15,7 @@ import EventBus from '../eventbus.js';
 
 export default {
 	name: 'GraphBuilderEnvironment',
-	props: ['openEO'],
+	props: ['active'],
 	data() {
 		return {
 			blocks: null
@@ -24,6 +24,8 @@ export default {
 	mounted() {
 		EventBus.$on('propagateCollections', this.propagateCollections);
 		EventBus.$on('propagateProcesses', this.propagateProcesses);
+		EventBus.$on('addProcessToEditor', this.insertToEditor);
+		EventBus.$on('addCollectionToEditor', this.insertToEditor);
 		EventBus.$on('serverChanged', this.resetBlocks);
 		
 		this.resetBlocks();
@@ -37,8 +39,10 @@ export default {
 			var pg = this.makeProcessGraph();
 
 			// ToDo: Don't emit separately
-			EventBus.$emit('addSourceCode', "window.ProcessGraph = " + JSON.stringify(pg, null, 2), true);
 			EventBus.$emit('showEditor');
+			this.$nextTick(() => {
+				EventBus.$emit('addSourceCode', "window.ProcessGraph = " + JSON.stringify(pg, null, 2), true);
+			})
 		},
 
 		resetBlocks() {
@@ -84,6 +88,10 @@ export default {
 		},
 
 		makeProcessGraphFromEdges(edges, currentNode) {
+			if (!currentNode) {
+				return {};
+			}
+
 			var parents = [];
 			for(var i in edges) {
 				if (edges[i].block2 == currentNode.id) {
@@ -92,21 +100,20 @@ export default {
 			}
 			if (currentNode.module == 'Collection') {
 				return {
+					process_id: 'get_collection',
 					name: currentNode.type
 				};
 			}
 			else {
-				var args = currentNode.values;
+				var process = currentNode.values;
 				if (parents.length == 1) {
-					args.imagery = parents[0];
+					process.imagery = parents[0];
 				}
 				else {
-					args.imagery = parents;
+					process.imagery = parents;
 				}
-				return {
-					name: currentNode.type,
-					args: args
-				};
+				process.process_id = currentNode.type;
+				return process;
 			}
 		},
 
@@ -116,7 +123,8 @@ export default {
 					name: "Output",
 					attrs: "output"
 				}];
-				for(var a in processes[i].args) {
+				for(var a in processes[i].parameters) {
+					var p = processes[i].parameters[a];
 					args.push({
 						name: a,
 						attrs: a == 'imagery' ? "input" : "editable input"
@@ -134,9 +142,6 @@ export default {
 	
 		propagateCollections(info) {
 			for(var i in info) {
-				if (info[i].name.indexOf('COPERNICUS/') === -1) {
-					continue;
-				}
 				this.blocks.register({
 					name: info[i].name,
 					family: "Collection",
@@ -149,6 +154,14 @@ export default {
     				]
 				});
 			}
+		},
+
+		insertToEditor(name) {
+			if (!this.active) {
+				return;
+			}
+
+			this.blocks.addBlock(name, 0, 0);
 		}
 
 	}

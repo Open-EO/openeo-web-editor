@@ -1,5 +1,5 @@
 import Vue from 'vue';
-import Config from './config.js';
+import Config from '../config.js';
 import Editor from './Editor.vue';
 import Snotify from 'vue-snotify';
 import 'vue-snotify/styles/simple.css';
@@ -16,8 +16,8 @@ Vue.prototype.$utils = utils;
 
 Vue.config.productionTip = false;
 Vue.config.errorHandler = function (err, vm, info) {
-	utils.error(vm, err.message);
 	console.log(err);
+	vm.$snotify.error(err.message);
 };
 
 window.App = new Vue({

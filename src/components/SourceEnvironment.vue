@@ -25,7 +25,7 @@ window.ProcessGraph = {};
 
 export default {
 	name: 'SourceEnvironment',
-	props: ['connection'],
+	props: ['active'],
 	computed: {
 		savedScriptNames() {
 			return Object.keys(this.savedScripts);
@@ -146,6 +146,9 @@ export default {
 		},
 
 		insertToEditor(text, replace = false) {
+			if (!this.active) {
+				return;
+			}
 			if (replace) {
 				this.editor.setValue(text);
 				this.scriptName = '';
