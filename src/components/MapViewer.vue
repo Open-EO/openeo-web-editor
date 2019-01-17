@@ -85,14 +85,15 @@ export default {
 		},
 
 		viewWebService(service) {
-			if (service.service_type.toLowerCase() == 'wms') {
-				this.updateWMSLayer(service);
-			}
-			else if (service.service_type.toLowerCase() == 'xyz') {
-				this.updateXYZLayer(service);
-			}
-			else {
-				this.$utils.error('Sorry, the requested service type is not supported by the map.');
+			switch(service.type.toLowerCase()) {
+				case 'wms':
+					this.updateWMSLayer(service);
+					break;
+				case 'xyz':
+					this.updateXYZLayer(service);
+					break;
+				default:
+					this.$utils.error('Sorry, the service type is not supported by the map.');
 			}
 		},
 
@@ -142,11 +143,11 @@ export default {
 		},
 
 		updateXYZLayer(service) {
-			var id = service.service_id;
-			var url = service.service_url + "/{z}/{x}/{y}";
+			var id = service.serviceId;
+			var url = service.url + "/{z}/{x}/{y}";
 			if (typeof this.layer[id] === 'undefined') {
 				var opts = {
-					name: id + " (XYZ)"
+					name: id.toUpperCase().substr(0,6) + " (XYZ)"
 				};
 				this.layer[id] = new L.TileLayer(url, opts);
 				this.addLayerToMap(id);
@@ -157,17 +158,17 @@ export default {
 		},
 
 		updateWMSLayer(service) {
-			var id = service.service_id;
+			var id = service.serviceId;
 			if (typeof this.layer[id] === 'undefined') {
-				var args = service.service_args;
-				args.name = id + " (WMS)";
+				var args = service.attributes;
+				args.name = id.toUpperCase().substr(0,6) + " (WMS)";
 				args.service = args.service || 'WMS';
 				args.format = args.format || 'image/jpeg';
-				this.layer[id] = L.tileLayer.wms(service.service_url, args);
+				this.layer[id] = L.tileLayer.wms(service.url, args);
 				this.addLayerToMap(id);
 			}
 			else {
-				this.layer[id].setUrl(service.service_url, false);
+				this.layer[id].setUrl(service.url, false);
 			}
 		}
 

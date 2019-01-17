@@ -1,14 +1,14 @@
 <template>
 	<div id="container">
 		<div id="ide">
-			<BackendPanel :connection="connection" :capabilities="capabilities" :supportedOutputFormats="supportedOutputFormats" :supportedServices="supportedServices" />
+			<BackendPanel :connection="connection" />
 			<div class="tabs" id="processGraphContent">
 				<div class="tabsHeader">
-					<button class="tabItem" name="graphTab" @click="changeProcessGraphTab"><i class="fas fa-code-branch"></i> Visual Builder</button>
+					<button class="tabItem" name="graphTab" @click="changeProcessGraphTab"><i class="fas fa-code-branch"></i> Visual Model Builder</button>
 					<button class="tabItem" name="sourceTab" @click="changeProcessGraphTab"><i class="fas fa-code"></i> Source Code</button>
 				</div>
 				<div class="tabsActions">
-					<button @click="executeProcessGraph" title="Run current process graph and view results" v-if="this.capabilities && this.capabilities.hasFeature('startJob')"><i class="fas fa-play"></i></button>
+					<button @click="executeProcessGraph" title="Run current process graph and view results" v-if="this.supports('startJob')"><i class="fas fa-play"></i></button>
 				</div>
 				<div class="tabsBody">
 					<div class="tabContent" id="graphTab">
@@ -21,30 +21,32 @@
 			</div>
 			<div class="tabs" id="userContent" v-show="this.connection">
 				<div class="tabsHeader">
-					<button class="tabItem" name="jobsTab" @click="changeUserTab"><i class="fas fa-tasks"></i> Jobs</button>
-					<button class="tabItem" name="servicesTab" @click="changeUserTab" v-show="this.capabilities && this.capabilities.hasFeature('createService')"><i class="fas fa-cloud"></i> Services</button>
-					<button class="tabItem" name="processGraphsTab" @click="changeUserTab" v-show="this.capabilities && this.capabilities.hasFeature('createProcessGraph')"><i class="fas fa-code-branch"></i> Process Graphs</button>
-					<button class="tabItem" name="filesTab" @click="changeUserTab" v-show="this.capabilities && this.capabilities.hasFeature('uploadFile')"><i class="fas fa-file"></i> Files</button>
+					<button class="tabItem" name="jobsTab" @click="changeUserTab" v-if="supportsJobs()"><i class="fas fa-tasks"></i> Batch Jobs</button>
+					<button class="tabItem" name="servicesTab" @click="changeUserTab" v-if="supportsServices()"><i class="fas fa-cloud"></i> Web Services</button>
+					<button class="tabItem" name="processGraphsTab" @click="changeUserTab" v-if="supportsProcessGraphs()"><i class="fas fa-code-branch"></i> Stored Process Graphs</button>
+					<!--
+					<button class="tabItem" name="filesTab" @click="changeUserTab" v-if="supportsFiles()"><i class="fas fa-file"></i> Files</button>
+					-->
 					<button class="tabItem" name="accountTab" @click="changeUserTab"><i class="fas fa-user"></i> Account</button>
 				</div>
 				<div class="tabsBody">
-					<div class="tabContent" id="jobsTab">
-						<JobPanel :connection="connection" :capabilities="capabilities" :supportedServices="supportedServices" />
+					<div class="tabContent" id="jobsTab" v-if="supportsJobs()">
+						<JobPanel :connection="connection" />
 					</div>
-					<!-- TODO-CF: Put these elements back in once they're upgraded enough to not break the whole app
-					<div class="tabContent" id="servicesTab" v-show="this.capabilities && this.capabilities.hasFeature('createService')">
-						<ServicePanel ref="servicePanel" :userId="openEO.Auth.userId" :openEO="openEO" />
+					<div class="tabContent" id="servicesTab" v-if="supportsServices()">
+						<ServicePanel :connection="connection" />
 					</div>
-					<div class="tabContent" id="processGraphsTab" v-show="this.capabilities && this.capabilities.hasFeature('createProcessGraph')">
-						<ProcessGraphPanel :userId="openEO.Auth.userId" :openEO="openEO" />
+					<div class="tabContent" id="processGraphsTab" v-if="supportsProcessGraphs()">
+						<ProcessGraphPanel :connection="connection" />
 					</div>
-					<div class="tabContent" id="filesTab" v-show="this.capabilities && this.capabilities.hasFeature('uploadFile')">
-						<FilePanel :userId="openEO.Auth.userId" :openEO="openEO" />
+					<!--
+					<div class="tabContent" id="filesTab" v-if="supportsFiles()">
+						<FilePanel :connection="connection" />
 					</div>
+					-->
 					<div class="tabContent" id="accountTab">
-						<AccountPanel :userId="openEO.Auth.userId" :openEO="openEO" />
-					</div>
-					-->				
+						<AccountPanel :connection="connection" />
+					</div>		
 				</div>
 			</div>
 			<footer>
@@ -116,9 +118,6 @@ export default {
 	data() {
 		return {
 			connection: null,
-			capabilities: null,
-			supportedOutputFormats: null,
-			supportedServices: null,
 			isVisualBuilderActive: true
 		};
 	},
@@ -158,9 +157,13 @@ export default {
 			this.resetActiveTab('userContent');
 		},
 
+		supports(feature) {
+			return this.connection && this.connection.capabilitiesObject && this.connection.capabilitiesObject.hasFeature(feature);
+		},
+
 		requestCapabilities() {
 			this.connection.capabilities().then(response => {
-				this.capabilities = response;
+				this.connection.capabilitiesObject = response;
 				this.requestSupportedOutputFormats();
 				this.requestSupportedServices();
 				this.requestAuth();
@@ -171,24 +174,20 @@ export default {
 		},
 
 		requestSupportedOutputFormats() {
-			if (this.capabilities.hasFeature('listFileTypes')) {
-				this.connection.listFileTypes().then(response => 
-					this.supportedOutputFormats = response
-				);
+			if (this.supports('listFileTypes')) {
+				this.connection.listFileTypes().then(response => this.connection.supportedOutputFormats = response);
 			}
 		},
 
 		requestSupportedServices() {
-			if (this.capabilities.hasFeature('listServiceTypes')) {
-				this.connection.listServiceTypes().then(response => 
-					this.supportedServices = response
-				);
+			if (this.supports('listServiceTypes')) {
+				this.connection.listServiceTypes().then(response => this.connection.supportedServices = response);
 			}
 		},
 
 		requestAuth() {
 			// TODO-CF: authenticateOIDC is missing
-			if (this.capabilities.hasFeature('authenticateBasic')) {
+			if (this.supports('authenticateBasic')) {
 				var opts = {
 					submitLoginCallback: (user, password) => {
 						return this.connection.authenticateBasic(user, password)
@@ -227,6 +226,34 @@ export default {
 			if (!elem.className || elem.className.indexOf(' tabActive') === -1) {
 				elem.className += " tabActive";
 			}
+		},
+
+		supportsJobs() {
+			if (!this.connection || !this.connection.capabilitiesObject) {
+				return false;
+			}
+			return (this.connection.capabilitiesObject.hasFeature('listJobs') || this.connection.capabilitiesObject.hasFeature('createJob'));
+		},
+
+		supportsServices() {
+			if (!this.connection || !this.connection.capabilitiesObject) {
+				return false;
+			}
+			return (this.connection.capabilitiesObject.hasFeature('listServices') || this.connection.capabilitiesObject.hasFeature('createService'));
+		},
+
+		supportsProcessGraphs() {
+			if (!this.connection || !this.connection.capabilitiesObject) {
+				return false;
+			}
+			return (this.connection.capabilitiesObject.hasFeature('listProcessGraphs') || this.connection.capabilitiesObject.hasFeature('createProcessGraph'));
+		},
+
+		supportsFiles() {
+			if (!this.connection || !this.connection.capabilitiesObject) {
+				return false;
+			}
+			return (this.connection.capabilitiesObject.hasFeature('listFiles') || this.connection.capabilitiesObject.hasFeature('uploadFile'));
 		},
 	
 		changeUserTab(evt) {

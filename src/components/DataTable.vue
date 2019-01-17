@@ -243,6 +243,9 @@ export default {
 		},
 		formatDateTime(value, col) {
 			return this.$utils.formatDateTime(value);
+		},
+		formatUpperCase(value, col) {
+			return typeof value === 'string' ? value.toUpperCase() : value;
 		}
 	}
 }

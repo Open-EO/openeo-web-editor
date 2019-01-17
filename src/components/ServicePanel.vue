@@ -1,136 +1,195 @@
 <template>
-	<DataTable ref="table" :dataSource="dataSource" :columns="columns" id="ServicePanel">
+	<DataTable ref="table" :dataSource="listServices" :columns="columns" id="ServicePanel">
 		<template slot="toolbar">
+			<button title="Add new service" @click="createServiceFromScript()" v-show="supports('createService')"><i class="fas fa-plus"></i> Add</button>
 			<button title="Refresh services" @click="updateData()"><i class="fas fa-sync-alt"></i></button> <!-- ToDo: Should be done automatically later -->
 		</template>
+		<template slot="enabled" slot-scope="p">
+			<span class="enabled">
+				<i v-if="p.row.enabled === true" class="fas fa-check-circle"></i>
+				<i v-else-if="p.row.enabled === false" class="fas fa-times-circle"></i>
+				<i v-else class="fas fa-question-circle"></i>
+			</span>
+		</template>
 		<template slot="actions" slot-scope="p">
+			<button title="Details" @click="serviceInfo(p.row)" v-show="supports('describeService')"><i class="fas fa-info"></i></button>
+			<button title="Edit" @click="editService(p.row)" v-show="supports('updateService')"><i class="fas fa-edit"></i></button>
+			<button title="Delete" @click="deleteService(p.row)" v-show="supports('deleteService')"><i class="fas fa-trash"></i></button>&nbsp;
 			<button title="View on map" @click="viewService(p.row)"><i class="fas fa-map"></i></button>
-			<button title="Details" @click="serviceInfo(p.row[p.col.id])" v-show="openEO.Capabilities.serviceInfo()"><i class="fas fa-info"></i></button>
-			<button title="Edit" @click="editService(p.row[p.col.id])" v-show="openEO.Capabilities.updateService()"><i class="fas fa-edit"></i></button>
-			<button title="Delete" @click="deleteService(p.row[p.col.id])" v-show="openEO.Capabilities.deleteService()"><i class="fas fa-trash"></i></button>
 		</template>
 	</DataTable>
 </template>
 
 <script>
 import EventBus from '../eventbus.js';
-import DataTable from './DataTable.vue';
+import WorkPanelMixin from './WorkPanelMixin.vue';
 
 export default {
 	name: 'ServicePanel',
-	props: ['openEO','userId'],
-	components: {
-		DataTable
-	},
+	mixins: [WorkPanelMixin],
 	data() {
 		return {
 			columns: {
-				service_id: {
+				serviceId: {
 					name: 'ID',
-					primaryKey: true
+					primaryKey: true,
+					hide: true
 				},
-				service_type: {
-					name: 'Type'
+				title: {
+					name: 'Title',
+					computedValue: (row, value) => {
+						if (!value && row.serviceId) {
+							return "Service #" + row.serviceId.toUpperCase().substr(0,6);
+						}
+						return value;
+					}
 				},
-				job_id: {
-					name: 'Job'
+				type: {
+					name: 'Type',
+					format: "UpperCase",
+				},
+				enabled: {
+					name: 'Enabled'
+				},
+				submitted: {
+					name: 'Submitted',
+					format: 'DateTime'
 				},
 				actions: {
 					name: 'Actions',
-					filterable: false,
-					id: 'service_id'
+					filterable: false
 				}
 			}
 		};
 	},
 	created() {
-		EventBus.$on('serverChanged', this.updateData);
 		EventBus.$on('serviceCreated', this.serviceCreated);
 	},
-	watch: { 
-		userId(newVal, oldVal) {
-			if (newVal !== null) {
-				this.updateData();
-			}
-		}
-	},
 	methods: {
-		dataSource() {
-			let users = this.openEO.Users.getObject(this.userId);
-			return users.getServices();
+		listServices() {
+			return this.connection.listServices();
 		},
 		updateData() {
-			if (!this.$refs.table || !this.openEO.Capabilities.createService()) {
+			this.updateTable(this.$refs.table, 'listServices', 'createService');
+		},
+		serviceCreated(service) {
+			if (!this.$refs.table) {
 				return;
 			}
-			else if (typeof this.userId !== 'string' && typeof this.userId !== 'number') {
-				this.$refs.table.setNoData(401);  // "please authenticate"
-			}
-			else {
-				this.$refs.table.retrieveData();
-			}
-		},
-		serviceCreated(data) {
-			this.$refs.table.addData(data);
+
+			this.$refs.table.addData(service);
 
 			var options = {
 				buttons: []
 			};
-			options.buttons.push({text: 'View', action: () => this.viewService(data)});
-			if (this.openEO.Capabilities.serviceInfo()) {
-				options.buttons.push({text: 'Details', action: () => this.serviceInfo(data.job_id)});
+			options.buttons.push({text: 'View', action: () => this.viewService(service)});
+			if (this.supports('describeService')) {
+				options.buttons.push({text: 'Details', action: () => this.serviceInfo(service)});
 			}
-			if (this.openEO.Capabilities.updateService()) {
-				options.buttons.push({text: 'Edit', action: () => this.editService(data.job_id)});
+			if (this.supports('updateService')) {
+				options.buttons.push({text: 'Edit', action: () => this.editService(service)});
 			}
-			if (this.openEO.Capabilities.deleteService()) {
-				options.buttons.push({text: 'Delete', action: () => this.deleteService(data.job_id)});
+			if (this.supports('deleteService')) {
+				options.buttons.push({text: 'Delete', action: () => this.deleteService(service)});
 			}
-			this.$snotify.confirm('Service created!', null, options);
+			this.$snotify.confirm('Web Service created!', null, options);
 		},
-		serviceInfo(id) {
-			var serviceApi = this.openEO.Services.getObject(id);
-			serviceApi.get()
-				.then(data => {
-					EventBus.$emit('showModal', 'Service: ' + id, data);
+		createService(processGraph, type) {
+			this.connection.createService(processGraph, type)
+				.then(service => {
+					EventBus.$emit('serviceCreated', service);
 				}).catch(error => {
-					this.$utils.error(this, 'Sorry, could not load service information.');
+					this.$utils.exception(this, error, 'Sorry, could not create the web service.');
 				});
 		},
-		editService(id) {
-			var serviceApi = this.openEO.Services.getObject(id);
-			// serviceApi.modify(null, null, {});
-			this.$utils.error(this, 'Not implemented');
-			// ToDo: Request what user wants to change
+		createServiceFromScript() {
+			var serviceTypes = Object.keys(this.connection.supportedServices);
+			var type;
+			if (serviceTypes.length == 1) {
+				type = serviceTypes[0];
+			}
+			else {
+				var type = prompt("Please specify the service type you want to create.\r\nOne of: ".serviceTypes.join(', '), '');
+				if (type === null) {
+					return;
+				}
+				else if (serviceTypes.indexOf(type) === -1) {
+					this.$utils.error(this, 'Invalid service type specified.');
+				}
+			}
+			
+			// ToDo: Ask user for service arguments
+			EventBus.$emit('getProcessGraph', (script) => {
+				this.createService(script, type);
+			});
 		},
-		deleteService(id) {
-			var serviceApi = this.openEO.Services.getObject(id);
-			serviceApi.delete()
-				.then(data => {
-					this.$refs.table.removeData(id);
-					EventBus.$emit('removeWebService', id);
+		serviceInfo(service) {
+			service.describeService()
+				.then(updatedService => {
+					EventBus.$emit('showModal', 'Web Service Details', updatedService.getAll());
+					this.updateServiceData(updatedService);
+				}).catch(error => {
+					this.$utils.exception(this, error, 'Sorry, could not load service information.');
+				});
+		},
+		editService(service) {
+			// TODO: provide more update options/don't just override the process graph and nothing else
+			EventBus.$emit('getProcessGraph', (script) => {
+				service.updateService(script)
+					.then(updatedService => {
+						this.$utils.ok(this, "Service successfully updated.");
+						this.updateServiceData(updatedService);
+					})
+					.catch(error => this.$utils.exception(this, error, "Sorry, could not update service."));;
+			}, false);
+		},
+		deleteService(service) {
+			service.deleteService()
+				.then(() => {
+					this.$refs.table.removeData(service.serviceId);
+					EventBus.$emit('removeWebService', service.serviceId);
 				})
 				.catch(error => {
-					this.$utils.error(this, 'Sorry, could not delete service.');
+					this.$utils.exception(this, error, 'Sorry, could not delete service.');
 				});
 		},
 		viewService(service) {
 			this.$utils.info(this, 'Requesting tiles from server. Please wait...');
 			EventBus.$emit('viewWebService', service);
 			EventBus.$emit('showMapViewer');
+		},
+		updateServiceData(updatedService) {
+			this.$refs.table.replaceData(updatedService);
 		}
 	}
 }
 </script>
 
 <style>
-#ServicePanel .service_id {
+#ServicePanel .serviceId {
 	width: 35%;
 }
-#ServicePanel .service_type {
+#ServicePanel .type {
 	width: 10%;
+	text-align: center;
 }
-#ServicePanel .job_id {
-	width: 35%;
+#ServicePanel .enabled {
+	width: 10%;
+	text-align: center;
+}
+#ServicePanel .submitted {
+	width: 20%;
+}
+#ServicePanel .actions {
+	width: 25%;
+}
+.enabled .fa-check-circle {
+	color: green;
+}
+.enabled .fa-times-circle {
+	color: red;
+}
+.enabled .fa-question-circle {
+	color: #555;
 }
 </style>

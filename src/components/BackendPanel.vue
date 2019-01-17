@@ -5,33 +5,32 @@
 			<input id="serverUrl" v-model.lazy.trim="serverUrl" list="serverUrls" />
 			<button @click="showServerSelector" title="Select previously used server"><i class="fas fa-book"></i></button>
 			<button @click="updateServerUrlFromInput" title="Change server"><i class="fas fa-check"></i></button>
-		</div>
-		<div class="info-toolbar">
 			<button @click="getServerInfo" title="Get server information"><i class="fas fa-info"></i></button>
 		</div>
 		<div class="collections-toolbar" v-show="showCollectionSelector()">
-			Collection: <select id="collection" ref="collection">
+			Collections: <select id="collection" ref="collection">
 				<option v-for="d in collections" :key="d.name" :value="d.name" :title="d.description">{{ d.name }}</option>
 			</select>
 			<button id="insertCollection" @click="insertCollection" title="Insert into script"><i class="fas fa-plus"></i></button>
-			<button @click="showCollectionInfo" title="Show details" v-show="capabilities && capabilities.hasFeature('describeCollection')"><i class="fas fa-info"></i></button>
+			<button @click="showCollectionInfo" title="Show details" v-show="supports('describeCollection')"><i class="fas fa-info"></i></button>
 		</div>
 		<div class="processes-toolbar" v-show="showProcessSelector()">
 			Processes: <select id="processes" ref="processes">
 				<option v-for="p in processes" :key="p.name" :value="p.name" :title="p.description">{{ p.name }}</option>
 			</select>
 			<button id="insertProcesses" @click="insertProcess" title="Insert into script"><i class="fas fa-plus"></i></button>
-			<button @click="showProcessInfo" title="Show details" v-show="capabilities && capabilities.hasFeature('listProcesses')"><i class="fas fa-info"></i></button>
+			<button @click="showProcessInfo" title="Show details" v-show="supports('listProcesses')"><i class="fas fa-info"></i></button>
 		</div>
 	</div>
 </template>
 
 <script>
 import EventBus from '../eventbus.js';
+import ConnectionMixin from './ConnectionMixin.vue'
 
 export default {
 	name: 'BackendPanel',
-	props: ['connection', 'capabilities', 'supportedOutputFormats', 'supportedServices'],
+	mixins: [ConnectionMixin],
 	data() {
 		return {
 			processes: [],
@@ -58,11 +57,11 @@ export default {
 	methods: {
 
 		showCollectionSelector() {
-			return this.capabilities && this.capabilities.hasFeature('listCollections') && this.collections.length > 0;
+			return this.supports('listCollections') && this.collections.length > 0;
 		},
 
 		showProcessSelector() {
-			return this.capabilities && this.capabilities.hasFeature('listProcesses') && this.processes.length > 0;
+			return this.supports('listProcesses') && this.processes.length > 0;
 		},
 
 		showServerSelector() {
@@ -91,12 +90,12 @@ export default {
 		},
 
 		discoverData() {
-			if (this.capabilities && this.capabilities.hasFeature('listCollections')) {
+			if (this.supports('listCollections')) {
 				this.connection.listCollections()
 					.then(this.setDiscoveredCollections)
 					.catch(error => this.setDiscoveredCollections([]));
 			}
-			if (this.capabilities && this.capabilities.hasFeature('listProcesses') ) {
+			if (this.supports('listProcesses') ) {
 				this.connection.listProcesses()
 					.then(this.setDiscoveredProcesses)
 					.catch(error => this.setDiscoveredProcesses([]));
@@ -126,7 +125,7 @@ export default {
 			}
 			var info = {
 				url: this.connection.getBaseUrl(),
-				supportedEndpoints: this.capabilities.listFeatures(),
+				supportedEndpoints: this.connection.capabilitiesObject.listFeatures(),
 				supportedWebServices: this.supportedServices,
 				supportedOutputFormats: this.supportedOutputFormats
 			};
@@ -202,11 +201,14 @@ h3 {
 	padding-bottom: 5px;
 	border-bottom: 1px dotted #ddd;
 }
-.collections-toolbar, .processes-toolbar, .info-toolbar {
+.collections-toolbar, .processes-toolbar {
 	display: inline-block;
-	margin-right: 3%;
+	width: 50%;
 }
 .vis-toolbar {
 	display: inline-block;
+}
+#collection, #process {
+	max-width: 55%;
 }
 </style>

@@ -1,116 +1,88 @@
 <template>
-	<DataTable ref="table" :dataSource="dataSource" :columns="columns" id="ProcessGraphPanel">
+	<DataTable ref="table" :dataSource="listProcessGraphs" :columns="columns" id="ProcessGraphPanel">
 		<template slot="toolbar">
-			<button title="Add new process graph" @click="addGraph" v-show="openEO.Capabilities.createUserProcessGraph()"><i class="fas fa-plus"></i> Add</button>
+			<button title="Add new process graph" @click="addGraph" v-show="supports('createProcessGraph')"><i class="fas fa-plus"></i> Add</button>
 			<button title="Refresh process graphs" @click="updateData()"><i class="fas fa-sync-alt"></i></button> <!-- ToDo: Should be done automatically later -->
 		</template>
 		<template slot="actions" slot-scope="p">
-			<button title="Details" @click="graphInfo(p.row[p.col.id])" v-show="openEO.Capabilities.userProcessGraphInfo()"><i class="fas fa-info"></i></button>
-			<button title="Edit" @click="editGraph(p.row[p.col.id])" v-show="openEO.Capabilities.updateUserProcessGraph()"><i class="fas fa-edit"></i></button>
-			<button title="Delete" @click="deleteGraph(p.row[p.col.id])" v-show="openEO.Capabilities.deleteUserProcessGraph()"><i class="fas fa-trash"></i></button>
+			<button title="Details" @click="graphInfo(p.row)" v-show="supports('describeProcessGraph')"><i class="fas fa-info"></i></button>
+			<button title="Edit" @click="editGraph(p.row)" v-show="supports('updateProcessGraph')"><i class="fas fa-edit"></i></button>
+			<button title="Delete" @click="deleteGraph(p.row)" v-show="supports('deleteProcessGraph')"><i class="fas fa-trash"></i></button>
 		</template>
 	</DataTable>
 </template>
 
 <script>
 import EventBus from '../eventbus.js';
-import DataTable from './DataTable.vue';
+import WorkPanelMixin from './WorkPanelMixin.vue';
 
 export default {
 	name: 'ProcessGraphPanel',
-	props: ['openEO','userId'],
-	components: {
-		DataTable
-	},
+	mixins: [WorkPanelMixin],
 	data() {
 		return {
 			columns: {
-				id: {
+				title: {
+					name: 'Title'
+				},
+				processGraphId: {
 					name: 'ID',
 					primaryKey: true
 				},
 				actions: {
 					name: 'Actions',
-					id: 'id',
 					filterable: false
 				}
 			}
 		};
 	},
-	created() {
-		EventBus.$on('serverChanged', this.updateData);
-	},
-	watch: { 
-		userId(newVal, oldVal) {
-			if (newVal !== null) {
-				this.updateData();
-			}
-		}
-	},
 	methods: {
-		dataSource() {
-			let users = this.openEO.Users.getObject(this.userId);
-			return users.getProcessGraphs();
+		listProcessGraphs() {
+			return this.connection.listProcessGraphs();
 		},
 		updateData() {
-			if (!this.$refs.table || !this.openEO.Capabilities.userProcessGraphs()) {
-				return;
-			}
-			else if (typeof this.userId !== 'string' && typeof this.userId !== 'number') {
-				this.$refs.table.setNoData(401);  // "please authenticate"
-			}
-			else {
-				this.$refs.table.retrieveData();
-			}
+			this.updateTable(this.$refs.table, 'listProcessGraphs', 'createProcessGraph');
 		},
 		addGraph() {
 			EventBus.$emit('getProcessGraph', (script) => {
-				var userApi = this.openEO.Users.getObject(this.userId);
-				userApi.createProcessGraph(script)
+				this.connection.createProcessGraph(script)
 					.then(data => {
-						this.$refs.table.addData(data.process_graph_id);
-						this.$utils.ok(this, 'Process Graph saved!');
-					}).catch(error => {
-						console.log(error);
-						this.$utils.error(this, 'Sorry, could not create a process graph.');
-					});
+						this.$refs.table.addData(data);
+						this.$utils.ok(this, 'Process Graph stored at back-end!');
+					}).catch(error => this.$utils.exception(this, error, 'Sorry, could not save the process graph.'));
 			});
 		},
-		graphInfo(id) {
-			var pgApi = this.openEO.Users.getObject(this.userId).getProcessGraphObject(id);
-			pgApi.get()
-				.then(data => {
-					EventBus.$emit('showModal', 'Process Graph: ' + id, data);
+		graphInfo(pg) {
+			pg.describeProcessGraph()
+				.then(updatedPg => {
+					EventBus.$emit('showModal', 'Process Graph Details', updatedPg.getAll());
+					this.updateProcessGraphData(updatedPg);
 				})
-				.catch(error => this.$utils.error(this, 'Sorry, could not load process graph.'));
+				.catch(error => this.$utils.exception(this, error, 'Sorry, could not load process graph.'));
 		},
-		editGraph(id) {
+		editGraph(pg) {
+			// TODO: provide more update options/don't just override the process graph and nothing else
 			EventBus.$emit('getProcessGraph', (script) => {
-				var pgApi = this.openEO.Users.getObject(this.userId).getProcessGraphObject(id);
-				pgApi.replace(script)
-					.then(data => {
+				var dataToUpdate= {
+					process_graph: script
+				};
+				pg.updateProcessGraph(dataToUpdate)
+					.then(updatedPg => {
 						this.$utils.ok(this, 'Process Graph updated!');
-					}).catch(error => {
-						this.$utils.error(this, 'Sorry, could not update the process graph.');
-					});
+						this.updateProcessGraphData(updatedPg);
+					}).catch(error => this.$utils.exception(this, error, 'Sorry, could not update the process graph.'));
 			});
 		},
-		deleteGraph(id) {
-			var pgApi = this.openEO.Users.getObject(this.userId).getProcessGraphObject(id);
-			pgApi.delete()
-				.then(data => {
-					this.$refs.table.removeData(id);
+		deleteGraph(pg) {
+			pg.deleteProcessGraph()
+				.then(() => {
+					this.$refs.table.removeData(pg.processGraphId);
 				})
-				.catch(error => {
-					this.$utils.error(this, 'Sorry, could not delete process graph.');
-				});
+				.catch(error => this.$utils.exception(this, error, 'Sorry, could not delete process graph.'));
+		},
+		updateProcessGraphData(updatePg) {
+			this.$refs.table.replaceData(updatePg);
 		}
 	}
 }
 </script>
-
-<style>
-#ProcessGraphPanel th {
-	width: 50%;
-}
-</style>
