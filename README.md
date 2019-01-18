@@ -1,7 +1,7 @@
 # openEO Web Editor
-A web-based editor for interactive usage of the openEO API (proof-of-concept).
+A web-based editor for interactive usage of the openEO API.
 
-The web editor currently **supports openEO API v0.0.2**, it doesn't yet support the most recent version of the API.
+The web editor currently **supports openEO API versions v0.3.x**.
 
 ## Getting Started
 You can use the online **[demo](https://open-eo.github.io/openeo-web-editor/demo/)** or build the files yourself and deploy them to any web host.
