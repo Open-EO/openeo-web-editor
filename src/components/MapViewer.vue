@@ -47,7 +47,7 @@ export default {
 			this.layerControl.addTo(this.map);
 
 			// Add base layers
-			this.baseLayer.osm = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+			this.baseLayer.osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 				name: 'OpenStreetMap',
 				attribution: 'Map data &copy; <a href="http://www.osm.org">OpenStreetMap</a>'
 			});

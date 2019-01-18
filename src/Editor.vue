@@ -203,13 +203,11 @@ export default {
 				};
 				EventBus.$emit('showComponentModal', 'Enter your credentials', 'CredentialsForm', opts);
 			}
+			else if (this.supports('authenticateOIDC')) {
+				this.$utils.info(this, 'Sorry, the authentication methods supported by the back-end is not supported by the Web Editor.');
+			}
 			else {
-				// if this is fired immediately, the BackendPanel hasn't yet received the capabilities -> wait until the next update cycle has finished
-				Vue.nextTick(function () {
-					EventBus.$emit('serverChanged');
-				});				
-				this.$utils.error(this, 'No authentication method available');
-				console.log('The server provides no authentication method that the web editor suppors');
+				this.$utils.info(this, 'You are working without authorization. Your data will be publicly available!');
 			}
 		},
 
