@@ -1,32 +1,31 @@
 <template>
-	<DataTable ref="table" :dataSource="dataSource" :columns="columns" id="FilePanel">
+	<DataTable ref="table" :dataSource="listFiles" :columns="columns" id="FilePanel">
 		<template slot="toolbar">
-			<span v-show="openEO.Capabilities.uploadUserFile()">
+			<div v-show="supports('uploadFile')" class="addFile">
 				<input type="file" name="uploadUserFile" id="uploadUserFile">
 				<button title="Add new file" id="uploadUserFileBtn" @click="uploadFile()"><i class="fas fa-upload"></i></button>
 				<span id="uploadUserFileStatus"></span>
-			</span>
-			<button title="Refresh files" @click="updateData()"><i class="fas fa-sync-alt"></i></button> <!-- ToDo: Should be done automatically later -->
-			<button v-show="!subscribed" title="Subscribe to all changes to the file directory" @click="subscribeToFileChanges()"><i class="fas fa-bell"></i></button>
-			<button v-show="subscribed" title="Unsubscribe from all changes to the file directory" @click="unsubscribeFromFileChanges()"><i class="fas fa-bell-slash"></i></button>
+			</div>
+			<div>
+				<button title="Refresh files" @click="updateData()"><i class="fas fa-sync-alt"></i></button> <!-- ToDo: Should be done automatically later -->
+				<button v-show="!subscribed" title="Subscribe to all changes to the file directory" @click="subscribeToFileChanges()"><i class="fas fa-bell"></i></button>
+				<button v-show="subscribed" title="Unsubscribe from all changes to the file directory" @click="unsubscribeFromFileChanges()"><i class="fas fa-bell-slash"></i></button>
+			</div>
 		</template>
 		<template slot="actions" slot-scope="p">
-			<button title="Download" @click="downloadFile(p.row[p.col.id])" v-show="openEO.Capabilities.downloadUserFile()"><i class="fas fa-download"></i></button>
-			<button title="Delete" @click="deleteFile(p.row[p.col.id])" v-show="openEO.Capabilities.deleteUserFile()"><i class="fas fa-trash"></i></button>
+			<button title="Download" @click="downloadFile(p.row)" v-show="supports('downloadFile')"><i class="fas fa-download"></i></button>
+			<button title="Delete" @click="deleteFile(p.row)" v-show="supports('deleteFile')"><i class="fas fa-trash"></i></button>
 		</template>
 	</DataTable>
 </template>
 
 <script>
 import EventBus from '../eventbus.js';
-import DataTable from './DataTable.vue';
+import WorkPanelMixin from './WorkPanelMixin.vue';
 
 export default {
   	name: 'FilePanel',
-	props: ['openEO','userId'],
-	components: {
-		DataTable
-	},
+	mixins: [WorkPanelMixin],
 	data() {
 		return {
 			columns: {
@@ -45,73 +44,55 @@ export default {
 				},
 				actions: {
 					name: 'Actions',
-					filterable: false,
-					id: 'name'
+					filterable: false
 				}
 			},
 			subscribed: false
 		};
 	},
-	created() {
-		EventBus.$on('serverChanged', this.updateData);
-	},
-	watch: { 
-		userId(newVal, oldVal) {
-			if (newVal !== null) {
-				this.updateData();
-			}
-		}
-	},
   	methods: {
-		dataSource() {
-			let users = this.openEO.Users.getObject(this.userId);
-			return users.getFiles();
+		listFiles() {
+			return this.connection.listFiles();
 		},
 		updateData() {
-			if (!this.$refs.table || !this.openEO.Capabilities.userFiles()) {
-				return;
-			}
-			else if (typeof this.userId !== 'string' && typeof this.userId !== 'number') {
-				this.$refs.table.setNoData(401);  // "please authenticate"
-			}
-			else {
-				this.$refs.table.retrieveData();
-			}
+			this.updateTable(this.$refs.table, 'listFiles', 'uploadFile');
 		},
 		uploadFile() {
 			var field = document.getElementById('uploadUserFile');
 			var status = document.getElementById('uploadUserFileStatus');
 			var file = field.files[0];
-			var fileApi = this.openEO.Users.getObject(this.userId).getFileObject(file.name);
-			fileApi.replace(file, percent => {
-				status.innerText = percent + '%';
-			}).then(data => {
-				// ToDo: This should not be self generated
-				this.$refs.table.replaceData({
-					"name": file.name,
-					"size": file.size,
-					"modified": (new Date()).toISOString()
+			console.log(file);
+
+			var file = this.connection.createFile(file.name)
+				.then(virtualFile => {
+					return virtualFile.uploadFile(file, percent => {
+						status.innerText = percent + '%';
+					});
+				}).then(uploadedFile => {
+					// ToDo: This should not be self generated, but the API gives no information yet
+					uploadedFile.setAll({
+						name: this.name,
+						size: source.size,
+						modified: (new Date()).toISOString()
+					});
+					this.$refs.table.replaceData(uploadedFile);
+					status.innerText = '';
+					field.value = '';
+					this.$utils.ok(this, 'File upload completed.');
+				}).catch(error => {
+					console.log(error);
+					status.innerText = '';
+					this.$utils.exception(this, error, 'Sorry, file upload failed.');
 				});
-				status.innerText = '';
-				field.value = '';
-				this.$utils.ok(this, 'File upload completed.');
-			}).catch(error => {
-				status.innerText = '';
-				this.$utils.error(this, 'Sorry, file upload failed.');
-			});
 		},
-		downloadFile(id) {
-			this.$utils.info(this, 'Download requested. Please wait...');
-			var fileApi = this.openEO.Users.getObject(this.userId).getFileObject(id);
-			fileApi.get().then(data => {
-				this.$utils.downloadData(data, id);
-			});
+		downloadFile(file) {
+			this.$utils.info(this, 'File requested. Please wait...');
+			file.downloadFile(file.name);
 		},
-		deleteFile(id) {
-			var fileApi = this.openEO.Users.getObject(this.userId).getFileObject(id);
-			fileApi.delete()
+		deleteFile(file) {
+			file.deleteFile()
 				.then(data => {
-					this.$refs.table.removeData(id);
+					this.$refs.table.removeData(file.name);
 				})
 				.catch(error => {
 					this.$utils.error(this, 'Sorry, could not delete file.');
@@ -136,6 +117,23 @@ export default {
 </script>
 
 <style>
+#FilePanel .addFile {
+	display: flex;
+	margin-bottom: 0.5em;
+}
+#uploadUserFile {
+	flex: 12;
+}
+#uploadUserFileBtn {
+	flex: 1;
+}
+#uploadUserFileStatus {
+	text-align: center;
+	flex: 2;
+}
+#FilePanel .dataTableToolbar {
+	width: 100%;
+}
 #FilePanel .name {
 	width: 50%;
 }

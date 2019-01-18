@@ -21,8 +21,6 @@ import 'codemirror/mode/javascript/javascript.js';
 import 'codemirror/addon/display/autorefresh.js';
 import CodeMirror from 'codemirror';
 
-window.ProcessGraph = {};
-
 export default {
 	name: 'SourceEnvironment',
 	props: ['active'],
@@ -70,11 +68,23 @@ export default {
 			if (!script) {
 				script = this.editor.getValue();
 			}
+			var pg = null;
 			if (script) {
-				eval(script);
+				try {
+					pg = JSON.parse(script);
+				} catch(error) {
+					console.log(error);
+					this.$utils.error(this, 'The source code must be valid JSON.');
+					return;
+				}
 			}
 
-			callback(window.ProcessGraph);
+			if (pg !== null) {
+				callback(pg);
+			}
+			else {
+				this.$utils.error(this, 'No valid model or source code specified.');
+			}
 		},
 
 		clearEditor() {

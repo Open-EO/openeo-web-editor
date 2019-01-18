@@ -41,7 +41,7 @@ export default {
 			// ToDo: Don't emit separately
 			EventBus.$emit('showEditor');
 			this.$nextTick(() => {
-				EventBus.$emit('addSourceCode', "window.ProcessGraph = " + JSON.stringify(pg, null, 2), true);
+				EventBus.$emit('addSourceCode', JSON.stringify(pg, null, 2), true);
 			})
 		},
 

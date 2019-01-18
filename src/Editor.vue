@@ -24,9 +24,7 @@
 					<button class="tabItem" name="jobsTab" @click="changeUserTab" v-if="supportsJobs()"><i class="fas fa-tasks"></i> Batch Jobs</button>
 					<button class="tabItem" name="servicesTab" @click="changeUserTab" v-if="supportsServices()"><i class="fas fa-cloud"></i> Web Services</button>
 					<button class="tabItem" name="processGraphsTab" @click="changeUserTab" v-if="supportsProcessGraphs()"><i class="fas fa-code-branch"></i> Stored Process Graphs</button>
-					<!--
 					<button class="tabItem" name="filesTab" @click="changeUserTab" v-if="supportsFiles()"><i class="fas fa-file"></i> Files</button>
-					-->
 					<button class="tabItem" name="accountTab" @click="changeUserTab"><i class="fas fa-user"></i> Account</button>
 				</div>
 				<div class="tabsBody">
@@ -39,11 +37,9 @@
 					<div class="tabContent" id="processGraphsTab" v-if="supportsProcessGraphs()">
 						<ProcessGraphPanel :connection="connection" />
 					</div>
-					<!--
 					<div class="tabContent" id="filesTab" v-if="supportsFiles()">
 						<FilePanel :connection="connection" />
 					</div>
-					-->
 					<div class="tabContent" id="accountTab">
 						<AccountPanel :connection="connection" />
 					</div>		
