@@ -1,38 +1,47 @@
 <template>
-	<DataTable ref="table" :dataSource="dataSource" :columns="columns" id="JobPanel">
-		<template slot="toolbar" slot-scope="p">
-			<button title="Add new job" @click="createJobFromScript" v-show="openEO.Capabilities.createJob()"><i class="fas fa-plus"></i> Add</button>
-			<button title="Refresh jobs" @click="updateData()" v-show="openEO.Capabilities.userJobs()"><i class="fas fa-sync-alt"></i></button> <!-- ToDo: Should be done automatically later -->
+	<DataTable ref="table" :dataSource="listJobs" :columns="columns" id="JobPanel" v-if="connection">
+		<template slot="toolbar">
+			<button title="Add new job" @click="createJobFromScript()" v-show="supports('createJob')"><i class="fas fa-plus"></i> Add</button>
+			<button title="Refresh jobs" @click="updateData()" v-show="supports('listJobs')"><i class="fas fa-sync-alt"></i></button> <!-- ToDo: Should be done automatically later -->
 		</template>
 		<template slot="actions" slot-scope="p">
-			<button title="Details" @click="showJobInfo(p.row[p.col.id])" v-show="openEO.Capabilities.jobInfo()"><i class="fas fa-info"></i></button>
-			<button title="Edit" @click="editJob(p.row[p.col.id])" v-show="openEO.Capabilities.updateJob()"><i class="fas fa-edit"></i></button>
-			<button title="Queue as batch job" @click="queueJob(p.row[p.col.id])" v-show="openEO.Capabilities.queueJob()"><i class="fas fa-play-circle"></i></button>
-			<button title="Pause batch job" @click="pauseJob(p.row[p.col.id])" v-show="openEO.Capabilities.pauseJob()"><i class="fas fa-pause-circle"></i></button>
-			<button title="Disable" @click="cancelJob(p.row[p.col.id])" v-show="openEO.Capabilities.cancelJob()"><i class="fas fa-stop-circle"></i></button>
-			<button title="Download" @click="downloadJob(p.row[p.col.id])" v-show="openEO.Capabilities.downloadJob()"><i class="fas fa-download"></i></button>
-			<button title="View results" @click="downloadJob(p.row[p.col.id], true)" v-show="openEO.Capabilities.downloadJob()"><i class="fas fa-eye"></i></button>
-			<button title="Create Service" @click="createServiceFromJob(p.row[p.col.id])" v-show="openEO.Capabilities.createService()"><i class="fas fa-plus"></i> <i class="fas fa-cloud"></i></button>
+			<button title="Details" @click="showJobInfo(p.row)" v-show="supports('describeJob')"><i class="fas fa-info"></i></button>
+			<button title="Estimate" @click="estimateJob(p.row)" v-show="supports('estimateJob')"><i class="fas fa-file-invoice-dollar"></i></button>
+			<button title="Edit" @click="editJob(p.row)" v-show="supports('updateJob')" v-if="isJobInactive(p.row)"><i class="fas fa-edit"></i></button>
+			<button title="Delete" @click="deleteJob(p.row)" v-show="supports('deleteJob')"><i class="fas fa-trash"></i></button>
+			<button title="Start" @click="queueJob(p.row)" v-show="supports('startJob')" v-if="isJobInactive(p.row)"><i class="fas fa-play-circle"></i></button>
+			<button title="Cancel" @click="cancelJob(p.row)" v-show="supports('stopJob')" v-if="isJobActive(p.row)"><i class="fas fa-stop-circle"></i></button>
+			<button title="Download" @click="downloadJob(p.row)" v-show="supports('downloadResults')" v-if="hasResults(p.row)"><i class="fas fa-download"></i></button>
+			<button title="View results" @click="downloadJob(p.row, true)" v-show="supports('downloadResults')" v-if="hasResults(p.row)"><i class="fas fa-eye"></i></button>
+			<button title="Subscribe" @click="subscribeToJob(p.row)" v-show="supports('subscribe') && !jobSubscriptions.includes(p.row)"><i class="fas fa-bell"></i></button>
+			<button title="Unsubscribe" @click="unsubscribeFromJob(p.row)" v-show="supports('unsubscribe') && jobSubscriptions.includes(p.row)"><i class="fas fa-bell-slash"></i></button>
 		</template>
 	</DataTable>
 </template>
 
 <script>
 import EventBus from '../eventbus.js';
-import DataTable from './DataTable.vue';
+import WorkPanelMixin from './WorkPanelMixin.vue';
 
 export default {
 	name: 'JobPanel',
-	props: ['openEO','userId'],
-	components: {
-		DataTable
-	},
+	mixins: [WorkPanelMixin],
 	data() {
 		return {
 			columns: {
-				job_id: {
+				jobId: {
 					name: 'ID',
-					primaryKey: true
+					primaryKey: true,
+					hide: true
+				},
+				title: {
+					name: 'Title',
+					computedValue: (row, value) => {
+						if (!value && row.jobId) {
+							return "Job #" + row.jobId.toUpperCase().substr(-6);
+						}
+						return value;
+					}
 				},
 				status: {
 					name: 'Status',
@@ -46,221 +55,220 @@ export default {
 					name: 'Last update',
 					format: 'DateTime'
 				},
-				consumed_credits: {
-					name: 'Costs',
-					filterable: false
-				},
 				actions: {
 					name: 'Actions',
-					filterable: false,
-					id: 'job_id'
+					filterable: false
 				}
 			},
-			// Watchers are available until the job subscription works
-			// ToDo: Afterwards everything related to this property can be removed.
+			jobSubscriptions: [],
 			watchers: []
 		};
 	},
 	created() {
 		EventBus.$on('jobCreated', this.jobCreated);
-		EventBus.$on('serverChanged', this.updateData);
-	},
-	mounted() {
-		window.setInterval(this.executeWatchers, 5000);
-	},
-	watch: { 
-		userId(newVal, oldVal) {
-			if (newVal !== null) {
-				this.updateData();
-			}
-		}
 	},
 	methods: {
-		dataSource() {
-			let users = this.openEO.Users.getObject(this.userId);
-			return users.getJobs();
+		listJobs() {
+			return this.connection.listJobs();
 		},
 		updateData() {
-			if (!this.$refs.table) {
-				return;
-			}
-			else if (!this.openEO.Capabilities.createJob()) {
-				this.$refs.table.setNoData(501);  // "feature not supported"
-			}
-			else if (!this.openEO.Capabilities.userJobs()) {
-				this.$refs.table.setNoData('Feature supported, but retrieval of stored data of this feature not supported.');
-			}
-			else if (typeof this.userId !== 'string' && typeof this.userId !== 'number') {
-				this.$refs.table.setNoData(401);  // "please authenticate"
-			}
-			else {
-				this.$refs.table.retrieveData();
-			}
+			this.updateTable(this.$refs.table, 'listJobs', 'createJob');
 		},
-		jobCreated(data) {
+		jobCreated(job) {
 			if (!this.$refs.table) {
 				return;
 			}
 
-			this.$refs.table.addData(data);
+			this.$refs.table.addData(job);
 
 			var options = {
 				buttons: []
 			};
-			if (this.openEO.Capabilities.downloadJob()) {
-				options.buttons.push({text: 'Download', action: () => this.downloadJob(data.job_id)});
+			if (this.supports('downloadResults')) {
+				options.buttons.push({text: 'Download', action: () => this.downloadJob(job)});
 			}
 			this.$snotify.confirm('Job created!', null, options);
 		},
-		createJob(job, output) {
-			this.openEO.Jobs.create(job.ProcessGraph, output)
-				.then(data => {
-					EventBus.$emit('jobCreated', data);
+		createJob(processGraph, outputFormat) {
+			if (!outputFormat) {
+				outputFormat = null;
+			}
+			this.connection.createJob(processGraph, outputFormat)
+				.then(job => {
+					EventBus.$emit('jobCreated', job);
 				}).catch(error => {
-					this.$utils.error(this, 'Sorry, could not create an openEO job.');
+					this.$utils.exception(this, error, 'Sorry, could not create a batch job.');
 				});
 		},
-		createJobFromScript(id) {
+		createJobFromScript() {
 			// Todo: Output formats
 			var output = {};
 			var format = prompt('Please specify the file format you need or leave empty for default format.', '');
 			if (format === null) {
 				return;
 			}
-			EventBus.$emit('evalScript', (script) => {
+			EventBus.$emit('getProcessGraph', (script) => {
 				this.createJob(script, format);
 			});
 		},
-		updateJobDataById(id) {
-			var jobApi = this.openEO.Jobs.getObject(id);
-			jobApi.get().then(data => this.updateJobData(data));
-		},
-		updateJobData(data) {
-			this.$refs.table.replaceData(data);
+		updateJobData(updatedJob) {
+			this.$refs.table.replaceData(updatedJob);
 
 			// Watchers
-			var index = this.watchers.indexOf(data.job_id);
-			switch(data.status.toLowerCase()) {
+			var index = this.watchers.findIndex(j => j.jobId == updatedJob.jobId);
+			switch(updatedJob.status.toLowerCase()) {
 				case 'running':
 				case 'queued':
 				case 'unknown':
 					if (index === -1) {
-						this.watchers.push(data.job_id);
+						this.watchers.push(updatedJob);
 					}
 					break;
 				default:
 					delete this.watchers[index];
 			}
 		},
+		deleteJob(job) {
+			job.deleteJob()
+				.then(() => {
+					this.$refs.table.removeData(job.jobId);
+				})
+				.catch(error => {
+					this.$utils.exception(this, error, 'Sorry, could not delete job.');
+				});
+		},
 		executeWatchers() {
 			for(var i in this.watchers) {
-				this.updateJobDataById(this.watchers[i]);
+				this.watchers[i].describeJob().then(data => this.updateJobData(data));
 			}
 		},
-		showJobInfo(id) {
-			var jobApi = this.openEO.Jobs.getObject(id);
-			jobApi.get()
-				.then(data => {
-					EventBus.$emit('showModal', 'Job: ' + id, data);
-					this.updateJobData(data);
+		showJobInfo(job) {
+			job.describeJob()
+				.then(updatedJob => {
+					EventBus.$emit('showModal', 'Job Details', updatedJob.getAll());
+					this.updateJobData(updatedJob);
 				})
-				.catch(error => this.$utils.error(this, 'Sorry, could not load job details.'));
+				.catch(error => this.$utils.exception(this, error, "Sorry, could not load job details."));
 		},
-		editJob(id) {
-			EventBus.$emit('evalScript', (script) => {
-				var jobApi = this.openEO.Jobs.getObject(id);
-				jobApi.modify(script.ProcessGraph, {});
-				this.updateJobDataById(id);
-			} , false);
+		estimateJob(job) {
+			job.estimateJob()
+				.then(estimate => {
+					EventBus.$emit('showModal', 'Job Estimate', estimate);
+				})
+				.catch(error => this.$utils.exception(this, error, "Sorry, could not load job estimate."));
 		},
-		queueJob(id) {
-			var jobApi = this.openEO.Jobs.getObject(id);
-			jobApi.queue()
-				.then(data => {
+		editJob(job) {
+			// TODO: provide more update options/don't just override the process graph and nothing else
+			EventBus.$emit('getProcessGraph', (script) => {
+				job.updateJob(script)
+					.then(updatedJob => {
+						this.$utils.ok(this, "Job successfully updated.");
+						this.updateJobData(updatedJob);
+					})
+					.catch(error => this.$utils.exception(this, error, "Sorry, could not update job."));;
+			});
+		},
+		queueJob(job) {
+			job.startJob()
+				.then(updatedJob => {
 					this.$utils.ok(this, "Job successfully queued.");
-					this.updateJobDataById(id);
+					this.updateJobData(updatedJob);
 				})
-				.catch(error => this.$utils.error(this, "Sorry, could not queue job."));
+				.catch(error => this.$utils.exception(this, error, "Sorry, could not queue job."));
 		},
-		pauseJob(id) {
-			var jobApi = this.openEO.Jobs.getObject(id);
-			jobApi.pause().then(data => {
-					this.$utils.ok(this, "Job successfully paused.");
-					this.updateJobDataById(id);
-				})
-				.catch(error => this.$utils.error(this, "Sorry, could not pause job."));
-		},
-		cancelJob(id) {
-			var jobApi = this.openEO.Jobs.getObject(id);
-			jobApi.cancel().then(data => {
+		cancelJob(job) {
+			job.stopJob()
+				.then(updatedJob => {
 					this.$utils.ok(this, "Job successfully canceled.");
-					this.updateJobDataById(id);
+					this.updateJobData(updatedJob);
 				})
-				.catch(error => this.$utils.error(this, "Sorry, could not cancel job."));
+				.catch(error => this.$utils.exception(this, error, "Sorry, could not cancel job."));
 		},
-		downloadJob(id, view = false) {
+		downloadJob(job, view = false) {
 			var format = prompt('Please specify the file format you need or leave empty for default format.', '');
 			if (format === null) {
 				return;
 			}
-			this.$utils.info(this, (view ? 'Data' : 'Download') + ' requested. Please wait...');
-			var jobApi = this.openEO.Jobs.getObject(id);
-			jobApi.download(format).then(blob => {
-				// ToDo: For now we support both direct downloading and download URLs (only one for now).
-				// Implementation is not very nice and needs improvement, but it's a prototype...
-				this.$utils.blobToText(blob, (event) => {
-					if (blob.type == 'application/json' || format == 'json') {
-						var json = JSON.parse(event.target.result);
-						if (Array.isArray(json) && json.length == 1 && typeof json[0] === 'string' && json[0].indexOf('://') !== -1) {
-							// Download file
-							var filename = this.$utils.getFileNameFromURL(json[0]);
-							this.openEO.HTTP.download(json[0])
-								.then(blob => this.handleDownloadedData(blob, view, filename))
-								.catch(e => this.$utils.error(this, "Sorry, could not send file to browser."));
-						}
-						else {
-							this.handleDownloadedData(blob, view);
-						}
-					}
-					else {
-						this.handleDownloadedData(blob, view);
-					}
-				});
-			}).catch(error => {
-				this.$utils.error(this, "Sorry, an error occured.");
+			
+			job.listResults().then(info => {
+				var url;
+				if(info.links.length == 0) {
+					this.$utils.error(this, "No download available.");
+				} else if(info.links.length == 1) {
+					url = info.links[0].href;
+				} else {
+					// TODO-CF: Use selection UI in Modal instead of quick'n'dirty prompt
+					url = prompt("Please specify which URL should be downloaded by typing its numer:\n" + info.links.map((value, index) => '['+index+'] '+value).join("\n"), '1');
+				}
+				var filename = this.$utils.getFileNameFromURL(url);
+
+				this.$utils.info(this, (view ? 'Data' : 'Download') + ' requested. Please wait...');
+
+				if(!view) {
+					this.$utils.downloadData(url, filename, undefined, true);
+				} else {
+					this.connection.download(url)
+						.then(blob => {
+							// TODO-CF: Matthias says the hacky download should be replaced (e.g. with list of URLs)
+							this.$utils.blobToText(blob, (event) => {
+								// View in browser
+								EventBus.$emit('getProcessGraph', (script) => {
+									EventBus.$emit('showInViewer', blob, script);
+								});
+							});
+						})
+						.catch(error => {
+							this.$utils.exception(this, error, "Sorry, an error occured.");
+						});
+				}
 			});
 		},
-		handleDownloadedData(blob, view, filename = null) {
-			if (view) {
-				// View in browser
-				EventBus.$emit('evalScript', (script) => {
-					EventBus.$emit('showInViewer', blob, script);
-				});
-			}
-			else {
-				this.$utils.downloadData(blob, filename, blob.type);
-			}
+		subscribeToJob(id) {  // TODO-CF: Upgrade when js-client supports it again
+			var params = {job_id: id};
+			this.connection.subscribe(
+				'openeo.jobs.debug', params,
+				(data, info) => {
+					console.log("Debugging information for job " + id + ": " + JSON.stringify(data));
+				}
+			);
+			this.connection.subscribe(
+				'openeo.jobs.output', params,
+				(data, info) => {
+					console.log("Output from job " + id + ": " + JSON.stringify(data));
+				}
+			);
+			this.connection.subscribe(
+				'openeo.jobs.status', params,
+				(data, info) => {
+					console.log("Status information for job " + id + ": " + JSON.stringify(data));
+				}
+			);
+			this.jobSubscriptions.push(id);
 		},
-		createServiceFromJob(id) {
-			var type;
-			if (this.openEO.SupportedServices.length == 1) {
-				type = this.openEO.SupportedServices[0];
+		unsubscribeFromJob(id) {  // TODO-CF: Upgrade when js-client supports it again
+			var params = {job_id: id};
+			this.connection.unsubscribe('openeo.jobs.debug', params);
+			this.connection.unsubscribe('openeo.jobs.output', params);
+			this.connection.unsubscribe('openeo.jobs.status', params);
+			this.jobSubscriptions.splice(this.jobSubscriptions.indexOf(id), 1);
+		},
+		hasResults(job) {
+			return (typeof job.status !== 'string' || job.status.toLowerCase() == 'finished');
+		},
+		isJobInactive(job) {
+			return (typeof job.status !== 'string' || !this.isActiveStatusCode(job.status));
+		},
+		isJobActive(job) {
+			return (typeof job.status !== 'string' || this.isActiveStatusCode(job.status));
+		},
+		isActiveStatusCode(status) {
+			switch (status.toLowerCase()) {
+				case 'running':
+				case 'queued':
+					return true;
+				default:
+					return false;
 			}
-			else {
-				var type = prompt('Please specify the service type you want to create:', '');
-				if (type === null) {
-					return;
-				}
-				else if (this.openEO.SupportedServices.indexOf(type.toLowerCase()) === -1) {
-					this.$utils.error(this, 'Invalid service type specified.');
-				}
-			}
-			// ToDo: Ask user for service arguments
-			this.openEO.Services.create(id, type, {}).then(data => {
-				EventBus.$emit('serviceCreated', data);
-			}).catch(error => {
-				this.$utils.error(this, "Sorry, an error occured.");
-			});
 		}
 	}
 }

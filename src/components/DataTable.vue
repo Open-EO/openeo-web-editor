@@ -10,12 +10,12 @@
 				<button @click="clearFilter" :disabled="!hasFilter"><i class="fas fa-times-circle"></i></button>
 			</div>
 		</div>
-		<table v-if="data.length > 0 || noDataMessage == undefined || noDataMessage == ''">
+		<table v-if="data.length > 0 || typeof noDataMessage == 'undefined' || noDataMessage == ''">
 			<tr>
-				<th v-for="(col, id) in columns" :key="id" :class="id">{{ col.name }}</th>
+				<th v-for="(col, id) in columns" v-show="!col.hide" :key="id" :class="id">{{ col.name }}</th>
 			</tr>
 			<tr v-for="(row, i) in view" :key="i">
-				<td v-for="(col, id) in columns" :key="id" :class="id" :data-value="col.stylable ? value(row, col, id) : false">
+				<td v-for="(col, id) in columns" v-show="!col.hide" :key="id" :class="id" :data-value="col.stylable ? value(row, col, id) : false">
 					<slot :name="id" :row="row" :col="col" :id="id">
 						{{ formattedValue(row, col, id) }}
 					</slot>
@@ -34,7 +34,7 @@ import EventBus from '../eventbus.js';
 
 export default {
 	name: 'DataTable',
-	props: ['id', 'columns', 'dataSource', 'preprocessor'],
+	props: ['id', 'columns', 'dataSource'],
 	data() {
 		return {
 			data: [],
@@ -74,26 +74,22 @@ export default {
 		},
 		setNoData(error) {
 			this.data = [];
-			if (typeof error === 'number') {
-				switch(error) {
-					case 401:
-						this.noDataMessage = 'Please authenticate to use this feature.';
-						break;
-					case 403:
-					case 404:
-						this.noDataMessage = 'Sorry, authentication failed. Please try again.';
-						break;
-					case 501:
-						this.noDataMessage = 'Sorry, this feature is not supported by the server.';
-						break;
-					default:
-						this.noDataMessage = 'Sorry, an error occured. Please try again later.';
-						break;
+			if (typeof error == 'string') {
+				this.noDataMessage = error;
+				return;
+			}
+			else if (typeof error == 'object') {
+				if (typeof error.data === 'object' && typeof error.config === 'object' && typeof error.headers === 'object') {
+					// Axios response, handle the data only.
+					error = error.data;
+				}
+				if (typeof error === 'object' && typeof error.message === 'string') {
+					this.noDataMessage = error.message;
+					return;
 				}
 			}
-			else {
-				this.noDataMessage = error;
-			}
+			console.log(error);
+			this.noDataMessage = "Sorry, an unknown error has occured.";
 		},
 		retrieveData() {
 			this.setNoData('Loading data...');
@@ -128,12 +124,7 @@ export default {
 		},
 		setData(data) {
 			this.noDataMessage = undefined;
-			if (typeof this.preprocessor === 'function') {
-				this.data = data.map(this.preprocessor);
-			}
-			else {
-				this.data = data;
-			}
+			this.data = data;
 		},
 		removeData(id) {
 			if (this.primaryKey === null) {
@@ -145,9 +136,6 @@ export default {
 			}
 		},
 		addData(newData) {
-			if (typeof this.preprocessor === 'function') {
-				newData = this.preprocessor(newData);
-			}
 			if (!newData.hasOwnProperty(this.primaryKey)) {
 				throw new Error('Object does not contain a value for the primary key.');
 			}
@@ -156,9 +144,6 @@ export default {
 		replaceData(newData) {
 			if (this.primaryKey === null) {
 				throw new Error('No primary key specified.');
-			}
-			if (typeof this.preprocessor === 'function') {
-				newData = this.preprocessor(newData);
 			}
 			if (!newData.hasOwnProperty(this.primaryKey)) {
 				throw new Error('Object does not contain a value for the primary key.');
@@ -172,12 +157,17 @@ export default {
 			}
 		},
 		value(row, col, id) {
+			var data;
 			if (typeof row === 'object') {
-				return row[id];
+				data = row[id];
 			}
 			else {
-				return row;
+				data = row;
 			}
+			if (typeof col === 'object' && typeof col.computedValue === 'function') {
+				data = col.computedValue(row, data);
+			}
+			return data;
 		},
 		formattedValue(row, col, id) {
 			return this.format(this.value(row, col, id), col);
@@ -194,7 +184,7 @@ export default {
 			this.view = this.view.filter(row => {
 				for(var key in row) {
 					var col = this.columns[key];
-					if (typeof col !== 'undefined' && col.hasOwnProperty('filterable') && col.filterable === false) {
+					if (typeof col === 'undefined' || col.hasOwnProperty('filterable') && col.filterable === false) {
 						continue;
 					}
 					var value = this.value(row, col, key);
@@ -249,6 +239,9 @@ export default {
 		},
 		formatDateTime(value, col) {
 			return this.$utils.formatDateTime(value);
+		},
+		formatUpperCase(value, col) {
+			return typeof value === 'string' ? value.toUpperCase() : value;
 		}
 	}
 }

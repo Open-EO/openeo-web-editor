@@ -1,4 +1,15 @@
 export default {
+	exception(vm, error, alt) {
+		var title = null;
+		var message = alt;
+		if (typeof error === 'object' && error.code && typeof error.message === 'string') {
+			if (error.code > 0) {
+				title = "Error #" + error.code;
+			}
+			message = error.message;
+		}
+		this.error(vm, message, title);
+	},
 	error(vm, message, title = null) {
 		vm.$snotify.error(message, title);
 	},
@@ -13,25 +24,35 @@ export default {
 		var a = document.createElement("a");
 		document.body.appendChild(a);
 		a.style = "display: none";
-		return function (data, fileName, type) {
-			var blob;
-			if (data instanceof Blob) {
-				blob = data;
-			}
-			else {
-				if (!type) {
-					type = 'application/octet-stream';
+		return function (dataOrUrl, fileName, type, isUrl = false) {
+			var url;
+			if(isUrl) {
+				url = dataOrUrl;
+			} else {  // create ObjectURL from supplied data
+				var blob;
+				if (dataOrUrl instanceof Blob) {
+					blob = dataOrUrl;
 				}
-				blob = new Blob([data], {type: type});
+				else {
+					if (!type) {
+						type = 'application/octet-stream';
+					}
+					blob = new Blob([dataOrUrl], {type: type});
+				}
+				if (!fileName) {
+					fileName = 'unnamed-file';
+				}
+				url = window.URL.createObjectURL(blob);
 			}
-			if (!fileName) {
-				fileName = 'unnamed-file';
-			}
-			var url = window.URL.createObjectURL(blob);
+			
+			// Tell the browser to download (same for both methods)
 			a.href = url;
 			a.download = fileName;
 			a.click();
-			window.URL.revokeObjectURL(url);
+
+			if(!isUrl) {  // ObjectURL created earlier should be revoked
+				window.URL.revokeObjectURL(url);
+			}
 		};
 	}()),
 
@@ -43,25 +64,6 @@ export default {
 
 	isNumeric(n) {
 		return !isNaN(parseFloat(n)) && isFinite(n);
-	},
-
-	recolorImage(canvas, script) {
-		if (!canvas.originalImage || !script.Visualization || !script.Visualization.function) {
-			return;
-		}
-		
-		try {
-			const ctx = canvas.getContext('2d');
-			const tgtData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-			for (var i = 0; i < tgtData.data.length; i += 4) {
-				const input = canvas.originalImage.data.slice(i, i + 4);
-				const es = script.Visualization.function(input, script.Visualization.args);
-				tgtData.data.set(es, i);
-			}
-			ctx.putImageData(tgtData, 0, 0);
-		} catch(e) {
-			console.log(e);
-		}
 	},
 
 	isChildOfModal(that) {

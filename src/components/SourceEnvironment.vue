@@ -3,7 +3,6 @@
 		<div class="sourceHeader">
 			<h3>Script: <em id="scriptName">{{ scriptName }}</em></h3>
 			<div class="sourceToolbar">
-				<button @click="executeScript" title="Run current script and view results" v-if="openEO.Capabilities.executeJob()" class="executeScript"><i class="fas fa-play"></i></button>
 				<button @click="newScript" title="Clear current script / New script"><i class="fas fa-file"></i></button>
 				<button @click="loadScript()" title="Load script from local storage"><i class="fas fa-folder-open"></i></button>
 				<button @click="saveScript" title="Save script to local storage"><i class="fas fa-save"></i></button>
@@ -19,11 +18,12 @@ import EventBus from '../eventbus.js';
 
 import 'codemirror/lib/codemirror.css';
 import 'codemirror/mode/javascript/javascript.js';
+import 'codemirror/addon/display/autorefresh.js';
 import CodeMirror from 'codemirror';
 
 export default {
 	name: 'SourceEnvironment',
-	props: ['openEO'],
+	props: ['active'],
 	computed: {
 		savedScriptNames() {
 			return Object.keys(this.savedScripts);
@@ -36,7 +36,8 @@ export default {
 			editorOptions: {
 				mode: 'javascript',
 				indentUnit: 4,
-				lineNumbers: true
+				lineNumbers: true,
+				autoRefresh: true
 			},
 			editor: null,
 			defaultScript: this.$config.defaultScript
@@ -53,47 +54,37 @@ export default {
 	mounted() {
 		this.editor = CodeMirror(document.getElementById('sourceCodeEditor'), this.editorOptions);
 		this.editor.setValue(this.defaultScript);
-		EventBus.$on('addToSource', this.insertToEditor);
-		EventBus.$on('evalScript', this.evalScript);
+		EventBus.$on('addSourceCode', this.insertToEditor);
+		EventBus.$on('addProcessToEditor', this.insertToEditor);
+		EventBus.$on('addCollectionToEditor', this.insertToEditor);
 		var storedScripts = localStorage.getItem("savedScripts");
 		if (storedScripts !== null) {
 			this.savedScripts = JSON.parse(storedScripts);
 		}
 	},
 	methods: {
-		evalScript(callback) {
-			var OpenEO = this.openEO;
-			OpenEO.Editor = {
-				ProcessGraph: {},
-				Visualization: {
-					function: undefined, // Don't use null, typeof null is object in JS.
-					args: {}
-				}
-			};
+		getProcessGraph(callback) {
 			var script = this.editor.getSelection();
 			if (!script) {
 				script = this.editor.getValue();
 			}
+			var pg = null;
 			if (script) {
-				eval(script);
-			}
-
-			OpenEO.Editor.Visualization.args = OpenEO.Editor.Visualization.args || {};
-			// Modify visualization when user specified a pre-defined visualization
-			if (typeof OpenEO.Editor.Visualization.function === 'object') {
-				var vis = OpenEO.Editor.Visualization.function;
-				OpenEO.Editor.Visualization.function = vis.callback;
-				// Set default arguments when not given by user
-				if (typeof vis.arguments !== 'undefined') {
-					for(var key in vis.arguments) {
-						if (typeof OpenEO.Editor.Visualization.args[key] === 'undefined') {
-							OpenEO.Editor.Visualization.args[key] = vis.arguments[key].defaultValue;
-						}
-					}
+				try {
+					pg = JSON.parse(script);
+				} catch(error) {
+					console.log(error);
+					this.$utils.error(this, 'The source code must be valid JSON.');
+					return;
 				}
 			}
 
-			callback(OpenEO.Editor);
+			if (pg !== null) {
+				callback(pg);
+			}
+			else {
+				this.$utils.error(this, 'No valid model or source code specified.');
+			}
 		},
 
 		clearEditor() {
@@ -103,19 +94,6 @@ export default {
 
 		storageName(name) {
 			return name.replace('.', '_');
-		},
-
-		executeScript() {
-			var format = prompt('Please specify the file format:', '');
-			if (format === null) {
-				return;
-			}
-			this.$utils.info(this, 'Data requested. Please wait...');
-			EventBus.$emit('evalScript', (script) => {
-				this.openEO.Jobs.executeSync(script.ProcessGraph, format)
-					.then(data => EventBus.$emit('showInViewer', data, script, format))
-					.catch(error => this.$utils.error(this, 'Sorry, could not execute script.'));
-			});
 		},
 
 		newScript() {
@@ -177,8 +155,17 @@ export default {
 			this.$delete(this.savedScripts, name);
 		},
 
-		insertToEditor(text) {
-			this.editor.replaceSelection(text);
+		insertToEditor(text, replace = false) {
+			if (!this.active) {
+				return;
+			}
+			if (replace) {
+				this.editor.setValue(text);
+				this.scriptName = '';
+			}
+			else {
+				this.editor.replaceSelection(text);
+			}
 		}
 
 	}
@@ -186,9 +173,6 @@ export default {
 </script>
 
 <style scoped>
-.executeScript {
-	margin-right: 3%;
-}
 .sourceHeader h3 {
 	margin-top: 1px;
 	float: left;
@@ -201,6 +185,7 @@ export default {
 }
 .sourceHeader {
 	padding: 5px;
+	border-bottom: dotted 1px #676767;
 }
 .sourceHeader:after {
     content: ".";

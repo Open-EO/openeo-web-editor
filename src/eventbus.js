@@ -9,7 +9,13 @@ Fired when the server URL has been changed in the front-end and needs to update 
 ## serverChanged()
 The server has changed and the UI should be updated.
 
-## addToSource(string $code)
+## addCollectionToEditor(string $code)
+Adds the collection to the editor.
+
+## addProcessToEditor(string $code)
+Adds the process to the editor.
+
+## addSourceCode(string $code, boolean $replace = false)
 Adds the code to the source code editor.
 
 ## viewWebService(object $service)
@@ -18,11 +24,11 @@ Shows a web service on the map.
 ## removeWebService(string $id)
 Removes a web service from the map.
 
-## evalScript(callback $callback)
-Triggers the script currently in the editor to be evaluated runs the callback using the data from the evaluation.
+## getProcessGraph(callback $callback)
+Triggers the script/model currently in the editor to be evaluated runs the callback using the data from the evaluation.
 
-## jobCreated(object $data)
-Triggered when a job was created successfully.
+## jobCreated(object $job)
+Triggered when a job was created successfully, parameter is the Job object returned by the openeo-js-client lib.
 
 ## closeModal()
 Closes the modal
@@ -30,8 +36,8 @@ Closes the modal
 ## modalClosed()
 A modal has been closed, which might be of relevance to its subcomponents (they may treat this as a "cancel")
 
-## serviceCreated(object $data)
-Triggered when a service was created successfully.
+## serviceCreated(object $service)
+Triggered when a service was created successfully, parameter is the Service object returned by the openeo-js-client lib.
 
 ## showModal(string $title, string $contents)
 Shows a modal with the specified title and contents.
@@ -46,7 +52,6 @@ The component to be used must be known (i.e. imported and declared) in the Modal
 
 ## showInViewer(Blob $blob, object $script, object $output_args)
 Shows the data with the specified content type in the appropriate area of the viewer.
-The script can be specified if any visualization should be applied.
 Also to enhance viewing experience the "original" output format arguments can be given.
 
 ## showMapViewer()
@@ -57,6 +62,12 @@ Shows the image panel in the viewer area.
 
 ## showMapDataViewer()
 Shows the data panel in the viewer area.
+
+## propagateCollections(object $data)
+Forwards new collection data from BackendPanel to GraphBuilderEnvironment
+
+## propagateProcesses(object $data)
+Forwards new process data from BackendPanel to GraphBuilderEnvironment
 
 */
 export default new Vue();

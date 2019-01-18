@@ -1,32 +1,48 @@
 <template>
 	<div id="container">
 		<div id="ide">
-			<BackendPanel :openEO="openEO" />
-			<SourceEnvironment :openEO="openEO" />
-			<div class="tabs" id="userContent">
+			<BackendPanel :connection="connection" />
+			<div class="tabs" id="processGraphContent">
 				<div class="tabsHeader">
-					<button class="tabItem" name="jobsTab" @click="changeUserTab"><i class="fas fa-tasks"></i> Jobs</button>
-					<button class="tabItem" name="servicesTab" @click="changeUserTab" v-show="this.openEO.Capabilities.createService()"><i class="fas fa-cloud"></i> Services</button>
-					<button class="tabItem" name="processGraphsTab" @click="changeUserTab" v-show="this.openEO.Capabilities.userProcessGraphs()"><i class="fas fa-code-branch"></i> Process Graphs</button>
-					<button class="tabItem" name="filesTab" @click="changeUserTab" v-show="this.openEO.Capabilities.userFiles()"><i class="fas fa-file"></i> Files</button>
+					<button class="tabItem" name="graphTab" @click="changeProcessGraphTab"><i class="fas fa-code-branch"></i> Visual Model Builder</button>
+					<button class="tabItem" name="sourceTab" @click="changeProcessGraphTab"><i class="fas fa-code"></i> Source Code</button>
+				</div>
+				<div class="tabsActions">
+					<button @click="executeProcessGraph" title="Run current process graph and view results" v-if="this.supports('startJob')"><i class="fas fa-play"></i></button>
+				</div>
+				<div class="tabsBody">
+					<div class="tabContent" id="graphTab">
+						<GraphBuilderEnvironment ref="graphBuilder" :active="isVisualBuilderActive" />
+					</div>
+					<div class="tabContent" id="sourceTab">
+						<SourceEnvironment ref="sourceEditor" :active="!isVisualBuilderActive" />
+					</div>
+				</div>
+			</div>
+			<div class="tabs" id="userContent" v-show="this.connection">
+				<div class="tabsHeader">
+					<button class="tabItem" name="jobsTab" @click="changeUserTab" v-if="supportsJobs()"><i class="fas fa-tasks"></i> Batch Jobs</button>
+					<button class="tabItem" name="servicesTab" @click="changeUserTab" v-if="supportsServices()"><i class="fas fa-cloud"></i> Web Services</button>
+					<button class="tabItem" name="processGraphsTab" @click="changeUserTab" v-if="supportsProcessGraphs()"><i class="fas fa-code-branch"></i> Stored Process Graphs</button>
+					<button class="tabItem" name="filesTab" @click="changeUserTab" v-if="supportsFiles()"><i class="fas fa-file"></i> Files</button>
 					<button class="tabItem" name="accountTab" @click="changeUserTab"><i class="fas fa-user"></i> Account</button>
 				</div>
 				<div class="tabsBody">
-					<div class="tabContent" id="jobsTab">
-						<JobPanel :userId="openEO.Auth.userId" :openEO="openEO" />
+					<div class="tabContent" id="jobsTab" v-if="supportsJobs()">
+						<JobPanel :connection="connection" />
 					</div>
-					<div class="tabContent" id="servicesTab" v-show="this.openEO.Capabilities.createService()">
-						<ServicePanel ref="servicePanel" :userId="openEO.Auth.userId" :openEO="openEO" />
+					<div class="tabContent" id="servicesTab" v-if="supportsServices()">
+						<ServicePanel :connection="connection" />
 					</div>
-					<div class="tabContent" id="processGraphsTab" v-show="this.openEO.Capabilities.userProcessGraphs()">
-						<ProcessGraphPanel :userId="openEO.Auth.userId" :openEO="openEO" />
+					<div class="tabContent" id="processGraphsTab" v-if="supportsProcessGraphs()">
+						<ProcessGraphPanel :connection="connection" />
 					</div>
-					<div class="tabContent" id="filesTab" v-show="this.openEO.Capabilities.userFiles()">
-						<FilePanel :userId="openEO.Auth.userId" :openEO="openEO" />
+					<div class="tabContent" id="filesTab" v-if="supportsFiles()">
+						<FilePanel :connection="connection" />
 					</div>
 					<div class="tabContent" id="accountTab">
-						<AccountPanel :userId="openEO.Auth.userId" :openEO="openEO" />
-					</div>
+						<AccountPanel :connection="connection" />
+					</div>		
 				</div>
 			</div>
 			<footer>
@@ -68,20 +84,16 @@ import ImageViewer from './components/ImageViewer.vue';
 import JobPanel from './components/JobPanel.vue';
 import MapViewer from './components/MapViewer.vue';
 import Modal from './components/Modal.vue';
+import GraphBuilderEnvironment from './components/GraphBuilderEnvironment.vue';
 import ProcessGraphPanel from './components/ProcessGraphPanel.vue';
 import ServicePanel from './components/ServicePanel.vue';
 import SourceEnvironment from './components/SourceEnvironment.vue';
 import axios from 'axios';
-import { OpenEO, Capabilities } from '@openeo/js-client';
-import OpenEOVisualizations from './visualizations.js';
+import { OpenEO } from '@openeo/js-client';
+import Vue from 'vue';
 
 // Making axios available globally for the OpenEO JS client
 window.axios = axios;
-
-OpenEO.Visualizations = OpenEOVisualizations;
-OpenEO.Capabilities = new Capabilities();
-OpenEO.SupportedOutputFormats = {};
-OpenEO.SupportedServices = [];
 
 export default {
 	name: 'openeo-web-editor',
@@ -89,6 +101,7 @@ export default {
 		AccountPanel,
 		BackendPanel,
 		DataViewer,
+		GraphBuilderEnvironment,
 		ImageViewer,
 		FilePanel,
 		JobPanel,
@@ -100,7 +113,8 @@ export default {
 	},
 	data() {
 		return {
-			openEO: OpenEO
+			connection: null,
+			isVisualBuilderActive: true
 		};
 	},
 	created() {
@@ -112,42 +126,40 @@ export default {
 			EventBus.$emit('changeServerUrl', this.$config.serverUrl);
 		}
 		this.resetActiveTab('userContent');
+		this.resetActiveTab('processGraphContent');
 
+		EventBus.$on('showEditor', this.showEditor);
 		EventBus.$on('showInViewer', this.showInViewer);
 		EventBus.$on('showMapViewer', this.showMapViewer);
 		EventBus.$on('showImageViewer', this.showImageViewer);
 		EventBus.$on('showDataViewer', this.showDataViewer);
+		EventBus.$on('getProcessGraph', this.getProcessGraph);
 	},
 	methods: {
 
 		changeServer(url) {
-			this.openEO.Capabilities = new Capabilities();
-			this.openEO.SupportedOutputFormats = {};
-			this.openEO.SupportedServices = [];
-
-			// Update server url
-			this.openEO.API.baseUrl = url;
-			// Invalidate old user id
-			this.openEO.Auth.reset();
-			// ToDo: Remove the driver switch after proof-of-concept
-			if (url.indexOf('/api') !== -1) {
-				this.openEO.API.driver = 'openeo-r-backend';
+			try {
+				var openEO = new OpenEO();
+				openEO.connect(url).then(connection => {
+					this.connection = connection;
+					this.requestCapabilities();
+				});
+			} catch (e) {
+				this.$utils.error(this, e);
 			}
-			else {
-				this.openEO.API.driver = 'other';
-			}
-			// Request authentication
-			// ToDo: Problem: Auth is fired to late, BackendPanel updates earlier...
-			this.requestCapabilities();
 		},
 
 		serverChanged() {
 			this.resetActiveTab('userContent');
 		},
 
+		supports(feature) {
+			return this.connection && this.connection.capabilitiesObject && this.connection.capabilitiesObject.hasFeature(feature);
+		},
+
 		requestCapabilities() {
-			this.openEO.API.getCapabilities().then(info => {
-				this.openEO.Capabilities = info;
+			this.connection.capabilities().then(response => {
+				this.connection.capabilitiesObject = response;
 				this.requestSupportedOutputFormats();
 				this.requestSupportedServices();
 				this.requestAuth();
@@ -158,26 +170,23 @@ export default {
 		},
 
 		requestSupportedOutputFormats() {
-			if (this.openEO.Capabilities.outputFormatCapabilities()) {
-				this.openEO.API.getOutputFormats().then(info => {
-					this.openEO.SupportedOutputFormats = info;
-				});
+			if (this.supports('listFileTypes')) {
+				this.connection.listFileTypes().then(response => this.connection.supportedOutputFormats = response);
 			}
 		},
 
 		requestSupportedServices() {
-			if (this.openEO.Capabilities.serviceCapabilities()) {
-				this.openEO.Services.getCapabilities().then(info => {
-					this.openEO.SupportedServices = info;
-				});
+			if (this.supports('listServiceTypes')) {
+				this.connection.listServiceTypes().then(response => this.connection.supportedServices = response);
 			}
 		},
 
 		requestAuth() {
-			if (this.openEO.Capabilities.userLogin()) {
+			// TODO-CF: authenticateOIDC is missing
+			if (this.supports('authenticateBasic')) {
 				var opts = {
 					submitLoginCallback: (user, password) => {
-						return this.openEO.Auth.login(user, password)
+						return this.connection.authenticateBasic(user, password)
 							.then(data => {
 								EventBus.$emit('serverChanged');
 								this.$utils.ok(this, 'Login successful.');
@@ -192,25 +201,15 @@ export default {
 						EventBus.$emit('serverChanged');
 					}
 				};
-				if (this.openEO.Capabilities.userRegister()) {
-					opts.submitRegisterCallback = (password) => {
-						return this.openEO.Auth.register(password)
-							.then(data => {
-								this.$utils.ok(this, 'Registration successful. Your new username is: ' + data.user_id);
-								return data;
-							})
-							.catch(error => {
-								this.$utils.error(this, 'Sorry, registration failed. Try to choose another password.');
-								throw error;
-							});
-					};
-				}
 				EventBus.$emit('showComponentModal', 'Enter your credentials', 'CredentialsForm', opts);
 			}
 			else {
-				// ToDO: We assume we are authenticated, but this should be removed after POC.
-				this.openEO.Auth.userId = 'me';
-				EventBus.$emit('serverChanged');
+				// if this is fired immediately, the BackendPanel hasn't yet received the capabilities -> wait until the next update cycle has finished
+				Vue.nextTick(function () {
+					EventBus.$emit('serverChanged');
+				});				
+				this.$utils.error(this, 'No authentication method available');
+				console.log('The server provides no authentication method that the web editor suppors');
 			}
 		},
 
@@ -224,9 +223,42 @@ export default {
 				elem.className += " tabActive";
 			}
 		},
+
+		supportsJobs() {
+			if (!this.connection || !this.connection.capabilitiesObject) {
+				return false;
+			}
+			return (this.connection.capabilitiesObject.hasFeature('listJobs') || this.connection.capabilitiesObject.hasFeature('createJob'));
+		},
+
+		supportsServices() {
+			if (!this.connection || !this.connection.capabilitiesObject) {
+				return false;
+			}
+			return (this.connection.capabilitiesObject.hasFeature('listServices') || this.connection.capabilitiesObject.hasFeature('createService'));
+		},
+
+		supportsProcessGraphs() {
+			if (!this.connection || !this.connection.capabilitiesObject) {
+				return false;
+			}
+			return (this.connection.capabilitiesObject.hasFeature('listProcessGraphs') || this.connection.capabilitiesObject.hasFeature('createProcessGraph'));
+		},
+
+		supportsFiles() {
+			if (!this.connection || !this.connection.capabilitiesObject) {
+				return false;
+			}
+			return (this.connection.capabilitiesObject.hasFeature('listFiles') || this.connection.capabilitiesObject.hasFeature('uploadFile'));
+		},
 	
 		changeUserTab(evt) {
 			this.changeTab('userContent', evt);
+		},
+	
+		changeProcessGraphTab(evt) {
+			this.changeTab('processGraphContent', evt);
+			this.isVisualBuilderActive = this.isTabActive('graphTab');
 		},
 
 		changeViewerTab(evt) {
@@ -253,6 +285,21 @@ export default {
 					this.setTabActive(tablinks[i]);
 				}
 			}
+		},
+
+		isTabActive(tabName) {
+			var elem = document.getElementById(tabName);
+			if (typeof elem === 'object' && elem !== null && typeof elem.className === 'string' && elem.className.indexOf(' tabActive') !== -1) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		},
+
+		showEditor() {
+			this.showTab('processGraphContent', 'sourceTab');
+			this.isVisualBuilderActive = this.isTabActive('graphTab');
 		},
 
 		showMapViewer() {
@@ -284,9 +331,6 @@ export default {
 				case 'image/jpg':
 				case 'image/jpeg':
 				case 'image/gif':
-					if (script) {
-						this.$refs.imageViewer.setScript(script);
-					}
 					this.$refs.imageViewer.showImageBlob(blob);
 					break;
 				case 'application/json':
@@ -303,6 +347,28 @@ export default {
 				default:
 					this.$utils.error(this, "Sorry, the returned content type is not supported to view.");
 			}
+		},
+
+		getProcessGraph(callback) {
+			if (this.isVisualBuilderActive) {
+				this.$refs.graphBuilder.getProcessGraph(callback);
+			}
+			else {
+				this.$refs.sourceEditor.getProcessGraph(callback);
+			}
+		},
+
+		executeProcessGraph() {
+			var format = prompt('Please specify the file format:', '');
+			if (format === null) {
+				return;
+			}
+			this.$utils.info(this, 'Data requested. Please wait...');
+			EventBus.$emit('getProcessGraph', (script) => {
+				this.connection.execute(script, format)
+					.then(data => EventBus.$emit('showInViewer', data, script, format))
+					.catch(error => this.$utils.error(this, 'Sorry, could not execute script.'));
+			});
 		},
 
 		getMimeTypeForOutputFormat(originalOutputFormat) {
@@ -371,7 +437,7 @@ ul, ol {
 	width: 50%;
 	overflow-y: auto;
 }
-#SourceEnvironment, #userContent, #viewer .tabs {
+#userContent, #viewer .tabs, #processGraphContent {
 	border: solid 1px #676767;
     margin: 1%;
 	background-color: #f7f7f7;
@@ -385,6 +451,19 @@ ul, ol {
 }
 #viewer .tabsHeader {
 	height: calc(1em + 16px);
+}
+#processGraphContent .tabsHeader {
+	float: left;
+	width: 80%;
+}
+#processGraphContent .tabsActions {
+	text-align: right;
+	float: right;
+	width: 10%;
+	padding: 4px 5px 0px 0px;
+}
+#processGraphContent .tabsBody {
+	clear: both;
 }
 #viewer .tabs {
 	height: 97%;
@@ -435,5 +514,375 @@ footer {
 }
 #openeoLogo {
 	height: 60px;
+}
+
+/* block.js */
+
+.blocks_js_editor * {
+    padding:0;
+    margin:0;
+}
+
+.blocks_js_editor {
+    width:100%;
+    height:100%;
+    position:relative;
+}
+
+.blocks_js_editor .blocks {
+    overflow:hidden;
+}
+
+.blocks_js_editor svg {
+    position:absolute;
+    z-index:1;
+}
+
+.blocks_js_editor .blocks {
+    overflow:hidden;
+    position:absolute;
+    z-index:3;
+    width:100%;
+    height:100%;
+}
+
+/**
+ * Menu bar
+ */
+
+.blocks_js_editor .menubar {
+    width:100%;
+    height:30px;
+    z-index:1;
+}
+
+.blocks_js_editor .contextmenu,
+.blocks_js_editor .childs {
+    width:200px;
+    padding:0px;
+    position:absolute;
+    display:none;
+    float:left;
+    z-index:99;
+    box-shadow:0px 0px 5px #666;
+    border:1px solid #aaa;
+    background-color:#fff;
+}
+
+.blocks_js_editor .menubar .add span {
+    color:green;
+}
+
+.blocks_js_editor .contextmenu .type,
+.blocks_js_editor .contextmenu .menuentry,
+.blocks_js_editor .contextmenu .family {
+    font-size:14px;
+    padding:1px;
+    cursor:pointer;
+    background-color:#fff;
+    height:18px;
+    color:#666;
+    border-left:1px solid #aaa;
+    border-right:1px solid #aaa;
+    border-top:none;
+    border-bottom:none;
+    margin-left:-1px;
+    margin-right:-1px;
+    background-repeat:repeat-x;
+    padding:3px;
+}
+
+.blocks_js_editor .contextmenu .menu_icon
+{
+    width:16px;
+    height:16px;
+    float:left;
+    background-repeat:no-repeat;
+    margin-right:3px;
+}
+
+.blocks_js_editor .contextmenu .menu_icon_compact
+{
+    background-image:url('http://gregwar.com/blocks.js/build/gfx/compact.png');
+}
+
+.blocks_js_editor .contextmenu .menu_icon_scale
+{
+    background-image:url('http://gregwar.com/blocks.js/build/gfx/scale.png');
+}
+
+.blocks_js_editor .contextmenu .menuentry:hover,
+.blocks_js_editor .contextmenu .type:hover {
+    background-color: #f7f7f7;
+    color:black;
+}
+
+.blocks_js_editor .contextmenu .family {
+	display: none;
+}
+
+/**
+ * Blocks
+ */
+
+.blocks_js_editor .block {
+    position:absolute;
+    background-image:url('http://gregwar.com/blocks.js/build/gfx/blockFade.png');
+    background-repeat:repeat-x;
+    border:2px solid #fafafa;
+    box-shadow:5px 5px 10px #aaa;
+    padding:1px;
+    margin-left:0px;
+    margin-top:0px;
+    background-color:#fafafa;
+    opacity:0.8;
+    font-size:14px;
+    -moz-user-select:none;
+    -khtml-user-select:none;
+    -webkit-user-select:none;
+    -o-user-select:none;
+}
+
+.blocks_js_editor .block .description {
+    display:none;
+    width:200px;
+    padding:3px;
+    border:1px solid #083776;
+    border-radius:5px;
+    color:#001531;
+    background-color:#91bcf6;
+    margin-top:15px;
+    position:absolute;
+    font-weight:normal;
+}
+
+.blocks_js_editor .blockTitle {
+    font-weight:bold;
+    background-color:#ddd;
+    background-image:url('http://gregwar.com/blocks.js/build/gfx/titleFade.png');
+    background-repeat:repeat-x;
+    padding:1px;
+    margin:-1px;
+    margin-bottom:2px;
+    cursor:move;
+    font-size:80%;
+}
+
+.blocks_js_editor .blockTitle .blockId {
+    opacity:0.4;
+}
+
+.blocks_js_editor .block .blockicon
+{
+    margin:0;
+    padding:0;
+    width:14px;
+    height:14px;
+    float:right;
+    cursor:pointer;
+    opacity:0.5;
+    margin-right:2px;
+}
+
+.blocks_js_editor .block .blockicon:hover {
+    opacity:1.0;
+}
+
+.blocks_js_editor .block .settings {
+    background-image:url('http://gregwar.com/blocks.js/build/gfx/settings.png');
+}
+
+.blocks_js_editor .block .delete {
+    background-image:url('http://gregwar.com/blocks.js/build/gfx/delete.png');
+}
+
+.blocks_js_editor .block .info {
+    background-image:url('http://gregwar.com/blocks.js/build/gfx/info.png');
+}
+
+.blocks_js_editor .block_selected {
+    border:2px solid #0a0;
+}
+
+.blocks_js_editor .block_selected .blockTitle {
+    background-color:#0c0;
+}
+
+.blocks_js_editor .inputs,
+.blocks_js_editor .outputs {
+    width:80px;
+}
+
+.blocks_js_editor .outputs {
+    float:right;
+}
+
+.blocks_js_editor .inputs {
+    float:left;
+}
+
+.blocks_js_editor .inputs.loopable {
+    float:right;
+}
+
+.blocks_js_editor .outputs.loopable {
+    float:left;
+}
+
+.blocks_js_editor .connector {
+    font-size:80%;
+    padding-top:2px;
+    background-repeat:no-repeat;
+    cursor:pointer;
+    clear:both;
+    width:130px;
+}
+
+.blocks_js_editor .connector.disabled {
+    opacity:0.4;
+}
+
+.blocks_js_editor .output {
+    text-align:right;
+}
+
+.blocks_js_editor .circle {
+    width:12px;
+    height:12px;
+    background-image:url('http://gregwar.com/blocks.js/build/gfx/circle.png');
+    background-size:12px 12px;
+}
+
+.blocks_js_editor .circle.io_active {
+    background-image:url('http://gregwar.com/blocks.js/build/gfx/circle_full.png');
+}
+
+.blocks_js_editor .circle.io_selected {
+    background-image:url('http://gregwar.com/blocks.js/build/gfx/circle_selected.png') !important;
+}
+
+.blocks_js_editor input,
+.blocks_js_editor textarea
+{
+    font-family:Courier;
+}
+
+.blocks_js_editor .input,
+.blocks_js_editor .loopable .output
+{
+    float:left;
+}
+
+.blocks_js_editor .input .circle,
+.blocks_js_editor .loopable .output .circle,
+.blocks_js_editor .parameter .circle {
+    float:left;
+    margin:1px;
+}
+
+.blocks_js_editor .input .circle.io_active,
+.blocks_js_editor .loopable .output .circle.io_active
+{
+    float:left;
+    margin:1px;
+}
+
+.blocks_js_editor .output,
+.blocks_js_editor .loopable .input {
+    float:right;
+}
+
+.blocks_js_editor .output .circle,
+.blocks_js_editor .loopable .input .circle
+{
+    float:right;
+    margin:1px;
+}
+
+.blocks_js_editor .block .parameters {
+    display:none;
+    position:absolute;
+    border:2px solid #aaa;
+    padding:3px;
+    z-index:50;
+    width:250px;
+    margin-left:-5px;
+    margin-top:-5px;
+    background-color:white;
+}
+
+/**
+ * Messages
+ */
+.blocks_js_editor .messages {
+    display:none;
+    width:350px;
+    position:absolute;
+    z-index:100;
+}
+
+.blocks_js_editor .message {
+    padding:5px;
+    font-size:14px;
+    cursor:pointer;
+    border:3px solid;
+    border-radius:5px;
+}
+
+.blocks_js_editor .messages ul {
+    list-style:circle;
+    margin-left:20px;
+}
+
+.blocks_js_editor .message.error {
+    color:red;
+    border-color:red;
+    background-color:#ffe3e3;
+}
+
+.blocks_js_editor .message.valid {
+    color:green;
+    border-color:green;
+    background-color:#eeffee;
+}
+
+.blocks_js_modal button {
+    margin:5px;
+    padding:2px;
+    cursor:pointer;
+    border:0;
+    color:#222;
+    font-size:18px;
+}
+
+.blocks_js_modal button.close {
+    color:white;
+    background-color:#ff4646;
+}
+
+.blocks_js_modal button.save {
+    color:white;
+    background-color:#21c40c;
+    float:right;
+}
+
+.blocks_js_modal input, 
+.blocks_js_modal select,
+.blocks_js_modal textarea {
+    width:250px;
+    padding:2px;
+    border:1px solid #aaa;
+    border-radius:2px;
+    background-color:#fafafa;
+    margin:2px;
+}
+
+.blocks_js_modal textarea {
+    width:400px;
+    height:110px;
+}
+
+.blocks_js_modal .fieldsArray .pattern {
+    display:none;
 }
 </style>
