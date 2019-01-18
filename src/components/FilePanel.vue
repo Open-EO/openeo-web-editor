@@ -1,22 +1,22 @@
 <template>
-	<DataTable ref="table" :dataSource="listFiles" :columns="columns" id="FilePanel">
-		<template slot="toolbar">
-			<div v-show="supports('uploadFile')" class="addFile">
-				<input type="file" name="uploadUserFile" id="uploadUserFile">
-				<button title="Add new file" id="uploadUserFileBtn" @click="uploadFile()"><i class="fas fa-upload"></i></button>
-				<span id="uploadUserFileStatus"></span>
-			</div>
-			<div>
+	<div id="FilePanel">
+		<div v-show="supports('uploadFile')" class="addFile">
+			<input type="file" name="uploadUserFile" id="uploadUserFile">
+			<button title="Add new file" id="uploadUserFileBtn" @click="uploadFile()"><i class="fas fa-upload"></i></button>
+			<span id="uploadUserFileStatus"></span>
+		</div>
+		<DataTable ref="table" :dataSource="listFiles" :columns="columns">
+			<template slot="toolbar">
 				<button title="Refresh files" @click="updateData()"><i class="fas fa-sync-alt"></i></button> <!-- ToDo: Should be done automatically later -->
 				<button v-show="!subscribed" title="Subscribe to all changes to the file directory" @click="subscribeToFileChanges()"><i class="fas fa-bell"></i></button>
 				<button v-show="subscribed" title="Unsubscribe from all changes to the file directory" @click="unsubscribeFromFileChanges()"><i class="fas fa-bell-slash"></i></button>
-			</div>
-		</template>
-		<template slot="actions" slot-scope="p">
-			<button title="Download" @click="downloadFile(p.row)" v-show="supports('downloadFile')"><i class="fas fa-download"></i></button>
-			<button title="Delete" @click="deleteFile(p.row)" v-show="supports('deleteFile')"><i class="fas fa-trash"></i></button>
-		</template>
-	</DataTable>
+			</template>
+			<template slot="actions" slot-scope="p">
+				<button title="Download" @click="downloadFile(p.row)" v-show="supports('downloadFile')"><i class="fas fa-download"></i></button>
+				<button title="Delete" @click="deleteFile(p.row)" v-show="supports('deleteFile')"><i class="fas fa-trash"></i></button>
+			</template>
+		</DataTable>
+	</div>
 </template>
 
 <script>
@@ -63,7 +63,7 @@ export default {
 			var file = field.files[0];
 			console.log(file);
 
-			var file = this.connection.createFile(file.name)
+			this.connection.createFile(file.name)
 				.then(virtualFile => {
 					return virtualFile.uploadFile(file, percent => {
 						status.innerText = percent + '%';
@@ -71,8 +71,8 @@ export default {
 				}).then(uploadedFile => {
 					// ToDo: This should not be self generated, but the API gives no information yet
 					uploadedFile.setAll({
-						name: this.name,
-						size: source.size,
+						name: file.name,
+						size: file.size,
 						modified: (new Date()).toISOString()
 					});
 					this.$refs.table.replaceData(uploadedFile);
@@ -99,9 +99,8 @@ export default {
 				});
 		},
 		subscribeToFileChanges() {
-			this.openEO.API.subscribe(
-				'openeo.files',
-				{},
+			this.connection.subscribe(
+				'openeo.files', {},
 				(data, info) => {
 					console.log("File change: " + JSON.stringify(data));
 				}
@@ -109,7 +108,7 @@ export default {
 			this.subscribed = true;
 		},
 		unsubscribeFromFileChanges(id) {
-			this.openEO.API.unsubscribe('openeo.files', {});
+			this.connection.unsubscribe('openeo.files', {});
 			this.subscribed = false;
 		}
 	}
@@ -130,9 +129,6 @@ export default {
 #uploadUserFileStatus {
 	text-align: center;
 	flex: 2;
-}
-#FilePanel .dataTableToolbar {
-	width: 100%;
 }
 #FilePanel .name {
 	width: 50%;

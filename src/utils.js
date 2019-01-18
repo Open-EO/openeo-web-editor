@@ -2,7 +2,7 @@ export default {
 	exception(vm, error, alt) {
 		var title = null;
 		var message = alt;
-		if (typeof error === 'object' && error.code && error.message) {
+		if (typeof error === 'object' && error.code && typeof error.message === 'string') {
 			if (error.code > 0) {
 				title = "Error #" + error.code;
 			}

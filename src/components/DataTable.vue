@@ -74,26 +74,22 @@ export default {
 		},
 		setNoData(error) {
 			this.data = [];
-			if (typeof error === 'number') {
-				switch(error) {
-					case 401:
-						this.noDataMessage = 'Please authenticate to use this feature.';
-						break;
-					case 403:
-					case 404:
-						this.noDataMessage = 'Sorry, authentication failed. Please try again.';
-						break;
-					case 501:
-						this.noDataMessage = 'Sorry, this feature is not supported by the server.';
-						break;
-					default:
-						this.noDataMessage = 'Sorry, an error occured. Please try again later.';
-						break;
+			if (typeof error == 'string') {
+				this.noDataMessage = error;
+				return;
+			}
+			else if (typeof error == 'object') {
+				if (typeof error.data === 'object' && typeof error.config === 'object' && typeof error.headers === 'object') {
+					// Axios response, handle the data only.
+					error = error.data;
+				}
+				if (typeof error === 'object' && typeof error.message === 'string') {
+					this.noDataMessage = error.message;
+					return;
 				}
 			}
-			else {
-				this.noDataMessage = error;
-			}
+			console.log(error);
+			this.noDataMessage = "Sorry, an unknown error has occured.";
 		},
 		retrieveData() {
 			this.setNoData('Loading data...');

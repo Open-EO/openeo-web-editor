@@ -42,10 +42,10 @@ export default {
 				return;
 			}
 			else if (!this.supports('createJob') && !this.supports('listJobs')) {
-				this.$refs.table.setNoData(501);  // "feature not supported"
+				this.$refs.table.setNoData('Sorry, this feature is not supported by the server.');
 			}
 			else if (typeof this.userId !== 'string' && typeof this.userId !== 'number') {
-				this.$refs.table.setNoData(401);  // "please authenticate"
+				this.$refs.table.setNoData('Please authenticate to use this feature.');
 			}
 			else {
 				this.$refs.table.retrieveData();

@@ -8,11 +8,11 @@
 			<button title="Details" @click="showJobInfo(p.row)" v-show="supports('describeJob')"><i class="fas fa-info"></i></button>
 			<button title="Estimate" @click="estimateJob(p.row)" v-show="supports('estimateJob')"><i class="fas fa-file-invoice-dollar"></i></button>
 			<button title="Edit" @click="editJob(p.row)" v-show="supports('updateJob')" v-if="isJobInactive(p.row)"><i class="fas fa-edit"></i></button>
-			<button title="Delete" @click="deleteJob(p.row)" v-show="supports('deleteJob')"><i class="fas fa-trash"></i></button>&nbsp;
+			<button title="Delete" @click="deleteJob(p.row)" v-show="supports('deleteJob')"><i class="fas fa-trash"></i></button>
 			<button title="Start" @click="queueJob(p.row)" v-show="supports('startJob')" v-if="isJobInactive(p.row)"><i class="fas fa-play-circle"></i></button>
-			<button title="Cancel" @click="cancelJob(p.row)" v-show="supports('stopJob')" v-if="isJobActive(p.row)"><i class="fas fa-stop-circle"></i></button>&nbsp;
+			<button title="Cancel" @click="cancelJob(p.row)" v-show="supports('stopJob')" v-if="isJobActive(p.row)"><i class="fas fa-stop-circle"></i></button>
 			<button title="Download" @click="downloadJob(p.row)" v-show="supports('downloadResults')" v-if="hasResults(p.row)"><i class="fas fa-download"></i></button>
-			<button title="View results" @click="downloadJob(p.row, true)" v-show="supports('downloadResults')" v-if="hasResults(p.row)"><i class="fas fa-eye"></i></button>&nbsp;
+			<button title="View results" @click="downloadJob(p.row, true)" v-show="supports('downloadResults')" v-if="hasResults(p.row)"><i class="fas fa-eye"></i></button>
 			<button title="Subscribe" @click="subscribeToJob(p.row)" v-show="supports('subscribe') && !jobSubscriptions.includes(p.row)"><i class="fas fa-bell"></i></button>
 			<button title="Unsubscribe" @click="unsubscribeFromJob(p.row)" v-show="supports('unsubscribe') && jobSubscriptions.includes(p.row)"><i class="fas fa-bell-slash"></i></button>
 		</template>

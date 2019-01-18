@@ -14,7 +14,7 @@
 		<template slot="actions" slot-scope="p">
 			<button title="Details" @click="serviceInfo(p.row)" v-show="supports('describeService')"><i class="fas fa-info"></i></button>
 			<button title="Edit" @click="editService(p.row)" v-show="supports('updateService')"><i class="fas fa-edit"></i></button>
-			<button title="Delete" @click="deleteService(p.row)" v-show="supports('deleteService')"><i class="fas fa-trash"></i></button>&nbsp;
+			<button title="Delete" @click="deleteService(p.row)" v-show="supports('deleteService')"><i class="fas fa-trash"></i></button>
 			<button title="View on map" @click="viewService(p.row)"><i class="fas fa-map"></i></button>
 		</template>
 	</DataTable>
