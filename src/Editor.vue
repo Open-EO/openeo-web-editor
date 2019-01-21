@@ -5,7 +5,7 @@
 			<div class="tabs" id="processGraphContent">
 				<div class="tabsHeader">
 					<button class="tabItem" name="graphTab" @click="changeProcessGraphTab"><i class="fas fa-code-branch"></i> Visual Model Builder</button>
-					<button class="tabItem" name="sourceTab" @click="changeProcessGraphTab"><i class="fas fa-code"></i> Source Code</button>
+					<button class="tabItem" name="sourceTab" @click="changeProcessGraphTab"><i class="fas fa-code"></i> Process Graph</button>
 				</div>
 				<div class="tabsActions">
 					<button @click="executeProcessGraph" title="Run current process graph and view results" v-if="this.supports('startJob')"><i class="fas fa-play"></i></button>
@@ -138,6 +138,10 @@ export default {
 	methods: {
 
 		changeServer(url) {
+			if (window.location.protocol === 'https:' && url.toLowerCase().substr(0,5) !== window.location.protocol) {
+				this.$utils.error(this, 'You are trying to connect to a back-end with HTTP instead of HTTPS, which is insecure and prohibited by web browsers. Please use HTTPS instead.');
+				return;
+			}
 			try {
 				var openEO = new OpenEO();
 				openEO.connect(url).then(connection => {

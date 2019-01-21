@@ -1,7 +1,7 @@
 <template>
 	<div id="SourceEnvironment">
 		<div class="sourceHeader">
-			<h3>Script: <em id="scriptName">{{ scriptName }}</em></h3>
+			<h3><em id="scriptName">{{ scriptName }}</em></h3>
 			<div class="sourceToolbar">
 				<button @click="newScript" title="Clear current script / New script"><i class="fas fa-file"></i></button>
 				<button @click="loadScript()" title="Load script from local storage"><i class="fas fa-folder-open"></i></button>
@@ -193,5 +193,8 @@ export default {
     display: block;
     visibility: hidden;
     height: 0px;
+}
+#sourceCodeEditor {
+	height: 400px;
 }
 </style>
