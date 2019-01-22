@@ -1,5 +1,3 @@
-"use strict";
-
 /**
  * Manage the types compatibility
  */

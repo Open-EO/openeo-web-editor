@@ -1,6 +1,5 @@
 import Types from './types.js';
 import BlocksMenu from './blocksmenu.js';
-import BlocksMessages from './blocksmessages.js';
 import History from './history.js';
 import Block from './block.js';
 import Meta from './meta.js';
@@ -9,18 +8,10 @@ import Connector from './connector.js';
 
 /**
  * Manage the blocks
- *
- * Options can contains :
- * - canLinkInputs (default false): can inputs be linked together?
- * - orientatiion (default true): is the graph oriented?
  */
-var Blocks = function(options)
+var Blocks = function(parentComponent)
 {
-    if (typeof options != 'undefined') {
-        this.options = options;
-    } else {
-        this.options = {};
-    }
+    this.parentComponent = parentComponent;
 
     // Types checker
     this.types = new Types;
@@ -96,18 +87,6 @@ var Blocks = function(options)
     }
 
     /**
-     * Gets an option value
-     */
-    this.getOption = function(key, defaultValue)
-    {
-        if (key in this.options) {
-            return this.options[key];
-        } else {
-            return defaultValue;
-        }
-    }
-
-    /**
      * Show/hide icons
      */
     this.showIcons = true;    
@@ -148,9 +127,6 @@ Blocks.prototype.run = function(selector)
 
         // Run the menu
         self.menu = new BlocksMenu(self);
-
-        // Create the message handler
-        self.messages = new BlocksMessages(self.div.find('.messages'), self.div.width());
 
         // Listen for mouse position
         self.div[0].addEventListener('mousemove', function(evt) {
@@ -613,12 +589,16 @@ Blocks.prototype.endLink = function(block, connectorId)
             throw 'Types '+types[0]+' and '+types[1]+' are not compatible';
         }
     } catch (error) {
-        this.messages.show('Unable to create this edge :' + "\n" + error, {'class': 'error'});
+        this.showError(error, 'Unable to create edge');
     }
     this.linking = null;
     this.selectedBlock = null;
     this.redraw();
 };
+
+Blocks.prototype.showError = function(message, title = null) {
+    this.parentComponent.$utils.error(this.parentComponent, message, title);
+}
 
 /**
  * Changing the compact mode
@@ -721,13 +701,9 @@ Blocks.prototype.doLoad = function(scene, init)
             }
 
             if (errors.length) {
-                var text = errors.length + " loading errors :<br/>";
-                text += '<ul>';
                 for (var k in errors) {
-                    text += '<li>' + errors[k] + '</li>';
+                    self.showError(errors[k], 'Loading error');
                 }
-                text += '</ul>';
-                self.messages.show(text, {'class': 'error'});
             }
 
             self.redraw();
@@ -736,7 +712,7 @@ Blocks.prototype.doLoad = function(scene, init)
                 self.perfectScale();	    
             }
         } catch (error) {
-            self.messages.show('Unable to create this edge :' + "\n" + error, {'class': 'error'});
+            self.showError(error, 'Unable to create edge');
         }
     });
 };

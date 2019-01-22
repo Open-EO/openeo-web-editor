@@ -1,5 +1,3 @@
-"use strict";
-
 /**
  * Handles the menu for creating blocks
  */

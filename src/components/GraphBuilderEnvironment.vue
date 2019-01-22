@@ -48,7 +48,7 @@ export default {
 
 		resetBlocks() {
 			if (this.blocks == null) {
-				this.blocks = new Blocks();
+				this.blocks = new Blocks(this);
 				this.blocks.run("#pgEditor");
 			}
 			else {

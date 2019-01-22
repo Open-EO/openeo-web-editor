@@ -86,17 +86,15 @@ Edge.prototype.draw = function(svg)
     var sinB = Math.sin(-alpha);
 
     // Drawing the arrow
-    if (this.blocks.getOption('orientation', true)) {
-        var xA = (this.position1.x-xM)*this.blocks.scale*10/(norm/2);
-        var yA = (this.position1.y-yM)*this.blocks.scale*10/(norm/2);
-        var lineWidth = this.defaultSize*this.blocks.scale/3.0;
-        svg.line(xM, yM, xM+(xA*cos-yA*sin), yM+(yA*cos+xA*sin), {
-            stroke: strokeStyle, strokeWidth: lineWidth
-        });
-        svg.line(xM, yM, xM+(xA*cosB-yA*sinB), yM+(yA*cosB+xA*sinB), {
-            stroke: strokeStyle, strokeWidth: lineWidth
-        });
-    }
+    var xA = (this.position1.x-xM)*this.blocks.scale*10/(norm/2);
+    var yA = (this.position1.y-yM)*this.blocks.scale*10/(norm/2);
+    var lineWidth = this.defaultSize*this.blocks.scale/3.0;
+    svg.line(xM, yM, xM+(xA*cos-yA*sin), yM+(yA*cos+xA*sin), {
+        stroke: strokeStyle, strokeWidth: lineWidth
+    });
+    svg.line(xM, yM, xM+(xA*cosB-yA*sinB), yM+(yA*cosB+xA*sinB), {
+        stroke: strokeStyle, strokeWidth: lineWidth
+    });
 
     if (this.label != null) {
         var fontSize = Math.round(this.defaultFontSize*this.blocks.scale);
@@ -141,7 +139,7 @@ Edge.prototype.create = function()
     }
 
     // You have to link an input with an output
-    if (!this.blocks.getOption('canLinkInputs', false) && this.connector1.type == this.connector2.type) {
+    if (this.connector1.type == this.connector2.type) {
         throw 'You have to link an input with an output';
     }
 

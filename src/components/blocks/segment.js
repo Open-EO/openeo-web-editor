@@ -1,5 +1,3 @@
-"use strict";
-
 var Segment = function(x, y, dx, dy)
 {
     this.x = x;
