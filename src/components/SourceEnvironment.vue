@@ -54,6 +54,7 @@ export default {
 	mounted() {
 		this.editor = CodeMirror(document.getElementById('sourceCodeEditor'), this.editorOptions);
 		this.editor.setValue(this.defaultScript);
+		this.editor.setSize(null, "100%");
 		EventBus.$on('addSourceCode', this.insertToEditor);
 		EventBus.$on('addProcessToEditor', this.insertToEditor);
 		EventBus.$on('addCollectionToEditor', this.insertToEditor);
