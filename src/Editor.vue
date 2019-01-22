@@ -517,4 +517,7 @@ footer {
 #openeoLogo {
 	height: 60px;
 }
+#container .snotifyToast__title {
+	font-size: 1.2em;
+}
 </style>
