@@ -27,14 +27,6 @@ var Edge = function(id, block1, connector1, block2, connector2, blocks)
 };
 
 /**
- * Should this edge be ignored in loop analysis ?
- */
-Edge.prototype.isLoopable = function()
-{
-    return (this.block1.isLoopable() || this.block2.isLoopable());
-}
-
-/**
  * Returns an array with the blocks ordered
  */
 Edge.prototype.fromTo = function()

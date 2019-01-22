@@ -197,18 +197,10 @@ Fields.prototype.save = function(serialize)
  */
 Fields.prototype.toggle = function()
 {
-    if (this.meta.parametersEditor != undefined && typeof(this.meta.parametersEditor) == 'function') {
-        this.meta.parametersEditor(this.block.values, function(values) {
-            this.block.updateValues(values);
-            this.block.render();
-            this.block.redraw();
-        });
+    if (this.display) {
+        this.hide();
     } else {
-        if (this.display) {
-            this.hide();
-        } else {
-            this.show();
-        }
+        this.show();
     }
 };
 

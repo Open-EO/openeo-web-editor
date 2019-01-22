@@ -58,8 +58,6 @@ Have a look at `simple.html`.
 The blocks is an object containing:
 
 * `name`: the name of the block
-* `family`: the block family, this will be used to put it in the right
-  blocks menu sub-section
 * `module`: the block module, act like a namespace and avoid name collisions
 * `size`: the size of the block, can be ̀`small`, `normal` or a certain
   number of pixels
@@ -80,7 +78,6 @@ It is an object containing:
 * `defaultValue`: the default value of the field, that will be used if it's
   editable
 * `hide`: do not display the editable field in the block information
-* `hideLabel`: do not display the editable field label in the block information
 * `card`: the cardinality of the input/output. This can be a string like `"0-3"`
   or and array like `[0,3]`, it represents the minimum and the maximum edges that
   can be connected to the I/O.

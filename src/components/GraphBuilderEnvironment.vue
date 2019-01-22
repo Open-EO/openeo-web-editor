@@ -120,40 +120,39 @@ export default {
 
 		propagateProcesses(processes) {
 			for(var i in processes) {
-				var args = [{
-					name: "Output",
-					attrs: "output"
-				}];
-				for(var a in processes[i].parameters) {
-					var p = processes[i].parameters[a];
-					args.push({
-						name: a,
-						attrs: a == 'imagery' ? "input" : "editable input"
-					});
-				}
-				this.blocks.register({
+				var field = {
 					name: processes[i].name,
 					description: processes[i].description,
-					family: "Process",
-					module: "Process",
-				    fields: args
-				});
+					module: "process",
+				    fields: [
+						{
+							name: "Output",
+							attrs: "output"
+						}
+					]
+				}
+				for(var a in processes[i].parameters) {
+					var p = processes[i].parameters[a];
+					p.name = a;
+					p.attrs = a == 'imagery' ? "input" : "editable input"
+					field.fields.push(p);
+				}
+				this.blocks.register(Object.assign(field, processes[i]));
 			}
 		},
 	
-		propagateCollections(info) {
-			for(var i in info) {
-				this.blocks.register({
-					name: info[i].name,
-					family: "Collection",
-					module: "Collection",
+		propagateCollections(collection) {
+			for(var i in collection) {
+				var field = {
+					module: "collection",
 				    fields: [
 						{
 							name: "Output",
 							attrs: "output"
 						}
     				]
-				});
+				};
+				this.blocks.register(Object.assign(field, collection[i]));
 			}
 		},
 
@@ -254,17 +253,22 @@ export default {
     font-weight:normal;
 }
 
-.blocks_js_editor .titleText {
-    margin: 3px;
-}
-
 .blocks_js_editor .blockTitle {
+	display: flex;
     padding: 0.3em 0.1em;
     font-weight:bold;
     background-color:#ddd;
     margin-bottom: 0.1em;
-    cursor:move;
-    font-size:90%;
+    cursor: move;
+    font-size: 0.9em;
+}
+
+.blocks_js_editor .titleText {
+	align-self: stretch;
+	flex-basis: 100%;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 .blocks_js_editor .blockTitle .blockId {
@@ -274,9 +278,11 @@ export default {
 
 .blocks_js_editor .block .blockicon
 {
-    float: right;
-    width: 4.5em;
+	align-self: flex-end;
+	flex-basis: 4.5em;
+    min-width: 4.5em;
     text-align: right;
+	white-space: nowrap;
 }
 
 
@@ -300,25 +306,13 @@ export default {
     background-color:#0c0;
 }
 
+.blocks_js_editor .inout {
+	display: flex;
+}
+
 .blocks_js_editor .inputs,
 .blocks_js_editor .outputs {
-    width:50%;
-}
-
-.blocks_js_editor .outputs {
-    float:right;
-}
-
-.blocks_js_editor .inputs {
-    float:left;
-}
-
-.blocks_js_editor .inputs.loopable {
-    float:right;
-}
-
-.blocks_js_editor .outputs.loopable {
-    float:left;
+    flex: 1;
 }
 
 .blocks_js_editor .connector {
@@ -361,29 +355,15 @@ export default {
     font-family:Courier;
 }
 
-.blocks_js_editor .block .parameters {
-    display:none;
-    position:absolute;
-    border:2px solid #aaa;
-    padding:3px;
-    z-index:50;
-    width:250px;
-    margin-left:-5px;
-    margin-top:-5px;
-    background-color:white;
-}
-
 .fieldRow {
 	display: flex;
 	margin-bottom: 0.5em;
 }
 .fieldRow label {
 	flex: 1;
-	float: left;
 }
 .fieldRow .fieldValue {
 	flex: 3;
-	float: right;
 }
 .fieldRow .fieldValue input, .fieldRow .fieldValue textarea, .fieldRow .fieldValue select {
 	width: 100%;

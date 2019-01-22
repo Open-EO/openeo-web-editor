@@ -3,7 +3,6 @@
  */
 var Field = function(metaField)
 {
-    var self = this;
     this.onUpdate = null;
 
     // Value
@@ -12,6 +11,8 @@ var Field = function(metaField)
     if ('defaultValue' in metaField) {
         this.value = metaField.defaultValue;
     }
+
+    this.meta = metaField;
 
     // Default unit
     if (metaField.unit == undefined) {
@@ -45,9 +46,6 @@ var Field = function(metaField)
 
     // Hide the field ?
     this.hide = 'hide' in metaField && metaField.hide;
-
-    // Hide the label ?
-    this.hideLabel = 'hideLabel' in metaField && metaField.hideLabel;
 
     // Field iname
     this.name = metaField.name.toLowerCase();
@@ -97,7 +95,7 @@ Field.prototype.updated = function()
  */
 Field.prototype.getFieldHtml = function()
 {
-    var field = '<div class="fieldRow"><label>' + this.label+'</label><div class="fieldValue">';
+    var field = '';
 
     if (this.isArray) {
         field += '<div class="fieldsArray">';
@@ -116,8 +114,6 @@ Field.prototype.getFieldHtml = function()
     } else {
         field += this.getSingleFieldHtml();
     }
-
-    field += '</div></div>';
 
     return field;
 };
@@ -175,14 +171,8 @@ Field.prototype.getSingleFieldHtml = function(value)
  */
 Field.prototype.getHtml = function()
 {
-    var html = '';
-
-    if (!this.hideLabel) {
-        html += '<b>' + this.label + '</b>: ';
-    }
-    
+    var html = '<b>' + this.label + '</b>: ';
     html += this.getPrintableValueWithUnit() + '<br/>';
-
     return html;
 };
 

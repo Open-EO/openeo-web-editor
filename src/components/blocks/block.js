@@ -12,15 +12,6 @@ var Block = function(blocks, meta, id)
 
     // Appareance values
     this.defaultFont = 10;
-    
-    // Width
-    if (this.meta.size == 'normal') {
-        this.width = 150;
-    } else if (this.meta.size == 'small') {
-        this.width = 100;
-    } else {
-        this.width = this.meta.size;
-    }
 
     // History saved before move
     this.historySaved = false;
@@ -60,10 +51,17 @@ var Block = function(blocks, meta, id)
     this.connectors = [];
 };
 
-// Can this block be used to break a loop ?
-Block.prototype.isLoopable = function()
-{
-    return this.meta.loopable;
+Block.prototype.getWidth = function() {
+    if (this.hasInputs()) {
+        return this.blocks.compactMode ? 120 : 170;
+    }
+    else {
+        return this.blocks.compactMode ? 90 : 120;
+    }
+};
+
+Block.prototype.hasInputs = function() {
+    return this.fields.fields.length > 1;
 };
 
 /**
@@ -139,7 +137,8 @@ Block.prototype.getHtml = function()
     this.connectors = [];
 
     // Getting the title
-    var title = this.meta.name + '<span class="blockId">#' + this.id + '</span>';
+    var header = this.meta.name + ' <span class="blockId">#' + this.id + '</span>';
+    var title = this.meta.name + ' #' + this.id;
     for (var k in this.fields.fields) {
         var field = this.fields.fields[k];
         if (field.asTitle) {
@@ -147,24 +146,18 @@ Block.prototype.getHtml = function()
         }
     }
 
-    var html = '<div class="parameters"></div>';
-    html += '<div class="blockTitle"><span class="titleText">'+title+'</span>';
+    var html = '<div class="blockTitle"><span class="titleText" title="'+title+'">'+header+'</span>';
     html += '<div class="blockicon"><span class="delete"><i class="fas fa-trash"></i></span>';
     html += '<span class="info"><i class="fas fa-info"></i></span>';
-    html += '<span class="settings"><i class="fas fa-sliders-h"></i></span></div></div>';
-    html += '<div class="infos"></div>';
-    
-    for (var k in self.fields.editables) {
-        var field = self.fields.editables[k];
-        var fieldHtml = field.getHtml();
-        if (html && (!field.hide) && (!field.asTitle) && (!this.blocks.compactMode)) {
-            html += '<div class="parameter">'+fieldHtml+'</div>';
-        }
+    if (this.fields.editables.length > 0) {
+        html += '<span class="settings"><i class="fas fa-sliders-h"></i></span>';
     }
+    html += '</div></div>';
+    html += '<div class="infos"></div><div class="inout">';
 
     // Handling inputs & outputs
     var handle = function(key, fields) {
-        html += '<div class="' + key + 's '+(self.isLoopable() ? 'loopable' : '')+'">';
+        html += '<div class="' + key + 's">';
 
         for (var k in fields) {
             var field = fields[k];
@@ -186,7 +179,7 @@ Block.prototype.getHtml = function()
                 if (field.dynamicLabel != null) {
                     label = String(field.dynamicLabel(self, x));
                 } else {
-                    if (field && field.is('editable')) {
+                    if (field && field.is('editable') && !self.blocks.compactMode) {
                         value = ' ('+field.getPrintableValueWithUnit(field.variadic ? x : undefined)+')';
                     }
                 }
@@ -205,11 +198,13 @@ Block.prototype.getHtml = function()
                 self.connectors.push(connectorId);
             }
         }
-            html += '</div>';
+        html += '</div>';
     };
 
     handle('input', this.fields.inputs);
     handle('output', this.fields.outputs);
+
+    html += "</div>";
 
     return html;
 };
@@ -277,7 +272,7 @@ Block.prototype.redraw = function(selected)
     // Rescaling
     if (this.lastScale != this.blocks.scale) {
         this.div.css('font-size', Math.round(this.blocks.scale*this.defaultFont)+'px');
-        this.div.css('width', Math.round(this.blocks.scale*this.width)+'px');
+        this.div.css('width', Math.round(this.blocks.scale*this.getWidth())+'px');
 
         this.cssParameters();
         this.lastScale = this.blocks.scale
@@ -301,9 +296,6 @@ Block.prototype.redraw = function(selected)
             }
         }
     }
-
-    // Updating the fields manager div
-    this.fields.div = this.div.find('.parameters');
 
     // Is selected ?
     this.div.removeClass('block_selected');
@@ -388,11 +380,11 @@ Block.prototype.initListeners = function()
     // Show the description
     self.div.find('.info').click(function() {
         var action = '';
-        switch(self.meta.family) {
-            case 'Process':
+        switch(self.meta.module) {
+            case 'process':
                 EventBus.$emit('showProcessInfo', self.meta.name);
                 break;
-            case 'Collection':
+            case 'collection':
                 EventBus.$emit('showCollectionInfo', self.meta.name);
                 break;
         }
@@ -501,9 +493,6 @@ Block.prototype.allSuccessors = function()
         for (var key in currentBlock.edges) {
             for (var i in currentBlock.edges[key]) {
                 var edge = currentBlock.edges[key][i];
-                if (edge.isLoopable()) {
-                    continue;
-                }
                 var fromTo = edge.fromTo();
 
                 if (fromTo[0] == currentBlock) {

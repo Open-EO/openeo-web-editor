@@ -105,8 +105,6 @@ Blocks.prototype.run = function(selector)
         // Inject the initial editor
         self.div.html(
               '<div class="blocks_js_editor">'
-            + '<div class="messages"></div>'
-            + '<div class="contextmenu"><div class="types"></div></div>'
             + '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" class="canvas"></svg>'
             + '<div class="blocks"></div>'
             + '</div>'
@@ -780,12 +778,12 @@ Blocks.prototype.perfectScale = function()
         var block = this.blocks[k];
         if (xMin == null) {
             xMin = block.x-15
-            xMax = block.x+block.width+18;
+            xMax = block.x+block.getWidth()+18;
             yMin = block.y-15
             yMax = block.y+115;
         } else {
             xMin = Math.min(xMin, block.x-15);
-            xMax = Math.max(xMax, block.x+block.width+18);
+            xMax = Math.max(xMax, block.x+block.getWidth()+18);
             yMin = Math.min(yMin, block.y-15);
             yMax = Math.max(yMax, block.y+115);
         }

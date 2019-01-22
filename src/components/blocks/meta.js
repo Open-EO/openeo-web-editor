@@ -4,8 +4,6 @@
 var Meta = function(meta)
 {
     this.name = meta.name;
-    this.loopable = ('loopable' in meta && meta['loopable']);
-    this.size = ('size' in meta ? meta.size : 'normal');
     this.fields = [];
     this.generate = meta.generate;
 
@@ -22,35 +20,11 @@ var Meta = function(meta)
         }
     }
 
-    // Checking for parameters editor
-    for (var k in meta.parametersEditor) {
-        var key = keys[k];
-        if (meta[key] != undefined) {
-            this[key] = meta[key];
-        } else {
-            this[key] = [];
-        }
-    }
-
     // Adding module
     if ('module' in meta) {
         this.module = meta.module;
     } else {
         this.module = null;
-    }
-
-    // Checking the family
-    if (meta.family == undefined) {
-        this.family = ''; // Root family
-    } else {
-        this.family = meta.family;
-    }
-
-    // Style
-    if (meta['class'] != undefined) {
-        this['class'] = meta['class'];
-    } else {
-        this['class'] = '';
     }
 }
 
