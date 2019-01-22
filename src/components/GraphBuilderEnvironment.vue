@@ -1,7 +1,7 @@
 <template>
 	<div id="GraphBuilderEnvironment">
 		<div class="sourceHeader">
-			<h3>Visual Process Graph Builder</h3>
+			<h3></h3>
 			<div class="sourceToolbar">
 				<button @click="convertModel" title="Generate Process Graph"><i class="fas fa-code"></i></button>
 			</div>

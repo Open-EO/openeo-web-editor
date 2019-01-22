@@ -46,7 +46,7 @@ export default {
 	computed: {
 		userName: {
 			get() {
-				if ((typeof this.userId !== 'string' && typeof this.userId !== 'number') || this.userId == 'me') {
+				if (!this.userId) {
 					return 'Guest';
 				}
 				else {
@@ -77,7 +77,7 @@ export default {
 				return;
 			}
 
-			if (this.supports('describeAccount')) {
+			if (this.supports('describeAccount') && this.userId) {
 				this.connection.describeAccount()
 					.then(data => this.me = data)
 					.catch(error => {
