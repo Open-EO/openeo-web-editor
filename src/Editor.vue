@@ -888,3 +888,7 @@ footer {
     display:none;
 }
 </style>
+#container .snotifyToast__title {
+	font-size: 1.2em;
+}
+</style>

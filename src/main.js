@@ -7,7 +7,8 @@ import utils from './utils.js';
 
 Vue.use(Snotify, {
 	toast: {
-		timeout: 10000
+		timeout: 5000,
+		titleMaxLength: 30
 	}
 });
 
