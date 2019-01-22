@@ -1,5 +1,6 @@
 import Fields from './fields.js';
 import Connector from './connector.js';
+import EventBus from '../../eventbus.js';
 
 /**
  * Creates an instance of a block
@@ -11,9 +12,6 @@ var Block = function(blocks, meta, id)
 
     // Appareance values
     this.defaultFont = 10;
-
-    // Custom description
-    this.description = null;
     
     // Width
     if (this.meta.size == 'normal') {
@@ -66,15 +64,6 @@ var Block = function(blocks, meta, id)
 Block.prototype.isLoopable = function()
 {
     return this.meta.loopable;
-};
-
-/**
- * Sets the block description to something custom
- */
-Block.prototype.setDescription = function(description)
-{
-    this.description = description;
-    this.div.find('.description').html(description);
 };
 
 /**
@@ -159,19 +148,10 @@ Block.prototype.getHtml = function()
     }
 
     var html = '<div class="parameters"></div>';
-    html += '<div class="blockTitle"><span class="titleText">'+title+'</span><div class="blockicon delete"></div>';
-    html += '<div class="blockicon info"></div>';
-
-    if (this.description) {
-        html += '<div class="description">' + self.description + '</div>';
-    } else {
-        if (this.meta.description) {
-            html += '<div class="description">' + this.meta.description + '</div>';
-        } else {
-            html += '<div class="description">No description</div>';
-        }
-    }
-    html += '<div class="blockicon settings"></div></div>';
+    html += '<div class="blockTitle"><span class="titleText">'+title+'</span>';
+    html += '<div class="blockicon"><span class="delete"><i class="fas fa-trash"></i></span>';
+    html += '<span class="info"><i class="fas fa-info"></i></span>';
+    html += '<span class="settings"><i class="fas fa-sliders-h"></i></span></div></div>';
     html += '<div class="infos"></div>';
     
     for (var k in self.fields.editables) {
@@ -215,8 +195,13 @@ Block.prototype.getHtml = function()
                     connectorId += '_' + x;
                 }
 
+                var circleLeft = '<div class="circle"></div>', circleRight = '';
+                if (key == 'output') {
+                    circleRight = circleLeft, circleLeft = '';
+                }
+
                 // Generating HTML
-                html += '<div class="'+key+' type_'+field.type+' connector '+connectorId+'" rel="'+connectorId+ '"><div class="circle"></div>' + self.htmlentities(label) + value + '</div>';
+                html += '<div class="'+key+' type_'+field.type+' connector '+connectorId+'" rel="'+connectorId+ '">' + circleLeft + self.htmlentities(label) + value + circleRight + '</div>';
                 self.connectors.push(connectorId);
             }
         }
@@ -293,13 +278,6 @@ Block.prototype.redraw = function(selected)
     if (this.lastScale != this.blocks.scale) {
         this.div.css('font-size', Math.round(this.blocks.scale*this.defaultFont)+'px');
         this.div.css('width', Math.round(this.blocks.scale*this.width)+'px');
-    
-        var size = Math.round(12*this.blocks.scale);
-        this.div.find('.circle').css('width', size+'px');
-        this.div.find('.circle').css('height', size+'px');
-        this.div.find('.circle').css('background-size', size+'px '+size+'px');
-
-        // this.div.find('.inputs, .outputs').width(this.div.width()/2-5);
 
         this.cssParameters();
         this.lastScale = this.blocks.scale
@@ -408,10 +386,16 @@ Block.prototype.initListeners = function()
     });
 
     // Show the description
-    self.div.find('.info').hover(function() {
-        self.div.find('.description').show();
-    }, function() {
-        self.div.find('.description').hide();
+    self.div.find('.info').click(function() {
+        var action = '';
+        switch(self.meta.family) {
+            case 'Process':
+                EventBus.$emit('showProcessInfo', self.meta.name);
+                break;
+            case 'Collection':
+                EventBus.$emit('showCollectionInfo', self.meta.name);
+                break;
+        }
     });
 };
 

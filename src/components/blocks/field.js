@@ -97,7 +97,7 @@ Field.prototype.updated = function()
  */
 Field.prototype.getFieldHtml = function()
 {
-    var field = this.label+':<br/>';
+    var field = '<div class="fieldRow"><label>' + this.label+'</label><div class="fieldValue">';
 
     if (this.isArray) {
         field += '<div class="fieldsArray">';
@@ -117,7 +117,7 @@ Field.prototype.getFieldHtml = function()
         field += this.getSingleFieldHtml();
     }
 
-    field += '<br/>';
+    field += '</div></div>';
 
     return field;
 };

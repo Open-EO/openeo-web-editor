@@ -1,4 +1,5 @@
 import Field from './field.js';
+import EventBus from '../../eventbus.js';
 
 /**
  * Parameters managers
@@ -68,47 +69,20 @@ Fields.prototype.getField = function(name)
  */
 Fields.prototype.show = function()
 {
-    var self = this;
-    var html = '<h3>'+this.block.meta.name+'#'+this.block.id+'</h3>';
-
-    html += '<form class="form">';
-    for (var k in this.editables) {
-        html += this.editables[k].getFieldHtml();
-    }
-    html += '<input type="submit" style="display:none" width="0" height="0" />';
-    html += '</form>';
-    
-    html += '<button class="save" href="javascript:void(0);">Save</button>';
-    html += '<button class="close" href="javascript:void(0);">Close</button>';
-
-    this.div.html(html);
-
-    this.div.find('.close').click(function() {
-        $.fancybox.close();
-    });
-
-    var form = this.div.find('form');
-    
-    this.div.find('.save').click(function() {
-        form.find('.pattern').remove();
-        self.save(self.serializeForm(form));
-        $.fancybox.close();
-    });
-
-    this.div.find('form').submit(function() {
-        form.find('.pattern').remove();
-        self.save(self.serializeForm($(this)));
-        $.fancybox.close();
-        return false;
-    });
-
-    this.div.find('input').dblclick(function() {
-        $(this).select();
-    });
-
-    this.handleArrays();
-
-    $.fancybox.open(this.div, {wrapCSS: 'blocks_js_modal'});
+    var title = this.block.meta.name+' #'+this.block.id;
+    var opts = {
+        editables: this.editables,
+        fields: this,
+        saveCallback: (element) => {
+            var form = $(element);
+            form.find('.pattern').remove();
+            this.save(this.serializeForm(form));
+            EventBus.$emit('closeModal');
+            return false;
+        },
+        handleArrays: this.handleArrays
+    };
+    EventBus.$emit('showComponentModal', title, 'ProcessParameterEditor', opts);
     this.display = true;
 };
 
@@ -136,9 +110,9 @@ Fields.prototype.serializeForm = function(form)
 /**
  * Handle Add & Remove buttons on fields array
  */
-Fields.prototype.handleArrays = function()
+Fields.prototype.handleArrays = function(element)
 {
-    this.div.find('.fieldsArray').each(function() {
+    $(element).find('.fieldsArray').each(function() {
         var pattern = $(this).find('.pattern').html();
         var fields = $(this).find('.fields');
 

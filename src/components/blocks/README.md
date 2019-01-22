@@ -23,46 +23,6 @@ the edited [scene](#scene). When you load the blocks, you can also load back a s
 
 ## Using blocks.js
 
-### Downloading
-
-If you want to use it, you'll have to fetch the code, either by cloning this 
-repository, or by 
-[downloading it](https://github.com/Gregwar/blocks.js/archive/master.zip).
-
-### Requirements
-
-blocks.js uses:
-
-* [jQuery](http://jquery.com/)
-* [jquery-json](http://code.google.com/p/jquery-json/) for JSON export
-* [jquery-mousewheel](http://plugins.jquery.com/mousewheel/) for scrolling zoom
-* [jquery-svg](http://keith-wood.name/svg.html) for edges rendering
-* [jquery-formserialize](http://malsup.com/jquery/form/) for forms serialization
-  and deserialization
-* [jquery-fancybox](http://fancyapps.com/fancybox/) for modal parameters edition
-
-All these requirements are included in this repository. This is why the third party
-libraries will look like this:
-
-```html
-<!-- Third party libraries -->
-<script type="text/javascript" src="build/jquery.js"></script>
-<script type="text/javascript" src="build/jquery.json.min.js"></script>
-<script type="text/javascript" src="build/jquery.mousewheel.min.js"></script>
-<script type="text/javascript" src="build/jquery.svg.min.js"></script>
-<script type="text/javascript" src="build/jquery.formserialize.min.js"></script>
-<script type="text/javascript" src="build/jquery.fancybox.min.js"></script> 
-<link rel="stylesheet" type="text/css" href="build/fancybox/jquery.fancybox.css" />
-```
-
-Then, you'll have to load `blocks.js` and `blocks.css`:
-
-```html
-<!-- blocks.js -->
-<script type="text/javascript" src="build/blocks.js"></script> 
-<link rel="stylesheet" type="text/css" href="build/blocks.css" />
-```
-
 ### Running it
 
 Here is a simple example:
@@ -101,7 +61,6 @@ The blocks is an object containing:
 * `family`: the block family, this will be used to put it in the right
   blocks menu sub-section
 * `module`: the block module, act like a namespace and avoid name collisions
-* `description`: a description of what the block does, to help the user
 * `size`: the size of the block, can be ̀`small`, `normal` or a certain
   number of pixels
 * `class`: additionals CSS classes that will be added to the block
@@ -217,23 +176,6 @@ blocks.register({
 
 Here, the number of outputed users will be editable, using the `n` editable
 field. Note that the `#` will be replaced by the number of the output.
-
-## Example
-
-Here is an example that uses blocks.js:
-
-* [ArduiFlow, arduino programming with blocks.js](https://github.com/Gregwar/ArduiFlow)
-
-## Contributing & hacking
-
-The development takes places in the `src/` directory. There is a `Makefile`
-using `uglifyjs` command line to create the build.
-
-You can use `index-dev.html` to test blocks.js using its sources, and `index.html`
-to try it in build mode. 
-
-The `build/` directory of this repository will not be updated on every commit, but
-must contain a recent snapshot of the repository.
 
 ## License
 

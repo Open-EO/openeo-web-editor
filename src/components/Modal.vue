@@ -6,7 +6,8 @@
 			<span class="close" @click="close">&times;</span>
 		</h2>
 		<div class="modal-content" id="modal-content">
-			<template v-if="typeof body === 'string'">{{ body }}</template>
+			<template v-if="typeof message === 'string'">{{ message }}</template>
+			<div v-else-if="typeof html === 'string'" v-html="html"></div>
 			<component v-else :is="compname" v-bind="props"></component>
 		</div>
 	</div>
@@ -18,18 +19,21 @@ import EventBus from '../eventbus.js';
 import ObjectTree from './ObjectTree.vue';
 import List from './List.vue';
 import CredentialsForm from './CredentialsForm.vue';
+import ProcessParameterEditor from './ProcessParameterEditor.vue';
 
 export default {
 	name: 'Modal',
 	components:  {
 		CredentialsForm,
 		List,
+		ProcessParameterEditor,
 		ObjectTree
 	},
 	data() {
 		return {
 			title: '',
-			body: null,
+			message: null,
+			html: null,
 			props: null,
 			compname: null,
 			shown: false
@@ -58,14 +62,20 @@ export default {
 
 		initCommonModal(title) {
 			this.title = title;
-			this.body = null;
+			this.message = null;
+			this.html = null;
 			this.compname = null;
 			this.props = null;
 		},
 
 		initTextModal(title, body) {
 			this.initCommonModal(title);
-			this.body = body;
+			this.message = body;
+		},
+
+		initHtmlModal(title, body) {
+			this.initCommonModal(title);
+			this.html = body;
 		},
 
 		initComponentModal(title, compname, props) {
@@ -74,9 +84,14 @@ export default {
 			this.props = props;
 		},
 
-		showModal(title, data) {
+		showModal(title, data, html = false) {
 			if (typeof data === 'string') {
-				this.initTextModal(title, body);
+				if (html) {
+					this.initHtmlModal(title, data);
+				}
+				else {
+					this.initTextModal(title, data);
+				}
 				this.show();
 			}
 			else {

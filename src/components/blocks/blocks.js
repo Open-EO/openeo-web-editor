@@ -1,5 +1,4 @@
 import Types from './types.js';
-import BlocksMenu from './blocksmenu.js';
 import History from './history.js';
 import Block from './block.js';
 import Meta from './meta.js';
@@ -32,9 +31,6 @@ var Blocks = function(parentComponent)
 
     // Compact mode
     this.compactMode = false;
-
-    // Context menu
-    this.menu = null;
 
     // Mouse
     this.mouseX = 0;
@@ -111,7 +107,7 @@ Blocks.prototype.run = function(selector)
               '<div class="blocks_js_editor">'
             + '<div class="messages"></div>'
             + '<div class="contextmenu"><div class="types"></div></div>'
-            + '<svg xmlns="http://www.w3.org/2000/svg" version="1.1"></svg>'
+            + '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" class="canvas"></svg>'
             + '<div class="blocks"></div>'
             + '</div>'
         );
@@ -124,9 +120,6 @@ Blocks.prototype.run = function(selector)
         // Setting up default viewer center
         self.center.x = self.div.width()/2;
         self.center.y = self.div.height()/2;
-
-        // Run the menu
-        self.menu = new BlocksMenu(self);
 
         // Listen for mouse position
         self.div[0].addEventListener('mousemove', function(evt) {
@@ -155,10 +148,6 @@ Blocks.prototype.run = function(selector)
         self.div.mouseup(function(event) {
             if (event.which == 2 || event.which == 1) {
                 self.moving = null;
-            }
-           
-            if (event.which == 1) {
-                self.menu.hide();
             }
         });
         
@@ -238,6 +227,23 @@ Blocks.prototype.getPosition = function()
 
     return position;
 };
+
+
+Blocks.prototype.hasUndo = function()
+{
+    if (this.history === null) {
+        return 0;
+    }
+    return this.history.size() > 0;
+}
+
+Blocks.prototype.undo = function()
+{
+    if (this.history === null) {
+        return;
+    }
+    this.history.restoreLast();
+}
 
 /**
  * Adds a block
@@ -773,8 +779,10 @@ Blocks.prototype.perfectScale = function()
     for (var k in this.blocks) {
         var block = this.blocks[k];
         if (xMin == null) {
-            xMin = xMax = block.x;
-            yMin = yMax = block.y;
+            xMin = block.x-15
+            xMax = block.x+block.width+18;
+            yMin = block.y-15
+            yMax = block.y+115;
         } else {
             xMin = Math.min(xMin, block.x-15);
             xMax = Math.max(xMax, block.x+block.width+18);

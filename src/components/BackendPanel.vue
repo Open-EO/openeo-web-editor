@@ -12,14 +12,14 @@
 				<option v-for="d in collections" :key="d.name" :value="d.name">{{ d.name }}</option>
 			</select>
 			<button id="insertCollection" @click="insertCollection" title="Insert into script"><i class="fas fa-plus"></i></button>
-			<button @click="showCollectionInfo" title="Show details" v-show="supports('describeCollection')"><i class="fas fa-info"></i></button>
+			<button @click="showSelectedCollectionInfo" title="Show details" v-show="supports('describeCollection')"><i class="fas fa-info"></i></button>
 		</div>
 		<div class="processes-toolbar" v-show="showProcessSelector()">
 			Processes: <select id="processes" ref="processes">
 				<option v-for="p in processes" :key="p.name" :value="p.name" :title="p.summary ? p.summary : ''">{{ p.name }}</option>
 			</select>
 			<button id="insertProcesses" @click="insertProcess" title="Insert into script"><i class="fas fa-plus"></i></button>
-			<button @click="showProcessInfo" title="Show details" v-show="supports('listProcesses')"><i class="fas fa-info"></i></button>
+			<button @click="showSelectedProcessInfo" title="Show details" v-show="supports('listProcesses')"><i class="fas fa-info"></i></button>
 		</div>
 	</div>
 </template>
@@ -47,6 +47,8 @@ export default {
 	created() {
 		EventBus.$on('changeServerUrl', this.changeServer);
 		EventBus.$on('serverChanged', this.discoverData);
+		EventBus.$on('showCollectionInfo', this.showCollectionInfo);
+		EventBus.$on('showProcessInfo', this.showProcessInfo);
 	},
 	mounted() {
 		var storedServers = localStorage.getItem("serverUrls");
@@ -132,19 +134,25 @@ export default {
 			EventBus.$emit('showModal', 'Server information', info);
 		},
 
-		showCollectionInfo() {
-			const name = this.$refs.collection.value;
-			this.connection.describeCollection(name)
-				.then(info => {
-					EventBus.$emit('showModal', 'Collection: ' + name, info);
-				})
-				.catch(error => this.$utils.error(this, 'Sorry, can\'t load collection details.'));
+		showSelectedCollectionInfo() {
+			this.showCollectionInfo(this.$refs.collection.value);
 		},
 
-		showProcessInfo() {
-			const name = this.$refs.processes.value;
-			const info = this.processes.find(p => p.name == name);
-			EventBus.$emit('showModal', 'Process: ' + name, info);
+		showCollectionInfo(id) {
+			this.connection.describeCollection(id)
+				.then(info => {
+					EventBus.$emit('showModal', 'Collection: ' + id, info);
+				})
+				.catch(error => this.$utils.error(this, "Sorry, can't load collection details."));
+		},
+
+		showSelectedProcessInfo() {
+			this.showProcessInfo(this.$refs.processes.value);
+		},
+
+		showProcessInfo(id) {
+			const info = this.processes.find(p => p.name == id);
+			EventBus.$emit('showModal', 'Process: ' + id, info);
 		},
 
 		insertCollection() {

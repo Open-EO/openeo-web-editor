@@ -52,12 +52,6 @@ var Meta = function(meta)
     } else {
         this['class'] = '';
     }
-
-    // Description
-    this.description = null;
-    if (meta.description != undefined) {
-        this.description = meta.description;
-    }
 }
 
 export default Meta;
