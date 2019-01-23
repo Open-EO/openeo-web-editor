@@ -69,5 +69,11 @@ Forwards new collection data from BackendPanel to GraphBuilderEnvironment
 ## propagateProcesses(object $data)
 Forwards new process data from BackendPanel to GraphBuilderEnvironment
 
+## showCollectionInfo(id)
+Shows collection information in a modal.
+
+## showProcessInfo(id)
+Shows process information in a modal.
+
 */
 export default new Vue();

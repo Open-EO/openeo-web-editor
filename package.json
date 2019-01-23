@@ -32,6 +32,7 @@
   },
   "dependencies": {
     "@openeo/js-client": "0.3.1",
+    "@openeo/processes-docgen": "^0.4.4",
     "codemirror": "^5.42.2",
     "leaflet": "^1.4.0",
     "leaflet-fullscreen": "^1.0.2",

@@ -86,6 +86,15 @@ export default {
 		}
 		let date = new Date(value);
 		return date.toISOString().replace('T', ' ').replace('Z', '').substring(0,19);
+	},
+
+	param(name) {
+		const urlParams = new URLSearchParams(window.location.search);
+		return urlParams.get(name);
+	},
+
+	isUrl(url) {
+		return (typeof url === 'string' && url.length > 0 && url.match(/^https?:\/\//i) !== null);
 	}
 
 };
