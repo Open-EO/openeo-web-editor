@@ -98,7 +98,7 @@ Blocks.prototype.run = function(selector)
     $(document).ready(function() {
         self.div = $(selector);
 
-        if (!self.div.size()) {
+        if (!self.div.length) {
             alert('blocks.js: Unable to find ' + selector);
         }
 
@@ -126,14 +126,14 @@ Blocks.prototype.run = function(selector)
             self.move(evt);
         });
 
-        $('html').mouseup(function(event) {
+        $('html').on('mouseup', function(event) {
             if (event.which == 1) {
                 self.release();
             }
         });
 
         // Detect clicks on the canvas
-        self.div.mousedown(function(event) {
+        self.div.on('mousedown', function(event) {
             if (self.canvasClicked()) {
                 event.preventDefault();
             } 
@@ -143,7 +143,7 @@ Blocks.prototype.run = function(selector)
             }
         });
         
-        self.div.mouseup(function(event) {
+        self.div.on('mouseup', function(event) {
             if (event.which == 2 || event.which == 1) {
                 self.moving = null;
             }
@@ -153,7 +153,7 @@ Blocks.prototype.run = function(selector)
         self.context.svg();
 
         // Detecting key press
-        $(document).keydown(function(e){
+        $(document).on('keydown', function(e){
             if ($('input').is(':focus')) {
                 return;
             }   

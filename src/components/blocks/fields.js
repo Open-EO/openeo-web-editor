@@ -122,11 +122,11 @@ Fields.prototype.handleArrays = function(element)
         buttons += '</div>';
         $(this).append(buttons);
 
-        $(this).find('.add').click(function() {
+        $(this).find('.add').on('click', function() {
             fields.append('<div class="field">'+pattern+'</div>');
         });
 
-        $(this).find('.remove').click(function() {
+        $(this).find('.remove').on('click', function() {
             fields.find('.field').last().remove();
         });
     });

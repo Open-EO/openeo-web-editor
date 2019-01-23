@@ -319,7 +319,7 @@ Block.prototype.initListeners = function()
 {
     var self = this;
     // Drag & drop the block
-    self.div.find('.blockTitle').mousedown(function(event) {
+    self.div.find('.blockTitle').on('mousedown', function(event) {
         if (event.which == 1) {
             self.historySaved = false;
             self.drag = [self.blocks.mouseX/self.blocks.scale-self.x, self.blocks.mouseY/self.blocks.scale-self.y];
@@ -341,7 +341,7 @@ Block.prototype.initListeners = function()
     });
         
     // Dragging
-    $('html').mousemove(function(evt) {
+    $('html').on('mousemove', function(evt) {
         if (self.drag) {
             if (!self.historySaved) {
                 self.blocks.history.save();
@@ -354,12 +354,12 @@ Block.prototype.initListeners = function()
     });
 
     // Drag the block
-    $('html').mouseup(function() {
+    $('html').on('mouseup', function() {
         self.drag = null;
     });
 
     // Draw a link
-    self.div.find('.connector').mousedown(function(event) {
+    self.div.find('.connector').on('mousedown', function(event) {
         if (event.which == 1) {
             self.blocks.beginLink(self, $(this).attr('rel'));
             event.preventDefault();
@@ -367,18 +367,18 @@ Block.prototype.initListeners = function()
     });
 
     // Handle the parameters
-    self.div.find('.settings').click(function() {
+    self.div.find('.settings').on('click', function() {
         self.fields.toggle();
         self.cssParameters();
     });
 
     // Handle the deletion
-    self.div.find('.delete').click(function() {
+    self.div.find('.delete').on('click', function() {
         self.blocks.removeBlock(self.blocks.getBlockId(self));
     });
 
     // Show the description
-    self.div.find('.info').click(function() {
+    self.div.find('.info').on('click', function() {
         var action = '';
         switch(self.meta.module) {
             case 'process':
