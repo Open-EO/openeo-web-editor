@@ -122,7 +122,11 @@ export default {
 		EventBus.$on('serverChanged', this.serverChanged);
 	},
 	mounted() {
-		if (typeof this.$config.serverUrl === 'string' && this.$config.serverUrl.length > 0) {
+		var serverFromQuery = this.$utils.param('server');
+		if (this.$config.allowServerChange && this.$utils.isUrl(serverFromQuery)) {
+			EventBus.$emit('changeServerUrl', serverFromQuery);
+		}
+		else if (this.$utils.isUrl(this.$config.serverUrl)) {
 			EventBus.$emit('changeServerUrl', this.$config.serverUrl);
 		}
 		this.resetActiveTab('userContent');

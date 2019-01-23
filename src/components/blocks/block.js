@@ -274,7 +274,6 @@ Block.prototype.redraw = function(selected)
         this.div.css('font-size', Math.round(this.blocks.scale*this.defaultFont)+'px');
         this.div.css('width', Math.round(this.blocks.scale*this.getWidth())+'px');
 
-        this.cssParameters();
         this.lastScale = this.blocks.scale
     }
 
@@ -302,14 +301,6 @@ Block.prototype.redraw = function(selected)
     if (selected) {
         this.div.addClass('block_selected');
     }
-};
-
-/**
- * Sets the css for the inputs
- */
-Block.prototype.cssParameters = function()
-{
-    this.div.find('input').css('font-size', Math.round(this.blocks.scale*this.defaultFont)+'px');
 };
 
 /**
@@ -368,8 +359,7 @@ Block.prototype.initListeners = function()
 
     // Handle the parameters
     self.div.find('.settings').on('click', function() {
-        self.fields.toggle();
-        self.cssParameters();
+        self.fields.show();
     });
 
     // Handle the deletion

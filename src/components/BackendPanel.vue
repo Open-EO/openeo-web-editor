@@ -26,7 +26,7 @@
 
 <script>
 import EventBus from '../eventbus.js';
-import ConnectionMixin from './ConnectionMixin.vue'
+import ConnectionMixin from './ConnectionMixin.vue';
 
 export default {
 	name: 'BackendPanel',
@@ -141,7 +141,7 @@ export default {
 		showCollectionInfo(id) {
 			this.connection.describeCollection(id)
 				.then(info => {
-					EventBus.$emit('showModal', 'Collection: ' + id, info);
+					EventBus.$emit('showModal', id, info);
 				})
 				.catch(error => this.$utils.error(this, "Sorry, can't load collection details."));
 		},
@@ -152,7 +152,7 @@ export default {
 
 		showProcessInfo(id) {
 			const info = this.processes.find(p => p.name == id);
-			EventBus.$emit('showModal', 'Process: ' + id, info);
+			EventBus.$emit('showComponentModal', id, 'ProcessPanel', {process: info});
 		},
 
 		insertCollection() {

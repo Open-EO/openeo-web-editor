@@ -12,19 +12,10 @@ var Fields = function(block)
     this.block = block;
     this.meta = this.block.meta;
 
-    // Is the form displayed ?
-    this.display = false;
-
-    // Div
-    this.div = null;
-
     // Fields
     this.fields = [];
     for (var k in this.meta.fields) {
         var field = new Field(this.meta.fields[k]);
-        field.onUpdate = function() {
-            self.block.cssParameters();
-        };
         this.block.blocks.types.register(field.type);
         this.fields.push(field);
     }
@@ -83,7 +74,6 @@ Fields.prototype.show = function()
         handleArrays: this.handleArrays
     };
     EventBus.$emit('showComponentModal', title, 'ProcessParameterEditor', opts);
-    this.display = true;
 };
 
 Fields.prototype.serializeForm = function(form)
@@ -147,15 +137,6 @@ Fields.prototype.getHtml = function()
 };
 
 /**
- * Hide the form
- */
-Fields.prototype.hide = function()
-{
-    this.div.hide();
-    this.display = false;
-};
-
-/**
  * Saves the form
  */
 Fields.prototype.save = function(serialize)
@@ -190,18 +171,6 @@ Fields.prototype.save = function(serialize)
 
     this.block.render();
     this.block.redraw();
-};
-
-/**
- * Show or hide the config
- */
-Fields.prototype.toggle = function()
-{
-    if (this.display) {
-        this.hide();
-    } else {
-        this.show();
-    }
 };
 
 export default Fields;

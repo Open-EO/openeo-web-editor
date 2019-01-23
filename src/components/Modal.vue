@@ -19,6 +19,7 @@ import EventBus from '../eventbus.js';
 import ObjectTree from './ObjectTree.vue';
 import List from './List.vue';
 import CredentialsForm from './CredentialsForm.vue';
+import ProcessPanel from './ProcessPanel.vue';
 import ProcessParameterEditor from './ProcessParameterEditor.vue';
 
 export default {
@@ -26,6 +27,7 @@ export default {
 	components:  {
 		CredentialsForm,
 		List,
+		ProcessPanel,
 		ProcessParameterEditor,
 		ObjectTree
 	},
