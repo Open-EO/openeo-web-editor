@@ -20,7 +20,7 @@
 <script>
 import EventBus from '../eventbus.js';
 import WorkPanelMixin from './WorkPanelMixin.vue';
-import { LinkList } from '@openeo/processes-docgen';
+import LinkList from '@openeo/vue-components/src/components/LinkList.vue';
 
 export default {
 	name: 'AccountPanel',

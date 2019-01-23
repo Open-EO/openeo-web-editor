@@ -127,11 +127,11 @@ export default {
 			}
 			var info = {
 				url: this.connection.getBaseUrl(),
-				supportedEndpoints: this.connection.capabilitiesObject.listFeatures(),
-				supportedWebServices: this.supportedServices,
-				supportedOutputFormats: this.supportedOutputFormats
+				capabilities: this.connection.capabilitiesObject._data,
+				services: this.connection.supportedServices,
+				formats: this.connection.supportedOutputFormats
 			};
-			EventBus.$emit('showModal', 'Server information', info);
+			EventBus.$emit('showComponentModal', 'Server information', 'ServerInfoPanel', info);
 		},
 
 		showSelectedCollectionInfo() {

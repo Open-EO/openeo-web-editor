@@ -21,6 +21,7 @@ import List from './List.vue';
 import CredentialsForm from './CredentialsForm.vue';
 import ProcessPanel from './ProcessPanel.vue';
 import ProcessParameterEditor from './ProcessParameterEditor.vue';
+import ServerInfoPanel from './ServerInfoPanel.vue';
 
 export default {
 	name: 'Modal',
@@ -29,7 +30,8 @@ export default {
 		List,
 		ProcessPanel,
 		ProcessParameterEditor,
-		ObjectTree
+		ObjectTree,
+		ServerInfoPanel
 	},
 	data() {
 		return {
