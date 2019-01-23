@@ -142,7 +142,7 @@ export default {
 	methods: {
 
 		changeServer(url) {
-			if (window.location.protocol === 'https:' && url.toLowerCase().substr(0,5) !== window.location.protocol) {
+			if (window.location.protocol === 'https:' && url.toLowerCase().substr(0,6) !== 'https:') {
 				this.$utils.error(this, 'You are trying to connect to a back-end with HTTP instead of HTTPS, which is insecure and prohibited by web browsers. Please use HTTPS instead.');
 				return;
 			}
