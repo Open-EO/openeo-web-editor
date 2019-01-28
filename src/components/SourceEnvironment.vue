@@ -18,7 +18,6 @@ import EventBus from '../eventbus.js';
 
 import 'codemirror/lib/codemirror.css';
 import 'codemirror/mode/javascript/javascript.js';
-import 'codemirror/addon/display/autorefresh.js';
 import CodeMirror from 'codemirror';
 
 export default {
@@ -36,8 +35,7 @@ export default {
 			editorOptions: {
 				mode: 'javascript',
 				indentUnit: 4,
-				lineNumbers: true,
-				autoRefresh: true
+				lineNumbers: true
 			},
 			editor: null,
 			defaultScript: this.$config.defaultScript
@@ -49,6 +47,9 @@ export default {
 				localStorage.setItem("savedScripts", JSON.stringify(newVal));
 			},
 			deep: true
+		},
+		active() {
+			this.editor.refresh();
 		}
 	},
 	mounted() {
@@ -175,25 +176,17 @@ export default {
 
 <style scoped>
 .sourceHeader h3 {
-	margin-top: 1px;
-	float: left;
-	width: 65%;
+	margin: 0;
+	flex: 2;
 }
 .sourceToolbar {
+	flex: 1;
 	text-align: right;
-	float: right;
-	width: 35%;
 }
 .sourceHeader {
 	padding: 5px;
 	border-bottom: dotted 1px #676767;
-}
-.sourceHeader:after {
-    content: ".";
-    clear: both;
-    display: block;
-    visibility: hidden;
-    height: 0px;
+	display: flex;
 }
 #sourceCodeEditor {
 	height: 400px;

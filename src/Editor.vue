@@ -2,13 +2,13 @@
 	<div id="container">
 		<div id="ide">
 			<BackendPanel :connection="connection" />
-			<div class="tabs" id="processGraphContent">
+			<div class="uiBox tabs" id="processGraphContent">
 				<div class="tabsHeader">
 					<button class="tabItem" name="graphTab" @click="changeProcessGraphTab"><i class="fas fa-code-branch"></i> Visual Model Builder</button>
 					<button class="tabItem" name="sourceTab" @click="changeProcessGraphTab"><i class="fas fa-code"></i> Process Graph</button>
-				</div>
-				<div class="tabsActions">
-					<button @click="executeProcessGraph" title="Run current process graph and view results" v-if="this.supports('startJob')"><i class="fas fa-play"></i></button>
+					<div class="tabsActions">
+						<button @click="executeProcessGraph" title="Run current process graph and view results" v-if="this.supports('startJob')"><i class="fas fa-play"></i></button>
+					</div>
 				</div>
 				<div class="tabsBody">
 					<div class="tabContent" id="graphTab">
@@ -19,11 +19,11 @@
 					</div>
 				</div>
 			</div>
-			<div class="tabs" id="userContent" v-show="this.connection">
+			<div class="uiBox tabs" id="userContent" v-show="this.connection">
 				<div class="tabsHeader">
 					<button class="tabItem" name="jobsTab" @click="changeUserTab" v-if="supportsJobs()"><i class="fas fa-tasks"></i> Batch Jobs</button>
 					<button class="tabItem" name="servicesTab" @click="changeUserTab" v-if="supportsServices()"><i class="fas fa-cloud"></i> Web Services</button>
-					<button class="tabItem" name="processGraphsTab" @click="changeUserTab" v-if="supportsProcessGraphs()"><i class="fas fa-code-branch"></i> Stored Process Graphs</button>
+					<button class="tabItem" name="processGraphsTab" @click="changeUserTab" v-if="supportsProcessGraphs()"><i class="fas fa-code-branch"></i> Process Graphs</button>
 					<button class="tabItem" name="filesTab" @click="changeUserTab" v-if="supportsFiles()"><i class="fas fa-file"></i> Files</button>
 					<button class="tabItem" name="accountTab" @click="changeUserTab"><i class="fas fa-user"></i> Account</button>
 				</div>
@@ -50,7 +50,7 @@
 			</footer>
 		</div>
 		<div id="viewer">
-			<div class="tabs">
+			<div class="uiBox tabs">
 				<div class="tabsHeader">
 					<button class="tabItem tabActive" name="mapTab" @click="changeViewerTab"><i class="fas fa-map"></i> Map</button>
 					<button class="tabItem" name="imageTab" @click="changeViewerTab"><i class="fas fa-image"></i> Images</button>
@@ -122,13 +122,6 @@ export default {
 		EventBus.$on('serverChanged', this.serverChanged);
 	},
 	mounted() {
-		var serverFromQuery = this.$utils.param('server');
-		if (this.$config.allowServerChange && this.$utils.isUrl(serverFromQuery)) {
-			EventBus.$emit('changeServerUrl', serverFromQuery);
-		}
-		else if (this.$utils.isUrl(this.$config.serverUrl)) {
-			EventBus.$emit('changeServerUrl', this.$config.serverUrl);
-		}
 		this.resetActiveTab('userContent');
 		this.resetActiveTab('processGraphContent');
 
@@ -430,23 +423,26 @@ ul, ol {
 	padding-bottom: 0;
 	padding-top: 0;
 }
-#viewer {
-	position: absolute;
-	top: 0px;
-	left: 50%;
-	width: 50%;
+#container {
+	display: flex;
 }
 #ide {
-	position: absolute;
-	top: 0px;
-	left: 0px;
+	flex: 1;
+	padding: 10px;
 	width: 50%;
+	min-width: 400px;
 	overflow-y: auto;
 }
-#userContent, #viewer .tabs, #processGraphContent {
-	border: solid 1px #676767;
-    margin: 1%;
+#viewer {
+	flex: 1;
+	padding: 10px;
+	border-left: 1px dotted #ccc;
+}
+.uiBox {
+	border: 1px solid #676767;
+	margin-bottom: 10px;
 	background-color: #f7f7f7;
+	border-radius: 3px;
 }
 .tabContent {
 	display: none;
@@ -454,22 +450,6 @@ ul, ol {
 	border-top: 1px solid #ddd;
 	overflow: auto;
 	padding-top: 1px;
-}
-#viewer .tabsHeader {
-	height: calc(1em + 16px);
-}
-#processGraphContent .tabsHeader {
-	float: left;
-	width: 80%;
-}
-#processGraphContent .tabsActions {
-	text-align: right;
-	float: right;
-	width: 10%;
-	padding: 4px 5px 0px 0px;
-}
-#processGraphContent .tabsBody {
-	clear: both;
 }
 #viewer .tabs {
 	height: 97%;
@@ -490,16 +470,33 @@ ul, ol {
 	border: 1px solid #ddd;
 	padding: 3px;
 }
+.tabsHeader {
+	display: flex;
+}
+#processGraphContent .tabsHeader {
+	display: flex;
+}
+#processGraphContent .tabsActions {
+	flex-grow: 1;
+	text-align: right;
+	padding: 4px 5px 0px 0px;
+}
+.tabItem:first-of-type {
+	margin-left: 5px;
+}
 .tabItem {
 	background-color: transparent;
 	border: 0;
-	margin: 5px 0 -1px 5px;
+	margin: 5px 5px -1px 0px;
 	padding: 5px 10px;
 	border: 1px solid #ddd;
 	border-bottom: 0;
 	border-radius: 5px 5px 0 0;
 	white-space: nowrap;
 	color: #666;
+	min-width: 5em;
+	text-overflow: ellipsis;
+	overflow: hidden;
 }
 .tabItem:focus {
 	outline: none;

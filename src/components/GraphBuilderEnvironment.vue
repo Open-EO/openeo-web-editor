@@ -1,7 +1,6 @@
 <template>
 	<div id="GraphBuilderEnvironment">
 		<div class="sourceHeader">
-			<h3></h3>
 			<div class="sourceToolbar">
 				<button @click="blocks.undo()" class="sep" v-show="blocks.hasUndo()" title="Undo last change"><i class="fas fa-undo-alt"></i></button>
 				<button @click="blocks.toggleCompact()" :class="{compactActive: this.blocks.compactMode}" title="Compact Mode"><i class="fas fa-compress-arrows-alt"></i></button>
@@ -99,7 +98,7 @@ export default {
 					parents.push(this.makeProcessGraphFromEdges(edges, edges[i].block1ref));
 				}
 			}
-			if (currentNode.module == 'Collection') {
+			if (currentNode.module == 'collection') {
 				return {
 					process_id: 'get_collection',
 					name: currentNode.type
@@ -169,26 +168,14 @@ export default {
 </script>
 
 <style scoped>
-.sourceHeader h3 {
-	margin-top: 1px;
-	float: left;
-	width: 65%;
-}
 .sourceToolbar {
+	flex: 1;
 	text-align: right;
-	float: right;
-	width: 35%;
 }
 .sourceHeader {
 	padding: 5px;
 	border-bottom: dotted 1px #676767;
-}
-.sourceHeader:after {
-    content: ".";
-    clear: both;
-    display: block;
-    visibility: hidden;
-    height: 0px;
+	display: flex;
 }
 #pgEditor {
 	height: 400px;

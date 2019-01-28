@@ -1,5 +1,5 @@
 <template>
-	<div id="backendPanel" class="dataPanel">
+	<div id="backendPanel" class="uiBox dataPanel">
 		<div class="server-toolbar" v-show="$config.allowServerChange">
 			<h3>Server:</h3>
 			<input id="serverUrl" v-model.lazy.trim="serverUrl" list="serverUrls" />
@@ -7,19 +7,23 @@
 			<button @click="updateServerUrlFromInput" title="Change server"><i class="fas fa-check"></i></button>
 			<button @click="getServerInfo" title="Get server information"><i class="fas fa-info"></i></button>
 		</div>
-		<div class="collections-toolbar" v-show="showCollectionSelector()">
-			Collections: <select id="collection" ref="collection">
-				<option v-for="d in collections" :key="d.name" :value="d.name">{{ d.name }}</option>
-			</select>
-			<button id="insertCollection" @click="insertCollection" title="Insert into script"><i class="fas fa-plus"></i></button>
-			<button @click="showSelectedCollectionInfo" title="Show details" v-show="supports('describeCollection')"><i class="fas fa-info"></i></button>
-		</div>
-		<div class="processes-toolbar" v-show="showProcessSelector()">
-			Processes: <select id="processes" ref="processes">
-				<option v-for="p in processes" :key="p.name" :value="p.name" :title="p.summary ? p.summary : ''">{{ p.name }}</option>
-			</select>
-			<button id="insertProcesses" @click="insertProcess" title="Insert into script"><i class="fas fa-plus"></i></button>
-			<button @click="showSelectedProcessInfo" title="Show details" v-show="supports('listProcesses')"><i class="fas fa-info"></i></button>
+		<div class="discovery-toolbar" v-if="showCollectionSelector() && showProcessSelector()">
+			<div class="collections-toolbar" v-if="showCollectionSelector()">
+				<span>Collections:</span>
+				<select id="collection" ref="collection">
+					<option v-for="d in collections" :key="d.name" :value="d.name">{{ d.name }}</option>
+				</select>
+				<button id="insertCollection" @click="insertCollection" title="Insert into script"><i class="fas fa-plus"></i></button>
+				<button @click="showSelectedCollectionInfo" title="Show details" v-show="supports('describeCollection')"><i class="fas fa-info"></i></button>
+			</div>
+			<div class="processes-toolbar" v-if="showProcessSelector()">
+				<span>Processes:</span>
+				<select id="processes" ref="processes">
+					<option v-for="p in processes" :key="p.name" :value="p.name" :title="p.summary ? p.summary : ''">{{ p.name }}</option>
+				</select>
+				<button id="insertProcesses" @click="insertProcess" title="Insert into script"><i class="fas fa-plus"></i></button>
+				<button @click="showSelectedProcessInfo" title="Show details" v-show="supports('listProcesses')"><i class="fas fa-info"></i></button>
+			</div>
 		</div>
 	</div>
 </template>
@@ -54,6 +58,14 @@ export default {
 		var storedServers = localStorage.getItem("serverUrls");
 		if (storedServers !== null) {
 			this.serverUrls = JSON.parse(storedServers);
+		}
+
+		var serverFromQuery = this.$utils.param('server');
+		if (this.$config.allowServerChange && this.$utils.isUrl(serverFromQuery)) {
+			EventBus.$emit('changeServerUrl', serverFromQuery);
+		}
+		else if (this.$utils.isUrl(this.$config.serverUrl)) {
+			EventBus.$emit('changeServerUrl', this.$config.serverUrl);
 		}
 	},
 	methods: {
@@ -201,28 +213,32 @@ h3 {
 	padding-right: 5px;
 }
 #backendPanel {
-	border: solid 1px #676767;
-	background-color: #f7f7f7;
-	margin: 1%;
 	padding: 5px;
 	vertical-align: middle;
 }
-#serverUrl {
-	width: 60%;
-}
 .server-toolbar {
-	margin-bottom: 5px;
-	padding-bottom: 5px;
-	border-bottom: 1px dotted #ddd;
+	display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+.discovery-toolbar {
+	margin-top: 5px;
+	margin-left: -1em;
+	display: flex;
+	flex-wrap: wrap;
 }
 .collections-toolbar, .processes-toolbar {
-	display: inline-block;
+	flex: 1;
+	display: flex;
+    flex-direction: row;
+    align-items: center;
 	width: 50%;
+	min-width: 250px;
+	padding-left: 1em;
 }
-.vis-toolbar {
-	display: inline-block;
-}
-#collection, #process {
-	max-width: 55%;
+#collection, #processes, #serverUrl {
+	flex-grow: 1;
+	margin-left: 0.2em;
+	min-width: 100px;
 }
 </style>

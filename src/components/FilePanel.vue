@@ -2,9 +2,9 @@
 	<div id="FilePanel">
 		<div v-show="supports('uploadFile')" class="addFile">
 			<input type="file" name="uploadUserFile" id="uploadUserFile">
-			<button title="Add new file" id="uploadUserFileBtn" @click="uploadFile()"><i class="fas fa-upload"></i></button>
-			<span id="uploadUserFileStatus"></span>
+			<button title="Add new file" id="uploadUserFileBtn" @click="uploadFile()" v-show="!uploadProgress"><i class="fas fa-upload"></i></button>
 		</div>
+		<div class="percent"><div class="used" :class="{error: uploadErrored}" :style="'width: ' + this.uploadProgress + '%; opacity: ' + this.uploadFadeOut"></div></div>
 		<DataTable ref="table" :dataSource="listFiles" :columns="columns">
 			<template slot="toolbar">
 				<button title="Refresh files" @click="updateData()"><i class="fas fa-sync-alt"></i></button> <!-- ToDo: Should be done automatically later -->
@@ -47,7 +47,10 @@ export default {
 					filterable: false
 				}
 			},
-			subscribed: false
+			subscribed: false,
+			uploadProgress: 0,
+			uploadErrored: false,
+			uploadFadeOut: 1
 		};
 	},
   	methods: {
@@ -59,14 +62,12 @@ export default {
 		},
 		uploadFile() {
 			var field = document.getElementById('uploadUserFile');
-			var status = document.getElementById('uploadUserFileStatus');
 			var file = field.files[0];
-			console.log(file);
 
 			this.connection.createFile(file.name)
 				.then(virtualFile => {
 					return virtualFile.uploadFile(file, percent => {
-						status.innerText = percent + '%';
+						this.uploadProgress = percent;
 					});
 				}).then(uploadedFile => {
 					// ToDo: This should not be self generated, but the API gives no information yet
@@ -76,14 +77,25 @@ export default {
 						modified: (new Date()).toISOString()
 					});
 					this.$refs.table.replaceData(uploadedFile);
-					status.innerText = '';
+					this.uploadProgress = 100;
+					this.fadeOutUploadProgress();
 					field.value = '';
 					this.$utils.ok(this, 'File upload completed.');
 				}).catch(error => {
 					console.log(error);
-					status.innerText = '';
+					this.fadeOutUploadProgress();
 					this.$utils.exception(this, error, 'Sorry, file upload failed.');
 				});
+		},
+		fadeOutUploadProgress() {
+			var t = setInterval(() => {
+				this.uploadFadeOut -= 0.05;
+				if (this.uploadFadeOut < 0) {
+					this.uploadProgress = 0;
+					this.uploadFadeOut = 1;
+					clearInterval(t);
+				}
+			}, 100);
 		},
 		downloadFile(file) {
 			this.$utils.info(this, 'File requested. Please wait...');
@@ -118,17 +130,10 @@ export default {
 <style>
 #FilePanel .addFile {
 	display: flex;
-	margin-bottom: 0.5em;
+	padding-bottom: 1px;
 }
-#uploadUserFile {
-	flex: 12;
-}
-#uploadUserFileBtn {
-	flex: 1;
-}
-#uploadUserFileStatus {
-	text-align: center;
-	flex: 2;
+#FilePanel .addFile button {
+	margin: 0;
 }
 #FilePanel .name {
 	width: 50%;
@@ -144,5 +149,21 @@ export default {
 }
 #FilePanel td.size, #FilePanel td.modified {
 	text-align: right;
+}
+#uploadUserFile {
+	flex-grow: 1;
+}
+#FilePanel .percent {
+	background-color: #eee;
+	height: 3px;
+	margin-bottom: 5px;
+}
+#FilePanel .percent .used {
+	background-color: green;
+	width: 0;
+	height: 3px;
+}
+#FilePanel .percent .used.errored {
+	background-color: maroon;
 }
 </style>

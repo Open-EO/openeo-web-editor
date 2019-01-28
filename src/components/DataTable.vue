@@ -259,23 +259,12 @@ export default {
 .noSearchResults td {
 	text-align: center;
 }
-.dataTableToolbar {
-	float: left;
-	width: 60%;
-}
 .dataTableFilter {
-	width: 40%;
-	float: right;
+	flex-grow: 1;
 	text-align: right;
 }
 .dataTableMenu {
 	margin-bottom: 5px;
-}
-.dataTableMenu:after {
-    content: ".";
-    clear: both;
-    display: block;
-    visibility: hidden;
-    height: 0px;
+	display: flex;
 }
 </style>

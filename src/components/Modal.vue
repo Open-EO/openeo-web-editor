@@ -138,9 +138,9 @@ export default {
 
 .modal-container {
     background-color: #fefefe;
-    margin: 10% auto;
+    margin: 5% auto;
     border: 1px solid #888;
-    width: 80%;
+    width: 90%;
 }
 
 .close {
