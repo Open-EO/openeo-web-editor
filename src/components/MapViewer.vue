@@ -54,11 +54,11 @@ export default {
 			this.baseLayer.osm.addTo(this.map);
 			this.layerControl.addBaseLayer(this.baseLayer.osm, this.baseLayer.osm.options.name);
 
-			this.map.on('layeradd', this.oNLayerAdd);
+			this.map.on('layeradd', this.onLayerAdd);
 			this.map.on('overlayremove', this.onOverlayRemove);
 		},
 
-		oNLayerAdd(evt) {
+		onLayerAdd(evt) {
 			var shownLayers = this.getShownLayers();
 			if (shownLayers.length == 2 && this.sideBySideComponent === null) {
 				this.sideBySideComponent = L.control.sideBySide(shownLayers[0], shownLayers[1]);

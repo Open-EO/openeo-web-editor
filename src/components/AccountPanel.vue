@@ -1,5 +1,5 @@
 <template>
-	<div id="filePanel">
+	<div id="filePanel" class="dataPanel">
 		<h3>User '{{ userName }}'</h3>
 		<template v-if="me.storage">
 			<h4>Storage</h4>
@@ -20,7 +20,7 @@
 <script>
 import EventBus from '../eventbus.js';
 import WorkPanelMixin from './WorkPanelMixin.vue';
-import LinkList from '@openeo/vue-components/src/components/LinkList.vue';
+import LinkList from '@openeo/vue-components/components/LinkList.vue';
 
 export default {
 	name: 'AccountPanel',

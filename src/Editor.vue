@@ -511,7 +511,19 @@ button.tabActive {
 	background-color: white;
 	color: black;
 }
-h3 {
+.vue-component h2 {
+	font-size: 1.75em;
+	padding: 0.25em 0 0.25em 0;
+	margin: 0 0 0.75em 0;
+	border-bottom: 1px solid #ccc;
+}
+.vue-component h3 {
+	font-size: 1.4em;
+	margin: 1.5em 0 0.75em 0;
+	padding: 0.25em 0 0.25em 0;
+	border-bottom: 1px dotted #ccc;
+}
+.dataPanel h3 {
 	margin: 0;
 	padding: 0;
 }

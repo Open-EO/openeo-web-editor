@@ -1,5 +1,5 @@
 <template>
-	<div id="backendPanel">
+	<div id="backendPanel" class="dataPanel">
 		<div class="server-toolbar" v-show="$config.allowServerChange">
 			<h3>Server:</h3>
 			<input id="serverUrl" v-model.lazy.trim="serverUrl" list="serverUrls" />
@@ -141,7 +141,10 @@ export default {
 		showCollectionInfo(id) {
 			this.connection.describeCollection(id)
 				.then(info => {
-					EventBus.$emit('showModal', id, info);
+					EventBus.$emit('showComponentModal', id, 'CollectionPanel', {
+						collection: info,
+						version: this.connection.capabilitiesObject.version()
+					});
 				})
 				.catch(error => this.$utils.error(this, "Sorry, can't load collection details."));
 		},
@@ -152,7 +155,10 @@ export default {
 
 		showProcessInfo(id) {
 			const info = this.processes.find(p => p.name == id);
-			EventBus.$emit('showComponentModal', id, 'ProcessPanel', {process: info});
+			EventBus.$emit('showComponentModal', id, 'ProcessPanel', {
+				process: info,
+				version: this.connection.capabilitiesObject.version()
+			});
 		},
 
 		insertCollection() {
