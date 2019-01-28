@@ -16,7 +16,7 @@
       "name": "Christoph Friedrich"
     }
   ],
-  "description": "A web-based editor for interactive usage of the openEO API (proof-of-concept).",
+  "description": "A web-based editor for interactive usage of the openEO API.",
   "license": "Apache-2.0",
   "homepage": "http://openeo.org",
   "bugs": {
@@ -31,8 +31,8 @@
     "build": "vue-cli-service build"
   },
   "dependencies": {
-    "@openeo/js-client": "0.3.1",
-    "@openeo/processes-docgen": "^0.4.4",
+    "@openeo/js-client": "^0.3.1",
+    "@openeo/vue-components": "0.3.0",
     "codemirror": "^5.42.2",
     "leaflet": "^1.4.0",
     "leaflet-fullscreen": "^1.0.2",

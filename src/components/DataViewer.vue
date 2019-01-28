@@ -7,7 +7,7 @@
 
 <script>
 import EventBus from '../eventbus.js';
-import ObjectTree from './ObjectTree.vue';
+import ObjectTree from '@openeo/vue-components/components/ObjectTree.vue';
 
 export default {
 	name: 'DataViewer',

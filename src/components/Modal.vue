@@ -16,20 +16,24 @@
 
 <script>
 import EventBus from '../eventbus.js';
-import ObjectTree from './ObjectTree.vue';
+import ObjectTree from '@openeo/vue-components/components/ObjectTree.vue';
 import List from './List.vue';
 import CredentialsForm from './CredentialsForm.vue';
+import CollectionPanel from './CollectionPanel.vue';
 import ProcessPanel from './ProcessPanel.vue';
 import ProcessParameterEditor from './ProcessParameterEditor.vue';
+import ServerInfoPanel from './ServerInfoPanel.vue';
 
 export default {
 	name: 'Modal',
 	components:  {
 		CredentialsForm,
+		CollectionPanel,
 		List,
 		ProcessPanel,
 		ProcessParameterEditor,
-		ObjectTree
+		ObjectTree,
+		ServerInfoPanel
 	},
 	data() {
 		return {

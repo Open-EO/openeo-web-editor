@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div class="dataPanel">
 		<form id="loginForm" @submit.prevent="submitLogin">
 			<h3>Login</h3>
 			<label for="username">Username:</label>
