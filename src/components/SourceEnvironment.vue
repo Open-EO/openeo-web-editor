@@ -6,7 +6,6 @@
 				<button @click="newScript" title="Clear current script / New script"><i class="fas fa-file"></i></button>
 				<button @click="loadScript()" title="Load script from local storage"><i class="fas fa-folder-open"></i></button>
 				<button @click="saveScript" title="Save script to local storage"><i class="fas fa-save"></i></button>
-				<button @click="downloadScript" title="Download script"><i class="fas fa-download"></i></button>
 			</div>
 		</div>
 		<div id="sourceCodeEditor"></div>
@@ -143,14 +142,6 @@ export default {
 			}
 			this.$set(this.savedScripts, this.storageName(name), this.editor.getValue());
 			this.scriptName = name;
-		},
-		
-		downloadScript() {
-			var name = this.scriptName;
-			if (!name) {
-				name = "openeo-script";
-			}
-			this.$utils.downloadData(this.editor.getValue(), name + ".js", "text/javascript");
 		},
 
 		deleteScript(name) {

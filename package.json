@@ -39,7 +39,9 @@
     "leaflet-geotiff": "^0.2.0",
     "leaflet-side-by-side": "github:digidem/leaflet-side-by-side",
     "vue": "^2.5.22",
-    "vue-snotify": "^3.2.1"
+    "vue-ctk-date-time-picker": "^2.0.6",
+    "vue-snotify": "^3.2.1",
+    "vuedraggable": "^2.17.0"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "^3.3.0",

@@ -1,7 +1,5 @@
-import Types from './types.js';
 import History from './history.js';
 import Block from './block.js';
-import Meta from './meta.js';
 import Edge from './edge.js';
 import Connector from './connector.js';
 
@@ -11,9 +9,6 @@ import Connector from './connector.js';
 var Blocks = function(parentComponent)
 {
     this.parentComponent = parentComponent;
-
-    // Types checker
-    this.types = new Types;
 
     // View center & scale
     this.center = {};
@@ -51,7 +46,7 @@ var Blocks = function(parentComponent)
     this.context = null;
 
     // Blocks types
-    this.metas = [];
+    this.moduleTypes = {};
 
     // Instances
     this.blocks = [];
@@ -246,30 +241,90 @@ Blocks.prototype.undo = function()
 /**
  * Adds a block
  */
-Blocks.prototype.addBlock = function(name, x, y)
+Blocks.prototype.addCollection = function(name, x, y)
 {
-    for (var k in this.metas) {
-        var type = this.metas[k];
-
-        if (type.name == name) {
-            var block = new Block(this, this.metas[k], this.id);
-            block.x = x;
-            block.y = y;
-            block.create(this.div.find('.blocks'));
-            this.history.save();
-            this.blocks.push(block);
-            this.id++;
-        }
+    this.addBlock(name, 'collection', x, y);
+};
+Blocks.prototype.addProcess = function(name, x, y)
+{
+    this.addBlock(name, 'process', x, y);
+};
+Blocks.prototype.addBlock = function(name, type, x, y)
+{
+    if (!(type in this.moduleTypes)) {
+        throw "Invalid module type specified.";
     }
+    if (!(name in this.moduleTypes[type])) {
+        throw "'" + name + "' not available.";
+    }
+    var meta = this.moduleTypes[type][name];
+    var block = new Block(this, meta, this.id);
+    block.x = x;
+    block.y = y;
+    block.create(this.div.find('.blocks'));
+    this.history.save();
+    this.blocks.push(block);
+    this.id++;
 };
 
 /**
  * Registers a new block type
  */
-Blocks.prototype.register = function(meta)
+Blocks.prototype.registerProcess = function(meta)
 {
-    this.metas.push(new Meta(meta));
+    var data = Object.assign({}, meta);
+    if (typeof data.id === 'string')  {
+        data.name = data.id;
+    }
+    else {
+        data.id = data.name;
+    }
+    data.fields = [];
+
+    data.returns.name = "Output";
+    data.returns.attrs = "output";
+    if (!data.returns.schema) {
+        data.returns.schema = {};
+    }
+    data.fields.push(data.returns);
+
+    for(var a in data.parameters) {
+        if (!data.parameters[a].schema) {
+            data.parameters[a].schema = {};
+        }
+        data.parameters[a].name = a;
+        data.parameters[a].attrs = "input";
+        data.fields.push(data.parameters[a]);
+    }
+    this.register(data, 'process');
 };
+Blocks.prototype.registerCollection = function(meta)
+{
+    var data = Object.assign({}, meta);
+    if (typeof data.id === 'string')  {
+        data.name = data.id;
+    }
+    else {
+        data.id = data.name;
+    }
+    data.returns = {
+        name: "Output",
+        attrs: "output",
+        schema: {
+            type: 'object',
+            format: 'eodata'
+        }
+    };
+    data.fields = [data.returns];
+    this.register(data, 'collection');
+};
+Blocks.prototype.register = function(meta, type) {
+    if (!(type in this.moduleTypes)) {
+        this.moduleTypes[type] = {};
+    }
+    meta.module = type;
+    this.moduleTypes[type][meta.name] = meta;
+}
 
 /**
  * Begin to draw an edge
@@ -277,30 +332,6 @@ Blocks.prototype.register = function(meta)
 Blocks.prototype.beginLink = function(block, connectorId)
 {
     this.linking = [block, connectorId];
-    this.highlightTargets();
-};
-
-/**
- * Highlight possible targets for a connector ID
- */
-Blocks.prototype.highlightTargets = function()
-{
-    var block = this.linking[0];
-    var connector = new Connector(this.linking[1]);
-    var type = block.getField(connector.name).type;
-    $('.connector').addClass('disabled');
-
-    var compatibles;
-    if (connector.type == 'output') {
-        compatibles = this.types.getCompatibles(type);
-    } else {
-        compatibles = this.types.getBackCompatibles(type);
-    }
-
-    for (var k in compatibles) {
-        var compatible = compatibles[k];
-        $('.connector.type_'+compatible).removeClass('disabled');
-    }
 };
 
 /**
@@ -320,7 +351,6 @@ Blocks.prototype.move = function()
 
             this.removeEdge(this.selectedLink);
             this.selectedSide = null;
-            this.highlightTargets();
             if (this.selectedLink != null && (this.selectedLink in this.edges)) {
                 this.edges[this.selectedLink].selected = false;
             }
@@ -588,17 +618,30 @@ Blocks.prototype.endLink = function(block, connectorId)
         var edgeIndex = this.edges.push(edge)-1;
 
         var types = edge.getTypes();
-        if (!this.types.isCompatible(types[0], types[1])) {
+        if (!this.isTypeCompatible(types[0], types[1])) {
             this.removeEdge(edgeIndex);
             throw 'Types '+types[0]+' and '+types[1]+' are not compatible';
         }
     } catch (error) {
-        this.showError(error, 'Unable to create edge');
+        console.log('Unable to create edge:', error);
+        // Don't show error message to user, happens to often unintentionally
     }
     this.linking = null;
     this.selectedBlock = null;
     this.redraw();
 };
+
+Blocks.prototype.isTypeCompatible = function(t1, t2) {
+    // ToDo: The different string formats
+    // ToDo: Any type
+    if (t1 === t2) {
+        return true;
+    }
+    else if ((t1 === 'number' && t2 === 'integer') || (t1 === 'integer' && t2 === 'number')) {
+        return true;
+    }
+    return false;
+}
 
 Blocks.prototype.showError = function(message, title = null) {
     this.parentComponent.$utils.error(this.parentComponent, message, title);
@@ -729,7 +772,7 @@ Blocks.prototype.doLoad = function(scene, init)
 Blocks.prototype.edgeImport = function(data)
 {
     if (!'id' in data) {
-        throw "An edge does not have id";
+        throw "An edge does not have an id";
     }
 
     var block1 = this.getBlockById(data.block1);
@@ -747,16 +790,13 @@ Blocks.prototype.edgeImport = function(data)
  * Imports JSON data into a block
  */
 Blocks.prototype.blockImport = function(data) {
-    for (var t in this.metas) {
-        var meta = this.metas[t];
-        var module = ('module' in data) ? data.module : null;
-        if (meta.name == data.type && meta.module == module) {
-            var block = new Block(this, meta, data.id);
-            block.x = data.x;
-            block.y = data.y;
-                block.setValues(data.values);
-            return block;
-        }
+    if (data.module in this.moduleTypes && data.type in this.moduleTypes[data.module]) {
+        var meta = this.moduleTypes[data.module][data.type];
+        var block = new Block(this, meta, data.id);
+        block.x = data.x;
+        block.y = data.y;
+        block.setValues(data.values);
+        return block;
     }
 
     throw 'Unable to create a block of type ' + data.type;

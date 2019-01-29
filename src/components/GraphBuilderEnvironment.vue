@@ -32,9 +32,8 @@ export default {
 
 		EventBus.$on('propagateCollections', this.propagateCollections);
 		EventBus.$on('propagateProcesses', this.propagateProcesses);
-		EventBus.$on('addProcessToEditor', this.insertToEditor);
-		EventBus.$on('addCollectionToEditor', this.insertToEditor);
-		EventBus.$on('serverChanged', this.resetBlocks);
+		EventBus.$on('addProcessToEditor', this.insertProcess);
+		EventBus.$on('addCollectionToEditor', this.insertCollection);
     },
 	methods: {
 		getProcessGraph(callback) {
@@ -50,10 +49,6 @@ export default {
 				EventBus.$emit('addSourceCode', JSON.stringify(pg, null, 2), true);
 			})
         },
-
-		resetBlocks() {
-			this.blocks.meta = [];
-		},
 
 		makeProcessGraph() {
 			var data = this.blocks.export();
@@ -119,48 +114,38 @@ export default {
 
 		propagateProcesses(processes) {
 			for(var i in processes) {
-				var field = {
-					name: processes[i].name,
-					description: processes[i].description,
-					module: "process",
-				    fields: [
-						{
-							name: "Output",
-							attrs: "output"
-						}
-					]
-				}
-				for(var a in processes[i].parameters) {
-					var p = processes[i].parameters[a];
-					p.name = a;
-					p.attrs = a == 'imagery' ? "input" : "editable input"
-					field.fields.push(p);
-				}
-				this.blocks.register(Object.assign(field, processes[i]));
+				this.blocks.registerProcess(processes[i]);
 			}
 		},
 	
-		propagateCollections(collection) {
-			for(var i in collection) {
-				var field = {
-					module: "collection",
-				    fields: [
-						{
-							name: "Output",
-							attrs: "output"
-						}
-    				]
-				};
-				this.blocks.register(Object.assign(field, collection[i]));
+		propagateCollections(collections) {
+			for(var i in collections) {
+				this.blocks.registerCollection(collections[i]);
 			}
 		},
 
-		insertToEditor(name) {
+		insertCollection(name) {
 			if (!this.active) {
 				return;
 			}
 
-			this.blocks.addBlock(name, 0, 0);
+			try {
+				this.blocks.addCollection(name, 0, 0);
+			} catch(error) {
+				this.$utils.error(this, error.message || error);
+			}
+		},
+
+		insertProcess(name) {
+			if (!this.active) {
+				return;
+			}
+
+			try {
+				this.blocks.addProcess(name, 0, 0);
+			} catch(error) {
+				this.$utils.error(this, error.message || error);
+			}
 		}
 
 	}
@@ -251,8 +236,7 @@ export default {
 }
 
 .blocks_js_editor .titleText {
-	align-self: stretch;
-	flex-basis: 100%;
+	flex-grow: 1;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -265,10 +249,6 @@ export default {
 
 .blocks_js_editor .block .blockicon
 {
-	align-self: flex-end;
-	flex-basis: 4.5em;
-    min-width: 4.5em;
-    text-align: right;
 	white-space: nowrap;
 }
 
@@ -297,9 +277,8 @@ export default {
 	display: flex;
 }
 
-.blocks_js_editor .inputs,
-.blocks_js_editor .outputs {
-    flex: 1;
+.blocks_js_editor .inputs {
+    flex-grow: 1;
 }
 
 .blocks_js_editor .connector {
@@ -307,12 +286,13 @@ export default {
     margin: 0.2em 0;
     background-repeat:no-repeat;
     cursor:pointer;
-    clear:both;
-    width:100%;
+    width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
-.blocks_js_editor .connector.disabled {
-    opacity:0.4;
+.blocks_js_editor .connector.noValue {
+    color: red;
 }
 
 .blocks_js_editor .output {
@@ -340,22 +320,5 @@ export default {
 .blocks_js_editor textarea
 {
     font-family:Courier;
-}
-
-.fieldRow {
-	display: flex;
-	margin-bottom: 0.5em;
-}
-.fieldRow label {
-	flex: 1;
-}
-.fieldRow .fieldValue {
-	flex: 3;
-}
-.fieldRow .fieldValue input, .fieldRow .fieldValue textarea, .fieldRow .fieldValue select {
-	width: 100%;
-}
-.fieldRow .fieldsArray .pattern {
-    display: none;
 }
 </style>

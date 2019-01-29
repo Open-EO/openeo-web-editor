@@ -34,8 +34,6 @@ var Connector = function(name, type, index = null)
             this.index = parseInt(index);
         }
     }
-
-    console.log(this);
 };
 
 /**

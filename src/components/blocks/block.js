@@ -22,7 +22,7 @@ var Block = function(blocks, meta, id)
     // Do I have focus ?
     this.hasFocus = false;
 
-    // Division (object)
+    // HTML Element (object)
     this.div = null;
 
     // Is the user dragging ?
@@ -53,15 +53,15 @@ var Block = function(blocks, meta, id)
 
 Block.prototype.getWidth = function() {
     if (this.hasInputs()) {
-        return this.blocks.compactMode ? 120 : 170;
+        return this.blocks.compactMode ? 110 : 170;
     }
     else {
-        return this.blocks.compactMode ? 90 : 120;
+        return this.blocks.compactMode ? 70 : 120;
     }
 };
 
 Block.prototype.hasInputs = function() {
-    return this.fields.fields.length > 1;
+    return this.fields.fields.length > 1; // One is always output
 };
 
 /**
@@ -115,88 +115,99 @@ Block.prototype.getValue = function(name)
  */
 Block.prototype.htmlentities = function(str)
 {
-    str = str.replace(/</, '&lt;');
-    str = str.replace(/>/, '&gt;');
+    str = str.replace(/</g, '&lt;');
+    str = str.replace(/>/g, '&gt;');
+    str = str.replace(/"/g, '&quot;');
+    str = str.replace(/'/g, '&apos;');
     return str;
 }
-
-/**
- * Set the infos of the block
- */
-Block.prototype.setInfos = function(html)
-{
-    this.div.find('.infos').html(html);
-};
 
 /**
  * Returns the render of the block
  */
 Block.prototype.getHtml = function()
 {
-    var self = this;
     this.connectors = [];
 
     // Getting the title
     var header = this.meta.name + ' <span class="blockId">#' + this.id + '</span>';
     var title = this.meta.name + ' #' + this.id;
-    for (var k in this.fields.fields) {
-        var field = this.fields.fields[k];
-        if (field.asTitle) {
-            title = field.getPrintableValue();
-        }
-    }
 
     var html = '<div class="blockTitle"><span class="titleText" title="'+title+'">'+header+'</span>';
-    html += '<div class="blockicon"><span class="delete"><i class="fas fa-trash"></i></span>';
-    html += '<span class="info"><i class="fas fa-info"></i></span>';
+    html += '<div class="blockicon">';
+    if (!this.blocks.compactMode) {
+        html += '<span class="delete" title="Remove (DEL)"><i class="fas fa-trash"></i></span>';
+        html += '<span class="info" title="Details"><i class="fas fa-info"></i></span>';
+    }
     if (this.fields.editables.length > 0) {
-        html += '<span class="settings"><i class="fas fa-sliders-h"></i></span>';
+        html += '<span class="settings" title="Change parameter values"><i class="fas fa-sliders-h"></i></span>';
     }
     html += '</div></div>';
-    html += '<div class="infos"></div><div class="inout">';
+    html += '<div class="inout">';
 
     // Handling inputs & outputs
+    var self = this;
     var handle = function(key, fields) {
         html += '<div class="' + key + 's">';
 
         for (var k in fields) {
             var field = fields[k];
 
-            if (field.extensible) {
-                field.size = self.maxEntry(field.name);
-            }
+            var connectorId = field.name.toLowerCase() + '_' + key;
 
-            var size = 1;
-            if (field.variadic) {
-                size = field.getDimension(self.fields);
-            }
-
-            for (var x=0; x<size; x++) {
-                var connectorId = field.name.toLowerCase() + '_' + key;
-                var label = field.getLabel().replace('#', x+1);
-
-                var value = '';
-                if (field.dynamicLabel != null) {
-                    label = String(field.dynamicLabel(self, x));
-                } else {
-                    if (field && field.is('editable') && !self.blocks.compactMode) {
-                        value = ' ('+field.getPrintableValueWithUnit(field.variadic ? x : undefined)+')';
+            var formattedValue = '';
+            if (field && field.isEditable() && !self.blocks.compactMode) {
+                var value = field.getValue();
+                if (typeof value === 'object') {
+                    if (value === null) {
+                        formattedValue = 'N/A';
+                    }
+                    else {
+                        if (Array.isArray(value)) {
+                            formattedValue = 'List(' + value.length + ')';
+                        }
+                        else {
+                            formattedValue = 'Object';
+                        }
+                        
+                        formattedValue = '<span title="' + self.htmlentities(JSON.stringify(value)) + '">' + formattedValue + '</span>';
                     }
                 }
-
-                if (field.variadic) {
-                    connectorId += '_' + x;
+                else if (typeof value === 'string' && value.length > 10) {
+                    formattedValue = '<span title="' + self.htmlentities(JSON.stringify(value)) + '">' + value.substr(0,10) + '...</span>';
                 }
-
-                var circleLeft = '<div class="circle"></div>', circleRight = '';
-                if (key == 'output') {
-                    circleRight = circleLeft, circleLeft = '';
+                else if (typeof value === 'boolean') {
+                    formattedValue = value ? '✔️' : '❌';
                 }
-
-                // Generating HTML
-                html += '<div class="'+key+' type_'+field.type+' connector '+connectorId+'" rel="'+connectorId+ '">' + circleLeft + self.htmlentities(label) + value + circleRight + '</div>';
-                self.connectors.push(connectorId);
+                else {
+                    formattedValue = value;
+                }
+                formattedValue = ': ' + formattedValue;
             }
+
+            var circleLeft = '<div class="circle"></div>', circleRight = '';
+            if (key == 'output') {
+                circleRight = circleLeft, circleLeft = '';
+            }
+
+            var classNames = [
+                key,
+                'type_' + field.type,
+                'connector',
+                connectorId,
+                ((field.hasValue || key == 'output') ? 'hasValue' : 'noValue')
+            ];
+            var label;
+            if (self.blocks.compactMode && key == 'output') {
+                label = '';
+            }
+            else {
+                label = self.htmlentities(field.getLabel());
+            }
+    
+            // Generating HTML
+            html += '<div class="' + classNames.join(' ') + '" rel="' + connectorId + '">' + circleLeft + label + formattedValue + circleRight + '</div>';
+            self.connectors.push(connectorId);
         }
         html += '</div>';
     };
@@ -285,8 +296,12 @@ Block.prototype.redraw = function(selected)
 
         connectorVisual.removeClass('io_active');
         connectorVisual.removeClass('io_selected');
+        if (!connectorDiv.hasClass('hasValue')) {
+            connectorDiv.addClass('noValue');
+        }
         if (connectorId in this.edges && this.edges[connectorId].length) {
             connectorVisual.addClass('io_active');
+            connectorDiv.removeClass('noValue');
 
             for (var n in this.edges[connectorId]) {
                 if (this.edges[connectorId][n].selected) {
@@ -369,7 +384,6 @@ Block.prototype.initListeners = function()
 
     // Show the description
     self.div.find('.info').on('click', function() {
-        var action = '';
         switch(self.meta.module) {
             case 'process':
                 EventBus.$emit('showProcessInfo', self.meta.name);
@@ -535,12 +549,7 @@ Block.prototype.hasConnector = function(connector)
         return false;
     }
 
-    if (field.variadic) {
-        return (connector.index != null) && 
-            (field.getDimension(this.fields) >= connector.index);
-    } else {
-        return (connector.index == null);
-    }
+    return (connector.index == null);
 };
 
 export default Block;

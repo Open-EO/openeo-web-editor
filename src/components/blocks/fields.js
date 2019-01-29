@@ -6,8 +6,6 @@ import EventBus from '../../eventbus.js';
  */
 var Fields = function(block)
 {
-    var self = this;
-
     // Block & meta
     this.block = block;
     this.meta = this.block.meta;
@@ -15,9 +13,7 @@ var Fields = function(block)
     // Fields
     this.fields = [];
     for (var k in this.meta.fields) {
-        var field = new Field(this.meta.fields[k]);
-        this.block.blocks.types.register(field.type);
-        this.fields.push(field);
+        this.fields.push(new Field(this.meta.fields[k]));
     }
 
     // Indexed fields
@@ -31,16 +27,14 @@ var Fields = function(block)
         var field = this.fields[k];
         this.indexedFields[field.name] = field;
 
-        if ('editable' in field.attrs) {
+        if (field.isEditable()) {
             this.editables.push(field);
         }
-        if ('input' in field.attrs) {
+        if ('input' == field.attrs) {
             this.inputs.push(field);
-            field.hide = true;
         }
-        if ('output' in field.attrs) {
+        if ('output' == field.attrs) {
             this.outputs.push(field);
-            field.hide = true;
         }
     }
 };
@@ -63,77 +57,13 @@ Fields.prototype.show = function()
     var title = this.block.meta.name+' #'+this.block.id;
     var opts = {
         editables: this.editables,
-        fields: this,
-        saveCallback: (element) => {
-            var form = $(element);
-            form.find('.pattern').remove();
-            this.save(this.serializeForm(form));
+        saveCallback: (data) => {
+            this.save(data);
             EventBus.$emit('closeModal');
             return false;
-        },
-        handleArrays: this.handleArrays
+        }
     };
     EventBus.$emit('showComponentModal', title, 'ProcessParameterEditor', opts);
-};
-
-Fields.prototype.serializeForm = function(form)
-{
-    var serialized = {};
-    var formData = form.serializeArray();
-    for(var i in formData) {
-        var obj = formData[i];
-        if (serialized[obj.name]) {
-            if (Array.isArray(serialized[obj.name])) {
-                serialized[obj.name].push(this.value || "");
-            }
-            else {
-                serialized[obj.name] = [serialized[obj.name]];
-            }
-         }
-         else {
-            serialized[obj.name] = obj.value || "";
-         }
-    }
-    return serialized;
-};
-
-/**
- * Handle Add & Remove buttons on fields array
- */
-Fields.prototype.handleArrays = function(element)
-{
-    $(element).find('.fieldsArray').each(function() {
-        var pattern = $(this).find('.pattern').html();
-        var fields = $(this).find('.fields');
-
-        var buttons = '<div class="buttons">';
-        buttons += '<a class="add" href="#">Add</a> ';
-        buttons += '<a class="remove" href="#">Remove</a>';
-        buttons += '</div>';
-        $(this).append(buttons);
-
-        $(this).find('.add').on('click', function() {
-            fields.append('<div class="field">'+pattern+'</div>');
-        });
-
-        $(this).find('.remove').on('click', function() {
-            fields.find('.field').last().remove();
-        });
-    });
-};
-
-/**
- * Show the fields
- */
-Fields.prototype.getHtml = function()
-{
-    var html = '';
-
-    for (var k in this.editables) {
-        html += this.editables[k].getHtml();
-    }
-
-    return html;
 };
 
 /**
@@ -143,7 +73,7 @@ Fields.prototype.save = function(serialize)
 {
     var boolFields = {};
     for (var entry in this.indexedFields) {
-        if (this.indexedFields[entry].type == 'bool') {
+        if (this.indexedFields[entry].type == 'boolean') {
             boolFields[entry] = this.indexedFields[entry];
         }
     }

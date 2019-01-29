@@ -9,6 +9,8 @@
 </template>
 
 <script>
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
 import Collection from '@openeo/vue-components/components/Collection.vue';
 
 export default {

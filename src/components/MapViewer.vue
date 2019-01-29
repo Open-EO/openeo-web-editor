@@ -19,8 +19,8 @@ export default {
 		return {
 			options: {
 				fullscreenControl: true,
-				center: [45,15], // [50.1725,9.15]
-				zoom: 8 // 4
+				center: [50.1725,9.15],
+				zoom: 6
 			},
 			map: null,
 			baseLayer: {

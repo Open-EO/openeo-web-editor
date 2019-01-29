@@ -51,12 +51,23 @@ export default {
 		EventBus.$on('closeModal', this.close);
 	},
 	methods: {
+		escCloseListener(event) {
+			if (event.key == "Escape") { 
+				EventBus.$emit('closeModal');
+				event.preventDefault();
+				event.stopPropagation();
+				return false;
+			}
+		},
+
 		show() {
+			window.addEventListener('keydown', this.escCloseListener);
 			this.shown = true;
 		},
 
 		close() {
 			this.shown = false;
+			window.removeEventListener('keydown', this.escCloseListener);
 			EventBus.$emit('modalClosed');
 		},
 
