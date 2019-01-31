@@ -1,7 +1,7 @@
 <template>
 	<div id="imageViewer" ref="imageContainer">
 		<span ref="emptyMsg" v-show="visibleContent == 'text'"></span>
-		<img ref="image" v-show="visibleContent == 'image'" title="Click to enlarge" style="max-width: 100%" @click="resize" />
+		<img ref="image" v-show="visibleContent == 'image'" @click="resize" />
 	</div>
 </template>
 
@@ -20,6 +20,7 @@ export default {
 
 	mounted() {
 		this.reset();
+		this.resize();
 	},
 
 	methods: {
@@ -52,12 +53,18 @@ export default {
 		},
 
 		resize() {
+			if (!this.$refs.image) {
+				return;
+			}
 			if (this.$refs.image.style.maxWidth) {
 				this.$refs.image.style.maxWidth = null;
+				this.$refs.image.style.cursor = 'zoom-out';
 				this.$refs.image.title = "Click to shrink (fit to screen)";
+
 			}
 			else {
 				this.$refs.image.style.maxWidth = "100%";
+				this.$refs.image.style.cursor = 'zoom-in';
 				this.$refs.image.title = "Click to enlarge";
 			}
 		}
