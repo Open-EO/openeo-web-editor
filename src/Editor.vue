@@ -257,7 +257,7 @@ export default {
 	
 		changeProcessGraphTab(evt) {
 			this.changeTab('processGraphContent', evt);
-			this.isVisualBuilderActive = this.isTabActive('graphTab');
+			this.enableVisualBuilder(this.isTabActive('graphTab'));
 		},
 
 		changeViewerTab(evt) {
@@ -298,7 +298,7 @@ export default {
 
 		showEditor() {
 			this.showTab('processGraphContent', 'sourceTab');
-			this.isVisualBuilderActive = this.isTabActive('graphTab');
+			this.enableVisualBuilder(this.isTabActive('graphTab'));
 		},
 
 		showMapViewer() {
@@ -348,12 +348,26 @@ export default {
 			}
 		},
 
-		getProcessGraph(callback) {
+		enableVisualBuilder(enable) {
+			if (this.isVisualBuilderActive === enable) {
+				return; // Nothing changed
+			}
+
+			EventBus.$emit('getProcessGraph', (pg) => {
+				this.isVisualBuilderActive = enable;
+
+				this.$nextTick(() => {
+					EventBus.$emit('insertProcessGraph', pg);
+				});
+			}, true);
+		},
+
+		getProcessGraph(callback, silent = false) {
 			if (this.isVisualBuilderActive) {
-				this.$refs.graphBuilder.getProcessGraph(callback);
+				this.$refs.graphBuilder.getProcessGraph(callback, silent);
 			}
 			else {
-				this.$refs.sourceEditor.getProcessGraph(callback);
+				this.$refs.sourceEditor.getProcessGraph(callback, silent);
 			}
 		},
 

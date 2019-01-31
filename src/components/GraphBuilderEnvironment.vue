@@ -4,8 +4,7 @@
 			<div class="sourceToolbar">
 				<button @click="blocks.undo()" class="sep" v-show="blocks.hasUndo()" title="Undo last change"><i class="fas fa-undo-alt"></i></button>
 				<button @click="blocks.toggleCompact()" :class="{compactActive: this.blocks.compactMode}" title="Compact Mode"><i class="fas fa-compress-arrows-alt"></i></button>
-				<button @click="blocks.perfectScale()" title="Scale to perfect size" class="sep"><i class="fas fa-arrows-alt"></i></button>
-				<button @click="convertModel" title="Generate Process Graph"><i class="fas fa-code"></i></button>
+				<button @click="blocks.perfectScale()" title="Scale to perfect size"><i class="fas fa-arrows-alt"></i></button>
 			</div>
 		</div>
 		<div id="pgEditor"></div>
@@ -25,7 +24,7 @@ export default {
 		};
 	},
 	beforeMount() {
-		this.blocks = new Blocks(this);
+		this.blocks = new Blocks(this.errorHandler);
     },
 	mounted() {
         this.blocks.run("#pgEditor");
@@ -34,26 +33,76 @@ export default {
 		EventBus.$on('propagateProcesses', this.propagateProcesses);
 		EventBus.$on('addProcessToEditor', this.insertProcess);
 		EventBus.$on('addCollectionToEditor', this.insertCollection);
-    },
+		EventBus.$on('insertProcessGraph', this.insertProcessGraph);
+	},
 	methods: {
-		getProcessGraph(callback) {
-			callback(this.makeProcessGraph());
+		errorHandler(message, title = null) {
+    		this.$utils.error(this, message, title);
 		},
 
-		convertModel() {
-			var pg = this.makeProcessGraph();
+		getProcessGraph(callback, silent = false) {
+			var pg = this.makeProcessGraph(silent);
+			console.log(pg);
+			callback(pg);
+		},
 
-			// ToDo: Don't emit separately
-			EventBus.$emit('showEditor');
-			this.$nextTick(() => {
-				EventBus.$emit('addSourceCode', JSON.stringify(pg, null, 2), true);
-			})
-        },
+		makeModel(processGraph) {
+			var success = true;
+			this.blocks.history.save(); // Store current state only once and then...
+			this.blocks.clear(); // clear screen...
+			this.blocks.history.enable(false); // disable history for import so that not every import step is in the history...
+			try {
+				// import process graph and scale it "perfectly"! :-)
+				this.importProcessGraph(processGraph);
+            	this.blocks.perfectScale();
+			} catch (error) {
+				// If an error occured: show it an restore the last working state from history.
+				this.$utils.error(this, error.message || error, "Process graph invalid");
+				this.blocks.history.restoreLast();
+				success = false;
+			}
+			// Finally, enable history again.
+			this.blocks.history.enable(true);
+			return success;
+		},
 
-		makeProcessGraph() {
+		importProcessGraph(obj, x = 0, y = 0) {
+			if (obj === null || typeof obj !== 'object') {
+				return null;
+			}
+
+			if (obj.process_id === 'get_collection') { // Image Collection
+				return this.blocks.addCollection(obj.name, x, y);
+			}
+			else if ('process_id' in obj) { // Process
+				var block = this.blocks.addProcess(obj.process_id, x, y);
+				if (block) {
+					block.setValues(obj);
+					block.render();
+				}
+
+				for(var a in obj) {
+					if (typeof obj[a] === 'object' && 'process_id' in obj[a]) {
+						var lastBlock = this.importProcessGraph(obj[a], x - ( block.getWidth() + 20 ) , y);
+						this.blocks.addEdge(lastBlock, "output", block, a);
+					}
+				}
+
+				return block;
+			}
+			return null;
+		},
+
+		makeProcessGraph(silent = false) {
 			var data = this.blocks.export();
 			var edges = data.edges;
 			var nodes = data.blocks;
+			if (nodes.length === 0) {
+				if (!silent) {
+					this.$utils.error(this, 'Error: There must be exactly one output');
+				}
+				return {};
+			}
 			var nodesById = {};
 			// Make an object of nodes indexed by id
 			for (var i in nodes) {
@@ -71,15 +120,13 @@ export default {
 					nodeIdList.splice(index, 1);
 				}
 			}
-			if (nodeIdList.length !== 1) {
-				alert('Error: There must be exactly one output');
+			if (nodeIdList.length !== 1 && !silent) {
+				this.$utils.error(this, 'Error: There must be exactly one output');
 			}
 			var startBlockId = nodeIdList[0];
 
 			// Create Process Graph
-			var pg = this.makeProcessGraphFromEdges(edges, nodesById[startBlockId]);
-			console.log(JSON.stringify(pg, null, 2));
-			return pg;
+			return this.makeProcessGraphFromEdges(edges, nodesById[startBlockId]);
 		},
 
 		makeProcessGraphFromEdges(edges, currentNode) {
@@ -122,6 +169,14 @@ export default {
 			for(var i in collections) {
 				this.blocks.registerCollection(collections[i]);
 			}
+		},
+
+		insertProcessGraph(pg) {
+			if (!this.active) {
+				return;
+			}
+
+			this.makeModel(pg);
 		},
 
 		insertCollection(name) {

@@ -65,20 +65,15 @@ Block.prototype.hasInputs = function() {
 };
 
 /**
- * Update the block values
- */
-Block.prototype.updateValues = function()
-{
-    this.blocks.history.save();
-};
-
-/**
  * Set the values
  */
 Block.prototype.setValues = function(values)
 {
-    for (var field in values) {
-        this.fields.getField(field).setValue(values[field]);
+    for (var fieldName in values) {
+        var field = this.fields.getField(fieldName);
+        if (field !== null) {
+            field.setValue(values[fieldName]);
+        }
     }
 };
 

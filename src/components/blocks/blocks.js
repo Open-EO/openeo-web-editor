@@ -6,9 +6,9 @@ import Connector from './connector.js';
 /**
  * Manage the blocks
  */
-var Blocks = function(parentComponent)
+var Blocks = function(errorHandler = null)
 {
-    this.parentComponent = parentComponent;
+    this.errorHandler = errorHandler;
 
     // View center & scale
     this.center = {};
@@ -243,11 +243,11 @@ Blocks.prototype.undo = function()
  */
 Blocks.prototype.addCollection = function(name, x, y)
 {
-    this.addBlock(name, 'collection', x, y);
+    return this.addBlock(name, 'collection', x, y);
 };
 Blocks.prototype.addProcess = function(name, x, y)
 {
-    this.addBlock(name, 'process', x, y);
+    return this.addBlock(name, 'process', x, y);
 };
 Blocks.prototype.addBlock = function(name, type, x, y)
 {
@@ -265,6 +265,7 @@ Blocks.prototype.addBlock = function(name, type, x, y)
     this.history.save();
     this.blocks.push(block);
     this.id++;
+    return block;
 };
 
 /**
@@ -582,53 +583,58 @@ Blocks.prototype.tryEndLink = function()
     }
 };
 
+Blocks.prototype.addEdge = function(blockOut, connectorOut, blockIn, connectorIn) {
+    var id = this.edgeId++;
+
+    if (!(connectorOut instanceof Connector)) {
+        connectorOut = new Connector(connectorOut, "output");
+    }
+    if (!(connectorIn instanceof Connector)) {
+        connectorIn = new Connector(connectorIn, "input");
+    }
+
+    if (connectorOut.isOutput()) {
+        var edge = new Edge(id, blockOut, connectorOut, blockIn, connectorIn, this);
+    } else {
+        var edge = new Edge(id, blockIn, connectorIn, blockOut, connectorOut, this);
+    }
+
+    for (var k in this.edges) {
+        var other = this.edges[k];
+        if (other.same(edge)) {
+            throw 'This edge already exists';
+        }
+    }
+
+    var fromTo = edge.fromTo();
+    if (fromTo[1].allSuccessors().indexOf(fromTo[0].id) != -1) {
+        throw 'You can not create a loop';
+    }
+
+    this.history.save();
+    edge.create();
+    var edgeIndex = this.edges.push(edge)-1;
+
+    var types = edge.getTypes();
+    if (!this.isTypeCompatible(types[0], types[1])) {
+        this.removeEdge(edgeIndex);
+        throw 'Types '+types[0]+' and '+types[1]+' are not compatible';
+    }
+    this.redraw();
+}
+
 /**
  * End drawing an edge
  */
 Blocks.prototype.endLink = function(block, connectorId)
 {
     try {
-        var id = this.edgeId++;
-
-        var blockA = this.linking[0];
-        var connectorA = new Connector(this.linking[1]);
-        var blockB = block;
-        var connectorB = new Connector(connectorId);
-
-        if (connectorA.isOutput()) {
-            var edge = new Edge(id, blockA, connectorA, blockB, connectorB, this);
-        } else {
-            var edge = new Edge(id, blockB, connectorB, blockA, connectorA, this);
-        }
-
-        for (var k in this.edges) {
-            var other = this.edges[k];
-            if (other.same(edge)) {
-                throw 'This edge already exists';
-            }
-        }
-
-        var fromTo = edge.fromTo();
-        if (fromTo[1].allSuccessors().indexOf(fromTo[0].id) != -1) {
-            throw 'You can not create a loop';
-        }
-
-        this.history.save();
-        edge.create();
-        var edgeIndex = this.edges.push(edge)-1;
-
-        var types = edge.getTypes();
-        if (!this.isTypeCompatible(types[0], types[1])) {
-            this.removeEdge(edgeIndex);
-            throw 'Types '+types[0]+' and '+types[1]+' are not compatible';
-        }
+        this.addEdge(this.linking[0], new Connector(this.linking[1]), block, new Connector(connectorId));
     } catch (error) {
-        console.log('Unable to create edge:', error);
-        // Don't show error message to user, happens to often unintentionally
+        this.showError(error.message || error);
     }
     this.linking = null;
     this.selectedBlock = null;
-    this.redraw();
 };
 
 Blocks.prototype.isTypeCompatible = function(t1, t2) {
@@ -644,7 +650,12 @@ Blocks.prototype.isTypeCompatible = function(t1, t2) {
 }
 
 Blocks.prototype.showError = function(message, title = null) {
-    this.parentComponent.$utils.error(this.parentComponent, message, title);
+    if (typeof this.errorHandler === 'function')  {
+        this.errorHandler(message, title);
+    }
+    else {
+        console.log(title, message);
+    }
 }
 
 /**

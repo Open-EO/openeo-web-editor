@@ -18,7 +18,9 @@ Vue.prototype.$utils = utils;
 Vue.config.productionTip = false;
 Vue.config.errorHandler = function (err, vm, info) {
 	console.log(err);
-	vm.$snotify.error(err.message);
+	if (vm && vm.$snotify) {
+		vm.$snotify.error(err.message);
+	}
 };
 
 window.App = new Vue({

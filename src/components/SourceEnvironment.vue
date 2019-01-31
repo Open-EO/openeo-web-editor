@@ -55,7 +55,7 @@ export default {
 		this.editor = CodeMirror(document.getElementById('sourceCodeEditor'), this.editorOptions);
 		this.editor.setValue(this.defaultScript);
 		this.editor.setSize(null, "100%");
-		EventBus.$on('addSourceCode', this.insertToEditor);
+		EventBus.$on('insertProcessGraph', this.insertProcessGraph);
 		EventBus.$on('addProcessToEditor', this.insertToEditor);
 		EventBus.$on('addCollectionToEditor', this.insertToEditor);
 		var storedScripts = localStorage.getItem("savedScripts");
@@ -64,7 +64,7 @@ export default {
 		}
 	},
 	methods: {
-		getProcessGraph(callback) {
+		getProcessGraph(callback, silent = false) {
 			var script = this.editor.getSelection();
 			if (!script) {
 				script = this.editor.getValue();
@@ -83,7 +83,7 @@ export default {
 			if (pg !== null) {
 				callback(pg);
 			}
-			else {
+			else if (!silent) {
 				this.$utils.error(this, 'No valid model or source code specified.');
 			}
 		},
@@ -159,6 +159,14 @@ export default {
 			else {
 				this.editor.replaceSelection(text);
 			}
+		},
+
+		insertProcessGraph(pg) {
+			if (!this.active) {
+				return;
+			}
+
+			this.insertToEditor(JSON.stringify(pg, null, 2), true);
 		}
 
 	}

@@ -15,17 +15,17 @@ Adds the collection to the editor.
 ## addProcessToEditor(string $code)
 Adds the process to the editor.
 
-## addSourceCode(string $code, boolean $replace = false)
-Adds the code to the source code editor.
-
 ## viewWebService(object $service)
 Shows a web service on the map.
 
 ## removeWebService(string $id)
 Removes a web service from the map.
 
-## getProcessGraph(callback $callback)
+## getProcessGraph(callback $callback, boolean $silent = false)
 Triggers the script/model currently in the editor to be evaluated runs the callback using the data from the evaluation.
+
+## insertProcessGraph(object $pg)
+Sends the current process graph and inserts it into the currently active editor.
 
 ## jobCreated(object $job)
 Triggered when a job was created successfully, parameter is the Job object returned by the openeo-js-client lib.
