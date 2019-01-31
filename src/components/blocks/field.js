@@ -11,17 +11,17 @@ var Field = function(metaField)
     // Getting type
     if (typeof this.meta.schema.type == 'undefined') {
         this.type = 'string';
-    } else if (Array.isArray(this.meta.schema.type)) {
-        this.type = this.meta.schema.type[0];
+    } else if (Array.isArray(this.meta.schema.type) && this.meta.schema.type.length > 0) {
+        this.type = this.meta.schema.type[0] === 'null' ? this.meta.schema.type[1] : this.meta.schema.type[0];
     } else {
-        this.type = this.meta.schema.type;
+        this.type = this.meta.schema.type ? this.meta.schema.type : 'any';
     }
 
     this.isArray = false;
     var s = this.meta.schema;
     if (s.type === 'array' || (Array.isArray(s.type) && s.type.includes('array'))) {
         this.isArray = true;
-        this.type = s.items.type;
+        this.type = s.items.type ? s.items.type : 'any';
     }
 
     // Cardinalities

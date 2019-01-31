@@ -11,8 +11,8 @@
 			<button title="Delete" @click="deleteJob(p.row)" v-show="supports('deleteJob')"><i class="fas fa-trash"></i></button>
 			<button title="Start" @click="queueJob(p.row)" v-show="supports('startJob')" v-if="isJobInactive(p.row)"><i class="fas fa-play-circle"></i></button>
 			<button title="Cancel" @click="cancelJob(p.row)" v-show="supports('stopJob')" v-if="isJobActive(p.row)"><i class="fas fa-stop-circle"></i></button>
-			<button title="Download" @click="downloadJob(p.row)" v-show="supports('downloadResults')" v-if="hasResults(p.row)"><i class="fas fa-download"></i></button>
-			<button title="View results" @click="downloadJob(p.row, true)" v-show="supports('downloadResults')" v-if="hasResults(p.row)"><i class="fas fa-eye"></i></button>
+			<button title="Download" @click="downloadResults(p.row)" v-show="supports('downloadResults')" v-if="hasResults(p.row)"><i class="fas fa-download"></i></button>
+			<button title="View results" @click="viewResults(p.row, true)" v-show="supports('downloadResults')" v-if="hasResults(p.row)"><i class="fas fa-eye"></i></button>
 			<button title="Subscribe" @click="subscribeToJob(p.row)" v-show="supports('subscribe') && !jobSubscriptions.includes(p.row)"><i class="fas fa-bell"></i></button>
 			<button title="Unsubscribe" @click="unsubscribeFromJob(p.row)" v-show="supports('unsubscribe') && jobSubscriptions.includes(p.row)"><i class="fas fa-bell-slash"></i></button>
 		</template>
@@ -87,13 +87,13 @@ export default {
 			if (this.supports('downloadResults')) {
 				options.buttons.push({text: 'Download', action: () => this.downloadJob(job)});
 			}
-			this.$snotify.confirm('Job created!', null, options);
+			this.$utils.confirm(this, 'Job created!', options);
 		},
-		createJob(processGraph, outputFormat) {
+		createJob(processGraph, outputFormat = null, outputParameters = {}, title = null) {
 			if (!outputFormat) {
 				outputFormat = null;
 			}
-			this.connection.createJob(processGraph, outputFormat)
+			this.connection.createJob(processGraph, outputFormat, outputParameters, title)
 				.then(job => {
 					EventBus.$emit('jobCreated', job);
 				}).catch(error => {
@@ -101,14 +101,38 @@ export default {
 				});
 		},
 		createJobFromScript() {
-			// Todo: Output formats
-			var output = {};
-			var format = prompt('Please specify the file format you need or leave empty for default format.', '');
-			if (format === null) {
+			var title = prompt("Please specify a title for the job:");
+			if (title === null) {
 				return;
 			}
+			else if (typeof title !== 'string' || title.length === 0) {
+				title = null;
+			}
+
+			var supportedFormats = Object.keys(this.connection.supportedOutputFormats.formats).map(v => v.toUpperCase());
+			var format = this.connection.supportedOutputFormats.default;
+			do {
+				var msgPrefix = '';
+				if (format !== this.connection.supportedOutputFormats.default) {
+					msgPrefix = "Specified file format is invalid.\r\n";
+				}
+				var format = prompt(msgPrefix + 'Please specify the targeted file format:', format);
+				if (format === null) {
+					return;
+				}
+				else if (typeof format === 'string') {
+					format = format.toUpperCase();
+					if (!supportedFormats.includes(format)) {
+						format = '';
+					}
+				}
+				else {
+					format = '';
+				}
+			} while(format.length == 0);
+
 			EventBus.$emit('getProcessGraph', (script) => {
-				this.createJob(script, format);
+				this.createJob(script, format, {}, title);
 			});
 		},
 		updateJobData(updatedJob) {
@@ -184,42 +208,38 @@ export default {
 				})
 				.catch(error => this.$utils.exception(this, error, "Sorry, could not cancel job."));
 		},
-		downloadJob(job, view = false) {
-			var format = prompt('Please specify the file format you need or leave empty for default format.', '');
-			if (format === null) {
-				return;
-			}
-			
+		viewResults(job) {			
 			job.listResults().then(info => {
-				var url;
 				if(info.links.length == 0) {
 					this.$utils.error(this, "No download available.");
-				} else if(info.links.length == 1) {
-					url = info.links[0].href;
-				} else {
-					// TODO-CF: Use selection UI in Modal instead of quick'n'dirty prompt
-					url = prompt("Please specify which URL should be downloaded by typing its numer:\n" + info.links.map((value, index) => '['+index+'] '+value).join("\n"), '1');
+					return;
+				} else if (info.links.length > 1) {
+					this.$utils.info(this, "Job resulted in multiple files, please download them individually.");
+					return;
 				}
-				var filename = this.$utils.getFileNameFromURL(url);
 
-				this.$utils.info(this, (view ? 'Data' : 'Download') + ' requested. Please wait...');
-
-				if(!view) {
-					this.$utils.downloadData(url, filename, undefined, true);
-				} else {
-					this.connection.download(url)
-						.then(blob => {
-							// TODO-CF: Matthias says the hacky download should be replaced (e.g. with list of URLs)
-							this.$utils.blobToText(blob, (event) => {
-								// View in browser
-								EventBus.$emit('getProcessGraph', (script) => {
-									EventBus.$emit('showInViewer', blob, script);
-								});
-							});
-						})
-						.catch(error => {
-							this.$utils.exception(this, error, "Sorry, an error occured.");
-						});
+				this.$utils.info(this, 'Data requested. Please wait...');
+				// Send requests without authentication (second parameter false), they should be secured by a token in the URL
+				this.connection.download(info.links[0].href, false)
+					.then(response => EventBus.$emit('showInViewer', response.data, info.links[0].type))
+					.catch(error => {
+						console.log();
+						this.$utils.exception(this, error.message || error, "Sorry, an error occured.");
+					});
+			});
+		},
+		downloadResults(job) {	
+			job.listResults().then(info => {
+				if(info.links.length == 0) {
+					this.$utils.error(this, "No download available.");
+				}
+				else {
+					// This can be formatted much nicer and more useful...
+					var urls = info.links.map(v => v.href);
+					EventBus.$emit('showComponentModal', 'Download results' + (info.title ? ' for: ' + info.title : ''), 'List', {
+						dataSource: urls,
+						actions: []
+					});
 				}
 			});
 		},

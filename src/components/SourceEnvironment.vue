@@ -1,13 +1,5 @@
 <template>
 	<div id="SourceEnvironment">
-		<div class="sourceHeader">
-			<h3><em id="scriptName">{{ scriptName }}</em></h3>
-			<div class="sourceToolbar">
-				<button @click="newScript" title="Clear current script / New script"><i class="fas fa-file"></i></button>
-				<button @click="loadScript()" title="Load script from local storage"><i class="fas fa-folder-open"></i></button>
-				<button @click="saveScript" title="Save script to local storage"><i class="fas fa-save"></i></button>
-			</div>
-		</div>
 		<div id="sourceCodeEditor"></div>
 	</div>
 </template>
@@ -22,46 +14,28 @@ import CodeMirror from 'codemirror';
 export default {
 	name: 'SourceEnvironment',
 	props: ['active'],
-	computed: {
-		savedScriptNames() {
-			return Object.keys(this.savedScripts);
-		}
-	},
 	data() {
 		return {
-			scriptName: '',
-			savedScripts: {},
 			editorOptions: {
 				mode: 'javascript',
-				indentUnit: 4,
+				indentUnit: 2,
 				lineNumbers: true
 			},
-			editor: null,
-			defaultScript: this.$config.defaultScript
+			editor: null
 		}
 	},
 	watch: {
-		savedScripts: {
-			handler: function(newVal, oldVal) {
-				localStorage.setItem("savedScripts", JSON.stringify(newVal));
-			},
-			deep: true
-		},
 		active() {
 			this.editor.refresh();
 		}
 	},
 	mounted() {
 		this.editor = CodeMirror(document.getElementById('sourceCodeEditor'), this.editorOptions);
-		this.editor.setValue(this.defaultScript);
 		this.editor.setSize(null, "100%");
+
 		EventBus.$on('insertProcessGraph', this.insertProcessGraph);
 		EventBus.$on('addProcessToEditor', this.insertToEditor);
 		EventBus.$on('addCollectionToEditor', this.insertToEditor);
-		var storedScripts = localStorage.getItem("savedScripts");
-		if (storedScripts !== null) {
-			this.savedScripts = JSON.parse(storedScripts);
-		}
 	},
 	methods: {
 		getProcessGraph(callback, silent = false) {
@@ -86,66 +60,6 @@ export default {
 			else if (!silent) {
 				this.$utils.error(this, 'No valid model or source code specified.');
 			}
-		},
-
-		clearEditor() {
-			this.editor.setValue('');
-			this.scriptName = '';
-		},
-
-		storageName(name) {
-			return name.replace('.', '_');
-		},
-
-		newScript() {
-			var confirmed = confirm("Do you really want to clear the existing script to create a new one?");
-			if (confirmed) {
-				this.clearEditor();
-			}
-		},
-		
-		loadScript(name = undefined) {
-			if(name != undefined) {
-				var code = this.savedScripts[name];
-				if (code) {
-					this.editor.setValue(code);
-					this.scriptName = name;
-					return true;  // to close the modal
-				}
-				else {
-					this.$utils.info(this, 'No script with the name "' + name + '" found.');
-					return false;  // to keep the modal open
-				}
-			} else {
-				EventBus.$emit('showComponentModal', 'Select script to load', 'List', {
-					dataSource: () => this.savedScriptNames,
-					actions: [
-						{
-							callback: this.loadScript,
-							icon: 'check',
-							title: 'Load script'
-						},
-						{
-							callback: this.deleteScript,
-							icon: 'trash',
-							title: 'Delete script'
-						}
-					]
-				});
-			}
-		},
-		
-		saveScript() {
-			var name = prompt("Name for the script:", this.scriptName);
-			if (!name) {
-				return;
-			}
-			this.$set(this.savedScripts, this.storageName(name), this.editor.getValue());
-			this.scriptName = name;
-		},
-
-		deleteScript(name) {
-			this.$delete(this.savedScripts, name);
 		},
 
 		insertToEditor(text, replace = false) {
@@ -174,12 +88,7 @@ export default {
 </script>
 
 <style scoped>
-.sourceHeader h3 {
-	margin: 0;
-	flex: 2;
-}
 .sourceToolbar {
-	flex: 1;
 	text-align: right;
 }
 .sourceHeader {

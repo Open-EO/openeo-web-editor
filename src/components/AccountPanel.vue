@@ -6,7 +6,7 @@
 			<div class="percent"><div class="used" :style="'width: ' + this.storageUsedPercent + '%'"></div></div>
 			<div>Used {{ formatMegabyte(this.storageUsed) }} of {{ formatMegabyte(this.me.storage.quota) }}.</div>
 		</template>
-		<template v-if="me.budget">
+		<template v-if="typeof me.budget === 'number' && me.budget >= 0">
 			<h4>Budget</h4>
 			{{ formatCurrency(me.budget) }}
 		</template>
@@ -31,16 +31,6 @@ export default {
 	data() {
 		return {
 			me: {}
-		}
-	},
-	created() {
-		EventBus.$on('serverChanged', this.updateData);
-	},
-	watch: { 
-		userId(newVal, oldVal) {
-			if (newVal !== null) {
-				this.updateData();
-			}
 		}
 	},
 	computed: {

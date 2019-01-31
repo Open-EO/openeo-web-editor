@@ -50,7 +50,7 @@ Shows a modal with the specified title and an instance of the $compname componen
 The component can be supplied with props by passing them as an object with the props' names as the keys and the props' contents as the values, e.g. {propname1: 'content', propname2: {foo: 'bar'}}
 The component to be used must be known (i.e. imported and declared) in the Modal component.
 
-## showInViewer(Blob $blob, object $script, object $output_args)
+## showInViewer(Blob $blob, object $output_args)
 Shows the data with the specified content type in the appropriate area of the viewer.
 Also to enhance viewing experience the "original" output format arguments can be given.
 

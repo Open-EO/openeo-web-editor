@@ -1,11 +1,9 @@
 <template>
 	<div id="GraphBuilderEnvironment">
-		<div class="sourceHeader">
-			<div class="sourceToolbar">
-				<button @click="blocks.undo()" class="sep" v-show="blocks.hasUndo()" title="Undo last change"><i class="fas fa-undo-alt"></i></button>
-				<button @click="blocks.toggleCompact()" :class="{compactActive: this.blocks.compactMode}" title="Compact Mode"><i class="fas fa-compress-arrows-alt"></i></button>
-				<button @click="blocks.perfectScale()" title="Scale to perfect size"><i class="fas fa-arrows-alt"></i></button>
-			</div>
+		<div class="editorToolbar">
+			<button @click="blocks.undo()" class="sepr" v-show="blocks.hasUndo()" title="Undo last change"><i class="fas fa-undo-alt"></i></button>
+			<button @click="blocks.toggleCompact()" :class="{compactActive: this.blocks.compactMode}" title="Compact Mode"><i class="fas fa-compress-arrows-alt"></i></button>
+			<button @click="blocks.perfectScale()" title="Scale to perfect size"><i class="fas fa-arrows-alt"></i></button>
 		</div>
 		<div id="pgEditor"></div>
 	</div>
@@ -41,9 +39,7 @@ export default {
 		},
 
 		getProcessGraph(callback, silent = false) {
-			var pg = this.makeProcessGraph(silent);
-			console.log(pg);
-			callback(pg);
+			callback(this.makeProcessGraph(silent));
 		},
 
 		makeModel(processGraph) {
@@ -207,25 +203,18 @@ export default {
 }
 </script>
 
-<style scoped>
-.sourceToolbar {
-	flex: 1;
-	text-align: right;
-}
-.sourceHeader {
-	padding: 5px;
-	border-bottom: dotted 1px #676767;
-	display: flex;
-}
+<style>
 #pgEditor {
 	height: 400px;
+	z-index: 100;
 }
-.sep {
-    margin-right: 0.5em;
+.editorToolbar {
+	float: right;
+	z-index: 101;
+	display: inline-block;
+	padding: 4px;
 }
-</style>
 
-<style>
 .blocks_js_editor {
     width:100%;
     height:100%;

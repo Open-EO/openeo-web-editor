@@ -92,10 +92,10 @@ export default {
 			if (this.supports('deleteService')) {
 				options.buttons.push({text: 'Delete', action: () => this.deleteService(service)});
 			}
-			this.$snotify.confirm('Web Service created!', null, options);
+			this.$utils.confirm(this, 'Web Service created!', options);
 		},
-		createService(processGraph, type) {
-			this.connection.createService(processGraph, type)
+		createService(processGraph, type, title = null) {
+			this.connection.createService(processGraph, type, title)
 				.then(service => {
 					EventBus.$emit('serviceCreated', service);
 				}).catch(error => {
@@ -103,24 +103,44 @@ export default {
 				});
 		},
 		createServiceFromScript() {
-			var serviceTypes = Object.keys(this.connection.supportedServices);
-			var type;
+			var title = prompt("Please specify a title for the service:");
+			if (title === null) {
+				return;
+			}
+			else if (typeof title !== 'string' || title.length === 0) {
+				title = null;
+			}
+
+			var serviceTypes = Object.keys(this.connection.supportedServices).map(v => v.toUpperCase());
+			var type = '';
 			if (serviceTypes.length == 1) {
 				type = serviceTypes[0];
 			}
 			else {
-				var type = prompt("Please specify the service type you want to create.\r\nOne of: ".serviceTypes.join(', '), '');
-				if (type === null) {
-					return;
-				}
-				else if (serviceTypes.indexOf(type) === -1) {
-					this.$utils.error(this, 'Invalid service type specified.');
-				}
+				do {
+					var msgPrefix = '';
+					if (type !== '') {
+						msgPrefix = "Specified service type is invalid.\r\n";
+					}
+					var type = prompt(msgPrefix + "Please specify the service type:\r\nOne of: ".serviceTypes.join(', '), type);
+					if (type === null) {
+						return;
+					}
+					else if (typeof type === 'string') {
+						type = type.toUpperCase();
+						if (!serviceTypes.includes(type)) {
+							type = '';
+						}
+					}
+					else {
+						type = '';
+					}
+				} while(type.length == 0);
 			}
 			
 			// ToDo: Ask user for service arguments
 			EventBus.$emit('getProcessGraph', (script) => {
-				this.createService(script, type);
+				this.createService(script, type, title);
 			});
 		},
 		serviceInfo(service) {

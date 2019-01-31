@@ -1,7 +1,7 @@
 <template>
     <ul>
         <li v-for="item in items" :key="item">
-            <a @click="doMainAction(item)">{{ item }}</a>
+            <a :href="item" @click="doMainAction(item, $event)" target="_blank">{{ item }}</a>
             <button v-for="action in actions" :key="action.icon" :title="action.title" @click="doAction(action.callback, item)">
                 <i :class="'fas fa-'+action.icon"></i>
             </button>
@@ -26,9 +26,13 @@ export default {
                 EventBus.$emit('closeModal');
             }
         },
-        doMainAction(item) {
+        doMainAction(item, event) {
             if(this.actions.length > 0) {
                 this.doAction(this.actions[0].callback, item);
+                if (event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
             }
         }
     }

@@ -1,4 +1,13 @@
 export default {
+
+	snotifyDefaults: {
+		timeout: 5000,
+		titleMaxLength: 30,
+		showProgressBar: true,
+		closeOnClick: true,
+		pauseOnHover: true
+	},
+
 	exception(vm, error, alt) {
 		var title = null;
 		var message = alt;
@@ -11,50 +20,24 @@ export default {
 		this.error(vm, message, title);
 	},
 	error(vm, message, title = null) {
-		vm.$snotify.error(message, title);
+		vm.$snotify.error(message, title, this.snotifyDefaults);
 	},
 	info(vm, message, title = null) {
-		vm.$snotify.info(message, title);
+		vm.$snotify.info(message, title, this.snotifyDefaults);
 	},
 	ok(vm, message, title = null) {
-		vm.$snotify.success(message, title);
-	},
-
-	downloadData: (function () {
-		var a = document.createElement("a");
-		document.body.appendChild(a);
-		a.style = "display: none";
-		return function (dataOrUrl, fileName, type, isUrl = false) {
-			var url;
-			if(isUrl) {
-				url = dataOrUrl;
-			} else {  // create ObjectURL from supplied data
-				var blob;
-				if (dataOrUrl instanceof Blob) {
-					blob = dataOrUrl;
-				}
-				else {
-					if (!type) {
-						type = 'application/octet-stream';
-					}
-					blob = new Blob([dataOrUrl], {type: type});
-				}
-				if (!fileName) {
-					fileName = 'unnamed-file';
-				}
-				url = window.URL.createObjectURL(blob);
-			}
-			
-			// Tell the browser to download (same for both methods)
-			a.href = url;
-			a.download = fileName;
-			a.click();
-
-			if(!isUrl) {  // ObjectURL created earlier should be revoked
-				window.URL.revokeObjectURL(url);
-			}
+		var options = {
+			timeout: 2000
 		};
-	}()),
+		vm.$snotify.success(message, title, Object.assign(this.snotifyDefaults, options));
+	},
+	confirm(vm, message, options) {
+		var defaults = {
+			timeout: 10000,
+			closeOnClick: false
+		};
+		vm.$snotify.confirm(message, null, Object.assign(this.snotifyDefaults, defaults, options));
+	},
 
 	blobToText(blob, callback) {
 		var reader = new FileReader();

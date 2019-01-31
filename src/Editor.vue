@@ -6,16 +6,25 @@
 				<div class="tabsHeader">
 					<button class="tabItem" name="graphTab" @click="changeProcessGraphTab"><i class="fas fa-code-branch"></i> Visual Model Builder</button>
 					<button class="tabItem" name="sourceTab" @click="changeProcessGraphTab"><i class="fas fa-code"></i> Process Graph</button>
-					<div class="tabsActions">
-						<button @click="executeProcessGraph" title="Run current process graph and view results" v-if="this.supports('startJob')"><i class="fas fa-play"></i></button>
+				</div>
+				<div class="sourceHeader">
+					<h3>
+						<em v-if="scriptName === null ">Unnamed</em>
+						<template v-else>{{ scriptName }}</template>
+					</h3>
+					<div class="sourceToolbar">
+						<button @click="newScript" title="Clear current script / New script"><i class="fas fa-file"></i></button>
+						<button @click="openScriptChooser" title="Load script from local storage"><i class="fas fa-folder-open"></i></button>
+						<button @click="saveScript" title="Save script to local storage"><i class="fas fa-save"></i></button>
+						<button @click="executeProcessGraph" title="Run current process graph and view results" class="sepl" v-if="this.supports('startJob')"><i class="fas fa-play"></i></button>
 					</div>
 				</div>
 				<div class="tabsBody">
 					<div class="tabContent" id="graphTab">
-						<GraphBuilderEnvironment ref="graphBuilder" :active="isVisualBuilderActive" />
+						<GraphBuilderEnvironment ref="graphBuilder" :active="isVisualBuilderActive" :scriptName="scriptName" />
 					</div>
 					<div class="tabContent" id="sourceTab">
-						<SourceEnvironment ref="sourceEditor" :active="!isVisualBuilderActive" />
+						<SourceEnvironment ref="sourceEditor" :active="!isVisualBuilderActive" :scriptName="scriptName" />
 					</div>
 				</div>
 			</div>
@@ -114,7 +123,9 @@ export default {
 	data() {
 		return {
 			connection: null,
-			isVisualBuilderActive: true
+			isVisualBuilderActive: true,
+			savedScripts: {},
+			scriptName: null
 		};
 	},
 	created() {
@@ -131,6 +142,24 @@ export default {
 		EventBus.$on('showImageViewer', this.showImageViewer);
 		EventBus.$on('showDataViewer', this.showDataViewer);
 		EventBus.$on('getProcessGraph', this.getProcessGraph);
+
+		var storedScripts = localStorage.getItem("savedScripts");
+		if (storedScripts !== null) {
+			this.savedScripts = JSON.parse(storedScripts);
+		}
+	},
+	computed: {
+		savedScriptNames() {
+			return Object.keys(this.savedScripts);
+		}
+	},
+	watch: {
+		savedScripts: {
+			handler: function(newVal, oldVal) {
+				localStorage.setItem("savedScripts", JSON.stringify(newVal));
+			},
+			deep: true
+		}
 	},
 	methods: {
 
@@ -141,12 +170,15 @@ export default {
 			}
 			try {
 				var openEO = new OpenEO();
-				openEO.connect(url).then(connection => {
-					this.connection = connection;
-					this.requestCapabilities();
-				});
+				openEO.connect(url)
+					.then(connection => {
+						this.connection = connection;
+						this.requestCapabilities();
+					}).catch(error => {
+						this.$utils.error(this, error.message || error);
+					});
 			} catch (e) {
-				this.$utils.error(this, e);
+				this.$utils.error(this, error.message || error);
 			}
 		},
 
@@ -205,11 +237,67 @@ export default {
 				EventBus.$emit('showComponentModal', 'Enter your credentials', 'CredentialsForm', opts);
 			}
 			else if (this.supports('authenticateOIDC')) {
+				EventBus.$emit('serverChanged');
 				this.$utils.info(this, 'Sorry, the authentication methods supported by the back-end is not supported by the Web Editor.');
 			}
 			else {
+				EventBus.$emit('serverChanged');
 				this.$utils.info(this, 'You are working without authorization. Your data will be publicly available!');
 			}
+		},
+
+		newScript() {
+			var confirmed = confirm("Do you really want to clear the existing script to create a new one?");
+			if (confirmed) {
+				EventBus.$emit('insertProcessGraph', {});
+				this.scriptName = null;
+			}
+		},
+
+		loadScript(name) {
+			var code = this.savedScripts[name];
+			if (code) {
+				EventBus.$emit('insertProcessGraph', code);
+				this.scriptName = name;
+				return true;  // to close the modal
+			}
+			else {
+				this.$utils.info(this, 'No script with the name "' + name + '" found.');
+				return false;  // to keep the modal open
+			}
+		},
+		
+		openScriptChooser() {
+			EventBus.$emit('showComponentModal', 'Select script to load', 'List', {
+				dataSource: () => this.savedScriptNames,
+				actions: [
+					{
+						callback: this.loadScript,
+						icon: 'check',
+						title: 'Load script'
+					},
+					{
+						callback: this.deleteScript,
+						icon: 'trash',
+						title: 'Delete script'
+					}
+				]
+			});
+		},
+
+		saveScript() {
+			var name = prompt("Name for the script:", this.scriptName);
+			if (!name) {
+				return;
+			}
+			EventBus.$emit('getProcessGraph', pg => {
+				this.$set(this.savedScripts, name, pg);
+				this.scriptName = name;
+			});
+		},
+
+		deleteScript(name) {
+			this.$delete(this.savedScripts, name);
 		},
 
 		resetActiveTab(container) {
@@ -313,7 +401,7 @@ export default {
 			this.showTab('viewer', 'dataTab');
 		},
 
-		showInViewer(blob, script = null, originalOutputFormat = null) {
+		showInViewer(blob, originalOutputFormat = null) {
 			if (!(blob instanceof Blob)) {
 				throw 'No blob specified.';
 			}
@@ -379,7 +467,7 @@ export default {
 			this.$utils.info(this, 'Data requested. Please wait...');
 			EventBus.$emit('getProcessGraph', (script) => {
 				this.connection.execute(script, format)
-					.then(data => EventBus.$emit('showInViewer', data, script, format))
+					.then(data => EventBus.$emit('showInViewer', data, format))
 					.catch(error => this.$utils.error(this, 'Sorry, could not execute script.'));
 			});
 		},
@@ -450,6 +538,7 @@ ul, ol {
 #viewer {
 	flex: 1;
 	padding: 10px;
+	max-width: 60%;
 	border-left: 1px dotted #ccc;
 }
 .uiBox {
@@ -490,11 +579,6 @@ ul, ol {
 #processGraphContent .tabsHeader {
 	display: flex;
 }
-#processGraphContent .tabsActions {
-	flex-grow: 1;
-	text-align: right;
-	padding: 4px 5px 0px 0px;
-}
 .tabItem:first-of-type {
 	margin-left: 5px;
 }
@@ -522,6 +606,27 @@ button.tabActive {
 	background-color: white;
 	color: black;
 }
+
+.sourceHeader {
+	padding: 5px;
+	border-top: 1px solid #ddd;
+	display: flex;
+	background-color: #fff;
+}
+.sourceHeader h3 {
+	margin: 0;
+	flex-grow: 1;
+}
+.sourceToolbar {
+	text-align: right;
+}
+.sepr {
+    margin-right: 0.5em;
+}
+.sepl {
+    margin-left: 0.5em;
+}
+
 .vue-component h2 {
 	font-size: 1.75em;
 	padding: 0.25em 0 0.25em 0;

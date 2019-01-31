@@ -44,8 +44,16 @@ export default {
 			this.updateTable(this.$refs.table, 'listProcessGraphs', 'createProcessGraph');
 		},
 		addGraph() {
+			var title = prompt("Please specify a title for the process graph:");
+			if (title === null) {
+				return;
+			}
+			else if (typeof title !== 'string' || title.length === 0) {
+				title = null;
+			}
+
 			EventBus.$emit('getProcessGraph', (script) => {
-				this.connection.createProcessGraph(script)
+				this.connection.createProcessGraph(script, title)
 					.then(data => {
 						this.$refs.table.addData(data);
 						this.$utils.ok(this, 'Process Graph stored at back-end!');

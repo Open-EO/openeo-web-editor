@@ -1,8 +1,7 @@
 <template>
 	<div id="imageViewer" ref="imageContainer">
 		<span ref="emptyMsg" v-show="visibleContent == 'text'"></span>
-		<canvas ref="canvas" v-show="visibleContent == 'canvas'"></canvas>
-		<img ref="image" v-show="visibleContent == 'image'" />
+		<img ref="image" v-show="visibleContent == 'image'" title="Click to enlarge" style="max-width: 100%" @click="resize" />
 	</div>
 </template>
 
@@ -32,7 +31,6 @@ export default {
 		setMessage(message) {
 			this.$refs.emptyMsg.innerText = message;
 			this.visibleContent = 'text';
-			this.setCanvasSize(0, 0);
 		},
 		
 		showImage(src) {
@@ -53,20 +51,15 @@ export default {
 			this.showImage(data);
 		},
 
-		updateCanvas() {
-			this.setCanvasSize(this.$refs.image.naturalWidth, this.$refs.image.naturalHeight);
-
-			var context = this.$refs.canvas.getContext('2d');
-			context.drawImage(this.$refs.image, 0, 0);
-			this.$refs.canvas.originalImage = context.getImageData(0, 0, this.$refs.canvas.width, this.$refs.canvas.height);
-
-			this.visibleContent = 'canvas';
-		},
-
-		setCanvasSize(w, h) {
-			this.$refs.canvas.width = this.$refs.image.naturalWidth;
-			this.$refs.canvas.height = this.$refs.image.naturalHeight;
-
+		resize() {
+			if (this.$refs.image.style.maxWidth) {
+				this.$refs.image.style.maxWidth = null;
+				this.$refs.image.title = "Click to shrink (fit to screen)";
+			}
+			else {
+				this.$refs.image.style.maxWidth = "100%";
+				this.$refs.image.title = "Click to enlarge";
+			}
 		}
 
 	}

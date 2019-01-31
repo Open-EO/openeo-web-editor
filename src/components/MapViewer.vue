@@ -161,6 +161,9 @@ export default {
 			var id = service.serviceId;
 			if (typeof this.layer[id] === 'undefined') {
 				var args = service.attributes;
+				if (args === null || typeof args !== 'object' || Array.isArray(args)) {
+					args = {};
+				};
 				args.name = id.toUpperCase().substr(0,6) + " (WMS)";
 				args.service = args.service || 'WMS';
 				args.format = args.format || 'image/jpeg';

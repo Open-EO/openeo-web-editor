@@ -1,6 +1,7 @@
 <template>
 	<div class="docgen">
-		<Process :processData="process" :version="version"></Process>
+		<!-- ToDo: Implement processReferenceBuilder -->
+		<Process :processData="process" :version="version" :provideDownload="false"></Process>
 	</div>
 </template>
 
