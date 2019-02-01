@@ -129,7 +129,8 @@ export default {
 		updateTiffLayer(url) {
 			var id = this.$utils.formatDateTime(Date.now());
 			if (typeof this.layer[id] === 'undefined') {
-				var renderer = LeafletGeotiffRenderer();
+				var renderer = new LeafletGeotiffRenderer();
+				renderer.name = "openEO-geotiff-visualizer";
 				var opts = {
 					name: id + ' (GeoTiff)',
 					renderer: renderer
