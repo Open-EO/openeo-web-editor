@@ -93,7 +93,7 @@ export default {
 					this.updateXYZLayer(service);
 					break;
 				default:
-					this.$utils.error('Sorry, the service type is not supported by the map.');
+					this.$utils.error(this, 'Sorry, the service type is not supported by the map.');
 			}
 		},
 
@@ -161,7 +161,7 @@ export default {
 			var id = service.serviceId;
 			if (typeof this.layer[id] === 'undefined') {
 				var args = service.attributes;
-				if (args === null || typeof args !== 'object' || Array.isArray(args)) {
+				if (!this.$utils.isObject(args)) {
 					args = {};
 				};
 				args.name = id.toUpperCase().substr(0,6) + " (WMS)";

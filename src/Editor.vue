@@ -13,10 +13,15 @@
 						<template v-else>{{ scriptName }}</template>
 					</h3>
 					<div class="sourceToolbar">
-						<button @click="newScript" title="Clear current script / New script"><i class="fas fa-file"></i></button>
+						<template v-if="isVisualBuilderActive">
+							<button @click="blocksUndo()" v-show="blocksHasUndo()" title="Undo last change"><i class="fas fa-undo-alt"></i></button>
+							<button @click="blocksToggleCompact()" :class="{compactActive: blocksCompactMode()}" title="Compact Mode"><i class="fas fa-compress-arrows-alt"></i></button>
+							<button @click="blocksPerfectScale()" title="Scale to perfect size"><i class="fas fa-arrows-alt"></i></button>
+						</template>
+						<button @click="newScript" title="Clear current script / New script" class="sepl"><i class="fas fa-file"></i></button>
 						<button @click="openScriptChooser" title="Load script from local storage"><i class="fas fa-folder-open"></i></button>
 						<button @click="saveScript" title="Save script to local storage"><i class="fas fa-save"></i></button>
-						<button @click="executeProcessGraph" title="Run current process graph and view results" class="sepl" v-if="this.supports('startJob')"><i class="fas fa-play"></i></button>
+						<button @click="executeProcessGraph" title="Run current process graph and view results" class="sepl" v-if="this.supports('execute')"><i class="fas fa-play"></i></button>
 					</div>
 				</div>
 				<div class="tabsBody">
@@ -163,6 +168,35 @@ export default {
 	},
 	methods: {
 
+		// ToDO: Move this to the Blocks component, once we switched from jQuery to Vue
+		blocksUndo() {
+			if (this.$refs.graphBuilder) {
+				this.$refs.graphBuilder.blocks.undo();
+			}
+		},
+		blocksToggleCompact() {
+			if (this.$refs.graphBuilder) {
+				this.$refs.graphBuilder.blocks.toggleCompact();
+			}
+		},
+		blocksPerfectScale() {
+			if (this.$refs.graphBuilder) {
+				this.$refs.graphBuilder.blocks.perfectScale();
+			}
+		},
+		blocksHasUndo() {
+			if (this.$refs.graphBuilder) {
+				return this.$refs.graphBuilder.blocks.hasUndo();
+			}
+			return false;
+		},
+		blocksCompactMode() {
+			if (this.$refs.graphBuilder) {
+				return this.$refs.graphBuilder.blocks.compactMode;
+			}
+			return false;
+		},
+
 		changeServer(url) {
 			if (window.location.protocol === 'https:' && url.toLowerCase().substr(0,6) !== 'https:') {
 				this.$utils.error(this, 'You are trying to connect to a back-end with HTTP instead of HTTPS, which is insecure and prohibited by web browsers. Please use HTTPS instead.');
@@ -175,10 +209,10 @@ export default {
 						this.connection = connection;
 						this.requestCapabilities();
 					}).catch(error => {
-						this.$utils.error(this, error.message || error);
+						this.$utils.exception(this, error);
 					});
 			} catch (e) {
-				this.$utils.error(this, error.message || error);
+				this.$utils.exception(this, error);
 			}
 		},
 
@@ -376,7 +410,7 @@ export default {
 
 		isTabActive(tabName) {
 			var elem = document.getElementById(tabName);
-			if (typeof elem === 'object' && elem !== null && typeof elem.className === 'string' && elem.className.indexOf(' tabActive') !== -1) {
+			if (this.$utils.isObject(elem) && typeof elem.className === 'string' && elem.className.indexOf(' tabActive') !== -1) {
 				return true;
 			}
 			else {
@@ -651,5 +685,8 @@ footer {
 }
 #container .snotifyToast__title {
 	font-size: 1.2em;
+}
+.compactActive {
+    color: green;
 }
 </style>

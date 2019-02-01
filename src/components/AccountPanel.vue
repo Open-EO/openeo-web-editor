@@ -46,7 +46,7 @@ export default {
 		},
 		storageUsed: {
 			get() {
-				if (typeof this.me.storage !== 'object' || this.me.storage === null) {
+				if (!this.$utils.isObject(this.me.storage)) {
 					return null;
 				}
 				return this.me.storage.quota - this.me.storage.free;
@@ -54,7 +54,7 @@ export default {
 		},
 		storageUsedPercent: {
 			get() {
-				if (typeof this.me.storage !== 'object' || this.me.storage === null) {
+				if (!this.$utils.isObject(this.me.storage)) {
 					return null;
 				}
 				return Math.round(this.storageUsed / this.me.storage.quota * 100);

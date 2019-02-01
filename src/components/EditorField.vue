@@ -87,7 +87,7 @@ export default {
 
 			var areaSelect = L.areaSelect();
 			areaSelect.addTo(map);
-			if (this.value !== null && typeof this.value === 'object' && Object.keys(this.value).length >= 4) {
+			if (this.$utils.isObject(this.value) && Object.keys(this.value).length >= 4) {
 				this.value = L.latLngBounds(
 					L.latLng(this.value.south, this.value.west),
 					L.latLng(this.value.north, this.value.east)

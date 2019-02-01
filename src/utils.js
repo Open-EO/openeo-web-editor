@@ -9,13 +9,21 @@ export default {
 	},
 
 	exception(vm, error, alt) {
+		console.log(error);
 		var title = null;
 		var message = alt;
-		if (typeof error === 'object' && error.code && typeof error.message === 'string') {
+		if (this.isObject(error) && typeof error.message === 'string') {
 			if (error.code > 0) {
 				title = "Error #" + error.code;
 			}
+			else {
+				title = alt;
+			}
 			message = error.message;
+		}
+		else if (typeof error === 'string') {
+			message = error;
+			title = alt;
 		}
 		this.error(vm, message, title);
 	},
@@ -78,6 +86,10 @@ export default {
 
 	isUrl(url) {
 		return (typeof url === 'string' && url.length > 0 && url.match(/^https?:\/\//i) !== null);
+	},
+
+	isObject(value) {
+		return (typeof value === 'object' && value !== null && !Array.isArray(value));
 	}
 
 };

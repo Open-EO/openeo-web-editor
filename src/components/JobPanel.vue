@@ -223,8 +223,7 @@ export default {
 				this.connection.download(info.links[0].href, false)
 					.then(response => EventBus.$emit('showInViewer', response.data, info.links[0].type))
 					.catch(error => {
-						console.log();
-						this.$utils.exception(this, error.message || error, "Sorry, an error occured.");
+						this.$utils.exception(this, error, "Sorry, can't download results.");
 					});
 			});
 		},

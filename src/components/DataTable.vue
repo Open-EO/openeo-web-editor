@@ -78,12 +78,12 @@ export default {
 				this.noDataMessage = error;
 				return;
 			}
-			else if (typeof error == 'object') {
+			else if (this.$utils.isObject(error)) {
 				if (typeof error.data === 'object' && typeof error.config === 'object' && typeof error.headers === 'object') {
 					// Axios response, handle the data only.
 					error = error.data;
 				}
-				if (typeof error === 'object' && typeof error.message === 'string') {
+				if (this.$utils.isObject(error) && typeof error.message === 'string') {
 					this.noDataMessage = error.message;
 					return;
 				}
@@ -164,7 +164,7 @@ export default {
 			else {
 				data = row;
 			}
-			if (typeof col === 'object' && typeof col.computedValue === 'function') {
+			if (this.$utils.isObject(col) && typeof col.computedValue === 'function') {
 				data = col.computedValue(row, data);
 			}
 			return data;

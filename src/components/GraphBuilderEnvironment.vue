@@ -1,10 +1,5 @@
 <template>
 	<div id="GraphBuilderEnvironment">
-		<div class="editorToolbar">
-			<button @click="blocks.undo()" class="sepr" v-show="blocks.hasUndo()" title="Undo last change"><i class="fas fa-undo-alt"></i></button>
-			<button @click="blocks.toggleCompact()" :class="{compactActive: this.blocks.compactMode}" title="Compact Mode"><i class="fas fa-compress-arrows-alt"></i></button>
-			<button @click="blocks.perfectScale()" title="Scale to perfect size"><i class="fas fa-arrows-alt"></i></button>
-		</div>
 		<div id="pgEditor"></div>
 	</div>
 </template>
@@ -35,7 +30,7 @@ export default {
 	},
 	methods: {
 		errorHandler(message, title = null) {
-    		this.$utils.error(this, message, title);
+    		this.$utils.exception(this, message, title);
 		},
 
 		getProcessGraph(callback, silent = false) {
@@ -53,7 +48,7 @@ export default {
             	this.blocks.perfectScale();
 			} catch (error) {
 				// If an error occured: show it an restore the last working state from history.
-				this.$utils.error(this, error.message || error, "Process graph invalid");
+				this.$utils.exception(this, error, "Process graph invalid");
 				this.blocks.history.restoreLast();
 				success = false;
 			}
@@ -63,7 +58,7 @@ export default {
 		},
 
 		importProcessGraph(obj, x = 0, y = 0) {
-			if (obj === null || typeof obj !== 'object') {
+			if (!this.$utils.isObject(obj)) {
 				return null;
 			}
 
@@ -78,7 +73,7 @@ export default {
 				}
 
 				for(var a in obj) {
-					if (typeof obj[a] === 'object' && 'process_id' in obj[a]) {
+					if (this.$utils.isObject(obj[a]) && 'process_id' in obj[a]) {
 						var lastBlock = this.importProcessGraph(obj[a], x - ( block.getWidth() + 20 ) , y);
 						this.blocks.addEdge(lastBlock, "output", block, a);
 					}
@@ -95,7 +90,7 @@ export default {
 			var nodes = data.blocks;
 			if (nodes.length === 0) {
 				if (!silent) {
-					this.$utils.error(this, 'Error: There must be exactly one output');
+					this.$utils.error(this, 'There must be exactly one output');
 				}
 				return {};
 			}
@@ -117,7 +112,7 @@ export default {
 				}
 			}
 			if (nodeIdList.length !== 1 && !silent) {
-				this.$utils.error(this, 'Error: There must be exactly one output');
+				this.$utils.error(this, 'There must be exactly one output');
 			}
 			var startBlockId = nodeIdList[0];
 
@@ -183,7 +178,7 @@ export default {
 			try {
 				this.blocks.addCollection(name, 0, 0);
 			} catch(error) {
-				this.$utils.error(this, error.message || error);
+				this.$utils.exception(this, error);
 			}
 		},
 
@@ -195,7 +190,7 @@ export default {
 			try {
 				this.blocks.addProcess(name, 0, 0);
 			} catch(error) {
-				this.$utils.error(this, error.message || error);
+				this.$utils.exception(this, error);
 			}
 		}
 
@@ -206,40 +201,29 @@ export default {
 <style>
 #pgEditor {
 	height: 400px;
-	z-index: 100;
-}
-.editorToolbar {
-	float: right;
-	z-index: 101;
-	display: inline-block;
-	padding: 4px;
 }
 
 .blocks_js_editor {
-    width:100%;
-    height:100%;
-    position:relative;
+    width: 100%;
+    height: 100%;
+    position: relative;
 }
 
 .blocks_js_editor .blocks {
-    overflow:hidden;
+    overflow: hidden;
 }
 
 .blocks_js_editor .canvas {
-    position:absolute;
-    z-index:1;
+    position: absolute;
+    z-index: 1;
 }
 
 .blocks_js_editor .blocks {
-    overflow:hidden;
-    position:absolute;
-    z-index:3;
-    width:100%;
-    height:100%;
-}
-
-.compactActive {
-    color: green;
+    overflow: hidden;
+    position: absolute;
+    z-index: 3;
+    width: 100%;
+    height: 100%;
 }
 
 .blocks_js_editor .block {

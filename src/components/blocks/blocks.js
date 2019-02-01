@@ -122,8 +122,13 @@ Blocks.prototype.run = function(selector)
         });
 
         $('html').on('mouseup', function(event) {
-            if (event.which == 1) {
-                self.release();
+            if (self.linking && event.which == 1) {
+                self.tryEndLink();
+                self.linking = null;
+                self.redraw();
+            }
+            if (self.moving && (event.which == 2 || event.which == 1)) {
+                self.moving = null;
             }
         });
 
@@ -135,12 +140,6 @@ Blocks.prototype.run = function(selector)
             
             if (event.which == 2 || (!self.selectedLink && !self.selectedBlock && event.which == 1)) {
                 self.moving = [self.mouseX, self.mouseY];
-            }
-        });
-        
-        self.div.on('mouseup', function(event) {
-            if (event.which == 2 || event.which == 1) {
-                self.moving = null;
             }
         });
         
@@ -494,7 +493,7 @@ Blocks.prototype.getBlockById = function(blockId)
  */
 Blocks.prototype.deleteEvent = function()
 {
-    // Remove a block and its edges
+    // Remove a block and its edgesdisabled
     if (this.selectedBlock != null) {
         this.history.save();
         this.removeBlock(this.selectedBlock);
@@ -554,19 +553,6 @@ Blocks.prototype.redraw = function()
     if (!this.redrawTimeout) {
         this.redrawTimeout = setTimeout(function() { self.doRedraw(); }, 25);
     }
-};
-
-/**
- * Release the mouse
- */
-Blocks.prototype.release = function()
-{
-    if (this.linking) {
-        this.tryEndLink();
-        this.linking=null;
-    }
-    $('.connector').removeClass('disabled');
-    this.redraw();
 };
 
 /**
@@ -631,7 +617,7 @@ Blocks.prototype.endLink = function(block, connectorId)
     try {
         this.addEdge(this.linking[0], new Connector(this.linking[1]), block, new Connector(connectorId));
     } catch (error) {
-        this.showError(error.message || error);
+        this.showError(error);
     }
     this.linking = null;
     this.selectedBlock = null;
@@ -722,7 +708,7 @@ Blocks.prototype.doLoad = function(scene, init)
             self.id = 1;
             self.edgeId = 1;
 
-            if (typeof(scene)!='object' || (scene instanceof Array)) {
+            if (typeof scene != 'object' || (scene instanceof Array)) {
                 throw 'Scene is not an object';
             }
             if (!('blocks' in scene) || !(scene.blocks instanceof Array)) {
@@ -818,7 +804,7 @@ Blocks.prototype.blockImport = function(data) {
  */
 Blocks.prototype.perfectScale = function()
 {
-    if (!this.div) {
+    if (!this.div || this.blocks.length === 0) {
         return;
     }
 

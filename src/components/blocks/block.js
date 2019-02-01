@@ -190,7 +190,7 @@ Block.prototype.getHtml = function()
                 'type_' + field.type,
                 'connector',
                 connectorId,
-                ((field.hasValue || key == 'output') ? 'hasValue' : 'noValue')
+                ((field.hasValue || field.meta.required !== true || key == 'output') ? 'hasValue' : 'noValue')
             ];
             var label;
             if (self.blocks.compactMode && key == 'output') {

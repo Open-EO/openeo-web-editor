@@ -6,7 +6,6 @@ import Segment from './segment.js';
 var Edge = function(id, block1, connector1, block2, connector2, blocks)
 {
     this.blocks = blocks;
-    this.label = null;
     this.id = parseInt(id);
     this.block1 = block1;
     this.connector1 = connector1;
@@ -32,14 +31,6 @@ var Edge = function(id, block1, connector1, block2, connector2, blocks)
 Edge.prototype.fromTo = function()
 {
     return [this.block1, this.block2];
-};
-
-/**
- * Sets the label of the edge
- */
-Edge.prototype.setLabel = function(label)
-{
-    this.label = label;
 };
 
 /**
@@ -86,22 +77,7 @@ Edge.prototype.draw = function(svg)
     svg.line(xM, yM, xM+(xA*cosB-yA*sinB), yM+(yA*cosB+xA*sinB), {
         stroke: strokeStyle, strokeWidth: lineWidth
     });
-
-    if (this.label != null) {
-        var fontSize = Math.round(this.defaultFontSize*this.blocks.scale);
-
-        svg.text(xM-2*fontSize, yM+fontSize/3, this.label, {
-            fontSize: fontSize+'px',
-            fill: '#3a3b01',
-            stroke: '#fff',
-            strokeWidth: 2
-        });
-        svg.text(xM-2*fontSize, yM+fontSize/3, this.label, {
-            fontSize: fontSize+'px',
-            fill: '#3a3b01',
-        });
-    }
-    };
+};
 
 /**
  * Does the position collide the line ?

@@ -21,14 +21,14 @@ var Field = function(metaField)
     var s = this.meta.schema;
     if (s.type === 'array' || (Array.isArray(s.type) && s.type.includes('array'))) {
         this.isArray = true;
-        this.type = s.items.type ? s.items.type : 'any';
+        this.type = typeof s.items === 'object' ? s.items.type : 'any';
     }
 
     // Cardinalities
     this.card = 'card' in metaField ? metaField.card : '*';
     this.card = this.parseCardinality(this.card, this.attrs == 'output');
 
-    // Field iname
+    // Field name
     this.name = metaField.name.toLowerCase();
 
     this.label = metaField.name;
