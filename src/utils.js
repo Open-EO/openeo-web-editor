@@ -34,17 +34,17 @@ export default {
 		vm.$snotify.info(message, title, this.snotifyDefaults);
 	},
 	ok(vm, message, title = null) {
-		var options = {
+		var typeDefaults = {
 			timeout: 2000
 		};
-		vm.$snotify.success(message, title, Object.assign(this.snotifyDefaults, options));
+		vm.$snotify.success(message, title, Object.assign({}, this.snotifyDefaults, typeDefaults));
 	},
-	confirm(vm, message, options) {
-		var defaults = {
+	confirm(vm, message, customOptions) {
+		var typeDefaults = {
 			timeout: 10000,
 			closeOnClick: false
 		};
-		vm.$snotify.confirm(message, null, Object.assign(this.snotifyDefaults, defaults, options));
+		vm.$snotify.confirm(message, null, Object.assign({}, this.snotifyDefaults, typeDefaults, customOptions));
 	},
 
 	blobToText(blob, callback) {

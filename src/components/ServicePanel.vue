@@ -82,12 +82,9 @@ export default {
 			var options = {
 				buttons: []
 			};
-			options.buttons.push({text: 'View', action: () => this.viewService(service)});
+			options.buttons.push({text: 'View on map', action: () => this.viewService(service)});
 			if (this.supports('describeService')) {
 				options.buttons.push({text: 'Details', action: () => this.serviceInfo(service)});
-			}
-			if (this.supports('updateService')) {
-				options.buttons.push({text: 'Edit', action: () => this.editService(service)});
 			}
 			if (this.supports('deleteService')) {
 				options.buttons.push({text: 'Delete', action: () => this.deleteService(service)});

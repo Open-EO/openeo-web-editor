@@ -9,8 +9,8 @@
 			<button title="Estimate" @click="estimateJob(p.row)" v-show="supports('estimateJob')"><i class="fas fa-file-invoice-dollar"></i></button>
 			<button title="Edit" @click="editJob(p.row)" v-show="supports('updateJob')" v-if="isJobInactive(p.row)"><i class="fas fa-edit"></i></button>
 			<button title="Delete" @click="deleteJob(p.row)" v-show="supports('deleteJob')"><i class="fas fa-trash"></i></button>
-			<button title="Start" @click="queueJob(p.row)" v-show="supports('startJob')" v-if="isJobInactive(p.row)"><i class="fas fa-play-circle"></i></button>
-			<button title="Cancel" @click="cancelJob(p.row)" v-show="supports('stopJob')" v-if="isJobActive(p.row)"><i class="fas fa-stop-circle"></i></button>
+			<button title="Start processing" @click="queueJob(p.row)" v-show="supports('startJob')" v-if="isJobInactive(p.row)"><i class="fas fa-play-circle"></i></button>
+			<button title="Cancel processing" @click="cancelJob(p.row)" v-show="supports('stopJob')" v-if="isJobActive(p.row)"><i class="fas fa-stop-circle"></i></button>
 			<button title="Download" @click="downloadResults(p.row)" v-show="supports('downloadResults')" v-if="hasResults(p.row)"><i class="fas fa-download"></i></button>
 			<button title="View results" @click="viewResults(p.row, true)" v-show="supports('downloadResults')" v-if="hasResults(p.row)"><i class="fas fa-eye"></i></button>
 			<button title="Subscribe" @click="subscribeToJob(p.row)" v-show="supports('subscribe') && !jobSubscriptions.includes(p.row)"><i class="fas fa-bell"></i></button>
@@ -84,8 +84,15 @@ export default {
 			var options = {
 				buttons: []
 			};
-			if (this.supports('downloadResults')) {
-				options.buttons.push({text: 'Download', action: () => this.downloadJob(job)});
+
+			if (this.supports('estimateJob')) {
+				options.buttons.push({text: 'Estimate', action: () => this.estimateJob(job)});
+			}
+			if (this.supports('startJob')) {
+				options.buttons.push({text: 'Start processing', action: () => this.queueJob(job)});
+			}
+			if (this.supports('deleteJob')) {
+				options.buttons.push({text: 'Delete', action: () => this.deleteJob(job)});
 			}
 			this.$utils.confirm(this, 'Job created!', options);
 		},
