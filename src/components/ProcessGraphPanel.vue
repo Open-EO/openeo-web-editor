@@ -5,7 +5,7 @@
 			<button title="Refresh process graphs" @click="updateData()"><i class="fas fa-sync-alt"></i></button> <!-- ToDo: Should be done automatically later -->
 		</template>
 		<template slot="actions" slot-scope="p">
-			<button title="Details" @click="graphInfo(p.row)" v-show="supports('describeProcessGraph')"><i class="fas fa-info"></i></button>
+			<button title="Details" @click="graphInfo(p.row)" v-show="supports('describeProcessGraph')"><i class="fas fa-info"></i></button>		<button title="Show in Editor" @click="showInEditor(p.row)" v-show="supports('describeProcessGraph')"><i class="fas fa-code-branch"></i></button>
 			<button title="Edit" @click="editGraph(p.row)" v-show="supports('updateProcessGraph')"><i class="fas fa-edit"></i></button>
 			<button title="Delete" @click="deleteGraph(p.row)" v-show="supports('deleteProcessGraph')"><i class="fas fa-trash"></i></button>
 		</template>
@@ -43,6 +43,21 @@ export default {
 		updateData() {
 			this.updateTable(this.$refs.table, 'listProcessGraphs', 'createProcessGraph');
 		},
+		refreshProcessGraph(pg, callback = null) {
+			pg.describeProcessGraph()
+				.then(updatedPg => {
+					if (typeof callback === 'function') {
+						callback(updatedPg);
+					}
+					this.updateProcessGraphData(updatedPg);
+				})
+				.catch(error => this.$utils.exception(this, error, 'Sorry, could not load process graph.'));
+		},
+		showInEditor(pg) {
+			this.refreshProcessGraph(pg, updatedPg => {
+				EventBus.$emit('insertProcessGraph', updatedPg.processGraph);
+			});
+		},
 		addGraph() {
 			var title = prompt("Please specify a title for the process graph:");
 			if (title === null) {
@@ -61,12 +76,9 @@ export default {
 			});
 		},
 		graphInfo(pg) {
-			pg.describeProcessGraph()
-				.then(updatedPg => {
-					EventBus.$emit('showModal', 'Process Graph Details', updatedPg.getAll());
-					this.updateProcessGraphData(updatedPg);
-				})
-				.catch(error => this.$utils.exception(this, error, 'Sorry, could not load process graph.'));
+			this.refreshProcessGraph(pg, updatedPg => {
+				EventBus.$emit('showModal', 'Process Graph Details', updatedPg.getAll());
+			});
 		},
 		editGraph(pg) {
 			// TODO: provide more update options/don't just override the process graph and nothing else

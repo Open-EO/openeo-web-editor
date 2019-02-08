@@ -30,9 +30,6 @@ export default {
 	created() {
 		EventBus.$on('serverChanged', this.updateData);
 	},
-	mounted() {
-		window.setInterval(this.executeWatchers, 5000);
-	},
 	methods: {
 		updateData() {
 			// To be overwritten by implementations

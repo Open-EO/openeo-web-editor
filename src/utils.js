@@ -39,12 +39,13 @@ export default {
 		};
 		vm.$snotify.success(message, title, Object.assign({}, this.snotifyDefaults, typeDefaults));
 	},
-	confirm(vm, message, customOptions) {
+	confirm(vm, message, buttons = []) {
 		var typeDefaults = {
 			timeout: 10000,
-			closeOnClick: false
+			closeOnClick: false,
+			buttons: buttons
 		};
-		vm.$snotify.confirm(message, null, Object.assign({}, this.snotifyDefaults, typeDefaults, customOptions));
+		vm.$snotify.confirm(message, null, Object.assign({}, this.snotifyDefaults, typeDefaults));
 	},
 
 	blobToText(blob, callback) {

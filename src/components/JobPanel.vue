@@ -6,13 +6,14 @@
 		</template>
 		<template slot="actions" slot-scope="p">
 			<button title="Details" @click="showJobInfo(p.row)" v-show="supports('describeJob')"><i class="fas fa-info"></i></button>
+			<button title="Show in Editor" @click="showInEditor(p.row)" v-show="supports('describeJob')"><i class="fas fa-code-branch"></i></button>
 			<button title="Estimate" @click="estimateJob(p.row)" v-show="supports('estimateJob')"><i class="fas fa-file-invoice-dollar"></i></button>
-			<button title="Edit" @click="editJob(p.row)" v-show="supports('updateJob')" v-if="isJobInactive(p.row)"><i class="fas fa-edit"></i></button>
+			<button title="Edit" @click="editJob(p.row)" v-show="supports('updateJob') && isJobInactive(p.row)"><i class="fas fa-edit"></i></button>
 			<button title="Delete" @click="deleteJob(p.row)" v-show="supports('deleteJob')"><i class="fas fa-trash"></i></button>
-			<button title="Start processing" @click="queueJob(p.row)" v-show="supports('startJob')" v-if="isJobInactive(p.row)"><i class="fas fa-play-circle"></i></button>
-			<button title="Cancel processing" @click="cancelJob(p.row)" v-show="supports('stopJob')" v-if="isJobActive(p.row)"><i class="fas fa-stop-circle"></i></button>
-			<button title="Download" @click="downloadResults(p.row)" v-show="supports('downloadResults')" v-if="hasResults(p.row)"><i class="fas fa-download"></i></button>
-			<button title="View results" @click="viewResults(p.row, true)" v-show="supports('downloadResults')" v-if="hasResults(p.row)"><i class="fas fa-eye"></i></button>
+			<button title="Start processing" @click="queueJob(p.row)" v-show="supports('startJob') && isJobInactive(p.row)"><i class="fas fa-play-circle"></i></button>
+			<button title="Cancel processing" @click="cancelJob(p.row)" v-show="supports('stopJob') && isJobActive(p.row)"><i class="fas fa-stop-circle"></i></button>
+			<button title="Download" @click="downloadResults(p.row)" v-show="supports('downloadResults') && hasResults(p.row)"><i class="fas fa-download"></i></button>
+			<button title="View results" @click="viewResults(p.row, true)" v-show="supports('downloadResults') && hasResults(p.row)"><i class="fas fa-eye"></i></button>
 			<button title="Subscribe" @click="subscribeToJob(p.row)" v-show="supports('subscribe') && !jobSubscriptions.includes(p.row)"><i class="fas fa-bell"></i></button>
 			<button title="Unsubscribe" @click="unsubscribeFromJob(p.row)" v-show="supports('unsubscribe') && jobSubscriptions.includes(p.row)"><i class="fas fa-bell-slash"></i></button>
 		</template>
@@ -67,12 +68,31 @@ export default {
 	created() {
 		EventBus.$on('jobCreated', this.jobCreated);
 	},
+	mounted() {
+		window.setInterval(this.executeWatchers, 10000);
+	},
 	methods: {
 		listJobs() {
 			return this.connection.listJobs();
 		},
 		updateData() {
 			this.updateTable(this.$refs.table, 'listJobs', 'createJob');
+		},
+		refreshJob(job, callback = null) {
+			var oldJob = Object.assign({}, job);
+			job.describeJob()
+				.then(updatedJob => {
+					if (typeof callback === 'function') {
+						callback(updatedJob, oldJob);
+					}
+					this.updateJobData(updatedJob);
+				})
+				.catch(error => this.$utils.exception(this, error, "Sorry, could not load job information."));
+		},
+		showInEditor(job) {
+			this.refreshJob(job, updatedJob => {
+				EventBus.$emit('insertProcessGraph', updatedJob.processGraph);
+			});
 		},
 		jobCreated(job) {
 			if (!this.$refs.table) {
@@ -81,20 +101,17 @@ export default {
 
 			this.$refs.table.addData(job);
 
-			var options = {
-				buttons: []
-			};
-
+			var buttons = [];
 			if (this.supports('estimateJob')) {
-				options.buttons.push({text: 'Estimate', action: () => this.estimateJob(job)});
+				buttons.push({text: 'Estimate', action: () => this.estimateJob(job)});
 			}
 			if (this.supports('startJob')) {
-				options.buttons.push({text: 'Start processing', action: () => this.queueJob(job)});
+				buttons.push({text: 'Start processing', action: () => this.queueJob(job)});
 			}
 			if (this.supports('deleteJob')) {
-				options.buttons.push({text: 'Delete', action: () => this.deleteJob(job)});
+				buttons.push({text: 'Delete', action: () => this.deleteJob(job)});
 			}
-			this.$utils.confirm(this, 'Job created!', options);
+			this.$utils.confirm(this, 'Job created!', buttons);
 		},
 		createJob(processGraph, outputFormat = null, outputParameters = {}, title = null) {
 			if (!outputFormat) {
@@ -170,16 +187,26 @@ export default {
 		},
 		executeWatchers() {
 			for(var i in this.watchers) {
-				this.watchers[i].describeJob().then(data => this.updateJobData(data));
+				this.refreshJob(this.watchers[i], (updated, old) => {
+					console.log(updated.status, old.status, updated, old);
+					if (old.status !== 'finished' && updated.status === 'finished') {
+						var buttons = [];
+						if (this.supports('downloadResults')) {
+							buttons.push({text: 'Download', action: () => this.downloadResults(job)});
+							buttons.push({text: 'View', action: () => this.viewResults(job)});
+						}
+						this.$utils.confirm(this, 'Job has finished!', buttons);
+					}
+					else if (old.status !== 'error' && updated.status === 'error') {
+						this.$utils.error('Job has stopped due to an error.');
+					}
+				});
 			}
 		},
 		showJobInfo(job) {
-			job.describeJob()
-				.then(updatedJob => {
-					EventBus.$emit('showModal', 'Job Details', updatedJob.getAll());
-					this.updateJobData(updatedJob);
-				})
-				.catch(error => this.$utils.exception(this, error, "Sorry, could not load job details."));
+			this.refreshJob(job, updatedJob => {
+				EventBus.$emit('showModal', 'Job Details', updatedJob.getAll());
+			});
 		},
 		estimateJob(job) {
 			job.estimateJob()

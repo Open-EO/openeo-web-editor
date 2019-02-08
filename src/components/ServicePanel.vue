@@ -12,7 +12,7 @@
 			</span>
 		</template>
 		<template slot="actions" slot-scope="p">
-			<button title="Details" @click="serviceInfo(p.row)" v-show="supports('describeService')"><i class="fas fa-info"></i></button>
+			<button title="Details" @click="serviceInfo(p.row)" v-show="supports('describeService')"><i class="fas fa-info"></i></button><button title="Show in Editorr" @click="showInEditor(p.row)" v-show="supports('describeService')"><i class="fas fa-code-branch"></i></button>
 			<button title="Edit" @click="editService(p.row)" v-show="supports('updateService')"><i class="fas fa-edit"></i></button>
 			<button title="Delete" @click="deleteService(p.row)" v-show="supports('deleteService')"><i class="fas fa-trash"></i></button>
 			<button title="View on map" @click="viewService(p.row)"><i class="fas fa-map"></i></button>
@@ -72,6 +72,21 @@ export default {
 		updateData() {
 			this.updateTable(this.$refs.table, 'listServices', 'createService');
 		},
+		refreshService(service, callback = null) {
+			service.describeService()
+				.then(updatedService => {
+					if (typeof callback === 'function') {
+						callback(updatedService);
+					}
+					this.updateServiceData(updatedService);
+				})
+				.catch(error => this.$utils.exception(this, error, "Sorry, could not load service information."));
+		},
+		showInEditor(service) {
+			this.refreshService(service, updatedService => {
+				EventBus.$emit('insertProcessGraph', updatedService.processGraph);
+			});
+		},
 		serviceCreated(service) {
 			if (!this.$refs.table) {
 				return;
@@ -79,17 +94,16 @@ export default {
 
 			this.$refs.table.addData(service);
 
-			var options = {
-				buttons: []
-			};
-			options.buttons.push({text: 'View on map', action: () => this.viewService(service)});
+			var buttons = [
+				{text: 'View on map', action: () => this.viewService(service)}
+			];
 			if (this.supports('describeService')) {
-				options.buttons.push({text: 'Details', action: () => this.serviceInfo(service)});
+				buttons.push({text: 'Details', action: () => this.serviceInfo(service)});
 			}
 			if (this.supports('deleteService')) {
-				options.buttons.push({text: 'Delete', action: () => this.deleteService(service)});
+				buttons.push({text: 'Delete', action: () => this.deleteService(service)});
 			}
-			this.$utils.confirm(this, 'Web Service created!', options);
+			this.$utils.confirm(this, 'Web Service created!', buttons);
 		},
 		createService(processGraph, type, title = null) {
 			this.connection.createService(processGraph, type, title)
@@ -141,13 +155,9 @@ export default {
 			});
 		},
 		serviceInfo(service) {
-			service.describeService()
-				.then(updatedService => {
-					EventBus.$emit('showModal', 'Web Service Details', updatedService.getAll());
-					this.updateServiceData(updatedService);
-				}).catch(error => {
-					this.$utils.exception(this, error, 'Sorry, could not load service information.');
-				});
+			this.refreshService(service, updatedService => {
+				EventBus.$emit('showModal', 'Web Service Details', updatedService.getAll());
+			});
 		},
 		editService(service) {
 			// TODO: provide more update options/don't just override the process graph and nothing else
