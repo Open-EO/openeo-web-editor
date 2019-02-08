@@ -167,7 +167,6 @@ export default {
 			switch(updatedJob.status.toLowerCase()) {
 				case 'running':
 				case 'queued':
-				case 'unknown':
 					if (index === -1) {
 						this.watchers.push(updatedJob);
 					}
@@ -355,9 +354,6 @@ export default {
 #JobPanel td.status[data-value="queued"] {
 	color: darkblue;
 }
-#JobPanel td.status[data-value="paused"] {
-	color: purple;
-}
 #JobPanel td.status[data-value="finished"] {
 	color: darkgreen;
 }
@@ -366,8 +362,5 @@ export default {
 }
 #JobPanel td.status[data-value="error"] {
 	color: red;
-}
-#JobPanel td.status[data-value="unknown"] {
-	color: darkgrey;
 }
 </style>
