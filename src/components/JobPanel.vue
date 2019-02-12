@@ -187,12 +187,11 @@ export default {
 		executeWatchers() {
 			for(var i in this.watchers) {
 				this.refreshJob(this.watchers[i], (updated, old) => {
-					console.log(updated.status, old.status, updated, old);
 					if (old.status !== 'finished' && updated.status === 'finished') {
 						var buttons = [];
 						if (this.supports('downloadResults')) {
-							buttons.push({text: 'Download', action: () => this.downloadResults(job)});
-							buttons.push({text: 'View', action: () => this.viewResults(job)});
+							buttons.push({text: 'Download', action: () => this.downloadResults(updated)});
+							buttons.push({text: 'View', action: () => this.viewResults(updated)});
 						}
 						this.$utils.confirm(this, 'Job has finished!', buttons);
 					}
