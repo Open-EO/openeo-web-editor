@@ -502,7 +502,7 @@ export default {
 			EventBus.$emit('getProcessGraph', (script) => {
 				this.connection.execute(script, format)
 					.then(data => EventBus.$emit('showInViewer', data, format))
-					.catch(error => this.$utils.error(this, 'Sorry, could not execute script.'));
+					.catch(error => this.$utils.exception(this, error, 'Sorry, could not execute process graph.'));
 			});
 		},
 
