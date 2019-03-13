@@ -54,10 +54,6 @@ export default {
 		reader.readAsText(blob);
 	},
 
-	isNumeric(n) {
-		return !isNaN(parseFloat(n)) && isFinite(n);
-	},
-
 	isChildOfModal(that) {
 		return that.$parent && that.$parent.$options.name == 'Modal';
 	},
