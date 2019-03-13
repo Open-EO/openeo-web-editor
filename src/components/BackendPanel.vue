@@ -139,7 +139,7 @@ export default {
 			}
 			var info = {
 				url: this.connection.getBaseUrl(),
-				capabilities: this.connection.capabilitiesObject._data,
+				capabilities: this.connection.capabilitiesObject.data,
 				services: this.connection.supportedServices,
 				formats: this.connection.supportedOutputFormats
 			};
