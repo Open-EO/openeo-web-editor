@@ -488,12 +488,17 @@ Blocks.prototype.getBlockById = function(blockId)
     return null;
 };
 
+Blocks.prototype.canDelete = function()
+{
+    return (this.selectedBlock != null || this.selectedLink != null);
+}
+
 /**
  * Delete the current link
  */
 Blocks.prototype.deleteEvent = function()
 {
-    // Remove a block and its edgesdisabled
+    // Remove a block and its edges
     if (this.selectedBlock != null) {
         this.history.save();
         this.removeBlock(this.selectedBlock);

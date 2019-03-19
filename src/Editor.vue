@@ -14,6 +14,7 @@
 					</h3>
 					<div class="sourceToolbar">
 						<template v-if="isVisualBuilderActive">
+							<button @click="blocksDelete()" v-show="blocksCanDelete()" title="Delete selected elements"><i class="fas fa-trash"></i></button>
 							<button @click="blocksUndo()" v-show="blocksHasUndo()" title="Undo last change"><i class="fas fa-undo-alt"></i></button>
 							<button @click="blocksToggleCompact()" :class="{compactActive: blocksCompactMode()}" title="Compact Mode"><i class="fas fa-compress-arrows-alt"></i></button>
 							<button @click="blocksPerfectScale()" title="Scale to perfect size"><i class="fas fa-arrows-alt"></i></button>
@@ -169,6 +170,11 @@ export default {
 	methods: {
 
 		// ToDO: Move this to the Blocks component, once we switched from jQuery to Vue
+		blocksDelete() {
+			if (this.$refs.graphBuilder) {
+				this.$refs.graphBuilder.blocks.deleteEvent();
+			}
+		},
 		blocksUndo() {
 			if (this.$refs.graphBuilder) {
 				this.$refs.graphBuilder.blocks.undo();
@@ -182,7 +188,14 @@ export default {
 		blocksPerfectScale() {
 			if (this.$refs.graphBuilder) {
 				this.$refs.graphBuilder.blocks.perfectScale();
+				this.$refs.graphBuilder.$forceUpdate();
 			}
+		},
+		blocksCanDelete() {
+			if (this.$refs.graphBuilder) {
+				return this.$refs.graphBuilder.blocks.canDelete();
+			}
+			return false;
 		},
 		blocksHasUndo() {
 			if (this.$refs.graphBuilder) {

@@ -1,10 +1,14 @@
 <template>
 	<div class="vue-component server-info">
 		<Capabilities :capabilities="capabilities" :url="url" />
-		<h3>Supported secondary web service types</h3>
-		<SupportedServiceTypes :version="capabilities.version" :services="services" />
-		<h3>Supported output file formats</h3>
-		<SupportedFileFormats :version="capabilities.version" :formats="formats" />
+		<template v-if="services">
+			<h3>Supported secondary web service types</h3>
+			<SupportedServiceTypes :version="capabilities.version" :services="services" />
+		</template>
+		<template v-if="formats">
+			<h3>Supported output file formats</h3>
+			<SupportedFileFormats :version="capabilities.version" :formats="formats" />
+		</template>
 	</div>
 </template>
 

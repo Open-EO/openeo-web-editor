@@ -172,7 +172,7 @@ export default {
 					}
 					break;
 				default:
-					delete this.watchers[index];
+					this.watchers.splice(index, 1);
 			}
 		},
 		deleteJob(job) {
@@ -196,7 +196,7 @@ export default {
 						this.$utils.confirm(this, 'Job has finished!', buttons);
 					}
 					else if (old.status !== 'error' && updated.status === 'error') {
-						this.$utils.error('Job has stopped due to an error.');
+						this.$utils.error(this, 'Job has stopped due to an error or timeout.');
 					}
 				});
 			}

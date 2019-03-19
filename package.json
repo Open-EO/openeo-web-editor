@@ -32,7 +32,7 @@
   },
   "dependencies": {
     "@openeo/js-client": "^0.3.2",
-    "@openeo/vue-components": "0.3.0",
+    "@openeo/vue-components": "^0.3.4",
     "codemirror": "^5.42.2",
     "leaflet": "^1.4.0",
     "leaflet-fullscreen": "^1.0.2",
