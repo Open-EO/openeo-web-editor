@@ -44,7 +44,7 @@ export default {
 		draggable,
 		VueCtkDateTimePicker
 	},
-    props: {
+	props: {
 		field: Object,
 		pass: {},
 		isItem: {
@@ -103,12 +103,12 @@ export default {
 			});
 		}
 	},
-    computed: {
+	computed: {
 		fieldName() {
 			return this.field.name + (this.field.isArray ? '[]' : '');
 		}
-    },
-    methods: {
+	},
+	methods: {
 		type() {
 			if (this.getFormat() === 'temporal_extent') {
 				return 'temporal_extent';
@@ -125,16 +125,23 @@ export default {
 			else if (this.field.type === 'boolean') {
 				return 'boolean';
 			}
+			else if (this.field.type === 'number') {
+				return 'number';
+			}
+			else if (this.field.type === 'integer') {
+				return 'integer';
+			}
 			else {
 				return 'string';
 			}
 		},
 		getValue() {
-			if (this.type() === 'temporal_extent') {
+			var type = this.type();
+			if (type === 'temporal_extent') {
 				return [this.value.start, this.value.end];
 			}
-			else if (this.type() === 'spatial_extent') {
-				return  {
+			else if (type === 'spatial_extent') {
+				return	{
 					// Round to 6 decimals, the leading + removes the trailing zeros appended by toFixed.
 					west: +this.value.getWest().toFixed(6),
 					south: +this.value.getSouth().toFixed(6),
@@ -142,12 +149,18 @@ export default {
 					north: +this.value.getNorth().toFixed(6),
 				};
 			}
-			else if (this.type() === 'array') {
+			else if (type === 'array') {
 				var values = [];
 				for(var i in this.$refs.arrayFields) {
 					values.push(this.$refs.arrayFields[i].getValue());
 				}
 				return values;
+			}
+			else if (type === 'number') {
+				return Number.parseFloat(this.value);
+			}
+			else if (type === 'integer') {
+				return Number.parseInt(this.value);
 			}
 			else {
 				return this.value;
@@ -167,17 +180,17 @@ export default {
 			this.value.splice(k, 1);
 			return false;
 		}
-    }
+	}
 };
 </script>
 
 <style scoped>
 .arrayElement {
-  transition: all 0.5s;
+	transition: all 0.5s;
 }
 
 .arrayElements-enter, .arrayElements-active {
-  opacity: 0;
+	opacity: 0;
 }
 
 .mover {

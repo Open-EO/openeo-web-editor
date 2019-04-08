@@ -32,7 +32,7 @@
   },
   "dependencies": {
     "@openeo/js-client": "^0.3.2",
-    "@openeo/vue-components": "^0.3.4",
+    "@openeo/vue-components": "^0.3.5",
     "codemirror": "^5.42.2",
     "leaflet": "^1.4.0",
     "leaflet-fullscreen": "^1.0.2",
@@ -44,8 +44,8 @@
     "vuedraggable": "^2.17.0"
   },
   "devDependencies": {
-    "@vue/cli-plugin-babel": "^3.3.0",
-    "@vue/cli-service": "^3.3.0",
+    "@vue/cli-plugin-babel": "^3.5.5",
+    "@vue/cli-service": "^3.5.3",
     "vue-template-compiler": "^2.5.22"
   },
   "browserslist": [
