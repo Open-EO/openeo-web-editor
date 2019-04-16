@@ -80,8 +80,8 @@ export default {
 		},
 		formatCurrency(num) {
 			var currency = '';
-			if (this.connection && this.connection.capabilitiesObject && this.connection.capabilitiesObject.currency() !== null) {
-				currency = ' ' + this.connection.capabilitiesObject.currency();
+			if (this.connection && this.connection.capabilities().currency() !== null) {
+				currency = ' ' + this.connection.capabilities().currency();
 			}
 			return num + currency;
 		}

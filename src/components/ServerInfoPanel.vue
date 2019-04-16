@@ -29,6 +29,9 @@ export default {
 </script>
 
 <style>
+.capabilities h2 {
+	display: none;
+}
 .billing-plans h4 {
 	display: inline-block;
 	font-size: 1.2em;

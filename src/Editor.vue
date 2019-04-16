@@ -216,11 +216,12 @@ export default {
 				return;
 			}
 			try {
-				var openEO = new OpenEO();
-				openEO.connect(url)
+				OpenEO.connect(url)
 					.then(connection => {
 						this.connection = connection;
-						this.requestCapabilities();
+						this.requestSupportedOutputFormats();
+						this.requestSupportedServices();
+						this.requestAuth();
 					}).catch(error => {
 						this.$utils.exception(this, error);
 					});
@@ -234,19 +235,7 @@ export default {
 		},
 
 		supports(feature) {
-			return this.connection && this.connection.capabilitiesObject && this.connection.capabilitiesObject.hasFeature(feature);
-		},
-
-		requestCapabilities() {
-			this.connection.capabilities().then(response => {
-				this.connection.capabilitiesObject = response;
-				this.requestSupportedOutputFormats();
-				this.requestSupportedServices();
-				this.requestAuth();
-			}).catch(error => {
-				console.log(error);
-				this.$utils.error(this, 'Sorry, server is not responding.');
-			});
+			return this.connection && this.connection.capabilities().hasFeature(feature);
 		},
 
 		requestSupportedOutputFormats() {
@@ -359,31 +348,31 @@ export default {
 		},
 
 		supportsJobs() {
-			if (!this.connection || !this.connection.capabilitiesObject) {
+			if (!this.connection) {
 				return false;
 			}
-			return (this.connection.capabilitiesObject.hasFeature('listJobs') || this.connection.capabilitiesObject.hasFeature('createJob'));
+			return (this.connection.capabilities().hasFeature('listJobs') || this.connection.capabilities().hasFeature('createJob'));
 		},
 
 		supportsServices() {
-			if (!this.connection || !this.connection.capabilitiesObject) {
+			if (!this.connection) {
 				return false;
 			}
-			return (this.connection.capabilitiesObject.hasFeature('listServices') || this.connection.capabilitiesObject.hasFeature('createService'));
+			return (this.connection.capabilities().hasFeature('listServices') || this.connection.capabilities().hasFeature('createService'));
 		},
 
 		supportsProcessGraphs() {
-			if (!this.connection || !this.connection.capabilitiesObject) {
+			if (!this.connection) {
 				return false;
 			}
-			return (this.connection.capabilitiesObject.hasFeature('listProcessGraphs') || this.connection.capabilitiesObject.hasFeature('createProcessGraph'));
+			return (this.connection.capabilities().hasFeature('listProcessGraphs') || this.connection.capabilities().hasFeature('createProcessGraph'));
 		},
 
 		supportsFiles() {
-			if (!this.connection || !this.connection.capabilitiesObject) {
+			if (!this.connection) {
 				return false;
 			}
-			return (this.connection.capabilitiesObject.hasFeature('listFiles') || this.connection.capabilitiesObject.hasFeature('uploadFile'));
+			return (this.connection.capabilities().hasFeature('listFiles') || this.connection.capabilities().hasFeature('uploadFile'));
 		},
 	
 		changeUserTab(evt) {
@@ -507,14 +496,10 @@ export default {
 		},
 
 		executeProcessGraph() {
-			var format = prompt('Please specify the file format:', '');
-			if (format === null) {
-				return;
-			}
 			this.$utils.info(this, 'Data requested. Please wait...');
 			EventBus.$emit('getProcessGraph', (script) => {
 				this.connection.execute(script, format)
-					.then(data => EventBus.$emit('showInViewer', data, format))
+					.then(data => EventBus.$emit('showInViewer', data))
 					.catch(error => this.$utils.exception(this, error, 'Sorry, could not execute process graph.'));
 			});
 		},

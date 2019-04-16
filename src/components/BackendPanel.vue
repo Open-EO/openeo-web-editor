@@ -11,7 +11,7 @@
 			<div class="collections-toolbar" v-if="showCollectionSelector()">
 				<span>Collections:</span>
 				<select id="collection" ref="collection">
-					<option v-for="d in collections" :key="d.name" :value="d.name">{{ d.name }}</option>
+					<option v-for="d in collections" :key="d.id" :value="d.id">{{ d.id }}</option>
 				</select>
 				<button id="insertCollection" @click="insertCollection" title="Insert into script"><i class="fas fa-plus"></i></button>
 				<button @click="showSelectedCollectionInfo" title="Show details" v-show="supports('describeCollection')"><i class="fas fa-info"></i></button>
@@ -19,7 +19,7 @@
 			<div class="processes-toolbar" v-if="showProcessSelector()">
 				<span>Processes:</span>
 				<select id="processes" ref="processes">
-					<option v-for="p in processes" :key="p.name" :value="p.name" :title="p.summary ? p.summary : ''">{{ p.name }}</option>
+					<option v-for="p in processes" :key="p.id" :value="p.id" :title="p.summary ? p.summary : ''">{{ p.id }}</option>
 				</select>
 				<button id="insertProcesses" @click="insertProcess" title="Insert into script"><i class="fas fa-plus"></i></button>
 				<button @click="showSelectedProcessInfo" title="Show details" v-show="supports('listProcesses')"><i class="fas fa-info"></i></button>
@@ -139,11 +139,11 @@ export default {
 			}
 			var info = {
 				url: this.connection.getBaseUrl(),
-				capabilities: this.connection.capabilitiesObject.data,
+				capabilities: this.connection.capabilities().toPlainObject(),
 				services: this.connection.supportedServices,
 				formats: this.connection.supportedOutputFormats
 			};
-			EventBus.$emit('showComponentModal', 'Server information', 'ServerInfoPanel', info);
+			EventBus.$emit('showComponentModal', this.connection.capabilities().title() || 'Server information', 'ServerInfoPanel', info);
 		},
 
 		showSelectedCollectionInfo() {
@@ -155,7 +155,7 @@ export default {
 				.then(info => {
 					EventBus.$emit('showComponentModal', id, 'CollectionPanel', {
 						collection: info,
-						version: this.connection.capabilitiesObject.version()
+						version: this.connection.capabilities().apiVersion()
 					});
 				})
 				.catch(error => this.$utils.error(this, "Sorry, can't load collection details."));
@@ -166,10 +166,10 @@ export default {
 		},
 
 		showProcessInfo(id) {
-			const info = this.processes.find(p => p.name == id);
+			const info = this.processes.find(p => p.id == id);
 			EventBus.$emit('showComponentModal', id, 'ProcessPanel', {
 				process: info,
-				version: this.connection.capabilitiesObject.version()
+				version: this.connection.capabilities().apiVersion()
 			});
 		},
 
@@ -184,22 +184,24 @@ export default {
 		setDiscoveredCollections(info) {
 			this.collections = [];
 			for (var i in info.collections) {
-				if (typeof info.collections[i].name === 'undefined') {
+				if (typeof info.collections[i].id === 'undefined') {
 					continue;
 				}
 				this.collections.push(info.collections[i]);
 			}
+			this.collections.sort((a, b) => a.id.localeCompare(b.id));
 			EventBus.$emit('propagateCollections', this.collections);
 		},
 		
 		setDiscoveredProcesses(info) {
 			this.processes = [];
 			for (var i in info.processes) {
-				if (typeof info.processes[i].name === 'undefined') {
+				if (typeof info.processes[i].id === 'undefined') {
 					continue;
 				}
 				this.processes.push(info.processes[i]);
 			}
+			this.processes.sort((a, b) => a.id.localeCompare(b.id));
 			EventBus.$emit('propagateProcesses', this.processes);
 		}
 	}

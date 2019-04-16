@@ -29,8 +29,8 @@ export default {
 	data() {
 		return {
 			columns: {
-				name: {
-					name: 'Path / Name',
+				path: {
+					name: 'Path',
 					primaryKey: true
 				},
 				size: {
@@ -64,18 +64,10 @@ export default {
 			var field = document.getElementById('uploadUserFile');
 			var file = field.files[0];
 
-			this.connection.createFile(file.name)
-				.then(virtualFile => {
-					return virtualFile.uploadFile(file, percent => {
-						this.uploadProgress = percent;
-					});
-				}).then(uploadedFile => {
-					// ToDo: This should not be self generated, but the API gives no information yet
-					uploadedFile.setAll({
-						name: file.name,
-						size: file.size,
-						modified: (new Date()).toISOString()
-					});
+			var virtualFile = this.connection.openFile(file.name);
+			virtualFile.uploadFile(file, percent => this.uploadProgress = percent)
+				.then(uploadedFile => {
+					console.log(uploadedFile);
 					this.$refs.table.replaceData(uploadedFile);
 					this.uploadProgress = 100;
 					this.fadeOutUploadProgress();
@@ -99,12 +91,12 @@ export default {
 		},
 		downloadFile(file) {
 			this.$utils.info(this, 'File requested. Please wait...');
-			file.downloadFile(file.name);
+			file.downloadFile(file.path);
 		},
 		deleteFile(file) {
 			file.deleteFile()
 				.then(data => {
-					this.$refs.table.removeData(file.name);
+					this.$refs.table.removeData(file.path);
 				})
 				.catch(error => {
 					this.$utils.error(this, 'Sorry, could not delete file.');
@@ -135,10 +127,10 @@ export default {
 #FilePanel .addFile button {
 	margin: 0;
 }
-#FilePanel .name {
+#FilePanel .path {
 	width: 50%;
 }
-#FilePanel td.name {
+#FilePanel td.path {
 	word-break: break-all;
 }
 #FilePanel .size {

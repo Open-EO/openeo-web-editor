@@ -113,11 +113,8 @@ export default {
 			}
 			this.$utils.confirm(this, 'Job created!', buttons);
 		},
-		createJob(processGraph, outputFormat = null, outputParameters = {}, title = null) {
-			if (!outputFormat) {
-				outputFormat = null;
-			}
-			this.connection.createJob(processGraph, outputFormat, outputParameters, title)
+		createJob(processGraph, title = null) {
+			this.connection.createJob(processGraph, title)
 				.then(job => {
 					EventBus.$emit('jobCreated', job);
 				}).catch(error => {
@@ -133,30 +130,8 @@ export default {
 				title = null;
 			}
 
-			var supportedFormats = Object.keys(this.connection.supportedOutputFormats.formats).map(v => v.toUpperCase());
-			var format = this.connection.supportedOutputFormats.default;
-			do {
-				var msgPrefix = '';
-				if (format !== this.connection.supportedOutputFormats.default) {
-					msgPrefix = "Specified file format is invalid.\r\n";
-				}
-				var format = prompt(msgPrefix + 'Please specify the targeted file format:', format);
-				if (format === null) {
-					return;
-				}
-				else if (typeof format === 'string') {
-					format = format.toUpperCase();
-					if (!supportedFormats.includes(format)) {
-						format = '';
-					}
-				}
-				else {
-					format = '';
-				}
-			} while(format.length == 0);
-
 			EventBus.$emit('getProcessGraph', (script) => {
-				this.createJob(script, format, {}, title);
+				this.createJob(script, title);
 			});
 		},
 		updateJobData(updatedJob) {
