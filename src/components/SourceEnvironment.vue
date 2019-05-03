@@ -68,7 +68,6 @@ export default {
 			}
 			if (replace) {
 				this.editor.setValue(text);
-				this.scriptName = '';
 			}
 			else {
 				this.editor.replaceSelection(text);

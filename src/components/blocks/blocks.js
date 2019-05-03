@@ -283,9 +283,6 @@ Blocks.prototype.registerProcess = function(meta)
 
     data.returns.name = "Output";
     data.returns.attrs = "output";
-    if (!data.returns.schema) {
-        data.returns.schema = {};
-    }
     data.fields.push(data.returns);
 
     for(var a in data.parameters) {
@@ -312,7 +309,7 @@ Blocks.prototype.registerCollection = function(meta)
         attrs: "output",
         schema: {
             type: 'object',
-            format: 'eodata'
+            format: 'raster-cube'
         }
     };
     data.fields = [data.returns];

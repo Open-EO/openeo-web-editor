@@ -68,7 +68,7 @@ Field.prototype.getEnumChoices = function() {
 }
 
 Field.prototype.isEditable = function() {
-    return this.meta.schema.format !== 'eodata';
+    return this.attrs !== 'output' && this.meta.schema.format !== 'raster-cube'; // ToDo: Take anyOf etc. into account
 }
 
 /**

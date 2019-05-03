@@ -27,10 +27,10 @@
 				</div>
 				<div class="tabsBody">
 					<div class="tabContent" id="graphTab">
-						<GraphBuilderEnvironment ref="graphBuilder" :active="isVisualBuilderActive" :scriptName="scriptName" />
+						<GraphBuilderEnvironment ref="graphBuilder" :active="isVisualBuilderActive" />
 					</div>
 					<div class="tabContent" id="sourceTab">
-						<SourceEnvironment ref="sourceEditor" :active="!isVisualBuilderActive" :scriptName="scriptName" />
+						<SourceEnvironment ref="sourceEditor" :active="!isVisualBuilderActive" />
 					</div>
 				</div>
 			</div>

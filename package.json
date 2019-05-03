@@ -16,7 +16,7 @@
       "name": "Christoph Friedrich"
     }
   ],
-  "description": "A web-based editor for interactive usage of the openEO API.",
+  "description": "An interactive and easy to use web-based editor for the OpenEO API.",
   "license": "Apache-2.0",
   "homepage": "http://openeo.org",
   "bugs": {
