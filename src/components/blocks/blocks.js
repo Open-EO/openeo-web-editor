@@ -2,6 +2,7 @@ import History from './history.js';
 import Block from './block.js';
 import Edge from './edge.js';
 import Connector from './connector.js';
+import Utils from '../../utils.js'
 
 /**
  * Manage the blocks
@@ -244,10 +245,12 @@ Blocks.prototype.addCollection = function(name, x, y)
 {
     return this.addBlock(name, 'collection', x, y);
 };
+
 Blocks.prototype.addProcess = function(name, x, y)
 {
     return this.addBlock(name, 'process', x, y);
 };
+
 Blocks.prototype.addBlock = function(name, type, x, y)
 {
     if (!(type in this.moduleTypes)) {
@@ -256,8 +259,7 @@ Blocks.prototype.addBlock = function(name, type, x, y)
     if (!(name in this.moduleTypes[type])) {
         throw "'" + name + "' not available.";
     }
-    var meta = this.moduleTypes[type][name];
-    var block = new Block(this, meta, this.id);
+    var block = new Block(this, type, this.moduleTypes[type][name], this.id);
     block.x = x;
     block.y = y;
     block.create(this.div.find('.blocks'));
@@ -272,38 +274,11 @@ Blocks.prototype.addBlock = function(name, type, x, y)
  */
 Blocks.prototype.registerProcess = function(meta)
 {
-    var data = Object.assign({}, meta);
-    if (typeof data.id === 'string')  {
-        data.name = data.id;
-    }
-    else {
-        data.id = data.name;
-    }
-    data.fields = [];
-
-    data.returns.name = "Output";
-    data.returns.attrs = "output";
-    data.fields.push(data.returns);
-
-    for(var a in data.parameters) {
-        if (!data.parameters[a].schema) {
-            data.parameters[a].schema = {};
-        }
-        data.parameters[a].name = a;
-        data.parameters[a].attrs = "input";
-        data.fields.push(data.parameters[a]);
-    }
-    this.register(data, 'process');
+    this.register(meta, 'process');
 };
 Blocks.prototype.registerCollection = function(meta)
 {
-    var data = Object.assign({}, meta);
-    if (typeof data.id === 'string')  {
-        data.name = data.id;
-    }
-    else {
-        data.id = data.name;
-    }
+    var data = Utils.mergeDeep({}, meta);
     data.returns = {
         name: "Output",
         attrs: "output",
@@ -312,15 +287,13 @@ Blocks.prototype.registerCollection = function(meta)
             format: 'raster-cube'
         }
     };
-    data.fields = [data.returns];
     this.register(data, 'collection');
 };
 Blocks.prototype.register = function(meta, type) {
     if (!(type in this.moduleTypes)) {
         this.moduleTypes[type] = {};
     }
-    meta.module = type;
-    this.moduleTypes[type][meta.name] = meta;
+    this.moduleTypes[type][meta.id] = meta;
 }
 
 /**
@@ -789,9 +762,8 @@ Blocks.prototype.edgeImport = function(data)
  * Imports JSON data into a block
  */
 Blocks.prototype.blockImport = function(data) {
-    if (data.module in this.moduleTypes && data.type in this.moduleTypes[data.module]) {
-        var meta = this.moduleTypes[data.module][data.type];
-        var block = new Block(this, meta, data.id);
+    if (data.type in this.moduleTypes && data.name in this.moduleTypes[data.module]) {
+        var block = new Block(this, data.type, this.moduleTypes[data.type][data.name], data.id);
         block.x = data.x;
         block.y = data.y;
         block.setValues(data.values);

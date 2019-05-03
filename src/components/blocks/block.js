@@ -1,14 +1,16 @@
 import Fields from './fields.js';
 import Connector from './connector.js';
 import EventBus from '../../eventbus.js';
+import VueUtils from '@openeo/vue-components/utils.js';
 
 /**
  * Creates an instance of a block
  */
-var Block = function(blocks, meta, id)
+var Block = function(blocks, type, schema, id)
 {
     this.blocks = blocks;
-    this.meta = meta;
+    this.name = schema.id;
+    this.type = type;
 
     // Appareance values
     this.defaultFont = 10;
@@ -32,14 +34,11 @@ var Block = function(blocks, meta, id)
     this.lastScale = null;
 
     // Parameters
-    this.fields = new Fields(this);
+    this.fields = new Fields(this, schema);
 
     // Position
     this.x = 0;
     this.y = 0;
-
-    // I/Os cardinality
-    this.ios = {};
 
     // Which IO has focus ?
     this.focusedConnector = null;
@@ -61,7 +60,7 @@ Block.prototype.getWidth = function() {
 };
 
 Block.prototype.hasInputs = function() {
-    return this.fields.fields.length > 1; // One is always output
+    return this.fields.inputs.length > 0;
 };
 
 /**
@@ -106,18 +105,6 @@ Block.prototype.getValue = function(name)
 };
 
 /**
- * Html entities on a string
- */
-Block.prototype.htmlentities = function(str)
-{
-    str = str.replace(/</g, '&lt;');
-    str = str.replace(/>/g, '&gt;');
-    str = str.replace(/"/g, '&quot;');
-    str = str.replace(/'/g, '&apos;');
-    return str;
-}
-
-/**
  * Returns the render of the block
  */
 Block.prototype.getHtml = function()
@@ -125,8 +112,8 @@ Block.prototype.getHtml = function()
     this.connectors = [];
 
     // Getting the title
-    var header = this.meta.name + ' <span class="blockId">#' + this.id + '</span>';
-    var title = this.meta.name + ' #' + this.id;
+    var header = this.name + ' <span class="blockId">#' + this.id + '</span>';
+    var title = this.name + ' #' + this.id;
 
     var html = '<div class="blockTitle"><span class="titleText" title="'+title+'">'+header+'</span>';
     html += '<div class="blockicon">';
@@ -165,11 +152,11 @@ Block.prototype.getHtml = function()
                             formattedValue = 'Object';
                         }
                         
-                        formattedValue = '<span title="' + self.htmlentities(JSON.stringify(value)) + '">' + formattedValue + '</span>';
+                        formattedValue = '<span title="' + VueUtils.htmlentities(JSON.stringify(value)) + '">' + formattedValue + '</span>';
                     }
                 }
                 else if (typeof value === 'string' && value.length > 10) {
-                    formattedValue = '<span title="' + self.htmlentities(JSON.stringify(value)) + '">' + value.substr(0,10) + '...</span>';
+                    formattedValue = '<span title="' + VueUtils.htmlentities(JSON.stringify(value)) + '">' + value.substr(0,10) + '...</span>';
                 }
                 else if (typeof value === 'boolean') {
                     formattedValue = value ? '✔️' : '❌';
@@ -190,14 +177,14 @@ Block.prototype.getHtml = function()
                 'type_' + field.type,
                 'connector',
                 connectorId,
-                ((field.hasValue || field.meta.required !== true || key == 'output') ? 'hasValue' : 'noValue')
+                ((field.hasValue || !field.isRequired() || key == 'output') ? 'hasValue' : 'noValue')
             ];
             var label;
             if (self.blocks.compactMode && key == 'output') {
                 label = '';
             }
             else {
-                label = self.htmlentities(field.getLabel());
+                label = VueUtils.htmlentities(field.getLabel());
             }
     
             // Generating HTML
@@ -251,7 +238,7 @@ Block.prototype.maxEntry = function(name)
  */
 Block.prototype.create = function(div)
 {
-    var html = '<div id="block' + this.id + '" class="block ' + this.meta['class'] + '"></div>'
+    var html = '<div id="block' + this.id + '" class="block"></div>'
 
     div.append(html);
     this.div = div.find('#block' + this.id);
@@ -379,12 +366,12 @@ Block.prototype.initListeners = function()
 
     // Show the description
     self.div.find('.info').on('click', function() {
-        switch(self.meta.module) {
+        switch(self.type) {
             case 'process':
-                EventBus.$emit('showProcessInfo', self.meta.name);
+                EventBus.$emit('showProcessInfo', self.name);
                 break;
             case 'collection':
-                EventBus.$emit('showCollectionInfo', self.meta.name);
+                EventBus.$emit('showCollectionInfo', self.name);
                 break;
         }
     });
@@ -418,20 +405,16 @@ Block.prototype.linkPositionFor = function(connector)
  */
 Block.prototype.canLink = function(connector)
 {
-    var tab = [];
+    var tab;
     var connectorId = connector.id();
 
     if (connectorId in this.edges) {
         tab = this.edges[connectorId];
     }
 
-    var card = this.fields.getField(connector.name).card;
+    // ToDo: Check compatibility of nodes?
 
-    if (card[1] == '*') {
-        return true;
-    }
-
-    return (tab.length < card[1]);
+    return true;
 };
 
 /**
@@ -519,8 +502,8 @@ Block.prototype.export = function()
         id: this.id,
         x: this.x,
         y: this.y,
-        type: this.meta.name,
-        module: this.meta.module,
+        type: this.type,
+        name: this.name,
         values: this.getValues()
     };
 };

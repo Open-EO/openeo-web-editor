@@ -10,7 +10,12 @@ import Blocks from './blocks/blocks.js';
 
 export default {
 	name: 'GraphBuilderEnvironment',
-	props: ['active'],
+	props: {
+		active: {
+			type: Boolean,
+			default: true
+		}
+	},
 	data() {
 		return {
 			blocks: null

@@ -9,7 +9,7 @@
 						<Description :description="editable.meta.description" />
 					</div>
 				</label>
-				<EditorField :ref="editable.name" :field="editable" :pass="editable.getValue()" />
+				<EditorFields :ref="editable.name" :field="editable" :pass="editable.getValue()" />
 			</div>
 			<button type="submit" class="save">Save</button>
 		</form>
@@ -18,13 +18,13 @@
 
 <script>
 import Description from '@openeo/vue-components/components/Description.vue';
-import EditorField from './EditorField.vue';
+import EditorFields from './EditorFields.vue';
 
 export default {
 	name: 'ProcessParameterEditor',
 	components: {
 		Description,
-		EditorField
+		EditorFields
 	},
 	props: ['editables', 'saveCallback'],
     methods: {
@@ -60,10 +60,15 @@ export default {
 	border-bottom: 1px dotted #ccc;
 }
 #processParameterEditor .fieldRow label {
+	min-width: 40%;
 	width: 40%;
+}
+#processParameterEditor .fieldRow .fieldEditorContainer {
+	flex-grow: 1;
 }
 #processParameterEditor .fieldRow .fieldContainer {
 	flex-grow: 1;
+	padding-left: 1em;
 }
 #processParameterEditor .fieldRow .fieldValue {
 	display: flex;

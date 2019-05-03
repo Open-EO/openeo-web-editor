@@ -4,38 +4,27 @@ import EventBus from '../../eventbus.js';
 /**
  * Parameters managers
  */
-var Fields = function(block)
+var Fields = function(block, schema)
 {
     // Block & meta
     this.block = block;
-    this.meta = this.block.meta;
 
     // Fields
-    this.fields = [];
-    for (var k in this.meta.fields) {
-        this.fields.push(new Field(this.meta.fields[k]));
-    }
-
-    // Indexed fields
+    var output = new Field(schema.returns, "Output", "output");
+    this.outputs = [output];
     this.inputs = [];
-    this.outputs = [];
     this.editables = [];
-    this.indexedFields = {};
+    this.indexedFields = {
+        output: output
+    };
 
-    // Indexing
-    for (var k in this.fields) {
-        var field = this.fields[k];
-        this.indexedFields[field.name] = field;
-
+    for(var name in schema.parameters) {
+        var field = new Field(schema.parameters[name], name, "input");
+        this.inputs.push(field);
         if (field.isEditable()) {
             this.editables.push(field);
         }
-        if ('input' == field.attrs) {
-            this.inputs.push(field);
-        }
-        if ('output' == field.attrs) {
-            this.outputs.push(field);
-        }
+        this.indexedFields[field.name] = field;
     }
 };
 
@@ -54,7 +43,7 @@ Fields.prototype.getField = function(name)
  */
 Fields.prototype.show = function()
 {
-    var title = this.block.meta.name+' #'+this.block.id;
+    var title = this.block.name+' #'+this.block.id;
     var opts = {
         editables: this.editables,
         saveCallback: (data) => {
