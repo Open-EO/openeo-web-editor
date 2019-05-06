@@ -4,9 +4,9 @@
 		<form v-else id="processParameterEditor" @submit.prevent="save">
 			<div class="fieldRow" v-for="(editable, k) in editables" :key="k">
 				<label>
-					{{ editable.label }}<strong class="required" v-if="editable.meta.required === true" title="required">*</strong>
-					<div v-if="editable.meta.description" class="description">
-						<Description :description="editable.meta.description" />
+					{{ editable.label }}<strong class="required" v-if="editable.isRequired()" title="required">*</strong>
+					<div v-if="editable.description()" class="description">
+						<Description :description="editable.description()" />
 					</div>
 				</label>
 				<EditorFields :ref="editable.name" :field="editable" :pass="editable.getValue()" />

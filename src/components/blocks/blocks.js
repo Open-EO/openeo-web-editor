@@ -2,7 +2,8 @@ import History from './history.js';
 import Block from './block.js';
 import Edge from './edge.js';
 import Connector from './connector.js';
-import Utils from '../../utils.js'
+import SVG from './svg.js';
+import Utils from '../../utils.js';
 
 /**
  * Manage the blocks
@@ -42,9 +43,10 @@ var Blocks = function(errorHandler = null)
 
     // BLocks division
     this.div = null;
+    this.innerDiv = null;
 
-    // Context for drawingc
-    this.context = null;
+    // SVG drawings
+    this.svg = null;
 
     // Blocks types
     this.moduleTypes = {};
@@ -74,7 +76,7 @@ var Blocks = function(errorHandler = null)
         this.blocks = [];
         this.id = 1;
         this.edgeId = 1;
-        this.div.find('.blocks').html('');
+        this.innerDiv.innerHTML = '';
         this.redraw();
     }
 
@@ -89,95 +91,99 @@ var Blocks = function(errorHandler = null)
  */
 Blocks.prototype.run = function(selector)
 {
-    var self = this;
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading"){
+        this._run(selector);
+    }
+    else {
+        document.addEventListener('DOMContentLoaded', () => this._run(selector));
+    }
+};
 
-    $(document).ready(function() {
-        self.div = $(selector);
+Blocks.prototype._run = function(selector) {
+    this.div = document.querySelector(selector);
 
-        if (!self.div.length) {
-            alert('blocks.js: Unable to find ' + selector);
+    if (!this.div) {
+        alert('blocks.js: Unable to find ' + selector);
+    }
+
+    // Inject the initial editor
+    this.div.innerHTML = '<div class="blocks_js_editor">'
+                        + '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" class="canvas"></svg>'
+                        + '<div class="blocks"></div>'
+                        + '</div>';
+
+    this.innerDiv = this.div.querySelector(".blocks");
+
+    this.svg = new SVG(this.div.querySelector("svg"), "100%", "100%");
+
+    // Setting up default viewer center
+    var rect = Utils.domBoundingBox(this.div);
+    this.center.x = rect.width/2;
+    this.center.y = rect.height/2;
+
+    // Listen for mouse position
+    this.div.addEventListener('mousemove', event => {
+        var rect = Utils.domBoundingBox(this.div);
+        this.mouseX = event.pageX - rect.offsetLeft;
+        this.mouseY = event.pageY - rect.offsetTop;
+        this.move();
+    });
+
+    document.querySelector('html').addEventListener('mouseup', event => {
+        if (this.linking && event.which == 1) {
+            this.tryEndLink();
+            this.linking = null;
+            this.redraw();
         }
-
-        // Inject the initial editor
-        self.div.html(
-              '<div class="blocks_js_editor">'
-            + '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" class="canvas"></svg>'
-            + '<div class="blocks"></div>'
-            + '</div>'
-        );
-
-        self.div.find('svg').css('width', '100%');
-        self.div.find('svg').css('height', '100%');
-
-        self.context = self.div.find('svg');
-
-        // Setting up default viewer center
-        self.center.x = self.div.width()/2;
-        self.center.y = self.div.height()/2;
-
-        // Listen for mouse position
-        self.div[0].addEventListener('mousemove', function(evt) {
-            self.mouseX = evt.pageX - self.div.offset().left;
-            self.mouseY = evt.pageY - self.div.offset().top;
-            self.move(evt);
-        });
-
-        $('html').on('mouseup', function(event) {
-            if (self.linking && event.which == 1) {
-                self.tryEndLink();
-                self.linking = null;
-                self.redraw();
-            }
-            if (self.moving && (event.which == 2 || event.which == 1)) {
-                self.moving = null;
-            }
-        });
-
-        // Detect clicks on the canvas
-        self.div.on('mousedown', function(event) {
-            if (self.canvasClicked()) {
-                event.preventDefault();
-            } 
-            
-            if (event.which == 2 || (!self.selectedLink && !self.selectedBlock && event.which == 1)) {
-                self.moving = [self.mouseX, self.mouseY];
-            }
-        });
-        
-        // Initializing canvas
-        self.context.svg();
-
-        // Detecting key press
-        $(document).on('keydown', function(e){
-            if ($('input').is(':focus')) {
-                return;
-            }   
-
-            // "del" will delete a selected link
-            if (e.keyCode == 46) {
-                self.deleteEvent();
-            }
-        });
-
-        // Binding the mouse wheel
-        self.div.bind('mousewheel', function(event, delta, deltaX, deltaY) {
-            var dX = self.mouseX - self.center.x;
-            var dY = self.mouseY - self.center.y;
-            var deltaScale = Math.pow(1.1, deltaY);
-            self.center.x -= dX*(deltaScale-1);
-            self.center.y -= dY*(deltaScale-1);
-            self.scale *= deltaScale;
-            self.redraw();
-            event.preventDefault();
-        });
-
-        self.history = new History(self);
-
-        if (!self.isReady) {
-            self.postReady();
+        if (this.moving && (event.which == 2 || event.which == 1)) {
+            this.moving = null;
         }
     });
-};
+
+    // Detect clicks on the canvas
+    this.div.addEventListener('mousedown', event => {
+        if (this.canvasClicked()) {
+            event.preventDefault();
+        } 
+        
+        if (event.which == 2 || (!this.selectedLink && !this.selectedBlock && event.which == 1)) {
+            this.moving = [this.mouseX, this.mouseY];
+        }
+    });
+
+    // Detecting key press
+    document.addEventListener('keydown', e => {
+        var allInputs = document.querySelectorAll('input, textarea, button, select, datalist');
+        for(let el of allInputs) {
+            if (el === document.activeElement) {
+                return;
+            }
+        }
+
+        // "del" will delete a selected link
+        if (e.keyCode == 46) {
+            this.deleteEvent();
+        }
+    });
+
+    // Binding the mouse wheel
+    this.div.addEventListener('mousewheel', event => {
+        var dX = this.mouseX - this.center.x;
+        var dY = this.mouseY - this.center.y;
+        var deltaScale = Math.pow(1.1, event.deltaY / 40 * -1);
+        this.center.x -= dX*(deltaScale-1);
+        this.center.y -= dY*(deltaScale-1);
+        this.scale *= deltaScale;
+        this.redraw();
+        event.preventDefault();
+    });
+
+    this.history = new History(this);
+
+    if (!this.isReady) {
+        this.postReady();
+    }
+}
 
 /**
  * Tell the system is ready
@@ -262,7 +268,7 @@ Blocks.prototype.addBlock = function(name, type, x, y)
     var block = new Block(this, type, this.moduleTypes[type][name], this.id);
     block.x = x;
     block.y = y;
-    block.create(this.div.find('.blocks'));
+    block.create(this.innerDiv);
     this.history.save();
     this.blocks.push(block);
     this.id++;
@@ -276,6 +282,7 @@ Blocks.prototype.registerProcess = function(meta)
 {
     this.register(meta, 'process');
 };
+
 Blocks.prototype.registerCollection = function(meta)
 {
     var data = Utils.mergeDeep({}, meta);
@@ -289,6 +296,7 @@ Blocks.prototype.registerCollection = function(meta)
     };
     this.register(data, 'collection');
 };
+
 Blocks.prototype.register = function(meta, type) {
     if (!(type in this.moduleTypes)) {
         this.moduleTypes[type] = {};
@@ -495,22 +503,22 @@ Blocks.prototype.doRedraw = function()
     }
 
     // Redraw edges
-    var svg = this.context.svg('get');
-    svg.clear();
+    this.svg.clear();
 
     for (var k in this.edges) {
-        this.edges[k].draw(svg);
+        this.edges[k].draw(this.svg);
     }
 
     if (this.linking) {
         try {
             var position = this.linking[0].linkPositionFor(this.linking[1]);
 
-            svg.line(position.x, position.y, this.mouseX, this.mouseY, {
-                stroke: 'rgba(0,0,0,0.4)',
-                strokeWidth: 3*this.scale
+            this.svg.line(position.x, position.y, this.mouseX, this.mouseY, {
+                'stroke': 'rgba(0,0,0,0.4)',
+                'stroke-width': 3*this.scale
             });
         } catch (error) {
+            console.log(error);
             this.linking = null;
         }
     }
@@ -523,10 +531,8 @@ Blocks.prototype.doRedraw = function()
  */
 Blocks.prototype.redraw = function()
 {
-    var self = this;
-
     if (!this.redrawTimeout) {
-        this.redrawTimeout = setTimeout(function() { self.doRedraw(); }, 25);
+        this.redrawTimeout = setTimeout(() => this.doRedraw(), 25);
     }
 };
 
@@ -594,6 +600,7 @@ Blocks.prototype.endLink = function(block, connectorId)
     } catch (error) {
         this.showError(error);
     }
+
     this.linking = null;
     this.selectedBlock = null;
 };
@@ -675,13 +682,11 @@ Blocks.prototype.load = function(scene)
  */
 Blocks.prototype.doLoad = function(scene, init)
 {
-    var self = this;
-
-    this.ready(function() {
+    this.ready(() => {
         try {
             var errors = [];
-            self.id = 1;
-            self.edgeId = 1;
+            this.id = 1;
+            this.edgeId = 1;
 
             if (typeof scene != 'object' || (scene instanceof Array)) {
                 throw 'Scene is not an object';
@@ -696,42 +701,44 @@ Blocks.prototype.doLoad = function(scene, init)
             for (var k in scene.blocks) {
                 try {
                     var data = scene.blocks[k];
-                    var block = self.blockImport(data);
-                    self.id = Math.max(self.id, block.id+1);
-                    block.create(self.div.find('.blocks'));
-                    self.blocks.push(block);
+                    var block = this.blockImport(data);
+                    this.id = Math.max(this.id, block.id+1);
+                    block.create(this.innerDiv);
+                    this.blocks.push(block);
                 } catch (error) {
-                    errors.push('Block #'+k+ ':'+error);
+                    console.log(error);
+                    errors.push('Block #'+k+ ': '+error);
                 }
             }
 
             for (var k in scene.edges) {
                 try {
                     var data = scene.edges[k];
-                    var edge = self.edgeImport(data);
+                    var edge = this.edgeImport(data);
 
-                    self.edgeId = Math.max(self.edgeId, edge.id+1);
+                    this.edgeId = Math.max(this.edgeId, edge.id+1);
 
                     edge.create();
-                    self.edges.push(edge);
+                    this.edges.push(edge);
                 } catch (error) {
-                    errors.push('Edge #'+k+' :'+error);
+                    console.log(error);
+                    errors.push('Edge #'+k+' : '+error);
                 }
             }
 
             if (errors.length) {
                 for (var k in errors) {
-                    self.showError(errors[k], 'Loading error');
+                    this.showError(errors[k], 'Loading error');
                 }
             }
 
-            self.redraw();
+            this.redraw();
 
             if (init) {
-                self.perfectScale();	    
+                this.perfectScale();	    
             }
         } catch (error) {
-            self.showError(error, 'Unable to create edge');
+            this.showError(error, 'Unable to create edge');
         }
     });
 };
@@ -762,7 +769,7 @@ Blocks.prototype.edgeImport = function(data)
  * Imports JSON data into a block
  */
 Blocks.prototype.blockImport = function(data) {
-    if (data.type in this.moduleTypes && data.name in this.moduleTypes[data.module]) {
+    if (data.type in this.moduleTypes && data.name in this.moduleTypes[data.type]) {
         var block = new Block(this, data.type, this.moduleTypes[data.type][data.name], data.id);
         block.x = data.x;
         block.y = data.y;
@@ -799,13 +806,16 @@ Blocks.prototype.perfectScale = function()
             yMax = Math.max(yMax, block.y+115);
         }
     }
-    var scaleA = this.div.width()/(xMax-xMin);
-    var scaleB = this.div.height()/(yMax-yMin);
+
+    var rect = this.div.getBoundingClientRect();
+
+    var scaleA = rect.width/(xMax-xMin);
+    var scaleB = rect.height/(yMax-yMin);
     var scale = Math.min(scaleA, scaleB);
 
     this.scale = scale;
-    this.center.x = this.div.width()/2 - scale*(xMin+xMax)/2.0;
-    this.center.y = this.div.height()/2 - scale*(yMin+yMax)/2.0;
+    this.center.x = rect.width/2 - scale*(xMin+xMax)/2.0;
+    this.center.y = rect.height/2 - scale*(yMin+yMax)/2.0;
 
     this.redraw();
 }

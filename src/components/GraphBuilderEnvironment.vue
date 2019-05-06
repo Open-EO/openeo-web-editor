@@ -136,21 +136,26 @@ export default {
 					parents.push(this.makeProcessGraphFromEdges(edges, edges[i].block1ref));
 				}
 			}
-			if (currentNode.module == 'collection') {
+			if (currentNode.type == 'collection') {
 				return {
-					process_id: 'get_collection',
-					name: currentNode.type
+					process_id: 'load_collection',
+					arguments: {
+						id: currentNode.name
+					}
 				};
 			}
 			else {
-				var process = currentNode.values;
+				var process = {
+					process_id: currentNode.name,
+					arguments: currentNode.values
+				}
+				// ToDo: Parse process metadata and set to correct argument name
 				if (parents.length == 1) {
-					process.imagery = parents[0];
+					process.arguments.data = parents[0];
 				}
 				else {
-					process.imagery = parents;
+					process.arguments.data = parents;
 				}
-				process.process_id = currentNode.type;
 				return process;
 			}
 		},

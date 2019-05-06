@@ -45,6 +45,10 @@ class Field extends ProcessSchema {
         return this.attrs !== 'output' && super.isEditable();
     }
 
+    description() {
+        return this.meta.description;
+    }
+
     /**
      * Return the (value) HTML rendering
      */

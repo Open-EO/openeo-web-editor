@@ -1,15 +1,15 @@
 <template>
 	<div class="fieldContainer">
-		<div class="dataTypeChooser" v-if="this.field.schemas.length > 1">
+		<div class="dataTypeChooser" v-if="field.schemas.length > 1">
 			Select data type:
 			<select name="dataType" v-model="type">
-				<option v-for="(schema, key) in this.field.schemas" :key="key" :value="key">{{ schema.title() }}</option>
+				<option v-for="(schema, key) in field.schemas" :key="key" :value="key">{{ schema.title() }}</option>
 			</select>
-			<div v-if="this.field.schemas[type].description" class="description">
-				<i class="fas fa-info-circle"></i> {{ this.field.schemas[type].description }}
+			<div v-if="field.schemas[type].description" class="description">
+				<i class="fas fa-info-circle"></i> {{ field.schemas[type].description }}
 			</div>
 		</div>
-		<EditorField :field="field" :schema="this.field.schemas[type]" :pass="pass" />
+		<EditorField :field="field" :schema="field.schemas[type]" :pass="pass" />
 	</div>
 </template>
 

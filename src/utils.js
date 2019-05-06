@@ -110,6 +110,13 @@ export default {
 		}
 	  
 		return this.mergeDeep(target, ...sources); 
+	},
+
+	domBoundingBox(el) {
+		var rect = el.getBoundingClientRect();
+		rect.offsetTop = rect.top + document.body.scrollTop;
+		rect.offsetLeft = rect.left + document.body.scrollLeft;
+		return rect;
 	}
 
 }; 

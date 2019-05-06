@@ -1,7 +1,7 @@
 <template>
 	<div class="fieldEditorContainer">
-		<select class="fieldValue" v-if="this.schema.isEnum()" :name="fieldName" v-model="value">
-			<option v-for="(choice, k) in field.getEnumChoices()" :key="k" :value="choice">{{ choice }}</option>
+		<select class="fieldValue" v-if="schema.isEnum()" :name="fieldName" v-model="value">
+			<option v-for="(choice, k) in schema.getEnumChoices()" :key="k" :value="choice">{{ choice }}</option>
 		</select>
 		<template v-else-if="type === 'temporal-interval'">
 			<VueCtkDateTimePicker v-model="value" :range="true" label="Select start and end time" format="YYYY-MM-DD[T]HH:mm:ss[Z]"></VueCtkDateTimePicker>

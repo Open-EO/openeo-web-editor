@@ -54,7 +54,7 @@ Edge.prototype.draw = function(svg)
         var strokeStyle = 'rgba(255, 200, 0, 1)';
     }
     svg.line(this.position1.x, this.position1.y, this.position2.x, this.position2.y, {
-        stroke: strokeStyle, strokeWidth: lineWidth
+        'stroke': strokeStyle, 'stroke-width': lineWidth
     });
     
     var xM = ((this.position1.x+this.position2.x)/2.0);
@@ -72,10 +72,10 @@ Edge.prototype.draw = function(svg)
     var yA = (this.position1.y-yM)*this.blocks.scale*10/(norm/2);
     var lineWidth = this.defaultSize*this.blocks.scale/3.0;
     svg.line(xM, yM, xM+(xA*cos-yA*sin), yM+(yA*cos+xA*sin), {
-        stroke: strokeStyle, strokeWidth: lineWidth
+        'stroke': strokeStyle, 'stroke-width': lineWidth
     });
     svg.line(xM, yM, xM+(xA*cosB-yA*sinB), yM+(yA*cosB+xA*sinB), {
-        stroke: strokeStyle, strokeWidth: lineWidth
+        'stroke': strokeStyle, 'stroke-width': lineWidth
     });
 };
 
@@ -108,11 +108,6 @@ Edge.prototype.create = function()
     // You have to link an input with an output
     if (this.connector1.type == this.connector2.type) {
         throw 'You have to link an input with an output';
-    }
-
-    // The cards have to be okay
-    if ((!this.block1.canLink(this.connector1)) || (!this.block2.canLink(this.connector2))) {
-        throw 'Can\'t create such an edge because of the cardinalities';
     }
 
     this.block1.addEdge(this.connector1, this);

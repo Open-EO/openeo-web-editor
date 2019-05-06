@@ -2,6 +2,7 @@ import Fields from './fields.js';
 import Connector from './connector.js';
 import EventBus from '../../eventbus.js';
 import VueUtils from '@openeo/vue-components/utils.js';
+import Utils from '../../utils.js';
 
 /**
  * Creates an instance of a block
@@ -128,8 +129,7 @@ Block.prototype.getHtml = function()
     html += '<div class="inout">';
 
     // Handling inputs & outputs
-    var self = this;
-    var handle = function(key, fields) {
+    var handle = (key, fields) => {
         html += '<div class="' + key + 's">';
 
         for (var k in fields) {
@@ -138,7 +138,7 @@ Block.prototype.getHtml = function()
             var connectorId = field.name.toLowerCase() + '_' + key;
 
             var formattedValue = '';
-            if (field && field.isEditable() && !self.blocks.compactMode) {
+            if (field && field.isEditable() && !this.blocks.compactMode) {
                 var value = field.getValue();
                 if (typeof value === 'object') {
                     if (value === null) {
@@ -174,13 +174,12 @@ Block.prototype.getHtml = function()
 
             var classNames = [
                 key,
-                'type_' + field.type,
                 'connector',
                 connectorId,
                 ((field.hasValue || !field.isRequired() || key == 'output') ? 'hasValue' : 'noValue')
             ];
             var label;
-            if (self.blocks.compactMode && key == 'output') {
+            if (this.blocks.compactMode && key == 'output') {
                 label = '';
             }
             else {
@@ -189,7 +188,7 @@ Block.prototype.getHtml = function()
     
             // Generating HTML
             html += '<div class="' + classNames.join(' ') + '" rel="' + connectorId + '">' + circleLeft + label + formattedValue + circleRight + '</div>';
-            self.connectors.push(connectorId);
+            this.connectors.push(connectorId);
         }
         html += '</div>';
     };
@@ -209,7 +208,7 @@ Block.prototype.render = function()
 {
     this.lastScale = null;
     this.hasFocus = false;
-    this.div.html(this.getHtml());
+    this.div.innerHTML = this.getHtml();
     this.initListeners();
     this.redraw();
 };
@@ -236,12 +235,12 @@ Block.prototype.maxEntry = function(name)
 /**
  * Creates and inject the div
  */
-Block.prototype.create = function(div)
+Block.prototype.create = function(parentDiv)
 {
-    var html = '<div id="block' + this.id + '" class="block"></div>'
-
-    div.append(html);
-    this.div = div.find('#block' + this.id);
+    this.div = document.createElement("div");
+    this.div.id = 'block' + this.id;
+    this.div.className = 'block';
+    parentDiv.appendChild(this.div);
 
     this.render();
 };
@@ -252,20 +251,20 @@ Block.prototype.create = function(div)
 Block.prototype.redraw = function(selected)
 {
     // Setting the position
-    this.div.css('margin-left', this.blocks.center.x+this.x*this.blocks.scale+'px');
-    this.div.css('margin-top', this.blocks.center.y+this.y*this.blocks.scale+'px');
+    this.div.style.marginLeft = this.blocks.center.x+this.x*this.blocks.scale+'px';
+    this.div.style.marginTop = this.blocks.center.y+this.y*this.blocks.scale+'px';
 
     // Showing/hiding icons
     if (this.blocks.showIcons && this.blocks.scale > 0.8) {
-        this.div.find('.blockicon').show();
+        this.div.querySelector('.blockicon').style.display = '';
     } else {
-        this.div.find('.blockicon').hide();
+        this.div.querySelector('.blockicon').style.display = 'none';
     }
 
     // Rescaling
     if (this.lastScale != this.blocks.scale) {
-        this.div.css('font-size', Math.round(this.blocks.scale*this.defaultFont)+'px');
-        this.div.css('width', Math.round(this.blocks.scale*this.getWidth())+'px');
+        this.div.style.fontSize = Math.round(this.blocks.scale*this.defaultFont)+'px';
+        this.div.style.width = Math.round(this.blocks.scale*this.getWidth())+'px';
 
         this.lastScale = this.blocks.scale
     }
@@ -273,30 +272,30 @@ Block.prototype.redraw = function(selected)
     // Changing the circle rendering
     for (var k in this.connectors) {
         var connectorId = this.connectors[k];
-        var connectorDiv = this.div.find('.' + connectorId);
-        var connectorVisual = connectorDiv.find('.circle');
+        var connectorDiv = this.div.querySelector('.' + connectorId);
+        var connectorVisual = connectorDiv.querySelector('.circle');
 
-        connectorVisual.removeClass('io_active');
-        connectorVisual.removeClass('io_selected');
-        if (!connectorDiv.hasClass('hasValue')) {
-            connectorDiv.addClass('noValue');
+        connectorVisual.classList.remove('io_active');
+        connectorVisual.classList.remove('io_selected');
+        if (!connectorDiv.classList.contains('hasValue')) {
+            connectorDiv.classList.add('noValue');
         }
         if (connectorId in this.edges && this.edges[connectorId].length) {
-            connectorVisual.addClass('io_active');
-            connectorDiv.removeClass('noValue');
+            connectorVisual.classList.add('io_active');
+            connectorDiv.classList.remove('noValue');
 
             for (var n in this.edges[connectorId]) {
                 if (this.edges[connectorId][n].selected) {
-                    connectorVisual.addClass('io_selected');
+                    connectorVisual.classList.add('io_selected');
                 }
             }
         }
     }
 
     // Is selected ?
-    this.div.removeClass('block_selected');
+    this.div.classList.remove('block_selected');
     if (selected) {
-        this.div.addClass('block_selected');
+        this.div.classList.add('block_selected');
     }
 };
 
@@ -305,76 +304,76 @@ Block.prototype.redraw = function(selected)
  */
 Block.prototype.initListeners = function()
 {
-    var self = this;
     // Drag & drop the block
-    self.div.find('.blockTitle').on('mousedown', function(event) {
+    this.div.querySelector('.blockTitle').addEventListener('mousedown', event => {
         if (event.which == 1) {
-            self.historySaved = false;
-            self.drag = [self.blocks.mouseX/self.blocks.scale-self.x, self.blocks.mouseY/self.blocks.scale-self.y];
+            this.historySaved = false;
+            this.drag = [this.blocks.mouseX/this.blocks.scale-this.x, this.blocks.mouseY/this.blocks.scale-this.y];
         }
     });
-
-    // Handle focus
-    self.div.hover(function() {
-        self.hasFocus = true;
-    }, function() {
-        self.hasFocus = false;
-    });
-
-    // Handle focus on the I/Os
-    self.div.find('.connector').hover(function() {
-        self.focusedConnector = $(this).attr('rel');
-    }, function() {
-        self.focusedConnector = null;
-    });
-        
+    
+    var html = document.querySelector('html');
     // Dragging
-    $('html').on('mousemove', function(evt) {
-        if (self.drag) {
-            if (!self.historySaved) {
-                self.blocks.history.save();
-                self.historySaved = true;
+    html.addEventListener('mousemove', () => {
+        if (this.drag) {
+            if (!this.historySaved) {
+                this.blocks.history.save();
+                this.historySaved = true;
             }
-            self.x = (self.blocks.mouseX/self.blocks.scale-self.drag[0]);
-            self.y = (self.blocks.mouseY/self.blocks.scale-self.drag[1]);
-            self.blocks.redraw();
+            this.x = (this.blocks.mouseX/this.blocks.scale-this.drag[0]);
+            this.y = (this.blocks.mouseY/this.blocks.scale-this.drag[1]);
+            this.blocks.redraw();
         }
     });
 
     // Drag the block
-    $('html').on('mouseup', function() {
-        self.drag = null;
-    });
+    html.addEventListener('mouseup', () => this.drag = null);
 
-    // Draw a link
-    self.div.find('.connector').on('mousedown', function(event) {
-        if (event.which == 1) {
-            self.blocks.beginLink(self, $(this).attr('rel'));
-            event.preventDefault();
-        }
-    });
+    // Handle focus
+    this.div.addEventListener('mouseover', () => this.hasFocus = true);
+    this.div.addEventListener('mouseout', () => this.hasFocus = false);
+
+    var connectors = this.div.querySelectorAll('.connector');
+    for(let connector of connectors) {
+        // Draw a link
+        connector.addEventListener('mousedown', event => {
+            if (event.which == 1) {
+                this.blocks.beginLink(this, connector.getAttribute('rel'));
+                event.preventDefault();
+            }
+        });
+
+        // Handle focus on the I/Os
+        connector.addEventListener('mouseover', () => this.focusedConnector = connector.getAttribute('rel'));
+        connector.addEventListener('mouseout', () => this.focusedConnector = null);
+    }
 
     // Handle the parameters
-    self.div.find('.settings').on('click', function() {
-        self.fields.show();
-    });
+    var settingsEl = this.div.querySelector('.settings');
+    if (settingsEl) {
+        settingsEl.addEventListener('click', () => this.fields.show());
+    }
 
     // Handle the deletion
-    self.div.find('.delete').on('click', function() {
-        self.blocks.removeBlock(self.blocks.getBlockId(self));
-    });
+    var deleteEl = this.div.querySelector('.delete');
+    if (deleteEl) {
+        deleteEl.addEventListener('click', () => this.blocks.removeBlock(this.blocks.getBlockId(this)));
+    }
 
     // Show the description
-    self.div.find('.info').on('click', function() {
-        switch(self.type) {
-            case 'process':
-                EventBus.$emit('showProcessInfo', self.name);
-                break;
-            case 'collection':
-                EventBus.$emit('showCollectionInfo', self.name);
-                break;
-        }
-    });
+    var infoEl = this.div.querySelector('.info');
+    if (infoEl) {
+        infoEl.addEventListener('click', () => {
+            switch(this.type) {
+                case 'process':
+                    EventBus.$emit('showProcessInfo', this.name);
+                    break;
+                case 'collection':
+                    EventBus.$emit('showCollectionInfo', this.name);
+                    break;
+            }
+        });
+    }
 };
 
 /**
@@ -389,32 +388,16 @@ Block.prototype.linkPositionFor = function(connector)
     }
 
     try {
-        var div = this.div.find('.' + connectorId + ' .circle')
-
-        var x = (div.offset().left-this.blocks.div.offset().left)+div.width()/2;
-        var y = (div.offset().top-this.blocks.div.offset().top)+div.height()/2;
+        var div = this.div.querySelector('.' + connectorId + ' .circle');
+        var dim = Utils.domBoundingBox(div);
+        var blocksDim = Utils.domBoundingBox(this.blocks.div);
+        var x = (dim.offsetLeft-blocksDim.offsetLeft)+dim.width/2;
+        var y = (dim.offsetTop-blocksDim.offsetTop)+dim.height/2;
     } catch (error) {
         throw 'Unable to find link position for '+connectorId+' ('+error+')';
     }
 
     return {x: x, y: y};
-};
-
-/**
- * Can the io be linked ?
- */
-Block.prototype.canLink = function(connector)
-{
-    var tab;
-    var connectorId = connector.id();
-
-    if (connectorId in this.edges) {
-        tab = this.edges[connectorId];
-    }
-
-    // ToDo: Check compatibility of nodes?
-
-    return true;
 };
 
 /**
@@ -455,7 +438,7 @@ Block.prototype.eraseEdge = function(connector, edge)
  */
 Block.prototype.erase = function()
 {
-    this.div.remove();
+    this.div.parentNode.removeChild(this.div);
 };
 
 /**
