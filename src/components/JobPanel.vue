@@ -130,7 +130,7 @@ export default {
 				title = null;
 			}
 
-			EventBus.$emit('getProcessGraph', (script) => {
+			EventBus.$emit('getProcessGraph', script => {
 				this.createJob(script, title);
 			});
 		},
@@ -190,7 +190,7 @@ export default {
 		},
 		editJob(job) {
 			// TODO: provide more update options/don't just override the process graph and nothing else
-			EventBus.$emit('getProcessGraph', (script) => {
+			EventBus.$emit('getProcessGraph', script => {
 				job.updateJob(script)
 					.then(updatedJob => {
 						this.$utils.ok(this, "Job successfully updated.");

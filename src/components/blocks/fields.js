@@ -10,21 +10,21 @@ var Fields = function(block, schema)
     this.block = block;
 
     // Fields
-    var output = new Field(schema.returns, "Output", "output");
-    this.outputs = [output];
+    var output = new Field(schema.returns, "output", true);
+    this.output = output;
     this.inputs = [];
     this.editables = [];
-    this.indexedFields = {
+    this.fields = {
         output: output
     };
 
     for(var name in schema.parameters) {
-        var field = new Field(schema.parameters[name], name, "input");
+        var field = new Field(schema.parameters[name], name);
         this.inputs.push(field);
         if (field.isEditable()) {
             this.editables.push(field);
         }
-        this.indexedFields[field.name] = field;
+        this.fields[field.name] = field;
     }
 };
 
@@ -33,9 +33,7 @@ var Fields = function(block, schema)
  */
 Fields.prototype.getField = function(name)
 {
-    name = name.toLowerCase();
-
-    return (name in this.indexedFields ? this.indexedFields[name] : null);
+    return (name in this.fields ? this.fields[name] : null);
 };
 
 /**
@@ -61,9 +59,9 @@ Fields.prototype.show = function()
 Fields.prototype.save = function(serialize)
 {
     var boolFields = {};
-    for (var entry in this.indexedFields) {
-        if (this.indexedFields[entry].type == 'boolean') {
-            boolFields[entry] = this.indexedFields[entry];
+    for (var entry in this.fields) {
+        if (this.fields[entry].type == 'boolean') {
+            boolFields[entry] = this.fields[entry];
         }
     }
 

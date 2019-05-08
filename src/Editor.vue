@@ -285,7 +285,7 @@ export default {
 		newScript() {
 			var confirmed = confirm("Do you really want to clear the existing script to create a new one?");
 			if (confirmed) {
-				EventBus.$emit('insertProcessGraph', {});
+				EventBus.$emit('insertProcessGraph', null);
 				this.scriptName = null;
 			}
 		},
@@ -477,27 +477,24 @@ export default {
 				return; // Nothing changed
 			}
 
-			EventBus.$emit('getProcessGraph', (pg) => {
+			EventBus.$emit('getProcessGraph', pg => {
 				this.isVisualBuilderActive = enable;
-
-				this.$nextTick(() => {
-					EventBus.$emit('insertProcessGraph', pg);
-				});
-			}, true);
+				this.$nextTick(() => EventBus.$emit('insertProcessGraph', pg));
+			}, true, true);
 		},
 
-		getProcessGraph(callback, silent = false) {
+		getProcessGraph(callback, silent = false, passNull = false) {
 			if (this.isVisualBuilderActive) {
-				this.$refs.graphBuilder.getProcessGraph(callback, silent);
+				this.$refs.graphBuilder.getProcessGraph(callback, silent, passNull);
 			}
 			else {
-				this.$refs.sourceEditor.getProcessGraph(callback, silent);
+				this.$refs.sourceEditor.getProcessGraph(callback, silent, passNull);
 			}
 		},
 
 		executeProcessGraph() {
 			this.$utils.info(this, 'Data requested. Please wait...');
-			EventBus.$emit('getProcessGraph', (script) => {
+			EventBus.$emit('getProcessGraph', script => {
 				this.connection.execute(script, format)
 					.then(data => EventBus.$emit('showInViewer', data))
 					.catch(error => this.$utils.exception(this, error, 'Sorry, could not execute process graph.'));

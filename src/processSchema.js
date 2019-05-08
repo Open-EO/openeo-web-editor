@@ -1,4 +1,4 @@
-import Utils from './utils.js';
+import { Utils as CommonUtils } from '@openeo/js-commons';
 
 class ProcessSchema {
 	
@@ -7,7 +7,7 @@ class ProcessSchema {
 		// ToDo: schema.not is not supported
 		if (schema.allOf) {
 			// ToDo: Mergin allOF is not always correct, but should be enough in mostly all cases.
-			var merged = Utils.mergeDeep({}, schema.allOf);
+			var merged = CommonUtils.mergeDeep({}, schema.allOf);
 			this.schemas = [new ProcessSubSchema(merged)];
 		}
 		else if (schema.oneOf || schema.anyOf) {
@@ -58,10 +58,24 @@ class ProcessSchema {
 		return (types.length === 1 && types[0] === type);
 	}
 
-	dataTypes(includeNull = false) {
-		var types = this.schemas.map(s => s.dataType());
+	dataType(native = false) {
+		var types = this.dataTypes(true, native);
+		var nullIndex = types.indexOf('null');
+		if (types.length === 1) {
+			return types[0];
+		}
+		else if (types.length === 2 && nullIndex != -1) {
+			return types[nullIndex === 0 ? 1 : 0];
+		}
+		else {
+			return 'mixed';
+		}
+	}
+
+	dataTypes(includeNull = false, native = false) {
+		var types = this.schemas.map(s => s.dataType(native));
 		if (!includeNull) {
-			types = types.filter(s => !s.isNull());
+			types = types.filter(s => s !== 'null');
 		}
 		return types;
 	}
@@ -101,8 +115,12 @@ class ProcessSubSchema {
 		return this.arrayItems.dataTypes();
 	}
 
-	dataType() {
-		return this.schema.format || this.schema.type || "any";
+	dataType(native = false) {
+		var type = this.schema.type || "any";
+		if (!native) {
+			type = this.schema.format || type;
+		}
+		return type;
 	}
 
 	isEnum() {

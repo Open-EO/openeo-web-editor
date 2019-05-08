@@ -1,5 +1,4 @@
 import Fields from './fields.js';
-import Connector from './connector.js';
 import EventBus from '../../eventbus.js';
 import VueUtils from '@openeo/vue-components/utils.js';
 import Utils from '../../utils.js';
@@ -41,14 +40,24 @@ var Block = function(blocks, type, schema, id)
     this.x = 0;
     this.y = 0;
 
-    // Which IO has focus ?
-    this.focusedConnector = null;
+    // Which field has focus?
+    this.focusedField = null;
 
     // Edges
     this.edges = {};
+    
 
-    // Connectors
-    this.connectors = [];
+    // Is result node?inputs
+    this.result = false;
+};
+
+Block.prototype.setResult = function(val) {
+    this.result = val;
+    this.render();
+}
+
+Block.prototype.getHeight = function() {
+    return 20 + this.fields.inputs.length * 15;
 };
 
 Block.prototype.getWidth = function() {
@@ -64,6 +73,17 @@ Block.prototype.hasInputs = function() {
     return this.fields.inputs.length > 0;
 };
 
+Block.prototype.getEdgeCount = function(fieldName) {
+    if(Array.isArray(this.edges[fieldName])) {
+        return this.edges[fieldName].length;
+    }
+    return 0;
+};
+
+Block.prototype.hasOutputEdges = function() {
+    return this.getEdgeCount(this.fields.output.name) > 0;
+}
+
 /**
  * Set the values
  */
@@ -76,28 +96,12 @@ Block.prototype.setValues = function(values)
         }
     }
 };
-
-/**
- * Getting the values
- */
-Block.prototype.getValues = function(values)
-{
-    var values = {};
-    for (var k in this.fields.editables) {
-        var field = this.fields.editables[k];
-        values[field.name] = field.getValue();
-    }
-
-    return values;
-};
-
 /**
  * Getting a field value
  */
 Block.prototype.getValue = function(name)
 {
     var field = this.fields.getField(name);
-
     if (field) {
         return field.getValue();
     } else {
@@ -110,8 +114,6 @@ Block.prototype.getValue = function(name)
  */
 Block.prototype.getHtml = function()
 {
-    this.connectors = [];
-
     // Getting the title
     var header = this.name + ' <span class="blockId">#' + this.id + '</span>';
     var title = this.name + ' #' + this.id;
@@ -135,8 +137,6 @@ Block.prototype.getHtml = function()
         for (var k in fields) {
             var field = fields[k];
 
-            var connectorId = field.name.toLowerCase() + '_' + key;
-
             var formattedValue = '';
             if (field && field.isEditable() && !this.blocks.compactMode) {
                 var value = field.getValue();
@@ -152,11 +152,11 @@ Block.prototype.getHtml = function()
                             formattedValue = 'Object';
                         }
                         
-                        formattedValue = '<span title="' + VueUtils.htmlentities(JSON.stringify(value)) + '">' + formattedValue + '</span>';
+                        formattedValue = '<span title="' + VueUtils.htmlentities(formattedValue) + '">' + formattedValue + '</span>';
                     }
                 }
                 else if (typeof value === 'string' && value.length > 10) {
-                    formattedValue = '<span title="' + VueUtils.htmlentities(JSON.stringify(value)) + '">' + value.substr(0,10) + '...</span>';
+                    formattedValue = '<span title="' + VueUtils.htmlentities(value) + '">' + value.substr(0,10) + '...</span>';
                 }
                 else if (typeof value === 'boolean') {
                     formattedValue = value ? '✔️' : '❌';
@@ -168,33 +168,35 @@ Block.prototype.getHtml = function()
             }
 
             var circleLeft = '<div class="circle"></div>', circleRight = '';
-            if (key == 'output') {
+            if (field.isOutput()) {
                 circleRight = circleLeft, circleLeft = '';
             }
 
             var classNames = [
                 key,
                 'connector',
-                connectorId,
-                ((field.hasValue || !field.isRequired() || key == 'output') ? 'hasValue' : 'noValue')
+                'field_' + field.name,
+                ((field.hasValue || !field.isRequired() || field.isOutput()) ? 'hasValue' : 'noValue')
             ];
             var label;
-            if (this.blocks.compactMode && key == 'output') {
+            if (field.isOutput() && this.blocks.compactMode) {
                 label = '';
+            }
+            else if (field.isOutput() && this.result) {
+                label = 'Result';
             }
             else {
                 label = VueUtils.htmlentities(field.getLabel());
             }
     
             // Generating HTML
-            html += '<div class="' + classNames.join(' ') + '" rel="' + connectorId + '">' + circleLeft + label + formattedValue + circleRight + '</div>';
-            this.connectors.push(connectorId);
+            html += '<div class="' + classNames.join(' ') + '" rel="' + field.name + '">' + circleLeft + label + formattedValue + circleRight + '</div>';
         }
         html += '</div>';
     };
 
     handle('input', this.fields.inputs);
-    handle('output', this.fields.outputs);
+    handle('output', [this.fields.output]);
 
     html += "</div>";
 
@@ -211,25 +213,6 @@ Block.prototype.render = function()
     this.div.innerHTML = this.getHtml();
     this.initListeners();
     this.redraw();
-};
-
-/**
- * Returns the maximum index of entry for input field name
- */
-Block.prototype.maxEntry = function(name)
-{
-    var max = 0;
-
-    for (var connectorId in this.edges) {
-        if (this.edges[connectorId].length) {
-            var connector = new Connector(connectorId);
-            if (connector.name == name) {
-                max = Math.max(parseInt(connector.index)+1, max);
-            }
-        }
-    }
-
-    return max;
 };
 
 /**
@@ -270,25 +253,29 @@ Block.prototype.redraw = function(selected)
     }
 
     // Changing the circle rendering
-    for (var k in this.connectors) {
-        var connectorId = this.connectors[k];
-        var connectorDiv = this.div.querySelector('.' + connectorId);
-        var connectorVisual = connectorDiv.querySelector('.circle');
+    for (var fieldName in this.fields.fields) {
+        var field = this.fields.fields[fieldName];
+        var fieldDiv = this.div.querySelector('.field_' + fieldName);
+        var connector = fieldDiv.querySelector('.circle');
 
-        connectorVisual.classList.remove('io_active');
-        connectorVisual.classList.remove('io_selected');
-        if (!connectorDiv.classList.contains('hasValue')) {
-            connectorDiv.classList.add('noValue');
+        connector.classList.remove('io_active');
+        connector.classList.remove('io_selected');
+        connector.classList.remove('result');
+        if (!fieldDiv.classList.contains('hasValue')) {
+            fieldDiv.classList.add('noValue');
         }
-        if (connectorId in this.edges && this.edges[connectorId].length) {
-            connectorVisual.classList.add('io_active');
-            connectorDiv.classList.remove('noValue');
+        if (fieldName in this.edges && this.getEdgeCount(fieldName) > 0) {
+            connector.classList.add('io_active');
+            fieldDiv.classList.remove('noValue');
 
-            for (var n in this.edges[connectorId]) {
-                if (this.edges[connectorId][n].selected) {
-                    connectorVisual.classList.add('io_selected');
+            for (var n in this.edges[fieldName]) {
+                if (this.edges[fieldName][n].selected) {
+                    connector.classList.add('io_selected');
                 }
             }
+        }
+        if (field.isOutput() && this.result) {
+            connector.classList.add('result');
         }
     }
 
@@ -340,12 +327,25 @@ Block.prototype.initListeners = function()
             if (event.which == 1) {
                 this.blocks.beginLink(this, connector.getAttribute('rel'));
                 event.preventDefault();
+                event.stopPropagation();
+            }
+        });
+        
+        // Allow specifying the result node
+        connector.addEventListener('click', event => {
+            if (event.which == 1) {
+                if (this.hasOutputEdges()) {
+                    this.blocks.showError("A result node can't have outgoing edges.");
+                    return;
+                }
+                this.blocks.setResultNode(this);
+                this.blocks.history.save();
             }
         });
 
         // Handle focus on the I/Os
-        connector.addEventListener('mouseover', () => this.focusedConnector = connector.getAttribute('rel'));
-        connector.addEventListener('mouseout', () => this.focusedConnector = null);
+        connector.addEventListener('mouseover', () => this.focusedField = connector.getAttribute('rel'));
+        connector.addEventListener('mouseout', () => this.focusedField = null);
     }
 
     // Handle the parameters
@@ -357,7 +357,7 @@ Block.prototype.initListeners = function()
     // Handle the deletion
     var deleteEl = this.div.querySelector('.delete');
     if (deleteEl) {
-        deleteEl.addEventListener('click', () => this.blocks.removeBlock(this.blocks.getBlockId(this)));
+        deleteEl.addEventListener('click', () => this.blocks.removeBlock(this.id));
     }
 
     // Show the description
@@ -379,22 +379,16 @@ Block.prototype.initListeners = function()
 /**
  * Gets the link position for an input or output
  */
-Block.prototype.linkPositionFor = function(connector)
+Block.prototype.linkPositionFor = function(fieldName)
 {
-    var connectorId = connector;
-
-    if (connector instanceof Object) {
-        connectorId = connector.id();
-    }
-
     try {
-        var div = this.div.querySelector('.' + connectorId + ' .circle');
+        var div = this.div.querySelector('.field_' + fieldName + ' .circle');
         var dim = Utils.domBoundingBox(div);
         var blocksDim = Utils.domBoundingBox(this.blocks.div);
         var x = (dim.offsetLeft-blocksDim.offsetLeft)+dim.width/2;
         var y = (dim.offsetTop-blocksDim.offsetTop)+dim.height/2;
     } catch (error) {
-        throw 'Unable to find link position for '+connectorId+' ('+error+')';
+        throw 'Unable to find link position for '+fieldName+' ('+error+')';
     }
 
     return {x: x, y: y};
@@ -403,30 +397,27 @@ Block.prototype.linkPositionFor = function(connector)
 /**
  * Add an edge
  */
-Block.prototype.addEdge = function(connector, edge)
+Block.prototype.addEdge = function(fieldName, edge)
 {
     var tab = [];
-    var connectorId = connector.id();
 
-    if (this.edges[connectorId] != undefined) {
-        tab = this.edges[connectorId];
+    if (this.edges[fieldName] != undefined) {
+        tab = this.edges[fieldName];
     }
 
     tab.push(edge);
-    this.edges[connectorId] = tab;
+    this.edges[fieldName] = tab;
 };
 
 /**
  * Erase an edge
  */
-Block.prototype.eraseEdge = function(connector, edge)
+Block.prototype.eraseEdge = function(fieldName, edge)
 {
-    var connectorId = connector.id();
-
-    if (this.edges[connectorId] != undefined) {
-        for (var k in this.edges[connectorId]) {
-            if (this.edges[connectorId][k] == edge) {
-                this.edges[connectorId].splice(k, 1);
+    if (this.edges[fieldName] != undefined) {
+        for (var k in this.edges[fieldName]) {
+            if (this.edges[fieldName][k] == edge) {
+                this.edges[fieldName].splice(k, 1);
                 break;
             }
         }
@@ -481,14 +472,65 @@ Block.prototype.allSuccessors = function()
  */
 Block.prototype.export = function()
 {
+    var values = {};
+    for (var k in this.fields.editables) {
+        var field = this.fields.editables[k];
+        values[field.name] = field.getValue();
+    }
+
     return {
         id: this.id,
         x: this.x,
         y: this.y,
         type: this.type,
         name: this.name,
-        values: this.getValues()
+        values: values
     };
+};
+
+Block.prototype.exportProcessGraph = function()
+{
+    var json;
+    if (this.type == 'collection') {
+        json =  {
+            process_id: 'load_collection',
+            arguments: {
+                id: this.name
+            }
+        };
+    }
+    else {
+        var values = {};
+        for (var k in this.fields.inputs) {
+            var field = this.fields.inputs[k];
+            if (this.getEdgeCount(field.name) > 0) {
+                // Convert incoming nodes into a list of references or a single reference to a result of another node
+                var v = [];
+                for(var i in this.edges[field.name]) {
+                    v.push({
+                        from_node: this.edges[field.name][i].getOtherBlock(this).id
+                    });
+                }
+                console.log(field.name, v);
+                values[field.name] = v.length === 1 ? v[0] : v;
+            }
+            else if (field.hasValue) {
+                console.log(field.getValue());
+                values[field.name] = field.getValue();
+            }
+        }
+
+        json = {
+            process_id: this.name,
+            arguments: values
+        };
+    }
+
+    if (this.result) {
+        json.result = true;
+    }
+
+    return json;
 };
 
 /**
@@ -497,20 +539,6 @@ Block.prototype.export = function()
 Block.prototype.getField = function(name)
 {
     return this.fields.getField(name);
-};
-
-/**
- * Does the block has the given connector ?
- */
-Block.prototype.hasConnector = function(connector)
-{
-    var field = this.getField(connector.name);
-
-    if (!field) {
-        return false;
-    }
-
-    return (connector.index == null);
 };
 
 export default Block;

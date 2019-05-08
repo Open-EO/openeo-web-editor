@@ -1,9 +1,10 @@
 import History from './history.js';
 import Block from './block.js';
 import Edge from './edge.js';
-import Connector from './connector.js';
 import SVG from './svg.js';
+import Field from './field.js';
 import Utils from '../../utils.js';
+import { JsonSchemaValidator, ProcessGraph, Utils as CommonUtils } from '@openeo/js-commons';
 
 /**
  * Manage the blocks
@@ -52,7 +53,7 @@ var Blocks = function(errorHandler = null)
     this.moduleTypes = {};
 
     // Instances
-    this.blocks = [];
+    this.blocks = {};
 
     // Edges
     this.edges = [];
@@ -73,7 +74,7 @@ var Blocks = function(errorHandler = null)
     this.clear = function()
     {
         this.edges = [];
-        this.blocks = [];
+        this.blocks = {};
         this.id = 1;
         this.edgeId = 1;
         this.innerDiv.innerHTML = '';
@@ -144,7 +145,7 @@ Blocks.prototype._run = function(selector) {
     this.div.addEventListener('mousedown', event => {
         if (this.canvasClicked()) {
             event.preventDefault();
-        } 
+        }
         
         if (event.which == 2 || (!this.selectedLink && !this.selectedBlock && event.which == 1)) {
             this.moving = [this.mouseX, this.mouseY];
@@ -244,6 +245,37 @@ Blocks.prototype.undo = function()
     this.history.restoreLast();
 }
 
+Blocks.prototype.setResultNode = function(block, result = true) {
+    if (block.result === result) {
+        return; // Nothing to change
+    }
+
+    block.setResult(result);
+    var foundNewResultNode = false;
+    for(var i in this.blocks) {
+        var other = this.blocks[i];
+        if (other !== block) {
+            // If we set a new result node, ensure that only that node is a result node and no other.
+            if (result) {
+                other.setResult(false);
+            }
+            // Find a potential result node if we don't want this to be the result node
+            else {
+                if (!other.hasOutputEdges()) {
+                    other.setResult(true);
+                    foundNewResultNode = true;
+                    break;
+                }
+            }
+        }
+    }
+    // If we have no new potential result node, communicate to the user.
+    if (!result && !foundNewResultNode) {
+        this.showError("No result node available, please specify one.");
+    }
+    this.redraw();
+}
+
 /**
  * Adds a block
  */
@@ -268,9 +300,12 @@ Blocks.prototype.addBlock = function(name, type, x, y)
     var block = new Block(this, type, this.moduleTypes[type][name], this.id);
     block.x = x;
     block.y = y;
+    if (this.getBlockCount() === 0) {
+        block.result = true;
+    }
     block.create(this.innerDiv);
     this.history.save();
-    this.blocks.push(block);
+    this.blocks[this.id] = block;
     this.id++;
     return block;
 };
@@ -285,9 +320,9 @@ Blocks.prototype.registerProcess = function(meta)
 
 Blocks.prototype.registerCollection = function(meta)
 {
-    var data = Utils.mergeDeep({}, meta);
+    var data = CommonUtils.mergeDeep({}, meta);
     data.returns = {
-        name: "Output",
+        name: "output",
         attrs: "output",
         schema: {
             type: 'object',
@@ -307,9 +342,9 @@ Blocks.prototype.register = function(meta, type) {
 /**
  * Begin to draw an edge
  */
-Blocks.prototype.beginLink = function(block, connectorId)
+Blocks.prototype.beginLink = function(block, fieldName)
 {
-    this.linking = [block, connectorId];
+    this.linking = [block, fieldName];
 };
 
 /**
@@ -322,9 +357,9 @@ Blocks.prototype.move = function()
         if (distance > 15) {
             var edge = this.edges[this.selectedLink];
             if (this.selectedSide[0] == 2) {
-                this.linking = [edge.block1, edge.connector1.id()];
+                this.linking = [edge.block1, edge.field1.name];
             } else {
-                this.linking = [edge.block2, edge.connector2.id()];
+                this.linking = [edge.block2, edge.field2.name];
             }
 
             this.removeEdge(this.selectedLink);
@@ -363,8 +398,7 @@ Blocks.prototype.canvasClicked = function()
     this.selectedSide = null;
 
     for (var k in this.blocks) {
-        var block = this.blocks[k];
-        if (block.hasFocus) {
+        if (this.blocks[k].hasFocus) {
             this.selectedBlock = k;
         }
     }
@@ -433,23 +467,8 @@ Blocks.prototype.removeBlock = function(key)
     this.edges = newEdges;
 
     block.erase();
-    this.blocks.splice(this.selectedBlock, 1);
-
+    delete this.blocks[key];
     this.redraw();
-};
-
-/**
- * Get a block id
- */
-Blocks.prototype.getBlockId = function(block)
-{
-    for (var k in this.blocks) {
-        if (this.blocks[k] == block) {
-            return k;
-        }
-    }
-
-    return null;
 };
 
 /**
@@ -457,14 +476,16 @@ Blocks.prototype.getBlockId = function(block)
  */
 Blocks.prototype.getBlockById = function(blockId)
 {
-    for (var k in this.blocks) {
-        if (this.blocks[k].id == blockId) {
-            return this.blocks[k];
-        }
+    if (this.blocks[blockId]) {
+        return this.blocks[blockId];
     }
 
     return null;
 };
+
+Blocks.prototype.getBlockCount = function() {
+    return Utils.size(this.blocks);
+}
 
 Blocks.prototype.canDelete = function()
 {
@@ -543,29 +564,54 @@ Blocks.prototype.tryEndLink = function()
 {
     for (var k in this.blocks) {
         var block = this.blocks[k];
-        if (block.hasFocus && block.focusedConnector) {
-            this.endLink(block, block.focusedConnector);
+        if (block.hasFocus && block.focusedField) {
+            this.endLink(block, block.focusedField);
             break;
         }
     }
 };
 
-Blocks.prototype.addEdge = function(blockOut, connectorOut, blockIn, connectorIn) {
+Blocks.prototype.addEdge = function(blockOut, fieldOut, blockIn, fieldIn) {
+    if (!(blockOut instanceof Block)) {
+        blockOut = this.getBlockById(blockOut);
+    }
+    if (!(blockIn instanceof Block)) {
+        blockIn = this.getBlockById(blockIn);
+    }
+
     var id = this.edgeId++;
 
-    if (!(connectorOut instanceof Connector)) {
-        connectorOut = new Connector(connectorOut, "output");
+    if (!(fieldOut instanceof Field)) {
+        fieldOut = blockOut.getField(fieldOut);
     }
-    if (!(connectorIn instanceof Connector)) {
-        connectorIn = new Connector(connectorIn, "input");
+    if (!(fieldIn instanceof Field)) {
+        fieldIn = blockIn.getField(fieldIn);
     }
 
-    if (connectorOut.isOutput()) {
-        var edge = new Edge(id, blockOut, connectorOut, blockIn, connectorIn, this);
+    if (fieldOut.isOutput()) {
+        var edge = new Edge(id, blockOut, fieldOut, blockIn, fieldIn, this);
     } else {
-        var edge = new Edge(id, blockIn, connectorIn, blockOut, connectorOut, this);
+        var edge = new Edge(id, blockIn, fieldIn, blockOut, fieldOut, this);
     }
 
+    // Check for loops or whether you want to connext the same fields
+    var fromTo = edge.fromTo();
+    if (fromTo[0] === fromTo[1]) {
+        return;
+    }
+    else if (fromTo[1].allSuccessors().indexOf(fromTo[0].id) != -1) {
+        throw 'You can not create a loop';
+    }
+
+    // Update result node
+    this.setResultNode(fieldOut.isOutput() ? blockOut : blockIn, false);
+
+    // Check type compatibility
+    if (!this.areTypesCompatible(edge.field1, edge.field2)) {
+        throw 'Types are not compatible';
+    }
+
+    // Check whether the edge exists
     for (var k in this.edges) {
         var other = this.edges[k];
         if (other.same(edge)) {
@@ -573,30 +619,19 @@ Blocks.prototype.addEdge = function(blockOut, connectorOut, blockIn, connectorIn
         }
     }
 
-    var fromTo = edge.fromTo();
-    if (fromTo[1].allSuccessors().indexOf(fromTo[0].id) != -1) {
-        throw 'You can not create a loop';
-    }
-
     this.history.save();
     edge.create();
-    var edgeIndex = this.edges.push(edge)-1;
-
-    var types = edge.getTypes();
-    if (!this.isTypeCompatible(types[0], types[1])) {
-        this.removeEdge(edgeIndex);
-        throw 'Types '+types[0]+' and '+types[1]+' are not compatible';
-    }
+    this.edges.push(edge);
     this.redraw();
 }
 
 /**
  * End drawing an edge
  */
-Blocks.prototype.endLink = function(block, connectorId)
+Blocks.prototype.endLink = function(block, fieldName)
 {
     try {
-        this.addEdge(this.linking[0], new Connector(this.linking[1]), block, new Connector(connectorId));
+        this.addEdge(this.linking[0], this.linking[1], block, fieldName);
     } catch (error) {
         this.showError(error);
     }
@@ -605,16 +640,8 @@ Blocks.prototype.endLink = function(block, connectorId)
     this.selectedBlock = null;
 };
 
-Blocks.prototype.isTypeCompatible = function(t1, t2) {
-    // ToDo: The different string formats
-    // ToDo: Any type
-    if (t1 === t2) {
-        return true;
-    }
-    else if ((t1 === 'number' && t2 === 'integer') || (t1 === 'integer' && t2 === 'number')) {
-        return true;
-    }
-    return false;
+Blocks.prototype.areTypesCompatible = function(t1, t2) {
+    return JsonSchemaValidator.isSchemaCompatible(t1.schema, t2.schema);
 }
 
 Blocks.prototype.showError = function(message, title = null) {
@@ -651,7 +678,7 @@ Blocks.prototype.export = function()
     }
 
     for (var k in this.edges) {
-        edges.push(this.edges[k].export());
+        edges[k] = this.edges[k].export();
     }
 
     return {
@@ -660,28 +687,77 @@ Blocks.prototype.export = function()
     };
 };
 
+
+Blocks.prototype.exportProcessGraph = function() {
+    if (this.getBlockCount() === 0) {
+        return null;
+    }    
+
+    var nodes = {};
+    for(var blockId in this.blocks) {
+        nodes[blockId] = this.blocks[blockId].exportProcessGraph();
+    }
+    
+    return nodes;
+};
+
+Blocks.prototype.importProcessGraph = function(processGraph) {
+    // Parse process graph
+    var pg = new ProcessGraph(processGraph);
+    pg.parse();
+
+    // Import nodes
+    this.importNodesFromProcessGraph(pg.getStartNodes());
+
+    // Import edges
+    var nodes = pg.getNodes();
+    for(let i in nodes) {
+        var node = nodes[i];
+
+        var args = node.getArgumentNames();
+        for(let i in args) {
+            if (node.getArgumentType(args[i]) == 'result') {
+                var referencedNode = pg.getNode(node.getRawArgumentValue(args[i])); // get the node that is referenced in the argument
+                this.addEdge(referencedNode.blockId, "output", node.blockId, args[i]);
+            }
+        }
+    }
+},
+
+Blocks.prototype.importNodesFromProcessGraph = function(nodes, x = 0, y = 0) {
+    for(let i in nodes) {
+        var node = nodes[i];
+        if (node.blockId > 0) {
+            continue; // Node has already been added
+        }
+
+        var block = null;
+        // Image Collection
+        if (node.process_id === 'load_collection' && node.hasArgument("id")) {
+            block = this.addCollection(node.getArgument("id"), x, y);
+        }
+        // Process
+        else {
+            block = this.addProcess(node.process_id, x, y);
+            if (block) {
+                block.setValues(node.arguments);
+                block.render();
+            }
+        }
+        block.result = node.isResultNode;
+        node.blockId = block.id;
+
+        this.importNodesFromProcessGraph(node.getNextNodes(), x + block.getWidth() + 20, y, block);
+        y += block.getHeight() + 20;
+    }
+};
+
 /**
  * Import some data
  */
-Blocks.prototype.importData = function(scene)
+Blocks.prototype.import = function(scene)
 {
     this.clear();
-    this.doLoad(scene, false);
-}
-
-/**
- * Lads a scene
- */
-Blocks.prototype.load = function(scene)
-{
-    this.doLoad(scene, true);
-}
-
-/**
- * Loads the scene
- */
-Blocks.prototype.doLoad = function(scene, init)
-{
     this.ready(() => {
         try {
             var errors = [];
@@ -694,98 +770,67 @@ Blocks.prototype.doLoad = function(scene, init)
             if (!('blocks' in scene) || !(scene.blocks instanceof Array)) {
                 throw 'Scene has no blocks section';
             }
-            if (!('edges' in scene) || !(scene.edges instanceof Array)) {
-                throw 'Scene has no blocks section';
+            if (!('edges' in scene) || !(scene.edges instanceof Object)) {
+                throw 'Scene has no edges section';
             }
 
             for (var k in scene.blocks) {
-                try {
-                    var data = scene.blocks[k];
-                    var block = this.blockImport(data);
+                var data = scene.blocks[k];
+                if (data.type in this.moduleTypes && data.name in this.moduleTypes[data.type]) {
+                    var block = new Block(this, data.type, this.moduleTypes[data.type][data.name], data.id);
+                    block.x = data.x;
+                    block.y = data.y;
+                    block.setValues(data.values);
                     this.id = Math.max(this.id, block.id+1);
                     block.create(this.innerDiv);
-                    this.blocks.push(block);
-                } catch (error) {
-                    console.log(error);
-                    errors.push('Block #'+k+ ': '+error);
+                    this.blocks[this.id] = block;
+                }
+                else {
+                    errors.push('Block #'+k+ ': Unable to create a block of type ' + data.type);
                 }
             }
 
             for (var k in scene.edges) {
-                try {
-                    var data = scene.edges[k];
-                    var edge = this.edgeImport(data);
-
-                    this.edgeId = Math.max(this.edgeId, edge.id+1);
-
-                    edge.create();
-                    this.edges.push(edge);
-                } catch (error) {
-                    console.log(error);
-                    errors.push('Edge #'+k+' : '+error);
+                var data = scene.edges[k];
+                if (!'id' in data) {
+                    errors.push('Edge #'+k+ ': The edge does not have an id');
+                    continue;
                 }
+            
+                var block1 = this.getBlockById(data.block1);
+                var block2 = this.getBlockById(data.block2);
+            
+                if (!block1 || !block2) {
+                    errors.push('Edge #'+k+ ': Corresponsing block does not exist');
+                }
+            
+                var edge = new Edge(data.id, block1, block1.getField(data.field1), block2, block2.getField(data.field2), this);
+
+                this.edgeId = Math.max(this.edgeId, edge.id+1);
+
+                edge.create();
+                this.edges.push(edge);
             }
 
             if (errors.length) {
                 for (var k in errors) {
-                    this.showError(errors[k], 'Loading error');
+                    this.showError(errors[k], 'Import failed');
                 }
             }
 
             this.redraw();
-
-            if (init) {
-                this.perfectScale();	    
-            }
         } catch (error) {
-            this.showError(error, 'Unable to create edge');
+            this.showError(error, 'Import failed');
         }
     });
 };
-
-
-
-/**
- * Imports JSON data into an edge
- */
-Blocks.prototype.edgeImport = function(data)
-{
-    if (!'id' in data) {
-        throw "An edge does not have an id";
-    }
-
-    var block1 = this.getBlockById(data.block1);
-    var block2 = this.getBlockById(data.block2);
-
-    if (!block1 || !block2) {
-	    throw "Error while importing an edge, a block did not exists";
-    }
-
-    return new Edge(data.id, block1, new Connector(data.connector1), 
-                             block2, new Connector(data.connector2), this);
-};
-
-/**
- * Imports JSON data into a block
- */
-Blocks.prototype.blockImport = function(data) {
-    if (data.type in this.moduleTypes && data.name in this.moduleTypes[data.type]) {
-        var block = new Block(this, data.type, this.moduleTypes[data.type][data.name], data.id);
-        block.x = data.x;
-        block.y = data.y;
-        block.setValues(data.values);
-        return block;
-    }
-
-    throw 'Unable to create a block of type ' + data.type;
-}
 
 /**
  * Go to the perfect scale
  */
 Blocks.prototype.perfectScale = function()
 {
-    if (!this.div || this.blocks.length === 0) {
+    if (!this.div || this.getBlockCount() === 0) {
         return;
     }
 
@@ -818,20 +863,6 @@ Blocks.prototype.perfectScale = function()
     this.center.y = rect.height/2 - scale*(yMin+yMax)/2.0;
 
     this.redraw();
-}
-
-/**
- * Write labels on the edges, edges is an object of ids => label
- */
-Blocks.prototype.setLabels = function(labels)
-{
-    for (var k in this.edges) {
-        var edge = this.edges[k];
-
-        if (edge.id in labels) {
-            edge.setLabel(labels[k]);
-        }
-    }
 }
 
 export default Blocks;

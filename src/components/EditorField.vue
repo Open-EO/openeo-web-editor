@@ -65,7 +65,7 @@ export default {
 	},
 	data() {
 		var v;
-		if (this.type === 'temporal_extent' && Array.isArray(this.$props.pass) && this.$props.pass.length >= 2) {
+		if (this.type === 'temporal-interval' && Array.isArray(this.$props.pass) && this.$props.pass.length >= 2) {
 			v = {
 				start: this.$props.pass[0],
 				end: this.$props.pass[1]
@@ -88,7 +88,7 @@ export default {
 		};
 	},
 	mounted() {
-		if (this.type === 'spatial_extent') {
+		if (this.type === 'bounding-box') {
 			var map = new L.Map('areaSelector');
 			var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 				name: 'OpenStreetMap',
@@ -116,7 +116,7 @@ export default {
 	},
 	computed: {
 		fieldName() {
-			return this.field.name + (this.field.isArray ? '[]' : '');
+			return this.field.name + (Array.isArray(this.field.value) ? '[]' : '');
 		},
 		type() {
 			return this.schema.dataType();
@@ -124,11 +124,10 @@ export default {
 	},
 	methods: {
 		getValue() {
-			var types = this.types();
-			if (this.type === 'temporal_extent') {
+			if (this.type === 'temporal-interval') {
 				return [this.value.start, this.value.end];
 			}
-			else if (this.type === 'spatial_extent') {
+			else if (this.type === 'bounding-box') {
 				return	{
 					// Round to 6 decimals, the leading + removes the trailing zeros appended by toFixed.
 					west: +this.value.getWest().toFixed(6),

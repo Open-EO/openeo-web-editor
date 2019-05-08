@@ -9,7 +9,7 @@
 				<i class="fas fa-info-circle"></i> {{ field.schemas[type].description }}
 			</div>
 		</div>
-		<EditorField :field="field" :schema="field.schemas[type]" :pass="pass" />
+		<EditorField ref="field" :field="field" :schema="field.schemas[type]" :pass="pass" />
 	</div>
 </template>
 
@@ -29,6 +29,11 @@ export default {
 		return {
 			type: 0
 		};
+	},
+	methods: {
+		getValue() {
+			return this.$refs.field.getValue();
+		}
 	}
 };
 </script>
