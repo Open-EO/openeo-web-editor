@@ -36,8 +36,13 @@ export default {
 		EventBus.$on('insertProcessGraph', this.insertProcessGraph);
 		EventBus.$on('addProcessToEditor', this.insertToEditor);
 		EventBus.$on('addCollectionToEditor', this.insertToEditor);
+		EventBus.$on('clearProcessGraph', this.clearProcessGraph);
 	},
 	methods: {
+		clearProcessGraph() {
+			this.insertToEditor("", true);
+		},
+	
 		getProcessGraph(callback, silent = false, passNull = false) {
 			var script = this.editor.getValue();
 			var pg = null;

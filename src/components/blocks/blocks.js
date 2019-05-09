@@ -310,6 +310,14 @@ Blocks.prototype.addBlock = function(name, type, x, y)
     return block;
 };
 
+Blocks.prototype.unregisterCollections = function() {
+    this.moduleTypes['collection'] = {};
+};
+
+Blocks.prototype.unregisterProcesses = function() {
+    this.moduleTypes['process'] = {};
+}
+
 /**
  * Registers a new block type
  */

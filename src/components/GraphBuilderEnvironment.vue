@@ -14,7 +14,9 @@ export default {
 		active: {
 			type: Boolean,
 			default: true
-		}
+		},
+		processes: Array,
+		collections: Array
 	},
 	data() {
 		return {
@@ -27,15 +29,32 @@ export default {
 	mounted() {
         this.blocks.run("#pgEditor");
 
-		EventBus.$on('propagateCollections', this.propagateCollections);
-		EventBus.$on('propagateProcesses', this.propagateProcesses);
 		EventBus.$on('addProcessToEditor', this.insertProcess);
 		EventBus.$on('addCollectionToEditor', this.insertCollection);
 		EventBus.$on('insertProcessGraph', this.insertProcessGraph);
+		EventBus.$on('clearProcessGraph', this.clearProcessGraph);
+	},
+	watch: {
+		processes(processes) {
+			this.blocks.unregisterProcesses();
+			for(var i in processes) {
+				this.blocks.registerProcess(processes[i]);
+			}
+		},
+		collections(collections) {
+			this.blocks.unregisterCollections();
+			for(var i in collections) {
+				this.blocks.registerCollection(collections[i]);
+			}
+		}
 	},
 	methods: {
 		errorHandler(message, title = null) {
     		this.$utils.exception(this, message, title);
+		},
+
+		clearProcessGraph() {
+			this.blocks.clear();
 		},
 
 		getProcessGraph(callback, silent = false, passNull = false) {
@@ -79,18 +98,6 @@ export default {
 					console.log(error);
 				}
 				return null;
-			}
-		},
-
-		propagateProcesses(processes) {
-			for(var i in processes) {
-				this.blocks.registerProcess(processes[i]);
-			}
-		},
-	
-		propagateCollections(collections) {
-			for(var i in collections) {
-				this.blocks.registerCollection(collections[i]);
 			}
 		},
 
