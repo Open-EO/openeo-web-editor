@@ -10,7 +10,14 @@ import Blocks from './blocks/blocks.js';
 
 export default {
 	name: 'GraphBuilderEnvironment',
-	props: ['active'],
+	props: {
+		active: {
+			type: Boolean,
+			default: true
+		},
+		processes: Array,
+		collections: Array
+	},
 	data() {
 		return {
 			blocks: null
@@ -22,19 +29,42 @@ export default {
 	mounted() {
         this.blocks.run("#pgEditor");
 
-		EventBus.$on('propagateCollections', this.propagateCollections);
-		EventBus.$on('propagateProcesses', this.propagateProcesses);
 		EventBus.$on('addProcessToEditor', this.insertProcess);
 		EventBus.$on('addCollectionToEditor', this.insertCollection);
 		EventBus.$on('insertProcessGraph', this.insertProcessGraph);
+		EventBus.$on('clearProcessGraph', this.clearProcessGraph);
+	},
+	watch: {
+		processes(processes) {
+			this.blocks.unregisterProcesses();
+			for(var i in processes) {
+				this.blocks.registerProcess(processes[i]);
+			}
+		},
+		collections(collections) {
+			this.blocks.unregisterCollections();
+			for(var i in collections) {
+				this.blocks.registerCollection(collections[i]);
+			}
+		}
 	},
 	methods: {
 		errorHandler(message, title = null) {
     		this.$utils.exception(this, message, title);
 		},
 
-		getProcessGraph(callback, silent = false) {
-			callback(this.makeProcessGraph(silent));
+		clearProcessGraph() {
+			this.blocks.clear();
+		},
+
+		getProcessGraph(callback, silent = false, passNull = false) {
+			var pg = this.makeProcessGraph(silent);
+			if (pg !== null || passNull) {
+				callback(pg);
+			}
+			else if (!silent) {
+				this.$utils.error(this, 'No valid model specified.');
+			}
 		},
 
 		makeModel(processGraph) {
@@ -44,7 +74,7 @@ export default {
 			this.blocks.history.enable(false); // disable history for import so that not every import step is in the history...
 			try {
 				// import process graph and scale it "perfectly"! :-)
-				this.importProcessGraph(processGraph);
+				this.blocks.importProcessGraph(processGraph);
             	this.blocks.perfectScale();
 			} catch (error) {
 				// If an error occured: show it an restore the last working state from history.
@@ -57,113 +87,22 @@ export default {
 			return success;
 		},
 
-		importProcessGraph(obj, x = 0, y = 0) {
-			if (!this.$utils.isObject(obj)) {
-				return null;
-			}
-
-			if (obj.process_id === 'get_collection') { // Image Collection
-				return this.blocks.addCollection(obj.name, x, y);
-			}
-			else if ('process_id' in obj) { // Process
-				var block = this.blocks.addProcess(obj.process_id, x, y);
-				if (block) {
-					block.setValues(obj);
-					block.render();
-				}
-
-				for(var a in obj) {
-					if (this.$utils.isObject(obj[a]) && 'process_id' in obj[a]) {
-						var lastBlock = this.importProcessGraph(obj[a], x - ( block.getWidth() + 20 ) , y);
-						this.blocks.addEdge(lastBlock, "output", block, a);
-					}
-				}
-
-				return block;
-			}
-			return null;
-		},
-
 		makeProcessGraph(silent = false) {
-			var data = this.blocks.export();
-			var edges = data.edges;
-			var nodes = data.blocks;
-			if (nodes.length === 0) {
+			try {
+				return this.blocks.exportProcessGraph();
+			} catch (error) {
 				if (!silent) {
-					this.$utils.error(this, 'There must be exactly one output');
-				}
-				return {};
-			}
-			var nodesById = {};
-			// Make an object of nodes indexed by id
-			for (var i in nodes) {
-				var id = nodes[i].id;
-				nodesById[id] = nodes[i];
-			}
-			// Find result node (node without connected output)
-			// and add references to blocks to edges
-			var nodeIdList = Object.keys(nodesById);
-			for (i in edges) {
-				edges[i].block1ref = nodesById[edges[i].block1];
-//				edges[i].block2ref = nodesById[edges[i].block2];
-				var index = nodeIdList.indexOf(edges[i].block1.toString());
-				if (index > -1) {
-					nodeIdList.splice(index, 1);
-				}
-			}
-			if (nodeIdList.length !== 1 && !silent) {
-				this.$utils.error(this, 'There must be exactly one output');
-			}
-			var startBlockId = nodeIdList[0];
-
-			// Create Process Graph
-			return this.makeProcessGraphFromEdges(edges, nodesById[startBlockId]);
-		},
-
-		makeProcessGraphFromEdges(edges, currentNode) {
-			if (!currentNode) {
-				return {};
-			}
-
-			var parents = [];
-			for(var i in edges) {
-				if (edges[i].block2 == currentNode.id) {
-					parents.push(this.makeProcessGraphFromEdges(edges, edges[i].block1ref));
-				}
-			}
-			if (currentNode.module == 'collection') {
-				return {
-					process_id: 'get_collection',
-					name: currentNode.type
-				};
-			}
-			else {
-				var process = currentNode.values;
-				if (parents.length == 1) {
-					process.imagery = parents[0];
+					this.$utils.exception(this, error);
 				}
 				else {
-					process.imagery = parents;
+					console.log(error);
 				}
-				process.process_id = currentNode.type;
-				return process;
-			}
-		},
-
-		propagateProcesses(processes) {
-			for(var i in processes) {
-				this.blocks.registerProcess(processes[i]);
-			}
-		},
-	
-		propagateCollections(collections) {
-			for(var i in collections) {
-				this.blocks.registerCollection(collections[i]);
+				return null;
 			}
 		},
 
 		insertProcessGraph(pg) {
-			if (!this.active) {
+			if (!this.active || !pg) {
 				return;
 			}
 
@@ -342,6 +281,10 @@ export default {
 
 .blocks_js_editor .circle.io_selected {
     background-color: #00C800 !important;
+}
+
+.blocks_js_editor .circle.result {
+    background-color: #888 !important;
 }
 
 .blocks_js_editor input,

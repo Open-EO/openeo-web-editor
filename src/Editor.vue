@@ -1,7 +1,7 @@
 <template>
 	<div id="container">
 		<div id="ide">
-			<BackendPanel :connection="connection" />
+			<BackendPanel :connection="connection" :collections="collections" :processes="processes" />
 			<div class="uiBox tabs" id="processGraphContent">
 				<div class="tabsHeader">
 					<button class="tabItem" name="graphTab" @click="changeProcessGraphTab"><i class="fas fa-code-branch"></i> Visual Model Builder</button>
@@ -22,12 +22,12 @@
 						<button @click="newScript" title="Clear current script / New script" class="sepl"><i class="fas fa-file"></i></button>
 						<button @click="openScriptChooser" title="Load script from local storage"><i class="fas fa-folder-open"></i></button>
 						<button @click="saveScript" title="Save script to local storage"><i class="fas fa-save"></i></button>
-						<button @click="executeProcessGraph" title="Run current process graph and view results" class="sepl" v-if="this.supports('execute')"><i class="fas fa-play"></i></button>
+						<button @click="executeProcessGraph" title="Run current process graph and view results" class="sepl" v-if="this.supports('computeResult')"><i class="fas fa-play"></i></button>
 					</div>
 				</div>
 				<div class="tabsBody">
 					<div class="tabContent" id="graphTab">
-						<GraphBuilderEnvironment ref="graphBuilder" :active="isVisualBuilderActive" />
+						<GraphBuilderEnvironment ref="graphBuilder" :active="isVisualBuilderActive" :collections="collections" :processes="processes" />
 					</div>
 					<div class="tabContent" id="sourceTab">
 						<SourceEnvironment ref="sourceEditor" :active="!isVisualBuilderActive" />
@@ -131,7 +131,9 @@ export default {
 			connection: null,
 			isVisualBuilderActive: true,
 			savedScripts: {},
-			scriptName: null
+			scriptName: null,
+			collections: [],
+			processes: []
 		};
 	},
 	created() {
@@ -232,6 +234,7 @@ export default {
 
 		serverChanged() {
 			this.resetActiveTab('userContent');
+			this.discoverData();
 		},
 
 		supports(feature) {
@@ -282,10 +285,47 @@ export default {
 			}
 		},
 
+		discoverData() {
+			if (this.supports('listCollections')) {
+				this.connection.listCollections()
+					.then(this.setDiscoveredCollections)
+					.catch(error => this.setDiscoveredCollections([]));
+			}
+			if (this.supports('listProcesses') ) {
+				this.connection.listProcesses()
+					.then(this.setDiscoveredProcesses)
+					.catch(error => this.setDiscoveredProcesses([]));
+			}
+		},
+	
+		setDiscoveredCollections(info) {
+			var collections = [];
+			for (var i in info.collections) {
+				if (typeof info.collections[i].id === 'undefined') {
+					continue;
+				}
+				collections.push(info.collections[i]);
+			}
+			collections.sort((a, b) => a.id.localeCompare(b.id));
+			this.collections = collections;
+		},
+		
+		setDiscoveredProcesses(info) {
+			var processes = [];
+			for (var i in info.processes) {
+				if (typeof info.processes[i].id === 'undefined') {
+					continue;
+				}
+				processes.push(info.processes[i]);
+			}
+			processes.sort((a, b) => a.id.localeCompare(b.id));
+			this.processes = processes;
+		},
+
 		newScript() {
 			var confirmed = confirm("Do you really want to clear the existing script to create a new one?");
 			if (confirmed) {
-				EventBus.$emit('insertProcessGraph', {});
+				EventBus.$emit('clearProcessGraph');
 				this.scriptName = null;
 			}
 		},
@@ -477,28 +517,25 @@ export default {
 				return; // Nothing changed
 			}
 
-			EventBus.$emit('getProcessGraph', (pg) => {
+			EventBus.$emit('getProcessGraph', pg => {
 				this.isVisualBuilderActive = enable;
-
-				this.$nextTick(() => {
-					EventBus.$emit('insertProcessGraph', pg);
-				});
-			}, true);
+				this.$nextTick(() => EventBus.$emit('insertProcessGraph', pg));
+			}, true, true);
 		},
 
-		getProcessGraph(callback, silent = false) {
+		getProcessGraph(callback, silent = false, passNull = false) {
 			if (this.isVisualBuilderActive) {
-				this.$refs.graphBuilder.getProcessGraph(callback, silent);
+				this.$refs.graphBuilder.getProcessGraph(callback, silent, passNull);
 			}
 			else {
-				this.$refs.sourceEditor.getProcessGraph(callback, silent);
+				this.$refs.sourceEditor.getProcessGraph(callback, silent, passNull);
 			}
 		},
 
 		executeProcessGraph() {
 			this.$utils.info(this, 'Data requested. Please wait...');
-			EventBus.$emit('getProcessGraph', (script) => {
-				this.connection.execute(script, format)
+			EventBus.$emit('getProcessGraph', script => {
+				this.connection.execute(script)
 					.then(data => EventBus.$emit('showInViewer', data))
 					.catch(error => this.$utils.exception(this, error, 'Sorry, could not execute process graph.'));
 			});
@@ -561,9 +598,8 @@ ul, ol {
 	display: flex;
 }
 #ide {
-	flex: 1;
 	padding: 10px;
-	width: 50%;
+	width: 60%;
 	min-width: 400px;
 	overflow-y: auto;
 }
@@ -571,6 +607,7 @@ ul, ol {
 	flex: 1;
 	padding: 10px;
 	max-width: 60%;
+	min-width: 300px;
 	border-left: 1px dotted #ccc;
 }
 .uiBox {

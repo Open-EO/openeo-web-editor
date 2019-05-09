@@ -150,7 +150,7 @@ export default {
 			}
 			
 			// ToDo: Ask user for service arguments
-			EventBus.$emit('getProcessGraph', (script) => {
+			EventBus.$emit('getProcessGraph', script => {
 				this.createService(script, type, title);
 			});
 		},
@@ -161,7 +161,7 @@ export default {
 		},
 		editService(service) {
 			// TODO: provide more update options/don't just override the process graph and nothing else
-			EventBus.$emit('getProcessGraph', (script) => {
+			EventBus.$emit('getProcessGraph', script => {
 				service.updateService(script)
 					.then(updatedService => {
 						this.$utils.ok(this, "Service successfully updated.");

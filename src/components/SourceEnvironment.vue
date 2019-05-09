@@ -36,13 +36,15 @@ export default {
 		EventBus.$on('insertProcessGraph', this.insertProcessGraph);
 		EventBus.$on('addProcessToEditor', this.insertToEditor);
 		EventBus.$on('addCollectionToEditor', this.insertToEditor);
+		EventBus.$on('clearProcessGraph', this.clearProcessGraph);
 	},
 	methods: {
-		getProcessGraph(callback, silent = false) {
-			var script = this.editor.getSelection();
-			if (!script) {
-				script = this.editor.getValue();
-			}
+		clearProcessGraph() {
+			this.insertToEditor("", true);
+		},
+	
+		getProcessGraph(callback, silent = false, passNull = false) {
+			var script = this.editor.getValue();
 			var pg = null;
 			if (script) {
 				try {
@@ -54,11 +56,11 @@ export default {
 				}
 			}
 
-			if (pg !== null) {
+			if (pg !== null || passNull) {
 				callback(pg);
 			}
 			else if (!silent) {
-				this.$utils.error(this, 'No valid model or source code specified.');
+				this.$utils.error(this, 'No valid source code specified.');
 			}
 		},
 
@@ -79,7 +81,12 @@ export default {
 				return;
 			}
 
-			this.insertToEditor(JSON.stringify(pg, null, 2), true);
+			if (!pg) {
+				this.insertToEditor("");
+			}
+			else {
+				this.insertToEditor(JSON.stringify(pg, null, 2), true);
+			}
 		}
 
 	}

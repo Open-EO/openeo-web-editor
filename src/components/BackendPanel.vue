@@ -35,10 +35,12 @@ import ConnectionMixin from './ConnectionMixin.vue';
 export default {
 	name: 'BackendPanel',
 	mixins: [ConnectionMixin],
+	props: {
+		processes: Array,
+		collections: Array
+	},
 	data() {
 		return {
-			processes: [],
-			collections: [],
 			serverUrls: [],
 			serverUrl: ''
 		};
@@ -50,7 +52,6 @@ export default {
 	},
 	created() {
 		EventBus.$on('changeServerUrl', this.changeServer);
-		EventBus.$on('serverChanged', this.discoverData);
 		EventBus.$on('showCollectionInfo', this.showCollectionInfo);
 		EventBus.$on('showProcessInfo', this.showProcessInfo);
 	},
@@ -100,19 +101,6 @@ export default {
 			this.serverUrl = url;
 			if (this.serverUrls.indexOf(url) === -1) {
 				this.serverUrls.push(url);
-			}
-		},
-
-		discoverData() {
-			if (this.supports('listCollections')) {
-				this.connection.listCollections()
-					.then(this.setDiscoveredCollections)
-					.catch(error => this.setDiscoveredCollections([]));
-			}
-			if (this.supports('listProcesses') ) {
-				this.connection.listProcesses()
-					.then(this.setDiscoveredProcesses)
-					.catch(error => this.setDiscoveredProcesses([]));
 			}
 		},
 
@@ -179,30 +167,6 @@ export default {
 
 		insertProcess() {
 			EventBus.$emit('addProcessToEditor', this.$refs.processes.value);
-		},
-	
-		setDiscoveredCollections(info) {
-			this.collections = [];
-			for (var i in info.collections) {
-				if (typeof info.collections[i].id === 'undefined') {
-					continue;
-				}
-				this.collections.push(info.collections[i]);
-			}
-			this.collections.sort((a, b) => a.id.localeCompare(b.id));
-			EventBus.$emit('propagateCollections', this.collections);
-		},
-		
-		setDiscoveredProcesses(info) {
-			this.processes = [];
-			for (var i in info.processes) {
-				if (typeof info.processes[i].id === 'undefined') {
-					continue;
-				}
-				this.processes.push(info.processes[i]);
-			}
-			this.processes.sort((a, b) => a.id.localeCompare(b.id));
-			EventBus.$emit('propagateProcesses', this.processes);
 		}
 	}
 }

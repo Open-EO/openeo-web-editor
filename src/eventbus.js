@@ -63,12 +63,6 @@ Shows the image panel in the viewer area.
 ## showMapDataViewer()
 Shows the data panel in the viewer area.
 
-## propagateCollections(object $data)
-Forwards new collection data from BackendPanel to GraphBuilderEnvironment
-
-## propagateProcesses(object $data)
-Forwards new process data from BackendPanel to GraphBuilderEnvironment
-
 ## showCollectionInfo(id)
 Shows collection information in a modal.
 

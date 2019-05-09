@@ -67,7 +67,7 @@ export default {
 				title = null;
 			}
 
-			EventBus.$emit('getProcessGraph', (script) => {
+			EventBus.$emit('getProcessGraph', script => {
 				this.connection.createProcessGraph(script, title)
 					.then(data => {
 						this.$refs.table.addData(data);
@@ -82,7 +82,7 @@ export default {
 		},
 		editGraph(pg) {
 			// TODO: provide more update options/don't just override the process graph and nothing else
-			EventBus.$emit('getProcessGraph', (script) => {
+			EventBus.$emit('getProcessGraph', script => {
 				var dataToUpdate= {
 					process_graph: script
 				};

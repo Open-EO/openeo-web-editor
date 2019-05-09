@@ -1,13 +1,22 @@
 <template>
-	<div class="fieldContainer">
-		<div class="fieldContainer" v-if="type() === 'temporal_extent'">
+	<div class="fieldEditorContainer">
+		<select class="fieldValue" v-if="schema.isEnum()" :name="fieldName" v-model="value">
+			<option v-for="(choice, k) in schema.getEnumChoices()" :key="k" :value="choice">{{ choice }}</option>
+		</select>
+		<template v-else-if="type === 'temporal-interval'">
 			<VueCtkDateTimePicker v-model="value" :range="true" label="Select start and end time" format="YYYY-MM-DD[T]HH:mm:ss[Z]"></VueCtkDateTimePicker>
 			<!-- ToDo: Support open date ranges, probably by using two separate date pickers -->
-		</div>
-		<div class="fieldContainer" v-else-if="type() === 'spatial_extent'">
+		</template>
+		<template v-else-if="type === 'bounding-box'">
 			<div id="areaSelector"></div>
-		</div>
-		<div class="fieldContainer" v-else-if="type() === 'array'">
+		</template>
+		<template v-else-if="type === 'callback'">
+			<GraphBuilderEnvironment ref="callbackBuilder" />
+		</template>
+		<template v-else-if="type === 'null'">
+			The field will be set to <strong><tt>null</tt></strong>.
+		</template>
+		<template v-else-if="type === 'array'">
 			<draggable v-model="value">
 				<transition-group name="arrayElements">
 					<div class="fieldValue arrayElement" v-for="(e, k) in value" :key="e.id">
@@ -18,11 +27,8 @@
 				</transition-group>
 			</draggable>
 			<button type="button" @click="addField()"><i class="fas fa-plus"></i> Add</button>
-		</div>
-		<select class="fieldValue" v-else-if="type() === 'enum'" :name="fieldName" v-model="value">
-			<option v-for="(choice, k) in field.getEnumChoices()" :key="k" :value="choice">{{ choice }}</option>
-		</select>
-		<input class="fieldValue" v-else-if="type() === 'boolean'" :checked="!!value" v-model="value" type="checkbox" :name="fieldName" />
+		</template>
+		<input class="fieldValue" v-else-if="type === 'boolean'" :checked="!!value" v-model="value" type="checkbox" :name="fieldName" />
 		<input class="fieldValue" v-else v-model="value" type="text" :name="fieldName" />
 	</div>
 </template>
@@ -35,17 +41,22 @@ import 'vue-ctk-date-time-picker/dist/vue-ctk-date-time-picker.css';
 
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import areaSelect from "./leaflet-areaselect/leaflet-areaselect.js"
-import "./leaflet-areaselect/leaflet-areaselect.css"
+import areaSelect from "./leaflet-areaselect/leaflet-areaselect.js";
+import "./leaflet-areaselect/leaflet-areaselect.css";
+
+
+import GraphBuilderEnvironment from './GraphBuilderEnvironment.vue';
 
 export default {
 	name: 'EditorField',
 	components: {
 		draggable,
+		GraphBuilderEnvironment,
 		VueCtkDateTimePicker
 	},
 	props: {
 		field: Object,
+		schema: Object,
 		pass: {},
 		isItem: {
 			type: Boolean,
@@ -54,13 +65,13 @@ export default {
 	},
 	data() {
 		var v;
-		if (this.type() === 'temporal_extent' && Array.isArray(this.$props.pass) && this.$props.pass.length >= 2) {
+		if (this.type === 'temporal-interval' && Array.isArray(this.$props.pass) && this.$props.pass.length >= 2) {
 			v = {
 				start: this.$props.pass[0],
 				end: this.$props.pass[1]
 			};
 		}
-		else if (this.type() === 'array') {
+		else if (this.type === 'array') {
 			v = [];
 			for(var i in this.$props.pass) {
 				v.push({
@@ -77,7 +88,7 @@ export default {
 		};
 	},
 	mounted() {
-		if (this.getFormat() === 'spatial_extent') {
+		if (this.type === 'bounding-box') {
 			var map = new L.Map('areaSelector');
 			var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 				name: 'OpenStreetMap',
@@ -105,42 +116,18 @@ export default {
 	},
 	computed: {
 		fieldName() {
-			return this.field.name + (this.field.isArray ? '[]' : '');
+			return this.field.name + (Array.isArray(this.field.value) ? '[]' : '');
+		},
+		type() {
+			return this.schema.dataType();
 		}
 	},
 	methods: {
-		type() {
-			if (this.getFormat() === 'temporal_extent') {
-				return 'temporal_extent';
-			}
-			else if (this.getFormat() === 'spatial_extent') {
-				return 'spatial_extent';
-			}
-			else if (this.field.isArray && !this.isItem) {
-				return 'array';
-			}
-			else if (this.field.isEnum()) {
-				return 'enum';
-			}
-			else if (this.field.type === 'boolean') {
-				return 'boolean';
-			}
-			else if (this.field.type === 'number') {
-				return 'number';
-			}
-			else if (this.field.type === 'integer') {
-				return 'integer';
-			}
-			else {
-				return 'string';
-			}
-		},
 		getValue() {
-			var type = this.type();
-			if (type === 'temporal_extent') {
+			if (this.type === 'temporal-interval') {
 				return [this.value.start, this.value.end];
 			}
-			else if (type === 'spatial_extent') {
+			else if (this.type === 'bounding-box') {
 				return	{
 					// Round to 6 decimals, the leading + removes the trailing zeros appended by toFixed.
 					west: +this.value.getWest().toFixed(6),
@@ -149,25 +136,25 @@ export default {
 					north: +this.value.getNorth().toFixed(6),
 				};
 			}
-			else if (type === 'array') {
+			else if (this.type === 'array') {
 				var values = [];
 				for(var i in this.$refs.arrayFields) {
 					values.push(this.$refs.arrayFields[i].getValue());
 				}
 				return values;
 			}
-			else if (type === 'number') {
+			else if (this.type === 'number') {
 				return Number.parseFloat(this.value);
 			}
-			else if (type === 'integer') {
+			else if (this.type === 'integer') {
+				return Number.parseInt(this.value);
+			}
+			else if (this.type === 'null') {
 				return Number.parseInt(this.value);
 			}
 			else {
 				return this.value;
 			}
-		},
-		getFormat() {
-			return this.field.meta.schema.format;
 		},
 		addField() {
 			this.value.push({
