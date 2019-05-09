@@ -5,22 +5,31 @@
 		</select>
 		<template v-else-if="type === 'temporal-interval'">
 			<VueCtkDateTimePicker v-model="value" :range="true" label="Select start and end time" format="YYYY-MM-DD[T]HH:mm:ss[Z]"></VueCtkDateTimePicker>
-			<!-- ToDo: Support open date ranges, probably by using two separate date pickers -->
+			<!-- ToDo: Support open date ranges, probably by using two separate date pickers, see also https://github.com/chronotruck/vue-ctk-date-time-picker/issues/121 -->
+		</template>
+		<template v-else-if="type === 'date-time'">
+			<VueCtkDateTimePicker v-model="value" label="Select date and time" format="YYYY-MM-DD[T]HH:mm:ss[Z]" no-button="true"></VueCtkDateTimePicker>
+		</template>
+		<template v-else-if="type === 'date'">
+			<VueCtkDateTimePicker v-model="value" label="Select date" only-date="true" format="YYYY-MM-DD" no-button="true"></VueCtkDateTimePicker>
+		</template>
+		<template v-else-if="type === 'time'">
+			<VueCtkDateTimePicker v-model="value" label="Select time" only-time="true" format="HH:mm:ss[Z]" no-button="true"></VueCtkDateTimePicker>
 		</template>
 		<template v-else-if="type === 'bounding-box'">
 			<div id="areaSelector"></div>
 		</template>
-		<template v-else-if="type === 'callback'">
-			<GraphBuilderEnvironment ref="callbackBuilder" />
-		</template>
+		<div v-else-if="type === 'callback'" class="border">
+			<GraphBuilderEnvironment ref="callbackBuilder" fieldId="inlinePgEditor" />
+		</div>
 		<template v-else-if="type === 'null'">
 			The field will be set to <strong><tt>null</tt></strong>.
 		</template>
-		<template v-else-if="type === 'array'">
+		<template v-else-if="type === 'array' || type === 'temporal-intervals'">
 			<draggable v-model="value">
 				<transition-group name="arrayElements">
 					<div class="fieldValue arrayElement" v-for="(e, k) in value" :key="e.id">
-						<EditorField ref="arrayFields" :field="field" :pass="e.value" :isItem="true" />
+						<EditorField ref="arrayFields" :field="field" :schema="schema" :pass="e.value" :isItem="true" />
 						<button type="button" @click="removeField(k)"><i class="fas fa-trash"></i></button>
 						<div class="mover"><i class="fas fa-arrows-alt"></i></div>
 					</div>
@@ -28,6 +37,7 @@
 			</draggable>
 			<button type="button" @click="addField()"><i class="fas fa-plus"></i> Add</button>
 		</template>
+		<textarea class="fieldValue textarea" v-else-if="useTextarea" v-model="value"></textarea>
 		<input class="fieldValue" v-else-if="type === 'boolean'" :checked="!!value" v-model="value" type="checkbox" :name="fieldName" />
 		<input class="fieldValue" v-else v-model="value" type="text" :name="fieldName" />
 	</div>
@@ -64,65 +74,102 @@ export default {
 		}
 	},
 	data() {
-		var v;
-		if (this.type === 'temporal-interval' && Array.isArray(this.$props.pass) && this.$props.pass.length >= 2) {
-			v = {
-				start: this.$props.pass[0],
-				end: this.$props.pass[1]
-			};
-		}
-		else if (this.type === 'array') {
-			v = [];
-			for(var i in this.$props.pass) {
-				v.push({
-					id: i,
-					value: this.$props.pass[i]
-				});
-			}
-		}
-		else {
-			v = this.$props.pass;
-		}
 		return {
-			value: v
-		};
-	},
-	mounted() {
-		if (this.type === 'bounding-box') {
-			var map = new L.Map('areaSelector');
-			var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-				name: 'OpenStreetMap',
-				attribution: 'Map data &copy; <a href="http://www.osm.org">OpenStreetMap</a>'
-			});
-			osm.addTo(map);
-
-			var areaSelect = L.areaSelect();
-			areaSelect.addTo(map);
-			if (this.$utils.isObject(this.value) && Object.keys(this.value).length >= 4) {
-				this.value = L.latLngBounds(
-					L.latLng(this.value.south, this.value.west),
-					L.latLng(this.value.north, this.value.east)
-				);
-				areaSelect.setBounds(this.value);
-			}
-			else {
-				map.setView([0,0], 1);
-				this.value = areaSelect.getBounds();
-			}
-			areaSelect.on("change", () => {
-				this.value = areaSelect.getBounds();
-			});
+			value: null
 		}
 	},
 	computed: {
+		type() {
+			return this.isItem ? this.schema.arrayOf() : this.schema.dataType();
+		},
+		useTextarea() {
+			return (this.type === 'geojson' || this.type === 'proj-definition' || this.type === 'output-format-options' || this.type === 'process-graph-variables');
+		},
 		fieldName() {
 			return this.field.name + (Array.isArray(this.field.value) ? '[]' : '');
-		},
-		type() {
-			return this.schema.dataType();
 		}
 	},
+	watch: {
+		schema() {
+			this.$nextTick(() => this.initView());
+		}
+	},
+	created() {
+		this.value = this.initValue();
+	},
+	mounted() {
+		this.initView();
+	},
 	methods: {
+		initView() {
+			if (this.type === 'bounding-box') {
+				var map = new L.Map('areaSelector');
+				var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+					name: 'OpenStreetMap',
+					attribution: 'Map data &copy; <a href="http://www.osm.org">OpenStreetMap</a>'
+				});
+				osm.addTo(map);
+
+				var areaSelect = L.areaSelect();
+				areaSelect.addTo(map);
+				if (this.$utils.isObject(this.value) && Object.keys(this.value).length >= 4) {
+					this.value = L.latLngBounds(
+						L.latLng(this.value.south, this.value.west),
+						L.latLng(this.value.north, this.value.east)
+					);
+					areaSelect.setBounds(this.value);
+				}
+				else {
+					map.setView([0,0], 1);
+					this.value = areaSelect.getBounds();
+				}
+				areaSelect.on("change", () => {
+					this.value = areaSelect.getBounds();
+				});
+			}
+		},
+		initValue() {
+			var v;
+			if (this.type === 'temporal-interval') {
+				if (Array.isArray(this.$props.pass) && this.$props.pass.length >= 2) {
+					v = {
+						start: this.$props.pass[0],
+						end: this.$props.pass[1]
+					};
+				}
+				else {
+					v = "";
+				}
+			}
+			else if (this.type === 'array' || this.type === 'temporal-intervals') {
+				v = [];
+				if (Array.isArray(this.$props.pass)) {
+					for(var i in this.$props.pass) {
+						v.push({
+							id: i,
+							value: this.$props.pass[i]
+						});
+					}
+				}
+			}
+			else if (this.useTextarea) {
+				if (typeof this.$props.pass === 'object') {
+					if (this.$utils.size() > 0) {
+						v = JSON.stringify(this.$props.pass, null, 2);
+					}
+					else {
+						v = "";
+					}
+				}
+				else {
+					v = this.$props.pass;
+				}
+			}
+			else {
+				v = this.$props.pass;
+			}
+			return v;
+		},
 		getValue() {
 			if (this.type === 'temporal-interval') {
 				return [this.value.start, this.value.end];
@@ -136,7 +183,7 @@ export default {
 					north: +this.value.getNorth().toFixed(6),
 				};
 			}
-			else if (this.type === 'array') {
+			else if (this.type === 'array' || this.type === 'temporal-intervals') {
 				var values = [];
 				for(var i in this.$refs.arrayFields) {
 					values.push(this.$refs.arrayFields[i].getValue());
@@ -150,7 +197,10 @@ export default {
 				return Number.parseInt(this.value);
 			}
 			else if (this.type === 'null') {
-				return Number.parseInt(this.value);
+				return null;
+			}
+			else if (this.useTextarea) {
+				return JSON.parse(this.value);
 			}
 			else {
 				return this.value;
@@ -171,6 +221,12 @@ export default {
 };
 </script>
 
+<style>
+.datepicker button {
+	margin: 0px;
+}
+</style>
+
 <style scoped>
 .arrayElement {
 	transition: all 0.5s;
@@ -185,5 +241,12 @@ export default {
 }
 #areaSelector {
 	height: 500px;
+}
+.textarea {
+	width: 100%;
+	height: 200px;
+}
+.border {
+	border: 1px solid #ccc;
 }
 </style>

@@ -1,6 +1,6 @@
 <template>
 	<div id="GraphBuilderEnvironment">
-		<div id="pgEditor"></div>
+		<div :id="fieldId" class="graphBuilder"></div>
 	</div>
 </template>
 
@@ -16,7 +16,8 @@ export default {
 			default: true
 		},
 		processes: Array,
-		collections: Array
+		collections: Array,
+		fieldId: String
 	},
 	data() {
 		return {
@@ -27,7 +28,7 @@ export default {
 		this.blocks = new Blocks(this.errorHandler);
     },
 	mounted() {
-        this.blocks.run("#pgEditor");
+        this.blocks.run("#" + this.fieldId);
 
 		EventBus.$on('addProcessToEditor', this.insertProcess);
 		EventBus.$on('addCollectionToEditor', this.insertCollection);
@@ -138,7 +139,7 @@ export default {
 </script>
 
 <style>
-#pgEditor {
+.graphBuilder {
 	height: 400px;
 }
 

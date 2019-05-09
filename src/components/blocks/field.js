@@ -45,6 +45,10 @@ class Field extends ProcessSchema {
     isRequired() {
         return this.meta.required === true;
     }
+
+    isDefaultValue() {
+        return !this.hasValue || this.hasDefaultValue() && this.defaultValue() == this.getValue(); // Don't do ===, otherwise empty objects are not recognized as the same.
+    }
     
     isEditable() {
         return this.isInput() && super.isEditable();

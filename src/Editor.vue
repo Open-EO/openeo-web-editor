@@ -27,7 +27,7 @@
 				</div>
 				<div class="tabsBody">
 					<div class="tabContent" id="graphTab">
-						<GraphBuilderEnvironment ref="graphBuilder" :active="isVisualBuilderActive" :collections="collections" :processes="processes" />
+						<GraphBuilderEnvironment ref="graphBuilder" :active="isVisualBuilderActive" :collections="collections" :processes="processes" fieldId="pgEditor" />
 					</div>
 					<div class="tabContent" id="sourceTab">
 						<SourceEnvironment ref="sourceEditor" :active="!isVisualBuilderActive" />

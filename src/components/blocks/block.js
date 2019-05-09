@@ -511,11 +511,12 @@ Block.prototype.exportProcessGraph = function()
                         from_node: this.edges[field.name][i].getOtherBlock(this).id
                     });
                 }
-                console.log(field.name, v);
                 values[field.name] = v.length === 1 ? v[0] : v;
             }
             else if (field.hasValue) {
-                console.log(field.getValue());
+                if (!field.isRequired() && field.isDefaultValue()) {
+                    continue; // Skip if it's the default value and not required
+                }
                 values[field.name] = field.getValue();
             }
         }

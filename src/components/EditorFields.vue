@@ -5,8 +5,8 @@
 			<select name="dataType" v-model="type">
 				<option v-for="(schema, key) in field.schemas" :key="key" :value="key">{{ schema.title() }}</option>
 			</select>
-			<div v-if="field.schemas[type].description" class="description">
-				<i class="fas fa-info-circle"></i> {{ field.schemas[type].description }}
+			<div v-if="field.schemas[type].description()" class="description">
+				<i class="fas fa-info-circle"></i> {{ field.schemas[type].description() }}
 			</div>
 		</div>
 		<EditorField ref="field" :field="field" :schema="field.schemas[type]" :pass="pass" />

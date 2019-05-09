@@ -139,6 +139,10 @@ class ProcessSubSchema {
 		return title;
 	}
 
+	description() {
+		return this.schema.description || "";
+	}
+
 }
 
 export {
