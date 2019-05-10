@@ -23,6 +23,7 @@
 <script>
 import EventBus from '../eventbus.js';
 import WorkPanelMixin from './WorkPanelMixin.vue';
+import Utils from '../utils.js';
 
 export default {
 	name: 'JobPanel',
@@ -87,7 +88,7 @@ export default {
 					}
 					this.updateJobData(updatedJob);
 				})
-				.catch(error => this.$utils.exception(this, error, "Sorry, could not load job information."));
+				.catch(error => Utils.exception(this, error, "Sorry, could not load job information."));
 		},
 		showInEditor(job) {
 			this.refreshJob(job, updatedJob => {
@@ -111,14 +112,14 @@ export default {
 			if (this.supports('deleteJob')) {
 				buttons.push({text: 'Delete', action: () => this.deleteJob(job)});
 			}
-			this.$utils.confirm(this, 'Job created!', buttons);
+			Utils.confirm(this, 'Job created!', buttons);
 		},
 		createJob(processGraph, title = null) {
 			this.connection.createJob(processGraph, title)
 				.then(job => {
 					EventBus.$emit('jobCreated', job);
 				}).catch(error => {
-					this.$utils.exception(this, error, 'Sorry, could not create a batch job.');
+					Utils.exception(this, error, 'Sorry, could not create a batch job.');
 				});
 		},
 		createJobFromScript() {
@@ -156,7 +157,7 @@ export default {
 					this.$refs.table.removeData(job.jobId);
 				})
 				.catch(error => {
-					this.$utils.exception(this, error, 'Sorry, could not delete job.');
+					Utils.exception(this, error, 'Sorry, could not delete job.');
 				});
 		},
 		executeWatchers() {
@@ -168,10 +169,10 @@ export default {
 							buttons.push({text: 'Download', action: () => this.downloadResults(updated)});
 							buttons.push({text: 'View', action: () => this.viewResults(updated)});
 						}
-						this.$utils.confirm(this, 'Job has finished!', buttons);
+						Utils.confirm(this, 'Job has finished!', buttons);
 					}
 					else if (old.status !== 'error' && updated.status === 'error') {
-						this.$utils.error(this, 'Job has stopped due to an error or timeout.');
+						Utils.error(this, 'Job has stopped due to an error or timeout.');
 					}
 				});
 			}
@@ -186,58 +187,58 @@ export default {
 				.then(estimate => {
 					EventBus.$emit('showModal', 'Job Estimate', estimate);
 				})
-				.catch(error => this.$utils.exception(this, error, "Sorry, could not load job estimate."));
+				.catch(error => Utils.exception(this, error, "Sorry, could not load job estimate."));
 		},
 		editJob(job) {
 			// TODO: provide more update options/don't just override the process graph and nothing else
 			EventBus.$emit('getProcessGraph', script => {
 				job.updateJob(script)
 					.then(updatedJob => {
-						this.$utils.ok(this, "Job successfully updated.");
+						Utils.ok(this, "Job successfully updated.");
 						this.updateJobData(updatedJob);
 					})
-					.catch(error => this.$utils.exception(this, error, "Sorry, could not update job."));;
+					.catch(error => Utils.exception(this, error, "Sorry, could not update job."));;
 			});
 		},
 		queueJob(job) {
 			job.startJob()
 				.then(updatedJob => {
-					this.$utils.ok(this, "Job successfully queued.");
+					Utils.ok(this, "Job successfully queued.");
 					this.updateJobData(updatedJob);
 				})
-				.catch(error => this.$utils.exception(this, error, "Sorry, could not queue job."));
+				.catch(error => Utils.exception(this, error, "Sorry, could not queue job."));
 		},
 		cancelJob(job) {
 			job.stopJob()
 				.then(updatedJob => {
-					this.$utils.ok(this, "Job successfully canceled.");
+					Utils.ok(this, "Job successfully canceled.");
 					this.updateJobData(updatedJob);
 				})
-				.catch(error => this.$utils.exception(this, error, "Sorry, could not cancel job."));
+				.catch(error => Utils.exception(this, error, "Sorry, could not cancel job."));
 		},
 		viewResults(job) {			
 			job.listResults().then(info => {
 				if(info.links.length == 0) {
-					this.$utils.error(this, "No download available.");
+					Utils.error(this, "No download available.");
 					return;
 				} else if (info.links.length > 1) {
-					this.$utils.info(this, "Job resulted in multiple files, please download them individually.");
+					Utils.info(this, "Job resulted in multiple files, please download them individually.");
 					return;
 				}
 
-				this.$utils.info(this, 'Data requested. Please wait...');
+				Utils.info(this, 'Data requested. Please wait...');
 				// Send requests without authentication (second parameter false), they should be secured by a token in the URL
 				this.connection.download(info.links[0].href, false)
 					.then(response => EventBus.$emit('showInViewer', response.data, info.links[0].type))
 					.catch(error => {
-						this.$utils.exception(this, error, "Sorry, can't download results.");
+						Utils.exception(this, error, "Sorry, can't download results.");
 					});
 			});
 		},
 		downloadResults(job) {	
 			job.listResults().then(info => {
 				if(info.links.length == 0) {
-					this.$utils.error(this, "No download available.");
+					Utils.error(this, "No download available.");
 				}
 				else {
 					// This can be formatted much nicer and more useful...

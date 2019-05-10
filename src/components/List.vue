@@ -11,6 +11,8 @@
 
 <script>
 import EventBus from '../eventbus.js';
+import Utils from '../utils.js';
+
 export default {
     name: 'List',
     props: ['dataSource', 'actions'],
@@ -22,7 +24,7 @@ export default {
     methods: {
         doAction(callback, item) {
             const closeAfterCompletion = callback(item);
-            if(closeAfterCompletion === true && this.$utils.isChildOfModal(this)) {
+            if(closeAfterCompletion === true && Utils.isChildOfModal(this)) {
                 EventBus.$emit('closeModal');
             }
         },

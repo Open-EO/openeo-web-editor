@@ -7,6 +7,7 @@
 <script>
 import EventBus from '../eventbus.js';
 import Blocks from './blocks/blocks.js';
+import Utils from '../utils.js';
 
 export default {
 	name: 'GraphBuilderEnvironment',
@@ -51,7 +52,7 @@ export default {
 	},
 	methods: {
 		errorHandler(message, title = null) {
-    		this.$utils.exception(this, message, title);
+    		Utils.exception(this, message, title);
 		},
 
 		clearProcessGraph() {
@@ -64,7 +65,7 @@ export default {
 				callback(pg);
 			}
 			else if (!silent) {
-				this.$utils.error(this, 'No valid model specified.');
+				Utils.error(this, 'No valid model specified.');
 			}
 		},
 
@@ -79,7 +80,7 @@ export default {
             	this.blocks.perfectScale();
 			} catch (error) {
 				// If an error occured: show it an restore the last working state from history.
-				this.$utils.exception(this, error, "Process graph invalid");
+				Utils.exception(this, error, "Process graph invalid");
 				this.blocks.history.restoreLast();
 				success = false;
 			}
@@ -93,7 +94,7 @@ export default {
 				return this.blocks.exportProcessGraph();
 			} catch (error) {
 				if (!silent) {
-					this.$utils.exception(this, error);
+					Utils.exception(this, error);
 				}
 				else {
 					console.log(error);
@@ -118,7 +119,7 @@ export default {
 			try {
 				this.blocks.addCollection(name, 0, 0);
 			} catch(error) {
-				this.$utils.exception(this, error);
+				Utils.exception(this, error);
 			}
 		},
 
@@ -130,7 +131,7 @@ export default {
 			try {
 				this.blocks.addProcess(name, 0, 0);
 			} catch(error) {
-				this.$utils.exception(this, error);
+				Utils.exception(this, error);
 			}
 		}
 

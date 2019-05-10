@@ -91,6 +91,8 @@
 
 <script>
 import EventBus from './eventbus.js';
+import Utils from './utils.js';
+import ConnectionMixin from './components/ConnectionMixin.vue';
 import AccountPanel from './components/AccountPanel.vue';
 import BackendPanel from './components/BackendPanel.vue';
 import DataViewer from './components/DataViewer.vue';
@@ -104,14 +106,15 @@ import ProcessGraphPanel from './components/ProcessGraphPanel.vue';
 import ServicePanel from './components/ServicePanel.vue';
 import SourceEnvironment from './components/SourceEnvironment.vue';
 import axios from 'axios';
-import { OpenEO } from '@openeo/js-client';
 import Vue from 'vue';
+import { mapGetters, mapActions } from 'vuex';
 
 // Making axios available globally for the OpenEO JS client
 window.axios = axios;
 
 export default {
 	name: 'openeo-web-editor',
+	mixins: [ConnectionMixin],
 	components: {
 		AccountPanel,
 		BackendPanel,
@@ -128,12 +131,9 @@ export default {
 	},
 	data() {
 		return {
-			connection: null,
 			isVisualBuilderActive: true,
 			savedScripts: {},
-			scriptName: null,
-			collections: [],
-			processes: []
+			scriptName: null
 		};
 	},
 	created() {
@@ -157,6 +157,8 @@ export default {
 		}
 	},
 	computed: {
+		...mapGetters(['collections', 'processes']),
+
 		savedScriptNames() {
 			return Object.keys(this.savedScripts);
 		}
@@ -170,6 +172,7 @@ export default {
 		}
 	},
 	methods: {
+		...mapActions(['connect', 'authenticateBasic']),
 
 		// ToDO: Move this to the Blocks component, once we switched from jQuery to Vue
 		blocksDelete() {
@@ -214,58 +217,33 @@ export default {
 
 		changeServer(url) {
 			if (window.location.protocol === 'https:' && url.toLowerCase().substr(0,6) !== 'https:') {
-				this.$utils.error(this, 'You are trying to connect to a back-end with HTTP instead of HTTPS, which is insecure and prohibited by web browsers. Please use HTTPS instead.');
+				Utils.error(this, 'You are trying to connect to a back-end with HTTP instead of HTTPS, which is insecure and prohibited by web browsers. Please use HTTPS instead.');
 				return;
 			}
-			try {
-				OpenEO.connect(url)
-					.then(connection => {
-						this.connection = connection;
-						this.requestSupportedOutputFormats();
-						this.requestSupportedServices();
-						this.requestAuth();
-					}).catch(error => {
-						this.$utils.exception(this, error);
-					});
-			} catch (e) {
-				this.$utils.exception(this, error);
-			}
+			this.connect(url)
+				.then(() => this.requestAuth())
+				.catch(error => Utils.exception(this, error));
 		},
 
 		serverChanged() {
 			this.resetActiveTab('userContent');
-			this.discoverData();
-		},
-
-		supports(feature) {
-			return this.connection && this.connection.capabilities().hasFeature(feature);
-		},
-
-		requestSupportedOutputFormats() {
-			if (this.supports('listFileTypes')) {
-				this.connection.listFileTypes().then(response => this.connection.supportedOutputFormats = response);
-			}
-		},
-
-		requestSupportedServices() {
-			if (this.supports('listServiceTypes')) {
-				this.connection.listServiceTypes().then(response => this.connection.supportedServices = response);
-			}
 		},
 
 		requestAuth() {
-			// TODO-CF: authenticateOIDC is missing
-			if (this.supports('authenticateBasic')) {
+			if (this.supports('authenticateOIDC')) {
+				EventBus.$emit('serverChanged');
+				Utils.info(this, 'Sorry, the authentication methods supported by the back-end is not supported by the Web Editor.');
+			}
+			else if (this.supports('authenticateBasic')) {
 				var opts = {
-					submitLoginCallback: (user, password) => {
-						return this.connection.authenticateBasic(user, password)
-							.then(data => {
+					submitLoginCallback: (username, password) => {
+						return this.authenticateBasic({username, password})
+							.then(() => {
 								EventBus.$emit('serverChanged');
-								this.$utils.ok(this, 'Login successful.');
-								return data;
+								Utils.ok(this, 'Login successful.');
 							})
 							.catch(error => {
-								this.$utils.error(this, 'Sorry, credentials are wrong.');
+								Utils.error(this, 'Sorry, credentials are wrong.');
 								throw error;
 							});
 					},
@@ -275,51 +253,10 @@ export default {
 				};
 				EventBus.$emit('showComponentModal', 'Enter your credentials', 'CredentialsForm', opts);
 			}
-			else if (this.supports('authenticateOIDC')) {
-				EventBus.$emit('serverChanged');
-				this.$utils.info(this, 'Sorry, the authentication methods supported by the back-end is not supported by the Web Editor.');
-			}
 			else {
 				EventBus.$emit('serverChanged');
-				this.$utils.info(this, 'You are working without authorization. Your data will be publicly available!');
+				Utils.info(this, 'You are working without authorization. Your data will be publicly available!');
 			}
-		},
-
-		discoverData() {
-			if (this.supports('listCollections')) {
-				this.connection.listCollections()
-					.then(this.setDiscoveredCollections)
-					.catch(error => this.setDiscoveredCollections([]));
-			}
-			if (this.supports('listProcesses') ) {
-				this.connection.listProcesses()
-					.then(this.setDiscoveredProcesses)
-					.catch(error => this.setDiscoveredProcesses([]));
-			}
-		},
-	
-		setDiscoveredCollections(info) {
-			var collections = [];
-			for (var i in info.collections) {
-				if (typeof info.collections[i].id === 'undefined') {
-					continue;
-				}
-				collections.push(info.collections[i]);
-			}
-			collections.sort((a, b) => a.id.localeCompare(b.id));
-			this.collections = collections;
-		},
-		
-		setDiscoveredProcesses(info) {
-			var processes = [];
-			for (var i in info.processes) {
-				if (typeof info.processes[i].id === 'undefined') {
-					continue;
-				}
-				processes.push(info.processes[i]);
-			}
-			processes.sort((a, b) => a.id.localeCompare(b.id));
-			this.processes = processes;
 		},
 
 		newScript() {
@@ -338,7 +275,7 @@ export default {
 				return true;  // to close the modal
 			}
 			else {
-				this.$utils.info(this, 'No script with the name "' + name + '" found.');
+				Utils.info(this, 'No script with the name "' + name + '" found.');
 				return false;  // to keep the modal open
 			}
 		},
@@ -452,7 +389,7 @@ export default {
 
 		isTabActive(tabName) {
 			var elem = document.getElementById(tabName);
-			if (this.$utils.isObject(elem) && typeof elem.className === 'string' && elem.className.indexOf(' tabActive') !== -1) {
+			if (Utils.isObject(elem) && typeof elem.className === 'string' && elem.className.indexOf(' tabActive') !== -1) {
 				return true;
 			}
 			else {
@@ -508,7 +445,7 @@ export default {
 						break;
 //					}
 				default:
-					this.$utils.error(this, "Sorry, the returned content type is not supported to view.");
+					Utils.error(this, "Sorry, the returned content type is not supported to view.");
 			}
 		},
 
@@ -533,11 +470,11 @@ export default {
 		},
 
 		executeProcessGraph() {
-			this.$utils.info(this, 'Data requested. Please wait...');
+			Utils.info(this, 'Data requested. Please wait...');
 			EventBus.$emit('getProcessGraph', script => {
 				this.connection.execute(script)
 					.then(data => EventBus.$emit('showInViewer', data))
-					.catch(error => this.$utils.exception(this, error, 'Sorry, could not execute process graph.'));
+					.catch(error => Utils.exception(this, error, 'Sorry, could not execute process graph.'));
 			});
 		},
 

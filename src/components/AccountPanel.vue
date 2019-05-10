@@ -21,6 +21,7 @@
 import EventBus from '../eventbus.js';
 import WorkPanelMixin from './WorkPanelMixin.vue';
 import LinkList from '@openeo/vue-components/components/LinkList.vue';
+import Utils from '../utils.js';
 
 export default {
 	name: 'AccountPanel',
@@ -46,7 +47,7 @@ export default {
 		},
 		storageUsed: {
 			get() {
-				if (!this.$utils.isObject(this.me.storage)) {
+				if (!Utils.isObject(this.me.storage)) {
 					return null;
 				}
 				return this.me.storage.quota - this.me.storage.free;
@@ -54,7 +55,7 @@ export default {
 		},
 		storageUsedPercent: {
 			get() {
-				if (!this.$utils.isObject(this.me.storage)) {
+				if (!Utils.isObject(this.me.storage)) {
 					return null;
 				}
 				return Math.round(this.storageUsed / this.me.storage.quota * 100);
@@ -71,7 +72,7 @@ export default {
 				this.connection.describeAccount()
 					.then(data => this.me = data)
 					.catch(error => {
-						this.$utils.exception(this, error, "Sorry, could not load account information.");
+						Utils.exception(this, error, "Sorry, could not load account information.");
 					});
 			}
 		},

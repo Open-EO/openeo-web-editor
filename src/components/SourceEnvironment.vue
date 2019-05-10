@@ -6,6 +6,7 @@
 
 <script>
 import EventBus from '../eventbus.js';
+import Utils from '../utils.js';
 
 import 'codemirror/lib/codemirror.css';
 import 'codemirror/mode/javascript/javascript.js';
@@ -51,7 +52,7 @@ export default {
 					pg = JSON.parse(script);
 				} catch(error) {
 					console.log(error);
-					this.$utils.error(this, 'The source code must be valid JSON.');
+					Utils.error(this, 'The source code must be valid JSON.');
 					return;
 				}
 			}
@@ -60,7 +61,7 @@ export default {
 				callback(pg);
 			}
 			else if (!silent) {
-				this.$utils.error(this, 'No valid source code specified.');
+				Utils.error(this, 'No valid source code specified.');
 			}
 		},
 

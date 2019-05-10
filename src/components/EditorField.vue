@@ -56,6 +56,7 @@ import "./leaflet-areaselect/leaflet-areaselect.css";
 
 
 import GraphBuilderEnvironment from './GraphBuilderEnvironment.vue';
+import Utils from '../utils.js';
 
 export default {
 	name: 'EditorField',
@@ -112,7 +113,7 @@ export default {
 
 				var areaSelect = L.areaSelect();
 				areaSelect.addTo(map);
-				if (this.$utils.isObject(this.value) && Object.keys(this.value).length >= 4) {
+				if (Utils.isObject(this.value) && Object.keys(this.value).length >= 4) {
 					this.value = L.latLngBounds(
 						L.latLng(this.value.south, this.value.west),
 						L.latLng(this.value.north, this.value.east)
@@ -154,7 +155,7 @@ export default {
 			}
 			else if (this.useTextarea) {
 				if (typeof this.$props.pass === 'object') {
-					if (this.$utils.size() > 0) {
+					if (Utils.size() > 0) {
 						v = JSON.stringify(this.$props.pass, null, 2);
 					}
 					else {

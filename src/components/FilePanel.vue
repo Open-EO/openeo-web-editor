@@ -22,6 +22,7 @@
 <script>
 import EventBus from '../eventbus.js';
 import WorkPanelMixin from './WorkPanelMixin.vue';
+import Utils from '../utils.js';
 
 export default {
   	name: 'FilePanel',
@@ -67,16 +68,15 @@ export default {
 			var virtualFile = this.connection.openFile(file.name);
 			virtualFile.uploadFile(file, percent => this.uploadProgress = percent)
 				.then(uploadedFile => {
-					console.log(uploadedFile);
 					this.$refs.table.replaceData(uploadedFile);
 					this.uploadProgress = 100;
 					this.fadeOutUploadProgress();
 					field.value = '';
-					this.$utils.ok(this, 'File upload completed.');
+					Utils.ok(this, 'File upload completed.');
 				}).catch(error => {
 					console.log(error);
 					this.fadeOutUploadProgress();
-					this.$utils.exception(this, error, 'Sorry, file upload failed.');
+					Utils.exception(this, error, 'Sorry, file upload failed.');
 				});
 		},
 		fadeOutUploadProgress() {
@@ -90,7 +90,7 @@ export default {
 			}, 100);
 		},
 		downloadFile(file) {
-			this.$utils.info(this, 'File requested. Please wait...');
+			Utils.info(this, 'File requested. Please wait...');
 			file.downloadFile(file.path);
 		},
 		deleteFile(file) {
@@ -99,7 +99,7 @@ export default {
 					this.$refs.table.removeData(file.path);
 				})
 				.catch(error => {
-					this.$utils.error(this, 'Sorry, could not delete file.');
+					Utils.error(this, 'Sorry, could not delete file.');
 				});
 		},
 		subscribeToFileChanges() {

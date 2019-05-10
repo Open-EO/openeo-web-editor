@@ -13,6 +13,8 @@
 
 <script>
 import EventBus from '../eventbus.js';
+import Utils from '../utils.js';
+
 export default {
     name: 'CredentialsForm',
     props: ['submitLoginCallback', 'cancelCallback'],
@@ -32,7 +34,7 @@ export default {
         submitLogin(event) {
             this.submitLoginCallback(this.username, this.password)
 				.then(data => {
-					if(this.$utils.isChildOfModal(this)) {
+					if(Utils.isChildOfModal(this)) {
      					EventBus.$off('modalClosed', this.cancelCallback);
 						EventBus.$emit('closeModal');
 					}

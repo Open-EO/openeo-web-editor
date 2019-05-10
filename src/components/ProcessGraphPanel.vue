@@ -15,6 +15,7 @@
 <script>
 import EventBus from '../eventbus.js';
 import WorkPanelMixin from './WorkPanelMixin.vue';
+import Utils from '../utils.js';
 
 export default {
 	name: 'ProcessGraphPanel',
@@ -51,7 +52,7 @@ export default {
 					}
 					this.updateProcessGraphData(updatedPg);
 				})
-				.catch(error => this.$utils.exception(this, error, 'Sorry, could not load process graph.'));
+				.catch(error => Utils.exception(this, error, 'Sorry, could not load process graph.'));
 		},
 		showInEditor(pg) {
 			this.refreshProcessGraph(pg, updatedPg => {
@@ -71,8 +72,8 @@ export default {
 				this.connection.createProcessGraph(script, title)
 					.then(data => {
 						this.$refs.table.addData(data);
-						this.$utils.ok(this, 'Process Graph stored at back-end!');
-					}).catch(error => this.$utils.exception(this, error, 'Sorry, could not save the process graph.'));
+						Utils.ok(this, 'Process Graph stored at back-end!');
+					}).catch(error => Utils.exception(this, error, 'Sorry, could not save the process graph.'));
 			});
 		},
 		graphInfo(pg) {
@@ -88,9 +89,9 @@ export default {
 				};
 				pg.updateProcessGraph(dataToUpdate)
 					.then(updatedPg => {
-						this.$utils.ok(this, 'Process Graph updated!');
+						Utils.ok(this, 'Process Graph updated!');
 						this.updateProcessGraphData(updatedPg);
-					}).catch(error => this.$utils.exception(this, error, 'Sorry, could not update the process graph.'));
+					}).catch(error => Utils.exception(this, error, 'Sorry, could not update the process graph.'));
 			});
 		},
 		deleteGraph(pg) {
@@ -98,7 +99,7 @@ export default {
 				.then(() => {
 					this.$refs.table.removeData(pg.processGraphId);
 				})
-				.catch(error => this.$utils.exception(this, error, 'Sorry, could not delete process graph.'));
+				.catch(error => Utils.exception(this, error, 'Sorry, could not delete process graph.'));
 		},
 		updateProcessGraphData(updatePg) {
 			this.$refs.table.replaceData(updatePg);

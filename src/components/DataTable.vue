@@ -31,6 +31,7 @@
 
 <script>
 import EventBus from '../eventbus.js';
+import Utils from '../utils.js';
 
 export default {
 	name: 'DataTable',
@@ -78,12 +79,12 @@ export default {
 				this.noDataMessage = error;
 				return;
 			}
-			else if (this.$utils.isObject(error)) {
+			else if (Utils.isObject(error)) {
 				if (typeof error.data === 'object' && typeof error.config === 'object' && typeof error.headers === 'object') {
 					// Axios response, handle the data only.
 					error = error.data;
 				}
-				if (this.$utils.isObject(error) && typeof error.message === 'string') {
+				if (Utils.isObject(error) && typeof error.message === 'string') {
 					this.noDataMessage = error.message;
 					return;
 				}
@@ -164,7 +165,7 @@ export default {
 			else {
 				data = row;
 			}
-			if (this.$utils.isObject(col) && typeof col.computedValue === 'function') {
+			if (Utils.isObject(col) && typeof col.computedValue === 'function') {
 				data = col.computedValue(row, data);
 			}
 			return data;
@@ -238,7 +239,7 @@ export default {
 			return ( value / Math.pow(1024, i) ).toFixed(2) * 1 + ' ' + ['B', 'kB', 'MB', 'GB', 'TB'][i];
 		},
 		formatDateTime(value, col) {
-			return this.$utils.formatDateTime(value);
+			return Utils.formatDateTime(value);
 		},
 		formatUpperCase(value, col) {
 			return typeof value === 'string' ? value.toUpperCase() : value;

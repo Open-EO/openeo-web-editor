@@ -1,6 +1,6 @@
 <template>
 	<div id="backendPanel" class="uiBox dataPanel">
-		<div class="server-toolbar" v-show="$config.allowServerChange">
+		<div class="server-toolbar" v-show="allowServerChange">
 			<h3>Server:</h3>
 			<input id="serverUrl" v-model.lazy.trim="serverUrl" list="serverUrls" />
 			<button @click="showServerSelector" title="Select previously used server"><i class="fas fa-book"></i></button>
@@ -29,8 +29,10 @@
 </template>
 
 <script>
+import Config from '../../config.js';
 import EventBus from '../eventbus.js';
 import ConnectionMixin from './ConnectionMixin.vue';
+import Utils from '../utils.js';
 
 export default {
 	name: 'BackendPanel',
@@ -42,7 +44,8 @@ export default {
 	data() {
 		return {
 			serverUrls: [],
-			serverUrl: ''
+			serverUrl: Config.serverUrl,
+			allowServerChange: Config.allowServerChange
 		};
 	},
 	watch: {
@@ -61,12 +64,12 @@ export default {
 			this.serverUrls = JSON.parse(storedServers);
 		}
 
-		var serverFromQuery = this.$utils.param('server');
-		if (this.$config.allowServerChange && this.$utils.isUrl(serverFromQuery)) {
+		var serverFromQuery = Utils.param('server');
+		if (this.allowServerChange && Utils.isUrl(serverFromQuery)) {
 			EventBus.$emit('changeServerUrl', serverFromQuery);
 		}
-		else if (this.$utils.isUrl(this.$config.serverUrl)) {
-			EventBus.$emit('changeServerUrl', this.$config.serverUrl);
+		else if (Utils.isUrl(this.serverUrl)) {
+			EventBus.$emit('changeServerUrl', this.serverUrl);
 		}
 	},
 	methods: {
@@ -111,7 +114,7 @@ export default {
 				}
 			}
 			else {
-				this.$utils.error(this, 'Please specify a valid server URL.');
+				Utils.error(this, 'Please specify a valid server URL.');
 			}
 		},
 
@@ -122,7 +125,7 @@ export default {
 
 		getServerInfo() {
 			if (!this.connection) {
-				this.$utils.info(this, 'Not connected yet.');
+				Utils.info(this, 'Not connected yet.');
 				return;
 			}
 			var info = {
@@ -146,7 +149,7 @@ export default {
 						version: this.connection.capabilities().apiVersion()
 					});
 				})
-				.catch(error => this.$utils.error(this, "Sorry, can't load collection details."));
+				.catch(error => Utils.error(this, "Sorry, can't load collection details."));
 		},
 
 		showSelectedProcessInfo() {

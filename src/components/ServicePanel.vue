@@ -23,6 +23,7 @@
 <script>
 import EventBus from '../eventbus.js';
 import WorkPanelMixin from './WorkPanelMixin.vue';
+import Utils from '../utils.js';
 
 export default {
 	name: 'ServicePanel',
@@ -80,7 +81,7 @@ export default {
 					}
 					this.updateServiceData(updatedService);
 				})
-				.catch(error => this.$utils.exception(this, error, "Sorry, could not load service information."));
+				.catch(error => Utils.exception(this, error, "Sorry, could not load service information."));
 		},
 		showInEditor(service) {
 			this.refreshService(service, updatedService => {
@@ -103,14 +104,14 @@ export default {
 			if (this.supports('deleteService')) {
 				buttons.push({text: 'Delete', action: () => this.deleteService(service)});
 			}
-			this.$utils.confirm(this, 'Web Service created!', buttons);
+			Utils.confirm(this, 'Web Service created!', buttons);
 		},
 		createService(processGraph, type, title = null) {
 			this.connection.createService(processGraph, type, title)
 				.then(service => {
 					EventBus.$emit('serviceCreated', service);
 				}).catch(error => {
-					this.$utils.exception(this, error, 'Sorry, could not create the web service.');
+					Utils.exception(this, error, 'Sorry, could not create the web service.');
 				});
 		},
 		createServiceFromScript() {
@@ -164,10 +165,10 @@ export default {
 			EventBus.$emit('getProcessGraph', script => {
 				service.updateService(script)
 					.then(updatedService => {
-						this.$utils.ok(this, "Service successfully updated.");
+						Utils.ok(this, "Service successfully updated.");
 						this.updateServiceData(updatedService);
 					})
-					.catch(error => this.$utils.exception(this, error, "Sorry, could not update service."));;
+					.catch(error => Utils.exception(this, error, "Sorry, could not update service."));;
 			}, false);
 		},
 		deleteService(service) {
@@ -177,11 +178,11 @@ export default {
 					EventBus.$emit('removeWebService', service.serviceId);
 				})
 				.catch(error => {
-					this.$utils.exception(this, error, 'Sorry, could not delete service.');
+					Utils.exception(this, error, 'Sorry, could not delete service.');
 				});
 		},
 		viewService(service) {
-			this.$utils.info(this, 'Requesting tiles from server. Please wait...');
+			Utils.info(this, 'Requesting tiles from server. Please wait...');
 			EventBus.$emit('viewWebService', service);
 			EventBus.$emit('showMapViewer');
 		},

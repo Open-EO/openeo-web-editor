@@ -1,15 +1,8 @@
 
+import Config from '../config';
 import { Utils as CommonUtils } from '@openeo/js-commons';
 
 export default {
-
-	snotifyDefaults: {
-		timeout:5000, 
-		titleMaxLength:30, 
-		showProgressBar:true, 
-		closeOnClick:true, 
-		pauseOnHover:true
-	}, 
 
 	exception(vm, error, alt) {
 		console.log(error); 
@@ -31,16 +24,16 @@ export default {
 		this.error(vm, message, title); 
 	}, 
 	error(vm, message, title = null) {
-		vm.$snotify.error(message, title, this.snotifyDefaults); 
+		vm.$snotify.error(message, title, Config.snotifyDefaults); 
 	}, 
 	info(vm, message, title = null) {
-		vm.$snotify.info(message, title, this.snotifyDefaults); 
+		vm.$snotify.info(message, title, Config.snotifyDefaults); 
 	}, 
 	ok(vm, message, title = null) {
 		var typeDefaults =  {
 			timeout:2000
 		}; 
-		vm.$snotify.success(message, title, Object.assign( {}, this.snotifyDefaults, typeDefaults)); 
+		vm.$snotify.success(message, title, Object.assign( {}, Config.snotifyDefaults, typeDefaults)); 
 	}, 
 	confirm(vm, message, buttons = []) {
 		var typeDefaults =  {
@@ -48,7 +41,7 @@ export default {
 			closeOnClick:false, 
 			buttons:buttons
 		}; 
-		vm.$snotify.confirm(message, null, Object.assign( {}, this.snotifyDefaults, typeDefaults)); 
+		vm.$snotify.confirm(message, null, Object.assign( {}, Config.snotifyDefaults, typeDefaults)); 
 	}, 
 
 	blobToText(blob, callback) {

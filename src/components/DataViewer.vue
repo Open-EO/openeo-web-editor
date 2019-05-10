@@ -8,6 +8,7 @@
 <script>
 import EventBus from '../eventbus.js';
 import ObjectTree from '@openeo/vue-components/components/ObjectTree.vue';
+import Utils from '../utils.js';
 
 export default {
 	name: 'DataViewer',
@@ -48,13 +49,13 @@ export default {
 			}
 			switch(mimeType) {
 				case 'application/json':
-					this.$utils.blobToText(blob, (event) => {
+					Utils.blobToText(blob, (event) => {
 						var json = JSON.parse(event.target.result);
 						this.showJson(json);
 					});
 					break;
 				case 'text/plain':
-					this.$utils.blobToText(blob, (event) => {
+					Utils.blobToText(blob, (event) => {
 						this.showText(event.target.result);
 					});
 					break;
