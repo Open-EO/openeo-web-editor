@@ -2,7 +2,7 @@
 	<div id="backendPanel" class="uiBox dataPanel">
 		<div class="server-toolbar" v-show="allowServerChange">
 			<h3>Server:</h3>
-			<input id="serverUrl" v-model.lazy.trim="serverUrl" list="serverUrls" />
+			<input id="serverUrl" v-model.lazy.trim="serverUrl" />
 			<button @click="showServerSelector" title="Select previously used server"><i class="fas fa-book"></i></button>
 			<button @click="updateServerUrlFromInput" title="Change server"><i class="fas fa-check"></i></button>
 			<button @click="getServerInfo" title="Get server information"><i class="fas fa-info"></i></button>
@@ -37,21 +37,15 @@ import Utils from '../utils.js';
 export default {
 	name: 'BackendPanel',
 	mixins: [ConnectionMixin],
-	props: {
-		processes: Array,
-		collections: Array
+	computed: {
+		...Utils.mapState('editor', ['storedServers']),
+		...Utils.mapState('server', ['processes', 'collections'])
 	},
 	data() {
 		return {
-			serverUrls: [],
 			serverUrl: Config.serverUrl,
 			allowServerChange: Config.allowServerChange
 		};
-	},
-	watch: {
-		serverUrls: function(newVal, oldVal) {
-			localStorage.setItem("serverUrls", JSON.stringify(newVal));
-		}
 	},
 	created() {
 		EventBus.$on('changeServerUrl', this.changeServer);
@@ -59,11 +53,6 @@ export default {
 		EventBus.$on('showProcessInfo', this.showProcessInfo);
 	},
 	mounted() {
-		var storedServers = localStorage.getItem("serverUrls");
-		if (storedServers !== null) {
-			this.serverUrls = JSON.parse(storedServers);
-		}
-
 		var serverFromQuery = Utils.param('server');
 		if (this.allowServerChange && Utils.isUrl(serverFromQuery)) {
 			EventBus.$emit('changeServerUrl', serverFromQuery);
@@ -73,6 +62,8 @@ export default {
 		}
 	},
 	methods: {
+
+		...Utils.mapMutations('editor', ['addServer', 'removeServer']),
 
 		showCollectionSelector() {
 			return this.supports('listCollections') && this.collections.length > 0;
@@ -84,7 +75,7 @@ export default {
 
 		showServerSelector() {
 			EventBus.$emit('showComponentModal', 'Select previously used server', 'List', {
-				dataSource: this.serverUrls,
+				dataSource: this.storedServers,
 				actions: [
 					{
 						callback: (url) => this.updateServerUrlTo(url) || true,  // return true to close the modal
@@ -92,7 +83,7 @@ export default {
 						title: 'Select this server'
 					},
 					{
-						callback: (url) => this.serverUrls.splice(this.serverUrls.indexOf(url), 1),
+						callback: (url) => this.removeServer(url),
 						icon: 'trash',
 						title: 'Delete entry from history'
 					}
@@ -102,9 +93,7 @@ export default {
 
 		changeServer(url) {
 			this.serverUrl = url;
-			if (this.serverUrls.indexOf(url) === -1) {
-				this.serverUrls.push(url);
-			}
+			this.addServer(url);
 		},
 
 		updateServerUrlFromInput() {

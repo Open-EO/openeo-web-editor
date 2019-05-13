@@ -107,7 +107,6 @@ import ServicePanel from './components/ServicePanel.vue';
 import SourceEnvironment from './components/SourceEnvironment.vue';
 import axios from 'axios';
 import Vue from 'vue';
-import { mapGetters, mapActions } from 'vuex';
 
 // Making axios available globally for the OpenEO JS client
 window.axios = axios;
@@ -132,7 +131,6 @@ export default {
 	data() {
 		return {
 			isVisualBuilderActive: true,
-			savedScripts: {},
 			scriptName: null
 		};
 	},
@@ -150,29 +148,15 @@ export default {
 		EventBus.$on('showImageViewer', this.showImageViewer);
 		EventBus.$on('showDataViewer', this.showDataViewer);
 		EventBus.$on('getProcessGraph', this.getProcessGraph);
-
-		var storedScripts = localStorage.getItem("savedScripts");
-		if (storedScripts !== null) {
-			this.savedScripts = JSON.parse(storedScripts);
-		}
 	},
 	computed: {
-		...mapGetters(['collections', 'processes']),
-
-		savedScriptNames() {
-			return Object.keys(this.savedScripts);
-		}
-	},
-	watch: {
-		savedScripts: {
-			handler: function(newVal, oldVal) {
-				localStorage.setItem("savedScripts", JSON.stringify(newVal));
-			},
-			deep: true
-		}
+		...Utils.mapState('editor', ['storedScripts']),
+		...Utils.mapState('server', ['collections', 'processes']),
+		...Utils.mapGetters('server', ['supports'])
 	},
 	methods: {
-		...mapActions(['connect', 'authenticateBasic']),
+		...Utils.mapMutations('editor', ['addScript', 'removeScript']),
+		...Utils.mapActions('server', ['connect', 'authenticateBasic']),
 
 		// ToDO: Move this to the Blocks component, once we switched from jQuery to Vue
 		blocksDelete() {
@@ -268,7 +252,7 @@ export default {
 		},
 
 		loadScript(name) {
-			var code = this.savedScripts[name];
+			var code = this.storedScripts[name];
 			if (code) {
 				EventBus.$emit('insertProcessGraph', code);
 				this.scriptName = name;
@@ -282,7 +266,7 @@ export default {
 		
 		openScriptChooser() {
 			EventBus.$emit('showComponentModal', 'Select script to load', 'List', {
-				dataSource: () => this.savedScriptNames,
+				dataSource: this.storedScripts,
 				actions: [
 					{
 						callback: this.loadScript,
@@ -290,7 +274,7 @@ export default {
 						title: 'Load script'
 					},
 					{
-						callback: this.deleteScript,
+						callback: this.removeScript,
 						icon: 'trash',
 						title: 'Delete script'
 					}
@@ -303,14 +287,10 @@ export default {
 			if (!name) {
 				return;
 			}
-			EventBus.$emit('getProcessGraph', pg => {
-				this.$set(this.savedScripts, name, pg);
+			EventBus.$emit('getProcessGraph', script => {
+				this.addScript({name, script});
 				this.scriptName = name;
 			});
-		},
-
-		deleteScript(name) {
-			this.$delete(this.savedScripts, name);
 		},
 
 		resetActiveTab(container) {

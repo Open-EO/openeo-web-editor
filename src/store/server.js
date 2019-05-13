@@ -1,6 +1,7 @@
 import { OpenEO } from '@openeo/js-client';
 
 export default {
+	namespaced: true,
 	state: {
 		connection: null,
 		userId: null,
@@ -11,11 +12,7 @@ export default {
 		collections: []
 	},
 	getters: {
-		connection: (state) => state.connection,
 		capabilities: (state) => state.connection !== null ? state.connection.capabilities() : null,
-		userId: (state) => state.userId,
-		collections: (state) => state.collections,
-		processes: (state) => state.processes,
 		supports: (state) => (feature) => state.connection !== null && state.connection.capabilities() !== null && state.connection.capabilities().hasFeature(feature)
 	},
 	actions: {

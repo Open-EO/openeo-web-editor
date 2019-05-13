@@ -1,6 +1,7 @@
 
 import Config from '../config';
 import { Utils as CommonUtils } from '@openeo/js-commons';
+import { mapState, mapActions, mapMutations, mapGetters } from 'vuex';
 
 export default {
 
@@ -94,6 +95,11 @@ export default {
 		rect.offsetTop = rect.top + document.body.scrollTop;
 		rect.offsetLeft = rect.left + document.body.scrollLeft;
 		return rect;
-	}
+	},
+
+	mapState,
+	mapGetters,
+	mapMutations,
+	mapActions
 
 }; 

@@ -16,10 +16,9 @@ export default {
 			type: Boolean,
 			default: true
 		},
-		processes: Array,
-		collections: Array,
 		fieldId: String
 	},
+	computed: Utils.mapState('server', ['processes', 'collections']),
 	data() {
 		return {
 			blocks: null

@@ -1,8 +1,8 @@
 <template>
     <ul>
-        <li v-for="item in items" :key="item">
-            <a :href="item" @click="doMainAction(item, $event)" target="_blank">{{ item }}</a>
-            <button v-for="action in actions" :key="action.icon" :title="action.title" @click="doAction(action.callback, item)">
+        <li v-for="(item, key) in items" :key="key">
+            <a :href="item" @click="doMainAction(isArray ? item : key, $event)" target="_blank">{{ isArray ? item : key }}</a>
+            <button v-for="action in actions" :key="action.icon" :title="action.title" @click="doAction(action.callback, isArray ? item : key)">
                 <i :class="'fas fa-'+action.icon"></i>
             </button>
         </li>
@@ -19,6 +19,9 @@ export default {
     computed: {
         items() {
             return (typeof this.dataSource == 'function' ? this.dataSource() : this.dataSource);
+        },
+        isArray() {
+            return Array.isArray(this.items);
         }
     },
     methods: {
