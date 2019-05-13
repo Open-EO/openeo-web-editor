@@ -16,7 +16,11 @@ export default {
 			type: Boolean,
 			default: true
 		},
-		fieldId: String
+		fieldId: String,
+		value: {
+			type: Object,
+			default: null
+		}
 	},
 	computed: Utils.mapState('server', ['processes', 'collections']),
 	data() {
@@ -28,7 +32,14 @@ export default {
 		this.blocks = new Blocks(this.errorHandler);
     },
 	mounted() {
-        this.blocks.run("#" + this.fieldId);
+		this.blocks.run("#" + this.fieldId);
+
+		this.registerProcesses();
+		this.registerCollections();
+		
+		if (this.value) {
+			this.insertProcessGraph(this.value);
+		}
 
 		EventBus.$on('addProcessToEditor', this.insertProcess);
 		EventBus.$on('addCollectionToEditor', this.insertCollection);
@@ -36,17 +47,11 @@ export default {
 		EventBus.$on('clearProcessGraph', this.clearProcessGraph);
 	},
 	watch: {
-		processes(processes) {
-			this.blocks.unregisterProcesses();
-			for(var i in processes) {
-				this.blocks.registerProcess(processes[i]);
-			}
+		processes() {
+			this.registerProcesses();
 		},
-		collections(collections) {
-			this.blocks.unregisterCollections();
-			for(var i in collections) {
-				this.blocks.registerCollection(collections[i]);
-			}
+		collections() {
+			this.registerCollections();
 		}
 	},
 	methods: {
@@ -56,6 +61,20 @@ export default {
 
 		clearProcessGraph() {
 			this.blocks.clear();
+		},
+
+		registerProcesses() {
+			this.blocks.unregisterProcesses();
+			for(var i in this.processes) {
+				this.blocks.registerProcess(this.processes[i]);
+			}
+		},
+
+		registerCollections() {
+			this.blocks.unregisterCollections();
+			for(var i in this.collections) {
+				this.blocks.registerCollection(this.collections[i]);
+			}
 		},
 
 		getProcessGraph(callback, silent = false, passNull = false) {

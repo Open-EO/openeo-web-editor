@@ -20,7 +20,7 @@
 			<div id="areaSelector"></div>
 		</template>
 		<div v-else-if="type === 'callback'" class="border">
-			<GraphBuilderEnvironment ref="callbackBuilder" fieldId="inlinePgEditor" />
+			<GraphBuilderEnvironment ref="callbackBuilder" fieldId="inlinePgEditor" :value="value" />
 		</div>
 		<template v-else-if="type === 'null'">
 			The field will be set to <strong><tt>null</tt></strong>.
@@ -56,6 +56,7 @@ import "./leaflet-areaselect/leaflet-areaselect.css";
 
 
 import GraphBuilderEnvironment from './GraphBuilderEnvironment.vue';
+import { ProcessGraph } from '@openeo/js-commons';
 import Utils from '../utils.js';
 
 export default {
@@ -142,6 +143,14 @@ export default {
 					v = "";
 				}
 			}
+			else if (this.type === 'callback') {
+				if (this.$props.pass.callback instanceof ProcessGraph) {
+					v = this.$props.pass.callback.toJSON();
+				}
+				else {
+					v = this.$props.pass.callback;
+				}
+			}
 			else if (this.type === 'array' || this.type === 'temporal-intervals') {
 				v = [];
 				if (Array.isArray(this.$props.pass)) {
@@ -174,6 +183,9 @@ export default {
 		getValue() {
 			if (this.type === 'temporal-interval') {
 				return [this.value.start, this.value.end];
+			}
+			else if (this.type === 'callback') {
+				return this.$refs.callbackBuilder.makeProcessGraph();
 			}
 			else if (this.type === 'bounding-box') {
 				return	{
