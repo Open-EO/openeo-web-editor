@@ -9,17 +9,17 @@
 				<i class="fas fa-info-circle"></i> {{ field.schemas[type].description() }}
 			</div>
 		</div>
-		<EditorField ref="field" :field="field" :schema="field.schemas[type]" :pass="pass" />
+		<ParameterField ref="field" :field="field" :schema="field.schemas[type]" :pass="pass" />
 	</div>
 </template>
 
 <script>
-import EditorField from './EditorField.vue';
+import ParameterField from './ParameterField.vue';
 
 export default {
-	name: 'EditorFields',
+	name: 'ParameterFields',
 	components: {
-		EditorField
+		ParameterField
 	},
 	props: {
 		field: Object,

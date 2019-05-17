@@ -1,15 +1,17 @@
 import Fields from './fields.js';
 import EventBus from '../../eventbus.js';
 import VueUtils from '@openeo/vue-components/utils.js';
+import { ProcessGraph } from '@openeo/js-commons';
 import Utils from '../../utils.js';
 
 /**
  * Creates an instance of a block
  */
-var Block = function(blocks, type, schema, id)
+var Block = function(blocks, name, type, meta, id)
 {
     this.blocks = blocks;
-    this.name = schema.id;
+    this.meta = meta;
+    this.name = name;
     this.type = type;
 
     // Appareance values
@@ -34,7 +36,7 @@ var Block = function(blocks, type, schema, id)
     this.lastScale = null;
 
     // Parameters
-    this.fields = new Fields(this, schema);
+    this.fields = new Fields(this, meta);
 
     // Position
     this.x = 0;
@@ -65,7 +67,7 @@ Block.prototype.getWidth = function() {
         return this.blocks.compactMode ? 110 : 170;
     }
     else {
-        return this.blocks.compactMode ? 70 : 120;
+        return this.blocks.compactMode ? 60 : 110;
     }
 };
 
@@ -84,18 +86,28 @@ Block.prototype.hasOutputEdges = function() {
     return this.getEdgeCount(this.fields.output.name) > 0;
 }
 
+Block.prototype.getDefaultOutputLabel = function() {
+    if (this.isCallbackArgument()) {
+        return "Callback Argument";
+    }
+    else {
+        return "Output";
+    }
+}
+
 /**
  * Set the values
  */
-Block.prototype.setValues = function(values)
+Block.prototype.setValues = function(values, json = false)
 {
     for (var fieldName in values) {
         var field = this.fields.getField(fieldName);
         if (field !== null) {
-            field.setValue(values[fieldName]);
+            field.setValue(json ? JSON.parse(values[fieldName]) : values[fieldName]);
         }
     }
 };
+
 /**
  * Getting a field value
  */
@@ -109,22 +121,46 @@ Block.prototype.getValue = function(name)
     }
 };
 
+Block.prototype.isCollection = function() {
+    return this.name === 'load_collection';
+};
+
+Block.prototype.isCallbackArgument = function() {
+    return this.type === 'callback-argument';
+};
+
+Block.prototype.getCollectionName = function() {
+    return this.fields.getField('id').getValue();
+}
+
 /**
  * Returns the render of the block
  */
 Block.prototype.getHtml = function()
 {
+    var name = this.name;
+    if (this.isCollection()) {
+        // Show collection id as title
+        name = this.getCollectionName();
+    }
+
     // Getting the title
-    var header = this.name + ' <span class="blockId">#' + this.id + '</span>';
-    var title = this.name + ' #' + this.id;
+    var header = name;
+    var title = name;
+    if (!this.isCallbackArgument()) {
+        header += ' <span class="blockId">#' + this.id + '</span>';
+        title += ' #' + this.id;
+    }
 
     var html = '<div class="blockTitle"><span class="titleText" title="'+title+'">'+header+'</span>';
     html += '<div class="blockicon">';
     if (!this.blocks.compactMode) {
-        html += '<span class="delete" title="Remove (DEL)"><i class="fas fa-trash"></i></span>';
+        if (!this.isCallbackArgument()) {
+            html += '<span class="delete" title="Remove (DEL)"><i class="fas fa-trash"></i></span>';
+        }
         html += '<span class="info" title="Details"><i class="fas fa-info"></i></span>';
     }
-    if (this.fields.editables.length > 0) {
+    if (typeof this.blocks.openParameterEditor === 'function' && this.fields.editables.length > 0 && !this.isCallbackArgument()) {
         html += '<span class="settings" title="Change parameter values"><i class="fas fa-sliders-h"></i></span>';
     }
     html += '</div></div>';
@@ -140,13 +176,19 @@ Block.prototype.getHtml = function()
             var formattedValue = '';
             if (field && field.isEditable() && !this.blocks.compactMode) {
                 var value = field.getValue();
-                if (typeof value === 'object') {
+                if (this.getEdgeCount(field.name) > 0) {
+                    formattedValue = '';
+                }
+                else if (typeof value === 'object') {
                     if (value === null) {
                         formattedValue = 'N/A';
                     }
                     else {
                         if (Array.isArray(value)) {
                             formattedValue = 'List(' + value.length + ')';
+                        }
+                        else if (value.callback instanceof ProcessGraph) {
+                            formattedValue = 'Callback';
                         }
                         else {
                             formattedValue = 'Object';
@@ -164,7 +206,9 @@ Block.prototype.getHtml = function()
                 else {
                     formattedValue = value;
                 }
-                formattedValue = ': ' + formattedValue;
+                if (formattedValue.length > 0) {
+                    formattedValue = ': ' + formattedValue;
+                }
             }
 
             var circleLeft = '<div class="circle"></div>', circleRight = '';
@@ -178,6 +222,9 @@ Block.prototype.getHtml = function()
                 'field_' + field.name,
                 ((field.hasValue || !field.isRequired() || field.isOutput()) ? 'hasValue' : 'noValue')
             ];
+            if (this.isCollection() && field.name === 'id') {
+                classNames.push('hide_collection_id');
+            }
             var label;
             if (field.isOutput() && this.blocks.compactMode) {
                 label = '';
@@ -222,7 +269,13 @@ Block.prototype.create = function(parentDiv)
 {
     this.div = document.createElement("div");
     this.div.id = 'block' + this.id;
-    this.div.className = 'block';
+    this.div.classList.add('block');
+    if (this.isCollection()) {
+        this.div.classList.add('block_collection');
+    }
+    else if (this.isCallbackArgument()) {
+        this.div.classList.add('block_argument');
+    }
     parentDiv.appendChild(this.div);
 
     this.render();
@@ -256,6 +309,9 @@ Block.prototype.redraw = function(selected)
     for (var fieldName in this.fields.fields) {
         var field = this.fields.fields[fieldName];
         var fieldDiv = this.div.querySelector('.field_' + fieldName);
+        if (!fieldDiv) {
+            continue;
+        }
         var connector = fieldDiv.querySelector('.circle');
 
         connector.classList.remove('io_active');
@@ -351,27 +407,38 @@ Block.prototype.initListeners = function()
     // Handle the parameters
     var settingsEl = this.div.querySelector('.settings');
     if (settingsEl) {
-        settingsEl.addEventListener('click', () => this.fields.show());
+        settingsEl.addEventListener('click', evt => {
+            this.fields.show();
+            evt.preventDefault();
+            evt.stopPropagation();
+        });
     }
 
     // Handle the deletion
     var deleteEl = this.div.querySelector('.delete');
     if (deleteEl) {
-        deleteEl.addEventListener('click', () => this.blocks.removeBlock(this.id));
+        deleteEl.addEventListener('click', evt => {
+            this.blocks.removeBlock(this.id);
+            evt.preventDefault();
+            evt.stopPropagation();
+        });
     }
 
     // Show the description
     var infoEl = this.div.querySelector('.info');
     if (infoEl) {
-        infoEl.addEventListener('click', () => {
-            switch(this.type) {
-                case 'process':
-                    EventBus.$emit('showProcessInfo', this.name);
-                    break;
-                case 'collection':
-                    EventBus.$emit('showCollectionInfo', this.name);
-                    break;
+        infoEl.addEventListener('click', evt => {
+            if (this.isCallbackArgument()) {
+                EventBus.$emit('showSchemaModal', this.name, this.meta.returns.schema);
             }
+            else if(this.isCollection()) {
+                EventBus.$emit('showCollectionInfo', this.getCollectionName());
+            }
+            else {
+                EventBus.$emit('showProcessInfo', this.name);
+            }
+            evt.preventDefault();
+            evt.stopPropagation();
         });
     }
 };
@@ -475,7 +542,7 @@ Block.prototype.export = function()
     var values = {};
     for (var k in this.fields.editables) {
         var field = this.fields.editables[k];
-        values[field.name] = field.getValue();
+        values[field.name] = JSON.stringify(field.getValue());
     }
 
     return {
@@ -490,42 +557,43 @@ Block.prototype.export = function()
 
 Block.prototype.exportProcessGraph = function()
 {
-    var json;
-    if (this.type == 'collection') {
-        json =  {
-            process_id: 'load_collection',
-            arguments: {
-                id: this.name
-            }
-        };
+    if (this.isCallbackArgument()) {
+        return null;
     }
-    else {
-        var values = {};
-        for (var k in this.fields.inputs) {
-            var field = this.fields.inputs[k];
-            if (this.getEdgeCount(field.name) > 0) {
-                // Convert incoming nodes into a list of references or a single reference to a result of another node
-                var v = [];
-                for(var i in this.edges[field.name]) {
+
+    var values = {};
+    for (var k in this.fields.inputs) {
+        var field = this.fields.inputs[k];
+        if (this.getEdgeCount(field.name) > 0) {
+            // Convert incoming nodes into a list of references or a single reference to a result of another node
+            var v = [];
+            for(var i in this.edges[field.name]) {
+                var otherBlock = this.edges[field.name][i].getOtherBlock(this);
+                if (otherBlock.isCallbackArgument()) {
                     v.push({
-                        from_node: this.edges[field.name][i].getOtherBlock(this).id
+                        from_argument: otherBlock.name
                     });
                 }
-                values[field.name] = v.length === 1 ? v[0] : v;
-            }
-            else if (field.hasValue) {
-                if (!field.isRequired() && field.isDefaultValue()) {
-                    continue; // Skip if it's the default value and not required
+                else {
+                    v.push({
+                        from_node: otherBlock.id
+                    });
                 }
-                values[field.name] = field.getValue();
             }
+            values[field.name] = v.length === 1 ? v[0] : v;
         }
-
-        json = {
-            process_id: this.name,
-            arguments: values
-        };
+        else if (field.hasValue) {
+            if (!field.isRequired() && field.isDefaultValue()) {
+                continue; // Skip if it's the default value and not required
+            }
+            values[field.name] = field.getValue();
+        }
     }
+
+    var json = {
+        process_id: this.name,
+        arguments: values
+    };
 
     if (this.result) {
         json.result = true;

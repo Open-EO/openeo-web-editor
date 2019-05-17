@@ -20,7 +20,7 @@
 			<div id="areaSelector"></div>
 		</template>
 		<div v-else-if="type === 'callback'" class="border">
-			<GraphBuilderEnvironment ref="callbackBuilder" fieldId="inlinePgEditor" :value="value" />
+			<VisualEditor ref="callbackBuilder" fieldId="inlinePgEditor" :callbackArguments="schema.getCallbackParameters()" :value="value" />
 		</div>
 		<template v-else-if="type === 'null'">
 			The field will be set to <strong><tt>null</tt></strong>.
@@ -29,7 +29,7 @@
 			<draggable v-model="value">
 				<transition-group name="arrayElements">
 					<div class="fieldValue arrayElement" v-for="(e, k) in value" :key="e.id">
-						<EditorField ref="arrayFields" :field="field" :schema="schema" :pass="e.value" :isItem="true" />
+						<ParameterField ref="arrayFields" :field="field" :schema="schema" :pass="e.value" :isItem="true" />
 						<button type="button" @click="removeField(k)"><i class="fas fa-trash"></i></button>
 						<div class="mover"><i class="fas fa-arrows-alt"></i></div>
 					</div>
@@ -55,15 +55,16 @@ import areaSelect from "./leaflet-areaselect/leaflet-areaselect.js";
 import "./leaflet-areaselect/leaflet-areaselect.css";
 
 
-import GraphBuilderEnvironment from './GraphBuilderEnvironment.vue';
 import { ProcessGraph } from '@openeo/js-commons';
 import Utils from '../utils.js';
 
 export default {
-	name: 'EditorField',
+	name: 'ParameterField',
 	components: {
 		draggable,
-		GraphBuilderEnvironment,
+		// Asynchronously load the component to avoid circular references.
+		// See https://vuejs.org/v2/guide/components-edge-cases.html#Circular-References-Between-Components
+		VisualEditor: () => import('./VisualEditor.vue'),
 		VueCtkDateTimePicker
 	},
 	props: {
@@ -93,7 +94,7 @@ export default {
 	},
 	watch: {
 		schema() {
-			this.$nextTick(() => this.initView());
+			this.$nextTick(this.initView);
 		}
 	},
 	created() {
@@ -144,11 +145,16 @@ export default {
 				}
 			}
 			else if (this.type === 'callback') {
-				if (this.$props.pass.callback instanceof ProcessGraph) {
-					v = this.$props.pass.callback.toJSON();
+				if (Utils.isObject(this.$props.pass) && this.$props.pass.callback) {
+					if (Utils.isObject(this.$props.pass) && this.$props.pass.callback instanceof ProcessGraph) {
+						v = this.$props.pass.callback.toJSON();
+					}
+					else  {
+						v = this.$props.pass.callback;
+					}
 				}
 				else {
-					v = this.$props.pass.callback;
+					v = null;
 				}
 			}
 			else if (this.type === 'array' || this.type === 'temporal-intervals') {
@@ -185,7 +191,12 @@ export default {
 				return [this.value.start, this.value.end];
 			}
 			else if (this.type === 'callback') {
-				return this.$refs.callbackBuilder.makeProcessGraph();
+				var pg = this.$refs.callbackBuilder.makeProcessGraph();
+				var obj = new ProcessGraph(pg);
+				obj.parse();
+				return {
+					callback: obj
+				};
 			}
 			else if (this.type === 'bounding-box') {
 				return	{
@@ -213,7 +224,12 @@ export default {
 				return null;
 			}
 			else if (this.useTextarea) {
-				return JSON.parse(this.value);
+				if (typeof this.value === 'string' && this.value.length > 0) {
+					return JSON.parse(this.value);
+				}
+				else {
+					return null;
+				}
 			}
 			else {
 				return this.value;

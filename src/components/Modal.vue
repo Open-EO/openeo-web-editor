@@ -1,74 +1,125 @@
 <template>
-<div id="modal" class="modal" v-if="shown" @click="possiblyClose">
-	<div class="modal-container">
-		<h2 class="modal-header">
-			{{ title }}
-			<span class="close" @click="close">&times;</span>
-		</h2>
-		<div class="modal-content" id="modal-content">
-			<template v-if="typeof message === 'string'">{{ message }}</template>
-			<div v-else-if="typeof html === 'string'" v-html="html"></div>
-			<component v-else :is="compname" v-bind="props"></component>
+	<div id="modal" v-if="shown" @click="possiblyClose">
+		<div class="modal-container" :style="{'max-width': maxWidth}">
+			<header>
+				<h2>{{ title }}</h2>
+				<span class="close" @click="close"><i class="fa fa-times" aria-hidden="true"></i></span>
+			</header>
+			<main>
+				<slot name="main">
+					<template v-if="message">{{ message }}</template>
+					<div v-else-if="html" v-html="html"></div>
+					<template v-else-if="listItems">
+						<strong class="listEmpty" v-if="listItems.length === 0">Sorry, no data available.</strong>
+						<ul class="list">
+							<li v-for="(item, key) in listItems" :key="key" @click="doMainListAction(item, key)">
+								<strong>{{ Array.isArray(listItems) ? item : key }}</strong>
+								<button type="button" v-for="action in otherListActions" :key="action.icon" :title="action.title" @click.prevent.stop="doListAction(item, key, action.callback)">
+									<i :class="'fas fa-'+action.icon"></i>
+								</button>
+							</li>
+						</ul>
+					</template>
+				</slot>
+			</main>
+			<footer>
+				<slot name="footer"></slot>
+			</footer>
 		</div>
 	</div>
-</div>
 </template>
 
 <script>
 import EventBus from '../eventbus.js';
-import ObjectTree from '@openeo/vue-components/components/ObjectTree.vue';
-import List from './List.vue';
-import CredentialsForm from './CredentialsForm.vue';
-import CollectionPanel from './CollectionPanel.vue';
-import ProcessPanel from './ProcessPanel.vue';
-import ProcessParameterEditor from './ProcessParameterEditor.vue';
-import ServerInfoPanel from './ServerInfoPanel.vue';
+import Utils from '../utils.js';
+
+const getDefaultState = () => {
+	return {
+		title: '',
+		message: null,
+		html: null,
+		list: null,
+		listActions: [],
+		shown: false,
+		onClose: null
+	};
+};
 
 export default {
 	name: 'Modal',
-	components:  {
-		CredentialsForm,
-		CollectionPanel,
-		List,
-		ProcessPanel,
-		ProcessParameterEditor,
-		ObjectTree,
-		ServerInfoPanel
+	props: {
+		maxWidth: {
+			type: String,
+			default: "80%"
+		}
 	},
 	data() {
-		return {
-			title: '',
-			message: null,
-			html: null,
-			props: null,
-			compname: null,
-			shown: false
-		};
+		return getDefaultState();
 	},
 	mounted() {
 		EventBus.$on('showModal', this.showModal);
 		EventBus.$on('showComponentModal', this.showComponentModal);
 		EventBus.$on('closeModal', this.close);
 	},
+    computed: {
+        listItems() {
+            return (typeof this.list == 'function' ? this.list() : this.list);
+		},
+		otherListActions() {
+			return Array.isArray(this.listActions) && this.listActions.length > 1 ? this.listActions.slice(1) : [];
+		}
+    },
 	methods: {
 		escCloseListener(event) {
 			if (event.key == "Escape") { 
-				EventBus.$emit('closeModal');
+				this.close();
 				event.preventDefault();
 				event.stopPropagation();
 				return false;
 			}
 		},
 
-		show() {
+		show(title, onClose = null) {
+			this.reset();
+			this._show(title, onClose);
+		},
+
+		showMessage(title, message, onClose = null) {
+			this.reset();
+			this.message = message;
+			this._show(title, onClose);
+		},
+
+		showHtml(title, html, onClose = null) {
+			this.reset();
+			this.html = html;
+			this._show(title, onClose);
+		},
+
+		showList(title, list, actions, onClose = null) {
+			this.reset();
+			this.list = list;
+			this.listActions = actions;
+			this._show(title, onClose);
+		},
+
+		_show(title, onClose) {
+			this.onClose = onClose;
+			this.title = title;
 			window.addEventListener('keydown', this.escCloseListener);
 			this.shown = true;
 		},
 
+		reset() {
+			Object.assign(this, getDefaultState());
+		},
+
 		close() {
+			if (typeof this.onClose === 'function' && !this.onClose()) {
+				return;
+			}
 			this.shown = false;
 			window.removeEventListener('keydown', this.escCloseListener);
-			EventBus.$emit('modalClosed');
 		},
 
 		possiblyClose(event) {
@@ -76,94 +127,128 @@ export default {
 				this.close();
 			}
 		},
-
-		initCommonModal(title) {
-			this.title = title;
-			this.message = null;
-			this.html = null;
-			this.compname = null;
-			this.props = null;
+		
+        doListAction(item, key, callback) {
+            const closeAfterCompletion = callback(Array.isArray(this.listItems) ? item : key);
+            if(closeAfterCompletion === true) {
+                this.close();
+            }
 		},
 
-		initTextModal(title, body) {
-			this.initCommonModal(title);
-			this.message = body;
-		},
-
-		initHtmlModal(title, body) {
-			this.initCommonModal(title);
-			this.html = body;
-		},
-
-		initComponentModal(title, compname, props) {
-			this.initCommonModal(title);
-			this.compname = compname;
-			this.props = props;
-		},
-
-		showModal(title, data, html = false) {
-			if (typeof data === 'string') {
-				if (html) {
-					this.initHtmlModal(title, data);
-				}
-				else {
-					this.initTextModal(title, data);
-				}
-				this.show();
-			}
-			else {
-				this.showComponentModal(title, 'ObjectTree', {data: data});
-			}
-		},
-
-		showComponentModal(title, compname, props) {
-			this.initComponentModal(title, compname, props);
-			this.show();
-		}
+        doMainListAction(item, key) {
+            if(this.listActions.length > 0) {
+                this.doListAction(item, key, this.listActions[0].callback);
+            }
+        }
 	}
 };
 </script>
 
 <style>
-.modal {
+#modal {
     position: fixed;
     z-index: 9000; /* Snotify has 9999 and is intentionally above the modals */
     left: 0;
     top: 0;
     width: 100%;
     height: 100%;
-    overflow: auto;
-    background-color: rgb(0,0,0);
     background-color: rgba(0,0,0,0.4);
+	display: flex;
+	justify-content: center;
+	align-items: center;
 }
 
-.modal-header {
-	background-color: #f7f7f7;
-    padding: 20px;
-	margin: 0px;
+#modal .modal-container {
+    background-color: #fff;
+    border: 1px solid #fff;
+	min-width: 30%;
+	max-height: 96%;
+	display: flex;
+	flex-direction: column;
+	box-shadow: 8px 8px 8px 0px rgba(0,0,0,0.3);
 }
 
-.modal-content {
-    padding: 20px;
+#modal header {
+	background-color: #1665B6;
+	color: white;
+	margin: 0;
+	height: 1.5rem;
+	padding: 1rem;
+	display: flex;
+	align-items: center;
 }
 
-.modal-container {
-    background-color: #fefefe;
-    margin: 5% auto;
-    border: 1px solid #888;
-    width: 90%;
+#modal header h2 {
+	display: inline-block;
+	flex-grow: 1;
+	margin: 0;
+	font-size: 1.5rem;
 }
 
-.close {
-    color: #aaa;
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
+#modal main {
+    padding: 1rem;
+	overflow: auto;
+	flex-grow: 1;
 }
 
-.close:hover, .close:focus {
-    color: black;
-    text-decoration: none;
+#modal .inline main {
+	padding: 0;
+}
+
+#modal footer:empty {
+	display: none;
+}
+
+#modal footer {
+	background-color: #eee;
+	margin: 0;
+	padding: 1rem;
+}
+
+#modal .close {
+	font-size: 1.5rem;
+	height: 2rem;
+	width: 2rem;
+    color: white;
     cursor: pointer;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+#modal .close:hover, #modal .close:focus {
+    color: red;
+}
+
+#modal .list {
+	list-style-type: none;
+	margin: 0;
+	padding: 0;
+	border: 1px solid #ccc;
+}
+
+#modal .list li:first-of-type {
+	border: 0;
+}
+#modal .list li {
+	cursor: pointer;
+	display: block;
+	border-top: 1px solid #ccc;
+	padding: 0.5rem;
+	color: #1665B6;
+	display: flex;
+	align-items: center;
+}
+#modal .list li:hover {
+	color: black;
+	background-color: #eee;
+}
+#modal .list li strong {
+	flex-grow: 1;
+	font-weight: normal;
+}
+#modal .listEmpty {
+    display: block;
+    text-align: center;
 }
 </style>

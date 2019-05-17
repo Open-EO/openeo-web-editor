@@ -71,7 +71,29 @@ export default {
 		}
 		let date = new Date(value); 
 		return date.toISOString().replace('T', ' ').replace('Z', '').substring(0, 19); 
-	}, 
+	},
+
+	getMimeTypeForOutputFormat(originalOutputFormat) {
+		if (!originalOutputFormat.format) {
+			return null;
+		}
+		var type = originalOutputFormat.format.toLowerCase();
+		switch(type) {
+			case 'png':
+			case 'jpeg':
+			case 'jpg':
+			case 'gif':
+				return 'image/' + type;
+			case 'tif':
+			case 'tiff':
+			case 'gtiff':
+				return 'image/tiff';
+			case 'json':
+				return 'application/json';
+			default:
+				return null;
+		}
+	},
 
 	param(name) {
 		const urlParams = new URLSearchParams(window.location.search); 

@@ -2,7 +2,7 @@ import { ProcessSchema } from '../../processSchema.js';
 
 class Field extends ProcessSchema {
 
-    constructor(meta, name, isOutput = false) {
+    constructor(meta, name, label, isOutput = false) {
         super(meta.schema);
 
         this.meta = meta;
@@ -12,7 +12,7 @@ class Field extends ProcessSchema {
     
         // Field name
         this.name = name;
-        this.label = name;
+        this.label = label;
     
         // Value
         this.hasValue = false;

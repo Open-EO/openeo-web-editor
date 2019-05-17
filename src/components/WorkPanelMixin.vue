@@ -27,8 +27,8 @@ export default {
 			}
 		}
 	},
-	created() {
-		EventBus.$on('serverChanged', this.updateData);
+	mounted() {
+		this.updateData();
 	},
 	methods: {
 		updateData() {

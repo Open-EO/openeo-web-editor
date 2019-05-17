@@ -3,18 +3,6 @@ import Vue from 'vue';
 /*
 # Events
 
-## changeServerUrl(string $url)
-Fired when the server URL has been changed in the front-end and needs to update the model.
-
-## serverChanged()
-The server has changed and the UI should be updated.
-
-## addCollectionToEditor(string $code)
-Adds the collection to the editor.
-
-## addProcessToEditor(string $code)
-Adds the process to the editor.
-
 ## viewWebService(object $service)
 Shows a web service on the map.
 
@@ -32,9 +20,6 @@ Triggered when a job was created successfully, parameter is the Job object retur
 
 ## closeModal()
 Closes the modal
-
-## modalClosed()
-A modal has been closed, which might be of relevance to its subcomponents (they may treat this as a "cancel")
 
 ## serviceCreated(object $service)
 Triggered when a service was created successfully, parameter is the Service object returned by the openeo-js-client lib.

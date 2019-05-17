@@ -34,7 +34,7 @@ export default {
 	},
 
 	mounted() {
-		this.createMap();
+		this.$nextTick(this.createMap);
 		EventBus.$on('viewWebService', this.viewWebService);
 		EventBus.$on('removeWebService', this.removeWebService);
 	},

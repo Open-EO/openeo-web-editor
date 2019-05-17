@@ -131,6 +131,10 @@ class ProcessSubSchema {
 		return this.schema.enum;
 	}
 
+	getCallbackParameters() {
+		return this.schema.parameters;
+	}
+
 	title() {
 		var title = this.dataType();
 		if (this.schema.title) {

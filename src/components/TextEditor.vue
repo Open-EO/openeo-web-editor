@@ -1,19 +1,27 @@
 <template>
-	<div id="SourceEnvironment">
+	<div id="TextEditor">
+		<EditorToolbar :onStore="getProcessGraph" :onInsert="insertProcessGraph" :onClear="clearProcessGraph" />
 		<div id="sourceCodeEditor"></div>
+		<DiscoveryToolbar :onAddCollection="insertToEditor" :onAddProcess="insertToEditor" />
 	</div>
 </template>
 
 <script>
 import EventBus from '../eventbus.js';
 import Utils from '../utils.js';
+import EditorToolbar from './EditorToolbar.vue';
+import DiscoveryToolbar from './DiscoveryToolbar.vue';
 
 import 'codemirror/lib/codemirror.css';
 import 'codemirror/mode/javascript/javascript.js';
 import CodeMirror from 'codemirror';
 
 export default {
-	name: 'SourceEnvironment',
+	name: 'TextEditor',
+	components: {
+		EditorToolbar,
+		DiscoveryToolbar
+	},
 	props: ['active'],
 	data() {
 		return {
@@ -26,18 +34,15 @@ export default {
 		}
 	},
 	watch: {
-		active() {
-			this.editor.refresh();
+		active(newVal) {
+			if (newVal) {
+				this.editor.refresh();
+			}
 		}
 	},
 	mounted() {
 		this.editor = CodeMirror(document.getElementById('sourceCodeEditor'), this.editorOptions);
 		this.editor.setSize(null, "100%");
-
-		EventBus.$on('insertProcessGraph', this.insertProcessGraph);
-		EventBus.$on('addProcessToEditor', this.insertToEditor);
-		EventBus.$on('addCollectionToEditor', this.insertToEditor);
-		EventBus.$on('clearProcessGraph', this.clearProcessGraph);
 	},
 	methods: {
 		clearProcessGraph() {
@@ -66,9 +71,6 @@ export default {
 		},
 
 		insertToEditor(text, replace = false) {
-			if (!this.active) {
-				return;
-			}
 			if (replace) {
 				this.editor.setValue(text);
 			}
@@ -78,10 +80,6 @@ export default {
 		},
 
 		insertProcessGraph(pg) {
-			if (!this.active) {
-				return;
-			}
-
 			if (!pg) {
 				this.insertToEditor("");
 			}
@@ -95,14 +93,6 @@ export default {
 </script>
 
 <style scoped>
-.sourceToolbar {
-	text-align: right;
-}
-.sourceHeader {
-	padding: 5px;
-	border-bottom: dotted 1px #676767;
-	display: flex;
-}
 #sourceCodeEditor {
 	height: 400px;
 }

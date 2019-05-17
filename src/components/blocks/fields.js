@@ -10,7 +10,7 @@ var Fields = function(block, schema)
     this.block = block;
 
     // Fields
-    var output = new Field(schema.returns, "output", true);
+    var output = new Field(schema.returns, "output", block.getDefaultOutputLabel(), true);
     this.output = output;
     this.inputs = [];
     this.editables = [];
@@ -19,7 +19,7 @@ var Fields = function(block, schema)
     };
 
     for(var name in schema.parameters) {
-        var field = new Field(schema.parameters[name], name);
+        var field = new Field(schema.parameters[name], name, name);
         this.inputs.push(field);
         if (field.isEditable()) {
             this.editables.push(field);
@@ -41,16 +41,7 @@ Fields.prototype.getField = function(name)
  */
 Fields.prototype.show = function()
 {
-    var title = this.block.name+' #'+this.block.id;
-    var opts = {
-        editables: this.editables,
-        saveCallback: (data) => {
-            this.save(data);
-            EventBus.$emit('closeModal');
-            return false;
-        }
-    };
-    EventBus.$emit('showComponentModal', title, 'ProcessParameterEditor', opts);
+    this.block.blocks.showParameters(this);
 };
 
 /**

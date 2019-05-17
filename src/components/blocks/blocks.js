@@ -9,12 +9,15 @@ import { JsonSchemaValidator, ProcessGraph, Utils as CommonUtils } from '@openeo
 /**
  * Manage the blocks
  */
-var Blocks = function(errorHandler = null)
+var Blocks = function(errorHandler = null, openParameterEditor = null)
 {
     this.errorHandler = errorHandler;
+    this.openParameterEditor = openParameterEditor;
+    this.active = true;
 
     // View center & scale
     this.center = {};
+    this.newBlockOffset = 0;
     this.scale = 1.3;
     this.redrawTimeout = null;
 
@@ -92,15 +95,6 @@ var Blocks = function(errorHandler = null)
  */
 Blocks.prototype.run = function(selector)
 {
-    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading"){
-        this._run(selector);
-    }
-    else {
-        document.addEventListener('DOMContentLoaded', () => this._run(selector));
-    }
-};
-
-Blocks.prototype._run = function(selector) {
     this.div = document.querySelector(selector);
 
     if (!this.div) {
@@ -121,6 +115,7 @@ Blocks.prototype._run = function(selector) {
     var rect = Utils.domBoundingBox(this.div);
     this.center.x = rect.width/2;
     this.center.y = rect.height/2;
+    this.newBlockOffset = 0;
 
     // Listen for mouse position
     this.div.addEventListener('mousemove', event => {
@@ -161,8 +156,8 @@ Blocks.prototype._run = function(selector) {
             }
         }
 
-        // "del" will delete a selected link
-        if (e.keyCode == 46) {
+        // "del" will delete a selected link or block
+        if (e.keyCode == 46 && this.active) {
             this.deleteEvent();
         }
     });
@@ -174,6 +169,7 @@ Blocks.prototype._run = function(selector) {
         var deltaScale = Math.pow(1.1, event.deltaY / 40 * -1);
         this.center.x -= dX*(deltaScale-1);
         this.center.y -= dY*(deltaScale-1);
+        this.newBlockOffset = 0;
         this.scale *= deltaScale;
         this.redraw();
         event.preventDefault();
@@ -216,6 +212,12 @@ Blocks.prototype.ready = function(callback)
     }
 };
 
+Blocks.prototype.showParameters = function(fields) {
+    if (typeof this.openParameterEditor === 'function') {
+        this.openParameterEditor(this, fields);
+    }
+};
+
 /**
  * Gets the mouse position
  */
@@ -243,6 +245,13 @@ Blocks.prototype.undo = function()
         return;
     }
     this.history.restoreLast();
+
+    if (!this.blocks[this.selectedBlock]) {
+        this.selectedBlock = null;
+    }
+    if (!this.edges[this.selectedLink]) {
+        this.selectedLink = null;
+    }
 }
 
 Blocks.prototype.setResultNode = function(block, result = true) {
@@ -279,17 +288,22 @@ Blocks.prototype.setResultNode = function(block, result = true) {
 /**
  * Adds a block
  */
-Blocks.prototype.addCollection = function(name, x, y)
+Blocks.prototype.addCollection = function(name, x = null, y = null)
 {
-    return this.addBlock(name, 'collection', x, y);
+    return this.addBlock('load_collection', 'process', x, y, {id: name, spatial_extent: null, temporal_extent: null});
 };
 
-Blocks.prototype.addProcess = function(name, x, y)
+Blocks.prototype.addProcess = function(name, x = null, y = null)
 {
     return this.addBlock(name, 'process', x, y);
 };
 
-Blocks.prototype.addBlock = function(name, type, x, y)
+Blocks.prototype.addCallbackArgument = function(name, x = null, y = null)
+{
+    return this.addBlock(name, 'callback-argument', x, y);
+};
+
+Blocks.prototype.addBlock = function(name, type, x, y, values = {})
 {
     if (!(type in this.moduleTypes)) {
         throw "Invalid module type specified.";
@@ -297,25 +311,31 @@ Blocks.prototype.addBlock = function(name, type, x, y)
     if (!(name in this.moduleTypes[type])) {
         throw "'" + name + "' not available.";
     }
-    var block = new Block(this, type, this.moduleTypes[type][name], this.id);
-    block.x = x;
-    block.y = y;
-    if (this.getBlockCount() === 0) {
+    var block = new Block(this, name, type, this.moduleTypes[type][name], this.id);
+    block.x = x === null ? (-block.getWidth()/2 + this.newBlockOffset) : x;
+    block.y = y === null ? (-block.getHeight()/2 + this.newBlockOffset) : y;
+    if (this.newBlockOffset < 150) {
+        this.newBlockOffset += 10;
+    }
+    if (this.getProcessBlockCount() === 0 && !block.isCallbackArgument()) {
         block.result = true;
     }
+    block.setValues(values);
     block.create(this.innerDiv);
-    this.history.save();
+    if (!block.isCallbackArgument()) {
+        this.history.save();
+    }
     this.blocks[this.id] = block;
     this.id++;
     return block;
 };
 
-Blocks.prototype.unregisterCollections = function() {
-    this.moduleTypes['collection'] = {};
-};
-
 Blocks.prototype.unregisterProcesses = function() {
     this.moduleTypes['process'] = {};
+}
+
+Blocks.prototype.unregisterCallbackArguments = function() {
+    this.moduleTypes['callback-arguments'] = {};
 }
 
 /**
@@ -323,28 +343,25 @@ Blocks.prototype.unregisterProcesses = function() {
  */
 Blocks.prototype.registerProcess = function(meta)
 {
-    this.register(meta, 'process');
+    this.register(meta, 'process', meta.id);
 };
 
-Blocks.prototype.registerCollection = function(meta)
+Blocks.prototype.registerCallbackArgument = function(name, meta)
 {
     var data = CommonUtils.mergeDeep({}, meta);
     data.returns = {
-        name: "output",
+        name: name,
         attrs: "output",
-        schema: {
-            type: 'object',
-            format: 'raster-cube'
-        }
+        schema: meta
     };
-    this.register(data, 'collection');
+    this.register(data, 'callback-argument', name);
 };
 
-Blocks.prototype.register = function(meta, type) {
+Blocks.prototype.register = function(meta, type, name) {
     if (!(type in this.moduleTypes)) {
         this.moduleTypes[type] = {};
     }
-    this.moduleTypes[type][meta.id] = meta;
+    this.moduleTypes[type][name] = meta;
 }
 
 /**
@@ -383,6 +400,7 @@ Blocks.prototype.move = function()
     if (this.moving) {
         this.center.x += (this.mouseX-this.moving[0]);
         this.center.y += (this.mouseY-this.moving[1]);
+        this.newBlockOffset = 0;
         this.moving = [this.mouseX, this.mouseY];
         this.redraw();
     }
@@ -463,6 +481,7 @@ Blocks.prototype.removeBlock = function(key)
 {
     var block = this.blocks[key];
 
+
     var newEdges = [];
     for (var k in this.edges) {
         var edge = this.edges[k];
@@ -475,6 +494,9 @@ Blocks.prototype.removeBlock = function(key)
     this.edges = newEdges;
 
     block.erase();
+    if (block.id == this.selectedBlock) {
+        this.selectedBlock = null;
+    }
     delete this.blocks[key];
     this.redraw();
 };
@@ -491,20 +513,46 @@ Blocks.prototype.getBlockById = function(blockId)
     return null;
 };
 
+Blocks.prototype.getCallbackArgumentBlockByName = function(name)  {
+    for(var i in this.blocks) {
+        var block = this.blocks[i];
+        if (block.isCallbackArgument() && block.name === name) {
+            return block;
+        }
+    }
+    return null;
+}
+
 Blocks.prototype.getBlockCount = function() {
     return Utils.size(this.blocks);
-}
+};
+
+Blocks.prototype.getProcessBlockCount = function() {
+    return Utils.size(Object.values(this.blocks).filter(b => !b.isCallbackArgument()));
+};
 
 Blocks.prototype.canDelete = function()
 {
+    // Don't allow deleting callback arguments
+    if (this.selectedBlock != null) {
+        var block = this.getBlockById(this.selectedBlock);
+        if (block && block.isCallbackArgument()) {
+            return false;
+        }
+    }
+
     return (this.selectedBlock != null || this.selectedLink != null);
-}
+};
 
 /**
  * Delete the current link
  */
 Blocks.prototype.deleteEvent = function()
 {
+    if (!this.canDelete()) {
+        return;
+    }
+
     // Remove a block and its edges
     if (this.selectedBlock != null) {
         this.history.save();
@@ -630,6 +678,8 @@ Blocks.prototype.addEdge = function(blockOut, fieldOut, blockIn, fieldIn) {
     this.history.save();
     edge.create();
     this.edges.push(edge);
+    blockIn.redraw();
+    blockOut.redraw();
     this.redraw();
 }
 
@@ -697,13 +747,16 @@ Blocks.prototype.export = function()
 
 
 Blocks.prototype.exportProcessGraph = function() {
-    if (this.getBlockCount() === 0) {
+    if (this.getProcessBlockCount() === 0) {
         return null;
     }    
 
     var nodes = {};
     for(var blockId in this.blocks) {
-        nodes[blockId] = this.blocks[blockId].exportProcessGraph();
+        let node = this.blocks[blockId].exportProcessGraph();
+        if (node !== null) {
+            nodes[blockId] = node;
+        }
     }
     
     return nodes;
@@ -724,9 +777,15 @@ Blocks.prototype.importProcessGraph = function(processGraph) {
 
         var args = node.getArgumentNames();
         for(let i in args) {
-            if (node.getArgumentType(args[i]) == 'result') {
-                var referencedNode = pg.getNode(node.getRawArgumentValue(args[i])); // get the node that is referenced in the argument
-                this.addEdge(referencedNode.blockId, "output", node.blockId, args[i]);
+            switch(node.getArgumentType(args[i])) {
+                case 'result':
+                    var referencedNode = pg.getNode(node.getRawArgumentValue(args[i])); // get the node that is referenced in the argument
+                    this.addEdge(referencedNode.blockId, "output", node.blockId, args[i]);
+                    break;
+                case 'callback-argument':
+                    var argName = this.getCallbackArgumentBlockByName(node.getRawArgumentValue(args[i]));
+                    this.addEdge(argName, "output", node.blockId, args[i]);
+                    break;
             }
         }
     }
@@ -739,18 +798,10 @@ Blocks.prototype.importNodesFromProcessGraph = function(nodes, x = 0, y = 0) {
             continue; // Node has already been added
         }
 
-        var block = null;
-        // Image Collection
-        if (node.process_id === 'load_collection' && node.hasArgument("id")) {
-            block = this.addCollection(node.getArgument("id"), x, y);
-        }
-        // Process
-        else {
-            block = this.addProcess(node.process_id, x, y);
-            if (block) {
-                block.setValues(node.arguments);
-                block.render();
-            }
+        var block = this.addProcess(node.process_id, x, y);
+        if (block) {
+            block.setValues(node.arguments);
+            block.render();
         }
         block.result = node.isResultNode;
         node.blockId = block.id;
@@ -785,13 +836,13 @@ Blocks.prototype.import = function(scene)
             for (var k in scene.blocks) {
                 var data = scene.blocks[k];
                 if (data.type in this.moduleTypes && data.name in this.moduleTypes[data.type]) {
-                    var block = new Block(this, data.type, this.moduleTypes[data.type][data.name], data.id);
+                    var block = new Block(this, data.name, data.type, this.moduleTypes[data.type][data.name], data.id);
                     block.x = data.x;
                     block.y = data.y;
-                    block.setValues(data.values);
+                    block.setValues(data.values, true);
                     this.id = Math.max(this.id, block.id+1);
                     block.create(this.innerDiv);
-                    this.blocks[this.id] = block;
+                    this.blocks[data.id] = block;
                 }
                 else {
                     errors.push('Block #'+k+ ': Unable to create a block of type ' + data.type);
@@ -807,9 +858,9 @@ Blocks.prototype.import = function(scene)
             
                 var block1 = this.getBlockById(data.block1);
                 var block2 = this.getBlockById(data.block2);
-            
                 if (!block1 || !block2) {
                     errors.push('Edge #'+k+ ': Corresponsing block does not exist');
+                    continue;
                 }
             
                 var edge = new Edge(data.id, block1, block1.getField(data.field1), block2, block2.getField(data.field2), this);
@@ -869,6 +920,7 @@ Blocks.prototype.perfectScale = function()
     this.scale = scale;
     this.center.x = rect.width/2 - scale*(xMin+xMax)/2.0;
     this.center.y = rect.height/2 - scale*(yMin+yMax)/2.0;
+    this.newBlockOffset = 0;
 
     this.redraw();
 }

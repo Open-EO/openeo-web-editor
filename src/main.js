@@ -3,7 +3,7 @@ import Snotify from 'vue-snotify';
 import 'vue-snotify/styles/simple.css';
 import store from './store/index';
 import Config from '../config';
-import Editor from './Editor.vue';
+import Page from './Page.vue';
 
 Vue.use(Snotify);
 
@@ -17,5 +17,5 @@ Vue.config.errorHandler = function (err, vm, info) {
 
 new Vue({
 	store,
-	render: h => h(Editor)
+	render: h => h(Page)
 }).$mount('#app');

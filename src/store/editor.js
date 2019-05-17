@@ -6,8 +6,8 @@ const scriptStorage = "savedScripts";
 export default {
 	namespaced: true,
 	state: {
-		storedServers: JSON.parse(localStorage.getItem(serverStorage) || []),
-		storedScripts: JSON.parse(localStorage.getItem(scriptStorage) || {})
+		storedServers: JSON.parse(localStorage.getItem(serverStorage) || "[]"),
+		storedScripts: JSON.parse(localStorage.getItem(scriptStorage) || "{}")
 	},
 	getters: {
 		getScriptByName: (state) => (name) => state.storedScripts[name]

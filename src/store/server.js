@@ -1,59 +1,84 @@
 import { OpenEO } from '@openeo/js-client';
 
-export default {
-	namespaced: true,
-	state: {
+const getDefaultState = () => {
+	return {
 		connection: null,
+		requireAuthentication: true,
 		userId: null,
-		connectionErrors: [],
+		connectionError: null,
+		discoveryErrors: [],
 		outputFormats: {},
 		serviceTypes: {},
 		processes: [],
 		collections: []
-	},
+	};
+};
+
+export default {
+	namespaced: true,
+	state: getDefaultState(),
 	getters: {
 		capabilities: (state) => state.connection !== null ? state.connection.capabilities() : null,
-		supports: (state) => (feature) => state.connection !== null && state.connection.capabilities() !== null && state.connection.capabilities().hasFeature(feature)
+		supports: (state) => (feature) => state.connection !== null && state.connection.capabilities() !== null && state.connection.capabilities().hasFeature(feature),
+		isConnected: (state) => state.connection !== null && (!state.requireAuthentication || state.userId !== null)
 	},
 	actions: {
-		async connect({commit}, url) {
-			commit('resetConnectionErrors');
+		async connect({commit}, {url, requireAuthentication}) {
+			commit('reset');
 			try {
 				var connection = await OpenEO.connect(url);
-				commit('userId', null);
 				commit('connection', connection);
 			} catch (error) {
-				commit('addConnectionsError', error);
+				if(error.message == 'Network Error' || error.name == 'NetworkError') {
+					error = new Error("Server is not available.");
+				}
+				commit('setConnectionError', error);
+				return false;
 			}
+
+			var promises = [];
 	
 			var capabilities = connection.capabilities();
-			// Request supported output formats
-			if (capabilities.hasFeature('listFileTypes')) {
-				connection.listFileTypes()
-					.then(response => commit('outputFormats', response))
-					.catch(error => commit('addConnectionsError', error) && commit('outputFormats', {}))
-			}
-
-			// Request supported service types
-			if (capabilities.hasFeature('listServiceTypes')) {
-				connection.listServiceTypes()
-					.then(response => commit('serviceTypes', response))
-					.catch(error => commit('addConnectionsError', error) && commit('serviceTypes', {}))
-			}
-
 			// Request collections
 			if (capabilities.hasFeature('listCollections')) {
-				connection.listCollections()
+				promises.push(connection.listCollections()
 					.then(response => commit('collections', response))
-					.catch(error => commit('addConnectionsError', error) && commit('collections', []));
+					.catch(error => commit('addDiscoveryError', error)));
+			}
+			else {
+				commit('addDiscoveryError', new Error("Collections not supported by the back-end."));
 			}
 
 			// Request processes
 			if (capabilities.hasFeature('listProcesses') ) {
-				connection.listProcesses()
+				promises.push(connection.listProcesses()
 					.then(response => commit('processes', response))
-					.catch(error => commit('addConnectionsError', error) && commit('processes', []));
+					.catch(error => commit('addDiscoveryError', error)));
 			}
+			else {
+				commit('addDiscoveryError', new Error("Processes not supported by the back-end."));
+			}
+
+			// Request supported output formats
+			if (capabilities.hasFeature('listFileTypes')) {
+				promises.push(connection.listFileTypes()
+					.then(response => commit('outputFormats', response))
+					.catch(error => commit('addDiscoveryError', error)))
+			}
+
+			// Request supported service types
+			if (capabilities.hasFeature('listServiceTypes')) {
+				promises.push(connection.listServiceTypes()
+					.then(response => commit('serviceTypes', response))
+					.catch(error => commit('addDiscoveryError', error)))
+			}
+	
+			await Promise.all(promises);
+
+			// Do this at the end to make sure isConnected is only true once everything is loaded.
+			commit('requireAuthentication', requireAuthentication);
+
+			return true;
 		},
 
 		async authenticateBasic(cx, {username, password}) {
@@ -67,6 +92,9 @@ export default {
 		}
 	},
 	mutations: {
+		requireAuthentication(state, requireAuth = true) {
+			state.requireAuthentication = requireAuth;
+		},
 		connection(state, connection) {
 			state.connection = connection;
 		},
@@ -101,11 +129,14 @@ export default {
 			collections.sort((a, b) => a.id.localeCompare(b.id));
 			state.collections = collections;
 		},
-		resetConnectionErrors(state) {
-			state.connectionErrors = [];
+		setConnectionError(state, error) {
+			state.connectionError = error;
 		},
-		addConnectionsError(state, error) {
-			state.connectionErrors.push(error);
+		addDiscoveryError(state, error) {
+			state.discoveryErrors.push(error);
+		},
+		reset(state) {
+			Object.assign(state, getDefaultState());
 		}
 	}
 };

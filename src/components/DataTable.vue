@@ -7,7 +7,7 @@
 			<div class="dataTableFilter" v-if="data.length > 0">
 				<i class="fas fa-search filter-icon"></i>
 				<input type="text" placeholder="Search term" v-model="filterValue">
-				<button @click="clearFilter" :disabled="!hasFilter"><i class="fas fa-times-circle"></i></button>
+				<button type="button" @click="clearFilter" :disabled="!hasFilter"><i class="fas fa-times-circle"></i></button>
 			</div>
 		</div>
 		<table v-if="data.length > 0 || typeof noDataMessage == 'undefined' || noDataMessage == ''">

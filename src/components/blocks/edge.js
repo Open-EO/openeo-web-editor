@@ -104,6 +104,10 @@ Edge.prototype.draw = function(svg)
  */
 Edge.prototype.collide = function(x, y)
 {
+    if (!this.segment) {
+        return false;
+    }
+
     var dp = this.segment.distanceP({x: x, y: y});
 
     if (dp[0] >= 0 && dp[0] <= 1) {
