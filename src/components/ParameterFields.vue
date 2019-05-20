@@ -1,15 +1,15 @@
 <template>
 	<div class="fieldContainer">
 		<div class="dataTypeChooser" v-if="field.schemas.length > 1">
-			Select data type:
-			<select name="dataType" v-model="type">
+			Data type:
+			<select name="dataType" v-model="type" :disabled="!editable">
 				<option v-for="(schema, key) in field.schemas" :key="key" :value="key">{{ schema.title() }}</option>
 			</select>
 			<div v-if="field.schemas[type].description()" class="description">
 				<i class="fas fa-info-circle"></i> {{ field.schemas[type].description() }}
 			</div>
 		</div>
-		<ParameterField ref="field" :field="field" :schema="field.schemas[type]" :pass="pass" />
+		<ParameterField ref="field" :editable="editable" :field="field" :schema="field.schemas[type]" :pass="pass" />
 	</div>
 </template>
 
@@ -23,6 +23,10 @@ export default {
 	},
 	props: {
 		field: Object,
+		editable: {
+			type: Boolean,
+			default: true
+		},
 		pass: {}
 	},
 	data() {

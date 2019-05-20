@@ -155,7 +155,7 @@ Block.prototype.getHtml = function()
     var html = '<div class="blockTitle"><span class="titleText" title="'+title+'">'+header+'</span>';
     html += '<div class="blockicon">';
     if (!this.blocks.compactMode) {
-        if (!this.isCallbackArgument()) {
+        if (this.blocks.editable && !this.isCallbackArgument()) {
             html += '<span class="delete" title="Remove (DEL)"><i class="fas fa-trash"></i></span>';
         }
         html += '<span class="info" title="Details"><i class="fas fa-info"></i></span>';
@@ -379,25 +379,27 @@ Block.prototype.initListeners = function()
     var connectors = this.div.querySelectorAll('.connector');
     for(let connector of connectors) {
         // Draw a link
-        connector.addEventListener('mousedown', event => {
-            if (event.which == 1) {
-                this.blocks.beginLink(this, connector.getAttribute('rel'));
-                event.preventDefault();
-                event.stopPropagation();
-            }
-        });
-        
-        // Allow specifying the result node
-        connector.addEventListener('click', event => {
-            if (event.which == 1) {
-                if (this.hasOutputEdges()) {
-                    this.blocks.showError("A result node can't have outgoing edges.");
-                    return;
+        if (this.blocks.editable) {
+            connector.addEventListener('mousedown', event => {
+                if (event.which == 1) {
+                    this.blocks.beginLink(this, connector.getAttribute('rel'));
+                    event.preventDefault();
+                    event.stopPropagation();
                 }
-                this.blocks.setResultNode(this);
-                this.blocks.history.save();
-            }
-        });
+            });
+
+            // Allow specifying the result node
+            connector.addEventListener('click', event => {
+                if (event.which == 1) {
+                    if (this.hasOutputEdges()) {
+                        this.blocks.showError("A result node can't have outgoing edges.");
+                        return;
+                    }
+                    this.blocks.setResultNode(this);
+                    this.blocks.history.save();
+                }
+            });
+        }
 
         // Handle focus on the I/Os
         connector.addEventListener('mouseover', () => this.focusedField = connector.getAttribute('rel'));

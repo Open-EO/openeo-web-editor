@@ -1,13 +1,13 @@
 <template>
 	<Tabs ref="tabs" id="processGraphContent">
-		<Tab id="visual" name="Visual Model Builder" icon="fa-code-branch" :selected="true" :onActivate="changeEditor">
+		<Tab id="visual" name="Visual Model" icon="fa-code-branch" :selected="true" :onActivate="changeEditor">
 			<template v-slot:tab="{ tab }">
-				<VisualEditor ref="graphBuilder" :active="tab.active" fieldId="pgEditor" />
+				<VisualEditor ref="graphBuilder" :active="tab.active" :editable="editable" :value="processGraph" :id="id + '_visual'" />
 			</template>
 		</Tab>
 		<Tab id="source" name="Process Graph" icon="fa-code" :onActivate="changeEditor">
 			<template v-slot:tab="{ tab }">
-				<TextEditor ref="sourceEditor" :active="tab.active" />
+				<TextEditor ref="sourceEditor" :active="tab.active" :editable="editable" :value="processGraph" :id="id + '_text'" />
 			</template>
 		</Tab>
 	</tabs>
@@ -30,9 +30,16 @@ export default {
 		Tabs,
 		Tab
 	},
-	mounted() {
-		EventBus.$on('getProcessGraph', this.getProcessGraph);
-		EventBus.$on('insertProcessGraph', this.insertProcessGraph);
+	props: {
+		id: String,
+		editable: {
+			type: Boolean,
+			default: true
+		},
+		processGraph: {
+			type: Object,
+			default: null
+		}
 	},
 	computed: {
 		activeEditor() {
@@ -63,8 +70,11 @@ export default {
 		},
 
 		changeEditor() {
-			this.inactiveEditor.getProcessGraph(pg => this.activeEditor.insertProcessGraph(pg), true, true);
+			if (this.editable) {
+				this.inactiveEditor.getProcessGraph(pg => this.activeEditor.insertProcessGraph(pg), true, true);
+			}
 		}
+
 	}
 }
 </script>

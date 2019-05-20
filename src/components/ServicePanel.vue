@@ -5,7 +5,7 @@
 			<button title="Refresh services" @click="updateData()"><i class="fas fa-sync-alt"></i></button> <!-- ToDo: Should be done automatically later -->
 		</template>
 		<template slot="enabled" slot-scope="p">
-			<span class="enabled">
+			<span class="boolean">
 				<i v-if="p.row.enabled === true" class="fas fa-check-circle"></i>
 				<i v-else-if="p.row.enabled === false" class="fas fa-times-circle"></i>
 				<i v-else class="fas fa-question-circle"></i>
@@ -28,6 +28,9 @@ import Utils from '../utils.js';
 export default {
 	name: 'ServicePanel',
 	mixins: [WorkPanelMixin],
+	computed: {
+		...Utils.mapState('server', ['serviceTypes'])
+	},
 	data() {
 		return {
 			columns: {
@@ -123,7 +126,7 @@ export default {
 				title = null;
 			}
 
-			var serviceTypes = Object.keys(this.connection.supportedServices).map(v => v.toUpperCase());
+			var serviceTypes = Object.keys(this.serviceTypes).map(v => v.toUpperCase());
 			var type = '';
 			if (serviceTypes.length == 1) {
 				type = serviceTypes[0];
@@ -151,13 +154,11 @@ export default {
 			}
 			
 			// ToDo: Ask user for service arguments
-			EventBus.$emit('getProcessGraph', script => {
-				this.createService(script, type, title);
-			});
+			EventBus.$emit('getProcessGraph', script => this.createService(script, type, title));
 		},
 		serviceInfo(service) {
 			this.refreshService(service, updatedService => {
-				EventBus.$emit('showModal', 'Web Service Details', updatedService.getAll());
+				EventBus.$emit('showServiceInfo', updatedService.getAll());
 			});
 		},
 		editService(service) {
@@ -210,14 +211,5 @@ export default {
 }
 #ServicePanel .actions {
 	width: 25%;
-}
-.enabled .fa-check-circle {
-	color: green;
-}
-.enabled .fa-times-circle {
-	color: red;
-}
-.enabled .fa-question-circle {
-	color: #555;
 }
 </style>

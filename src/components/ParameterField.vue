@@ -1,26 +1,26 @@
 <template>
 	<div class="fieldEditorContainer">
-		<select class="fieldValue" v-if="schema.isEnum()" :name="fieldName" v-model="value">
+		<select class="fieldValue" v-if="schema.isEnum()" :name="fieldName" v-model="value" :disabled="!editable">
 			<option v-for="(choice, k) in schema.getEnumChoices()" :key="k" :value="choice">{{ choice }}</option>
 		</select>
 		<template v-else-if="type === 'temporal-interval'">
-			<VueCtkDateTimePicker v-model="value" :range="true" label="Select start and end time" format="YYYY-MM-DD[T]HH:mm:ss[Z]"></VueCtkDateTimePicker>
+			<VueCtkDateTimePicker v-model="value" :disabled="!editable" :range="true" label="Select start and end time" format="YYYY-MM-DD[T]HH:mm:ss[Z]"></VueCtkDateTimePicker>
 			<!-- ToDo: Support open date ranges, probably by using two separate date pickers, see also https://github.com/chronotruck/vue-ctk-date-time-picker/issues/121 -->
 		</template>
 		<template v-else-if="type === 'date-time'">
-			<VueCtkDateTimePicker v-model="value" label="Select date and time" format="YYYY-MM-DD[T]HH:mm:ss[Z]" no-button="true"></VueCtkDateTimePicker>
+			<VueCtkDateTimePicker v-model="value" :disabled="!editable" label="Select date and time" format="YYYY-MM-DD[T]HH:mm:ss[Z]" no-button="true"></VueCtkDateTimePicker>
 		</template>
 		<template v-else-if="type === 'date'">
-			<VueCtkDateTimePicker v-model="value" label="Select date" only-date="true" format="YYYY-MM-DD" no-button="true"></VueCtkDateTimePicker>
+			<VueCtkDateTimePicker v-model="value" :disabled="!editable" label="Select date" only-date="true" format="YYYY-MM-DD" no-button="true"></VueCtkDateTimePicker>
 		</template>
 		<template v-else-if="type === 'time'">
-			<VueCtkDateTimePicker v-model="value" label="Select time" only-time="true" format="HH:mm:ss[Z]" no-button="true"></VueCtkDateTimePicker>
+			<VueCtkDateTimePicker v-model="value" :disabled="!editable" label="Select time" only-time="true" format="HH:mm:ss[Z]" no-button="true"></VueCtkDateTimePicker>
 		</template>
 		<template v-else-if="type === 'bounding-box'">
 			<div id="areaSelector"></div>
 		</template>
 		<div v-else-if="type === 'callback'" class="border">
-			<VisualEditor ref="callbackBuilder" fieldId="inlinePgEditor" :callbackArguments="schema.getCallbackParameters()" :value="value" />
+			<VisualEditor ref="callbackBuilder" id="inlinePgEditor" :editable="editable" :callbackArguments="schema.getCallbackParameters()" :value="value" />
 		</div>
 		<template v-else-if="type === 'null'">
 			The field will be set to <strong><tt>null</tt></strong>.
@@ -29,17 +29,17 @@
 			<draggable v-model="value">
 				<transition-group name="arrayElements">
 					<div class="fieldValue arrayElement" v-for="(e, k) in value" :key="e.id">
-						<ParameterField ref="arrayFields" :field="field" :schema="schema" :pass="e.value" :isItem="true" />
-						<button type="button" @click="removeField(k)"><i class="fas fa-trash"></i></button>
-						<div class="mover"><i class="fas fa-arrows-alt"></i></div>
+						<ParameterField ref="arrayFields" :editable="editable" :field="field" :schema="schema" :pass="e.value" :isItem="true" />
+						<button v-if="editable" type="button" @click="removeField(k)"><i class="fas fa-trash"></i></button>
+						<div class="mover" v-if="editable"><i class="fas fa-arrows-alt"></i></div>
 					</div>
 				</transition-group>
 			</draggable>
-			<button type="button" @click="addField()"><i class="fas fa-plus"></i> Add</button>
+			<button type="button" v-if="editable" @click="addField()"><i class="fas fa-plus"></i> Add</button>
 		</template>
-		<textarea class="fieldValue textarea" v-else-if="useTextarea" v-model="value"></textarea>
-		<input class="fieldValue" v-else-if="type === 'boolean'" :checked="!!value" v-model="value" type="checkbox" :name="fieldName" />
-		<input class="fieldValue" v-else v-model="value" type="text" :name="fieldName" />
+		<textarea class="fieldValue textarea" v-else-if="useTextarea" v-model="value" :disabled="!editable"></textarea>
+		<input class="fieldValue" v-else-if="type === 'boolean'" :checked="!!value" v-model="value" type="checkbox" :name="fieldName" :disabled="!editable" />
+		<input class="fieldValue" v-else v-model="value" type="text" :name="fieldName" :disabled="!editable" />
 	</div>
 </template>
 
@@ -69,6 +69,10 @@ export default {
 	},
 	props: {
 		field: Object,
+		editable: {
+			type: Boolean,
+			default: true
+		},
 		schema: Object,
 		pass: {},
 		isItem: {
@@ -106,14 +110,14 @@ export default {
 	methods: {
 		initView() {
 			if (this.type === 'bounding-box') {
-				var map = new L.Map('areaSelector');
+				var map = new L.Map('areaSelector', {zoomControl: this.editable});
 				var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 					name: 'OpenStreetMap',
 					attribution: 'Map data &copy; <a href="http://www.osm.org">OpenStreetMap</a>'
 				});
 				osm.addTo(map);
 
-				var areaSelect = L.areaSelect();
+				var areaSelect = L.areaSelect({editable: this.editable});
 				areaSelect.addTo(map);
 				if (Utils.isObject(this.value) && Object.keys(this.value).length >= 4) {
 					this.value = L.latLngBounds(
@@ -129,6 +133,14 @@ export default {
 				areaSelect.on("change", () => {
 					this.value = areaSelect.getBounds();
 				});
+				if (!this.editable) {
+					map.touchZoom.disable();
+					map.doubleClickZoom.disable();
+					map.scrollWheelZoom.disable();
+					map.boxZoom.disable();
+					map.keyboard.disable();
+					map.dragging.disable();
+				}
 			}
 		},
 		initValue() {

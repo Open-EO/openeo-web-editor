@@ -48,6 +48,7 @@ export default {
 		}
 	},
 	computed: {
+		...Utils.mapGetters('server', ['formatCurrency']),
 		hasBudget() {
 			return typeof this.me.budget === 'number' && this.me.budget >= 0;
 		},
@@ -107,13 +108,6 @@ export default {
 			else {
 				return Math.round(num/(1024*1024)) + ' MB';
 			}
-		},
-		formatCurrency(num) {
-			var currency = '';
-			if (this.connection && this.connection.capabilities().currency() !== null) {
-				currency = ' ' + this.connection.capabilities().currency();
-			}
-			return num + currency;
 		}
 	}
 }

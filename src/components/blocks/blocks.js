@@ -14,6 +14,7 @@ var Blocks = function(errorHandler = null, openParameterEditor = null)
     this.errorHandler = errorHandler;
     this.openParameterEditor = openParameterEditor;
     this.active = true;
+    this.editable = true;
 
     // View center & scale
     this.center = {};
@@ -93,9 +94,10 @@ var Blocks = function(errorHandler = null, openParameterEditor = null)
 /**
  * Runs the blocks editor
  */
-Blocks.prototype.run = function(selector)
+Blocks.prototype.run = function(selector, editable = true)
 {
     this.div = document.querySelector(selector);
+    this.editable = editable;
 
     if (!this.div) {
         alert('blocks.js: Unable to find ' + selector);
@@ -126,7 +128,7 @@ Blocks.prototype.run = function(selector)
     });
 
     document.querySelector('html').addEventListener('mouseup', event => {
-        if (this.linking && event.which == 1) {
+        if (this.editable && this.linking && event.which == 1) {
             this.tryEndLink();
             this.linking = null;
             this.redraw();
@@ -157,7 +159,7 @@ Blocks.prototype.run = function(selector)
         }
 
         // "del" will delete a selected link or block
-        if (e.keyCode == 46 && this.active) {
+        if (this.editable && e.keyCode == 46 && this.active) {
             this.deleteEvent();
         }
     });
@@ -214,7 +216,7 @@ Blocks.prototype.ready = function(callback)
 
 Blocks.prototype.showParameters = function(fields) {
     if (typeof this.openParameterEditor === 'function') {
-        this.openParameterEditor(this, fields);
+        this.openParameterEditor(this, fields, this.editable);
     }
 };
 
@@ -377,7 +379,7 @@ Blocks.prototype.beginLink = function(block, fieldName)
  */
 Blocks.prototype.move = function()
 {
-    if (this.selectedSide) {
+    if (this.editable && this.selectedSide) {
         var distance = Math.sqrt(Math.pow(this.mouseX-this.selectedSide[1],2)+Math.pow(this.mouseY-this.selectedSide[2],2));
         if (distance > 15) {
             var edge = this.edges[this.selectedLink];
@@ -405,7 +407,7 @@ Blocks.prototype.move = function()
         this.redraw();
     }
 
-    if (this.linking) {
+    if (this.editable && this.linking) {
         this.redraw();
     }
 };

@@ -39,11 +39,11 @@ export default {
 		};
 	},
 	methods: {
-		show(connection) {
+		show(connection, outputFormats, serviceTypes) {
 			this.url = connection.getBaseUrl();
 			this.capabilities = connection.capabilities().toPlainObject();
-			this.formats = connection.supportedOutputFormats;
-			this.services = connection.supportedServices;
+			this.formats = outputFormats;
+			this.services = serviceTypes;
 			this.$refs.modal.show(connection.capabilities().title() || 'Server information');
 		}
 	}

@@ -1,17 +1,17 @@
 <template>
 	<div id="VisualEditor" ref="visualEditor">
-		<EditorToolbar :onStore="getProcessGraph" :onInsert="insertProcessGraph" :onClear="clearProcessGraph">
-			<button type="button" @click="blocks.deleteEvent()" v-show="blocks.canDelete()" title="Delete selected elements"><i class="fas fa-trash"></i></button>
-			<button type="button" @click="blocks.undo()" v-show="blocks.hasUndo()" title="Undo last change"><i class="fas fa-undo-alt"></i></button>
+		<EditorToolbar :editable="editable" :onStore="getProcessGraph" :onInsert="insertProcessGraph" :onClear="clearProcessGraph">
+			<button type="button" @click="blocks.deleteEvent()" v-show="editable && blocks.canDelete()" title="Delete selected elements"><i class="fas fa-trash"></i></button>
+			<button type="button" @click="blocks.undo()" v-show="editable && blocks.hasUndo()" title="Undo last change"><i class="fas fa-undo-alt"></i></button>
 			<button type="button" @click="blocks.toggleCompact()" :class="{compactActive: blocks.compactMode}" title="Compact Mode"><i class="fas fa-compress-arrows-alt"></i></button>
-			<button type="button" @click="blocksPerfectScale()" title="Scale to perfect size"><i class="fas fa-arrows-alt"></i></button>
+			<button type="button" @click="perfectScale()" title="Scale to perfect size"><i class="fas fa-arrows-alt"></i></button>
 			<button type="button" @click="toggleFullScreen()" :title="isFullScreen ? 'Close fullscreen' : 'Show fullscreen'">
 				<span v-show="isFullScreen"><i class="fas fa-compress"></i></span>
 				<span v-show="!isFullScreen"><i class="fas fa-expand"></i></span>
 			</button>
 		</EditorToolbar>
-		<div :id="fieldId" class="graphBuilder"></div>
-		<DiscoveryToolbar :onAddCollection="insertCollection" :onAddProcess="insertProcess" />
+		<div :id="id" class="graphBuilder"></div>
+		<DiscoveryToolbar v-if="editable" :onAddCollection="insertCollection" :onAddProcess="insertProcess" />
 		<SchemaModal ref="schemaModal" />
 		<ParameterModal ref="parameterModal" />
 	</div>
@@ -35,11 +35,15 @@ export default {
 		SchemaModal
 	},
 	props: {
+		id: String,
+		editable: {
+			type: Boolean,
+			default: true
+		},
 		active: {
 			type: Boolean,
 			default: true
 		},
-		fieldId: String,
 		value: {
 			type: Object,
 			default: null
@@ -60,7 +64,7 @@ export default {
 	beforeMount() {
 		this.blocks = new Blocks(
 			this.errorHandler,
-			(blocks, fields) => this.openParameterEditor(blocks, fields)
+			(blocks, fields, editable) => this.openParameterEditor(blocks, fields, editable)
 		);
 	},
 	mounted() {
@@ -74,14 +78,14 @@ export default {
 	},
 	methods: {
 		initBlocks() {
-			this.blocks.run("#" + this.fieldId);
+			this.blocks.run("#" + this.id, this.editable);
 
 			this.registerProcesses();
 			this.makeCallbackArguments();
 			this.insertProcessGraph(this.value, false);
 		},
 
-		blocksPerfectScale() {
+		perfectScale() {
 			this.blocks.perfectScale();
 			this.$forceUpdate();
 		},
@@ -91,10 +95,12 @@ export default {
 			if (!this.isFullScreen) {
 				this.isFullScreen = true;
 				element.classList.add('fullscreen');
+				this.perfectScale();
 			}
 			else {
 				this.isFullScreen = false;
 				element.classList.remove('fullscreen');
+				this.perfectScale();
 			}
 		},
 
@@ -109,13 +115,13 @@ export default {
 			this.$refs.schemaModal.show(name, schema, "This is a callback argument. It is a value made available by the process executing this sub-processes for further use. The value will comply to the following data type(s):");
 		},
 
-		openParameterEditor(blocks, fields) {
+		openParameterEditor(blocks, fields, editable) {
 			blocks.active = false;
 			var title = fields.block.name+' #'+fields.block.id;
 			this.$refs.parameterModal.show(
-				title, fields.editables,
+				title, fields.editables, editable,
 				// save handler
-				data => fields.save(data),
+				editable ? (data => fields.save(data)) : null,
 				// close handler
 				() => {
 					blocks.active = true;

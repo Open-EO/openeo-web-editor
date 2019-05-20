@@ -13,7 +13,7 @@
 			</header>
 			<main class="page">
 				<div id="workspace" ref="workspace">
-					<Editor />
+					<Editor ref="editor" id="mainEditor" />
 					<UserWorkspace />
 				</div>
 				<hr id="separator" ref="separator" @dblclick="centerSeparator()" @mousedown="startMovingSeparator($event)" />
@@ -25,6 +25,7 @@
 		<CollectionModal ref="collectionModal" />
 		<ProcessModal ref="processModal" />
 		<ServerInfoModal ref="serverInfoModal" />
+		<SecondaryServiceInfoModal ref="serviceModal" />
 	</div>
 </template>
 
@@ -39,6 +40,7 @@ import Editor from './Editor.vue';
 import CollectionModal from './CollectionModal.vue';
 import ProcessModal from './ProcessModal.vue';
 import ServerInfoModal from './ServerInfoModal.vue';
+import SecondaryServiceInfoModal from './SecondaryServiceInfoModal.vue';
 
 export default {
 	name: 'IDE',
@@ -50,7 +52,8 @@ export default {
 		UserWorkspace,
 		CollectionModal,
 		ProcessModal,
-		ServerInfoModal
+		ServerInfoModal,
+		SecondaryServiceInfoModal
 	},
 	data() {
 		return {
@@ -59,14 +62,25 @@ export default {
 		};
 	},
 	computed: {
-		...Utils.mapState('server', ['collections', 'processes']),
+		...Utils.mapState('server', ['collections', 'processes', 'outputFormats', 'serviceTypes']),
 	},
 	mounted() {
 		EventBus.$on('showCollectionInfo', this.showCollectionInfo);
 		EventBus.$on('showProcessInfo', this.showProcessInfo);
+		EventBus.$on('showServiceInfo', this.showServiceInfo);
+		EventBus.$on('getProcessGraph', this.getProcessGraph);
+		EventBus.$on('insertProcessGraph', this.insertProcessGraph);
 		this.updatePositions();
 	},
 	methods: {
+
+		getProcessGraph(callback, silent = false, passNull = false) {
+			this.$refs.editor.getProcessGraph(callback, silent, passNull);
+		},
+
+		insertProcessGraph(pg) {
+			this.$refs.editor.insertProcessGraph(pg);
+		},
 
 		updatePositions() {
 			var workspaceWidth = parseFloat(window.getComputedStyle(this.$refs.workspace).width);
@@ -113,8 +127,12 @@ export default {
 			this.$refs.processModal.show(info, this.apiVersion);
 		},
 
+		showServiceInfo(service) {
+			this.$refs.serviceModal.show(service);
+		},
+
 		showServerInfo() {
-			this.$refs.serverInfoModal.show(this.connection);
+			this.$refs.serverInfoModal.show(this.connection, this.outputFormats, this.serviceTypes);
 		}
 
 	}

@@ -100,6 +100,16 @@ button {
 	font-weight: normal;
 }
 
+.boolean .fa-check-circle {
+	color: green;
+}
+.boolean .fa-times-circle {
+	color: red;
+}
+.boolean .fa-question-circle {
+	color: #555;
+}
+
 .vue-component h2 {
 	font-size: 1.75em;
 	padding: 0.25em 0 0.25em 0;
@@ -111,6 +121,12 @@ button {
 	margin: 1.5em 0 0.75em 0;
 	padding: 0.25em 0 0.25em 0;
 	border-bottom: 1px dotted #ccc;
+}
+.vue-component .tabular {
+	margin: 0.5em 0;
+}
+.vue-component .tabular .value ul {
+	padding-left: 20px;
 }
 
 #container .snotifyToast__title {

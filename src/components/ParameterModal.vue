@@ -1,20 +1,20 @@
 <template>
 	<Modal ref="__modal">
 		<template v-slot:main>
-			<p v-if="editables.length === 0">No editable parameters available.</p>
+			<p v-if="editableFields.length === 0">No editable parameters available.</p>
 			<form v-else id="parameterModal" @submit.prevent="save">
-				<div class="fieldRow" v-for="(editable, k) in editables" :key="k">
+				<div class="fieldRow" v-for="(field, k) in editableFields" :key="k">
 					<label>
-						{{ editable.label }}<strong class="required" v-if="editable.isRequired()" title="required">*</strong>
-						<div v-if="editable.description()" class="description">
-							<Description :description="editable.description()" />
+						{{ field.label }}<strong class="required" v-if="field.isRequired()" title="required">*</strong>
+						<div v-if="field.description()" class="description">
+							<Description :description="field.description()" />
 						</div>
 					</label>
-					<ParameterFields :ref="editable.name" :field="editable" :pass="editable.getValue()" />
+					<ParameterFields :ref="field.name" :editable="editable" :field="field" :pass="field.getValue()" />
 				</div>
 			</form>
 		</template>
-		<template v-slot:footer>
+		<template v-if="typeof this.saveCallback === 'function'" v-slot:footer>
 			<div class="footer">
 				<button class="save" @click="save">Save</button>
 			</div>
@@ -37,27 +37,31 @@ export default {
 	},
 	data() {
 		return {
-			editables: [],
+			editableFields: [],
+			editable: true,
 			saveCallback: null
 		};
 	},
 	methods: {
 		save() {
 			try {
-				var data = {};
-				for(var i in this.$refs) {
-					if (Array.isArray(this.$refs[i]) && this.$refs[i].length > 0 && Utils.isObject(this.$refs[i][0]) && typeof this.$refs[i][0].getValue == 'function') {
-						data[i] = this.$refs[i][0].getValue();
+				if (typeof this.saveCallback === 'function') {
+					var data = {};
+					for(var i in this.$refs) {
+						if (Array.isArray(this.$refs[i]) && this.$refs[i].length > 0 && Utils.isObject(this.$refs[i][0]) && typeof this.$refs[i][0].getValue == 'function') {
+							data[i] = this.$refs[i][0].getValue();
+						}
 					}
+					this.saveCallback(data);
 				}
-				this.saveCallback(data);
 				this.$refs.__modal.close();
 			} catch (error) {
 				Utils.exception(this, error);
 			}
 		},
-		show(title, editables, saveCallback, closeCallback) {
-			this.editables = editables;
+		show(title, editableFields, editable = true, saveCallback = null, closeCallback = null) {
+			this.editableFields = editableFields;
+			this.editable = editable;
 			this.saveCallback = saveCallback;
 			this.$refs.__modal.show(title, closeCallback);
 		}

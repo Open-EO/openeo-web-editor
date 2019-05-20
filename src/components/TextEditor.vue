@@ -1,8 +1,8 @@
 <template>
 	<div id="TextEditor">
-		<EditorToolbar :onStore="getProcessGraph" :onInsert="insertProcessGraph" :onClear="clearProcessGraph" />
-		<div id="sourceCodeEditor"></div>
-		<DiscoveryToolbar :onAddCollection="insertToEditor" :onAddProcess="insertToEditor" />
+		<EditorToolbar :editable="editable" :onStore="getProcessGraph" :onInsert="insertProcessGraph" :onClear="clearProcessGraph" />
+		<div :id="id" class="sourceCodeEditor"></div>
+		<DiscoveryToolbar v-if="editable" :onAddCollection="insertToEditor" :onAddProcess="insertToEditor" />
 	</div>
 </template>
 
@@ -22,13 +22,28 @@ export default {
 		EditorToolbar,
 		DiscoveryToolbar
 	},
-	props: ['active'],
+	props: {
+		id: String,
+		editable: {
+			type: Boolean,
+			default: true
+		},
+		active: {
+			type: Boolean,
+			default: false
+		},
+		value: {
+			type: Object,
+			default: null
+		}
+	},
 	data() {
 		return {
 			editorOptions: {
 				mode: 'javascript',
 				indentUnit: 2,
-				lineNumbers: true
+				lineNumbers: true,
+				readOnly: !this.$props.editable
 			},
 			editor: null
 		}
@@ -41,8 +56,9 @@ export default {
 		}
 	},
 	mounted() {
-		this.editor = CodeMirror(document.getElementById('sourceCodeEditor'), this.editorOptions);
+		this.editor = CodeMirror(document.getElementById(this.id), this.editorOptions);
 		this.editor.setSize(null, "100%");
+		this.insertProcessGraph(this.value);
 	},
 	methods: {
 		clearProcessGraph() {
@@ -93,7 +109,7 @@ export default {
 </script>
 
 <style scoped>
-#sourceCodeEditor {
+.sourceCodeEditor {
 	height: 400px;
 }
 </style>

@@ -3,10 +3,12 @@
 		<h3 v-if="scriptName">{{ scriptName }}</h3>
 		<div class="sourceToolbar">
 			<slot></slot>
-			<button type="button" @click="newScript" title="Clear current script / New script" class="sepl"><i class="fas fa-file"></i></button>
-			<button type="button" @click="openScriptChooser" title="Load script from local storage"><i class="fas fa-folder-open"></i></button>
-			<button type="button" @click="saveScript" title="Save script to local storage"><i class="fas fa-save"></i></button>
-			<button type="button" @click="executeProcessGraph" title="Run current process graph and view results" class="sepl" v-if="this.supports('computeResult')"><i class="fas fa-play"></i></button>
+			<span class="sepl">
+				<button v-if="editable" type="button" @click="newScript" title="Clear current script / New script"><i class="fas fa-file"></i></button>
+				<button v-if="editable" type="button" @click="openScriptChooser" title="Load script from local storage"><i class="fas fa-folder-open"></i></button>
+				<button type="button" @click="saveScript" title="Save script to local storage"><i class="fas fa-save"></i></button>
+			</span>
+			<button type="button" @click="executeProcessGraph" title="Run current process graph and view results" class="sepl" v-if="editable && this.supports('computeResult')"><i class="fas fa-play"></i></button>
 		</div>
 	</div>
 </template>
@@ -18,6 +20,10 @@ import Utils from '../utils.js';
 export default {
 	name: 'EditorToolbar',
 	props: {
+		editable: {
+			type: Boolean,
+			default: true
+		},
 		onClear: {
 			type: Function,
 			required: true

@@ -1,17 +1,16 @@
 <template>
 	<div id="modal" v-if="shown" @click="possiblyClose">
-		<div class="modal-container" :style="{'max-width': maxWidth}">
+		<div class="modal-container" :style="{'min-width': minWidth, 'max-width': maxWidth}">
 			<header>
 				<h2>{{ title }}</h2>
 				<span class="close" @click="close"><i class="fa fa-times" aria-hidden="true"></i></span>
 			</header>
 			<main>
 				<slot name="main">
-					<template v-if="message">{{ message }}</template>
-					<div v-else-if="html" v-html="html"></div>
-					<template v-else-if="listItems">
-						<strong class="listEmpty" v-if="listItems.length === 0">Sorry, no data available.</strong>
-						<ul class="list">
+					<div v-if="html !== null" v-html="html"></div>
+					<template v-else-if="list !== null">
+						<strong class="listEmpty" v-if="listCount == 0">Sorry, no data available.</strong>
+						<ul class="list" v-else>
 							<li v-for="(item, key) in listItems" :key="key" @click="doMainListAction(item, key)">
 								<strong>{{ Array.isArray(listItems) ? item : key }}</strong>
 								<button type="button" v-for="action in otherListActions" :key="action.icon" :title="action.title" @click.prevent.stop="doListAction(item, key, action.callback)">
@@ -20,6 +19,7 @@
 							</li>
 						</ul>
 					</template>
+					<template v-else>{{ message }}</template>
 				</slot>
 			</main>
 			<footer>
@@ -35,7 +35,7 @@ import Utils from '../utils.js';
 
 const getDefaultState = () => {
 	return {
-		title: '',
+		title: 'Sorry, no message passed!',
 		message: null,
 		html: null,
 		list: null,
@@ -48,6 +48,10 @@ const getDefaultState = () => {
 export default {
 	name: 'Modal',
 	props: {
+		minWidth: {
+			type: String,
+			default: "30%"
+		},
 		maxWidth: {
 			type: String,
 			default: "80%"
@@ -62,6 +66,9 @@ export default {
 		EventBus.$on('closeModal', this.close);
 	},
     computed: {
+		listCount() {
+			return Utils.size(this.listItems);
+		},
         listItems() {
             return (typeof this.list == 'function' ? this.list() : this.list);
 		},
@@ -161,7 +168,6 @@ export default {
 #modal .modal-container {
     background-color: #fff;
     border: 1px solid #fff;
-	min-width: 30%;
 	max-height: 96%;
 	display: flex;
 	flex-direction: column;

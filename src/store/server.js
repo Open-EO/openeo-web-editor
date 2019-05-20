@@ -20,6 +20,13 @@ export default {
 	getters: {
 		capabilities: (state) => state.connection !== null ? state.connection.capabilities() : null,
 		supports: (state) => (feature) => state.connection !== null && state.connection.capabilities() !== null && state.connection.capabilities().hasFeature(feature),
+		formatCurrency: (state) => (amount) => {
+			var currency = '';
+			if (state.connection && state.connection.capabilities().currency() !== null) {
+				currency = ' ' + state.connection.capabilities().currency();
+			}
+			return amount + currency;
+		},
 		isConnected: (state) => state.connection !== null && (!state.requireAuthentication || state.userId !== null)
 	},
 	actions: {

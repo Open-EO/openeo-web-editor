@@ -3,7 +3,8 @@ L.AreaSelect = L.Evented.extend({
     
     options: {
         width: 300,
-        height: 200
+        height: 200,
+        enabled: true
     },
 
     initialize: function(options) {
@@ -76,19 +77,21 @@ L.AreaSelect = L.Evented.extend({
         this._leftShade = L.DomUtil.create("div", "leaflet-areaselect-shade leaflet-control", this._container);
         this._rightShade = L.DomUtil.create("div", "leaflet-areaselect-shade leaflet-control", this._container);
         
-        this._nwHandle = L.DomUtil.create("div", "leaflet-areaselect-handle leaflet-control", this._container);
-        this._swHandle = L.DomUtil.create("div", "leaflet-areaselect-handle leaflet-control", this._container);
-        this._neHandle = L.DomUtil.create("div", "leaflet-areaselect-handle leaflet-control", this._container);
-        this._seHandle = L.DomUtil.create("div", "leaflet-areaselect-handle leaflet-control", this._container);
+        if (this.options.editable) {
+            this._nwHandle = L.DomUtil.create("div", "leaflet-areaselect-handle leaflet-control", this._container);
+            this._swHandle = L.DomUtil.create("div", "leaflet-areaselect-handle leaflet-control", this._container);
+            this._neHandle = L.DomUtil.create("div", "leaflet-areaselect-handle leaflet-control", this._container);
+            this._seHandle = L.DomUtil.create("div", "leaflet-areaselect-handle leaflet-control", this._container);
         
-        this._setUpHandlerEvents(this._nwHandle);
-        this._setUpHandlerEvents(this._neHandle, -1, 1);
-        this._setUpHandlerEvents(this._swHandle, 1, -1);
-        this._setUpHandlerEvents(this._seHandle, -1, -1);
-        
-        this.map.on("moveend", this._onMapChange, this);
-        this.map.on("zoomend", this._onMapChange, this);
-        this.map.on("resize", this._onMapResize, this);
+            this._setUpHandlerEvents(this._nwHandle);
+            this._setUpHandlerEvents(this._neHandle, -1, 1);
+            this._setUpHandlerEvents(this._swHandle, 1, -1);
+            this._setUpHandlerEvents(this._seHandle, -1, -1);
+            
+            this.map.on("moveend", this._onMapChange, this);
+            this.map.on("zoomend", this._onMapChange, this);
+            this.map.on("resize", this._onMapResize, this);
+        }
         
         this.fire("change");
     },
@@ -142,7 +145,6 @@ L.AreaSelect = L.Evented.extend({
     
     _render: function() {
         var size = this.map.getSize();
-        var handleOffset = Math.round(this._nwHandle.offsetWidth/2);
         
         var topBottomHeight = Math.round((size.y-this._height)/2);
         var leftRightWidth = Math.round((size.x-this._width)/2);
@@ -171,10 +173,13 @@ L.AreaSelect = L.Evented.extend({
             right: 0
         });
         
-        setDimensions(this._nwHandle, {left:leftRightWidth-handleOffset, top:topBottomHeight-7});
-        setDimensions(this._neHandle, {right:leftRightWidth-handleOffset, top:topBottomHeight-7});
-        setDimensions(this._swHandle, {left:leftRightWidth-handleOffset, bottom:topBottomHeight-7});
-        setDimensions(this._seHandle, {right:leftRightWidth-handleOffset, bottom:topBottomHeight-7});
+        if (this.options.editable) {
+            var handleOffset = Math.round(this._nwHandle.offsetWidth/2);
+            setDimensions(this._nwHandle, {left:leftRightWidth-handleOffset, top:topBottomHeight-7});
+            setDimensions(this._neHandle, {right:leftRightWidth-handleOffset, top:topBottomHeight-7});
+            setDimensions(this._swHandle, {left:leftRightWidth-handleOffset, bottom:topBottomHeight-7});
+            setDimensions(this._seHandle, {right:leftRightWidth-handleOffset, bottom:topBottomHeight-7});
+        }
     }
 });
 
