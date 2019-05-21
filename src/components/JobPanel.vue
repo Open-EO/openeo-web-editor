@@ -8,7 +8,7 @@
 			<button title="Details" @click="showJobInfo(p.row)" v-show="supports('describeJob')"><i class="fas fa-info"></i></button>
 			<button title="Show in Editor" @click="showInEditor(p.row)" v-show="supports('describeJob')"><i class="fas fa-code-branch"></i></button>
 			<button title="Estimate" @click="estimateJob(p.row)" v-show="supports('estimateJob')"><i class="fas fa-file-invoice-dollar"></i></button>
-			<button title="Edit" @click="editJob(p.row)" v-show="supports('updateJob') && isJobInactive(p.row)"><i class="fas fa-edit"></i></button>
+			<button title="Update process graph" @click="updateProcessGraph(p.row)" v-show="supports('updateJob') && isJobInactive(p.row)"><i class="fas fa-edit"></i></button>
 			<button title="Delete" @click="deleteJob(p.row)" v-show="supports('deleteJob')"><i class="fas fa-trash"></i></button>
 			<button title="Start processing" @click="queueJob(p.row)" v-show="supports('startJob') && isJobInactive(p.row)"><i class="fas fa-play-circle"></i></button>
 			<button title="Cancel processing" @click="cancelJob(p.row)" v-show="supports('stopJob') && isJobActive(p.row)"><i class="fas fa-stop-circle"></i></button>
@@ -43,7 +43,8 @@ export default {
 							return "Job #" + row.jobId.toUpperCase().substr(-6);
 						}
 						return value;
-					}
+					},
+					edit: this.updateTitle
 				},
 				status: {
 					name: 'Status',
@@ -179,7 +180,7 @@ export default {
 		},
 		showJobInfo(job) {
 			this.refreshJob(job, updatedJob => {
-				EventBus.$emit('showModal', 'Job Details', updatedJob.getAll());
+				EventBus.$emit('showJobInfo', updatedJob.getAll());
 			});
 		},
 		estimateJob(job) {
@@ -189,8 +190,7 @@ export default {
 				})
 				.catch(error => Utils.exception(this, error, "Sorry, could not load job estimate."));
 		},
-		editJob(job) {
-			// TODO: provide more update options/don't just override the process graph and nothing else
+		updateProcessGraph(job) {
 			EventBus.$emit('getProcessGraph', script => {
 				job.updateJob(script)
 					.then(updatedJob => {
@@ -199,6 +199,14 @@ export default {
 					})
 					.catch(error => Utils.exception(this, error, "Sorry, could not update job."));;
 			});
+		},
+		updateTitle(job, newTitle) {
+			job.updateJob({title: newTitle})
+				.then(updatedJob => {
+					Utils.ok(this, "Job title successfully updated.");
+					this.updateJobData(updatedJob);
+				})
+				.catch(error => Utils.exception(this, error, "Sorry, could not update job title."));
 		},
 		queueJob(job) {
 			job.startJob()
@@ -319,23 +327,5 @@ export default {
 }
 #JobPanel td.consumed_credits, #JobPanel td.updated, #JobPanel td.submitted {
 	text-align: right;
-}
-#JobPanel td.status[data-value="submitted"] {
-	color: black;
-}
-#JobPanel td.status[data-value="running"] {
-	color: darkorange;
-}
-#JobPanel td.status[data-value="queued"] {
-	color: darkblue;
-}
-#JobPanel td.status[data-value="finished"] {
-	color: darkgreen;
-}
-#JobPanel td.status[data-value="canceled"] {
-	color: darkgrey;
-}
-#JobPanel td.status[data-value="error"] {
-	color: red;
 }
 </style>

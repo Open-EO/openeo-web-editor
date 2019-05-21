@@ -6,7 +6,7 @@
 		</template>
 		<template slot="actions" slot-scope="p">
 			<button title="Details" @click="graphInfo(p.row)" v-show="supports('describeProcessGraph')"><i class="fas fa-info"></i></button>		<button title="Show in Editor" @click="showInEditor(p.row)" v-show="supports('describeProcessGraph')"><i class="fas fa-code-branch"></i></button>
-			<button title="Edit" @click="editGraph(p.row)" v-show="supports('updateProcessGraph')"><i class="fas fa-edit"></i></button>
+			<button title="Update process graph" @click="updateProcessGraph(p.row)" v-show="supports('updateProcessGraph')"><i class="fas fa-edit"></i></button>
 			<button title="Delete" @click="deleteGraph(p.row)" v-show="supports('deleteProcessGraph')"><i class="fas fa-trash"></i></button>
 		</template>
 	</DataTable>
@@ -23,12 +23,14 @@ export default {
 	data() {
 		return {
 			columns: {
-				title: {
-					name: 'Title'
-				},
 				processGraphId: {
 					name: 'ID',
-					primaryKey: true
+					primaryKey: true,
+					hide: true
+				},
+				title: {
+					name: 'Title',
+					edit: this.updateTitle
 				},
 				actions: {
 					name: 'Actions',
@@ -78,21 +80,25 @@ export default {
 		},
 		graphInfo(pg) {
 			this.refreshProcessGraph(pg, updatedPg => {
-				EventBus.$emit('showModal', 'Process Graph Details', updatedPg.getAll());
+				EventBus.$emit('showProcessGraphInfo', updatedPg.getAll());
 			});
 		},
-		editGraph(pg) {
-			// TODO: provide more update options/don't just override the process graph and nothing else
+		updateProcessGraph(pg) {
 			EventBus.$emit('getProcessGraph', script => {
-				var dataToUpdate= {
-					process_graph: script
-				};
-				pg.updateProcessGraph(dataToUpdate)
+				pg.updateProcessGraph({processGraph: script})
 					.then(updatedPg => {
 						Utils.ok(this, 'Process Graph updated!');
 						this.updateProcessGraphData(updatedPg);
 					}).catch(error => Utils.exception(this, error, 'Sorry, could not update the process graph.'));
 			});
+		},
+		updateTitle(pg, newTitle) {
+			pg.updateProcessGraph({title: newTitle})
+				.then(updatePg => {
+					Utils.ok(this, "Process graph title successfully updated.");
+					this.updateProcessGraphData(updatePg);
+				})
+				.catch(error => Utils.exception(this, error, "Sorry, could not update process graph title."));
 		},
 		deleteGraph(pg) {
 			pg.deleteProcessGraph()

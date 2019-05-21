@@ -129,11 +129,13 @@ export default {
 .storagePercent {
 	background-color: green;
 	height: 1em;
+	border-radius: 0.3em;
 }
 .storagePercent .used {
 	background-color: maroon;
 	width: 1px;
 	height: 1em;
+	border-radius: 0.3em;
 }
 .nowrap {
 	white-space: nowrap;

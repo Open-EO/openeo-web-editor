@@ -25,7 +25,9 @@
 		<CollectionModal ref="collectionModal" />
 		<ProcessModal ref="processModal" />
 		<ServerInfoModal ref="serverInfoModal" />
-		<SecondaryServiceInfoModal ref="serviceModal" />
+		<ServiceInfoModal ref="serviceModal" />
+		<JobInfoModal ref="jobModal" />
+		<ProcessGraphInfoModal ref="pgModal" />
 	</div>
 </template>
 
@@ -40,7 +42,9 @@ import Editor from './Editor.vue';
 import CollectionModal from './CollectionModal.vue';
 import ProcessModal from './ProcessModal.vue';
 import ServerInfoModal from './ServerInfoModal.vue';
-import SecondaryServiceInfoModal from './SecondaryServiceInfoModal.vue';
+import JobInfoModal from './JobInfoModal.vue';
+import ProcessGraphInfoModal from './ProcessGraphInfoModal.vue';
+import ServiceInfoModal from './ServiceInfoModal.vue';
 
 export default {
 	name: 'IDE',
@@ -53,7 +57,9 @@ export default {
 		CollectionModal,
 		ProcessModal,
 		ServerInfoModal,
-		SecondaryServiceInfoModal
+		JobInfoModal,
+		ProcessGraphInfoModal,
+		ServiceInfoModal
 	},
 	data() {
 		return {
@@ -67,6 +73,8 @@ export default {
 	mounted() {
 		EventBus.$on('showCollectionInfo', this.showCollectionInfo);
 		EventBus.$on('showProcessInfo', this.showProcessInfo);
+		EventBus.$on('showJobInfo', this.showJobInfo);
+		EventBus.$on('showProcessGraphInfo', this.showProcessGraphInfo);
 		EventBus.$on('showServiceInfo', this.showServiceInfo);
 		EventBus.$on('getProcessGraph', this.getProcessGraph);
 		EventBus.$on('insertProcessGraph', this.insertProcessGraph);
@@ -129,6 +137,14 @@ export default {
 
 		showServiceInfo(service) {
 			this.$refs.serviceModal.show(service);
+		},
+
+		showJobInfo(job) {
+			this.$refs.jobModal.show(job);
+		},
+
+		showProcessGraphInfo(pg) {
+			this.$refs.pgModal.show(pg);
 		},
 
 		showServerInfo() {

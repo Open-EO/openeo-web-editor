@@ -101,6 +101,7 @@ export default {
 }
 #parameterModal .fieldRow .fieldEditorContainer {
 	flex-grow: 1;
+	display: flex;
 }
 #parameterModal .fieldRow .fieldContainer {
 	flex-grow: 1;

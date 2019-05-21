@@ -110,6 +110,25 @@ button {
 	color: #555;
 }
 
+.status[data-value="submitted"] {
+	color: black;
+}
+.status[data-value="running"] {
+	color: darkorange;
+}
+.status[data-value="queued"] {
+	color: darkblue;
+}
+.status[data-value="finished"] {
+	color: darkgreen;
+}
+.status[data-value="canceled"] {
+	color: darkgrey;
+}
+.status[data-value="error"] {
+	color: red;
+}
+
 .vue-component h2 {
 	font-size: 1.75em;
 	padding: 0.25em 0 0.25em 0;

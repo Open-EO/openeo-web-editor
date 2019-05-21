@@ -15,9 +15,20 @@
 				<th v-for="(col, id) in columns" v-show="!col.hide" :key="id" :class="id">{{ col.name }}</th>
 			</tr>
 			<tr v-for="(row, i) in view" :key="i">
-				<td v-for="(col, id) in columns" v-show="!col.hide" :key="id" :class="id" :data-value="col.stylable ? value(row, col, id) : false">
+				<td v-for="(col, id) in columns" v-show="!col.hide" :key="id" 
+					:class="[id, {'edit': canEdit(col)}]"
+					:title="canEdit(col) ? 'Double-click to change the value' : false"
+					@dblclick="onDblClick($event, row, col, id)"
+					:data-value="col.stylable ? value(row, col, id) : false">
 					<slot :name="id" :row="row" :col="col" :id="id">
-						{{ formattedValue(row, col, id) }}
+						<template v-if="showEditField(row, col, id)">
+							<form @submit.prevent.stop="saveEditField($event, row, col, id)">
+								<input type="text" ref="editField" :value="value(row, col, id)" @blur="saveEditField($event, row, col, id)" @keyup="resetEditFieldEsc($event, row, col, id)" />
+							</form>
+						</template>
+						<template v-else>
+							{{ formattedValue(row, col, id) }}
+						</template>
 					</slot>
 				</td>
 			</tr>
@@ -42,7 +53,8 @@ export default {
 			view: [],
 			filterValue: null,
 			primaryKey: null,
-			noDataMessage: 'No data specified.'
+			noDataMessage: 'No data specified.',
+			editField: null
 		};
 	},
 	watch: {
@@ -59,12 +71,50 @@ export default {
 		},
 		hasFilter() {
 			return (typeof this.filterValue === 'string' && this.filterValue.length > 0) ? true : false;
-		},
+		}
 	},
 	created() {
 		this.determinePrimaryKey();
 	},
 	methods: {
+		canEdit(col) {
+			return (typeof col.edit === 'function');
+		},
+		showEditField(row, col, id) {
+			return this.canEdit(col) && this.editField != null && this.editField[0] == row && this.editField[1] == id;
+		},
+		onDblClick(event, row, col, id) {
+			if (this.canEdit(col)) {
+				return;
+			}
+
+			var value = this.value(row, col, id);
+			if (typeof value === 'boolean') {
+				var action = this.columns[id].edit;
+				action(row);
+			}
+			else {
+				this.editField = [row, id];
+				this.$nextTick(() => this.$refs.editField[0].focus());
+			}
+			event.preventDefault();
+			event.stopPropagation();
+		},
+		saveEditField(event, row, col, id) {
+			if (this.editField !== null && this.canEdit(col)) {
+				var action = this.columns[id].edit;
+				action(row, this.$refs.editField[0].value);
+
+				this.editField = null;
+				event.preventDefault();
+				event.stopPropagation();
+			}
+		},
+		resetEditFieldEsc(event, row, col, id) {
+			if (event.key == "Escape") {
+				this.editField = null;
+			}
+		},
 		determinePrimaryKey() {
 			for(var col in this.columns) {
 				if (this.columns[col].primaryKey) {
@@ -267,5 +317,8 @@ export default {
 .dataTableMenu {
 	margin-bottom: 5px;
 	display: flex;
+}
+.edit {
+	cursor: pointer;
 }
 </style>

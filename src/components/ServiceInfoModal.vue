@@ -7,9 +7,9 @@
 				<div class="tabular"><label>URL:</label> <code class="value">{{ service.url }}</code></div>
 
 				<div class="tabular"><label>Enabled:</label> <span class="value boolean">
-					<i v-if="service.enabled === true" class="fas fa-check-circle"></i>
-					<i v-else-if="service.enabled === false" class="fas fa-times-circle"></i>
-					<i v-else class="fas fa-question-circle"></i>
+					<span v-if="service.enabled === true"><i class="fas fa-check-circle"></i></span>
+					<span v-else-if="service.enabled === false"><i class="fas fa-times-circle"></i></span>
+					<span v-else><i class="fas fa-question-circle"></i></span>
 				</span></div>
 
 				<div class="tabular" v-if="service.submitted"><label>Submitted:</label> <code class="value">{{ submitted }}</code></div>
@@ -28,8 +28,8 @@
 			</section>
 
 			<section class="process-graph">
-				<h3>Process Graph</h3>
-				<Editor :processGraph="service.processGraph" :editable="false" id="serviceEditor" />
+				<div class="vue-component"><h3>Process Graph</h3></div>
+				<Editor :processGraph="service.processGraph" :editable="false" id="servicePgViewer" />
 			</section>
 
 			<section class="vue-component parameters" v-if="hasParameters">
@@ -67,10 +67,11 @@ import ObjectTree from '@openeo/vue-components/components/ObjectTree.vue';
 import Editor from './Editor.vue';
 
 export default {
-	name: 'SecondaryServiceInfoModal',
+	name: 'ServiceInfoModal',
 	components: {
-		Modal,
+		Description,
 		Editor,
+		Modal,
 		ObjectTree
 	},
 	computed: {
@@ -109,7 +110,3 @@ export default {
 	}
 }
 </script>
-
-<style>
-
-</style>

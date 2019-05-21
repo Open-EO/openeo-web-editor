@@ -6,16 +6,16 @@
 		</template>
 		<template slot="enabled" slot-scope="p">
 			<span class="boolean">
-				<i v-if="p.row.enabled === true" class="fas fa-check-circle"></i>
-				<i v-else-if="p.row.enabled === false" class="fas fa-times-circle"></i>
-				<i v-else class="fas fa-question-circle"></i>
+				<span v-show="p.row.enabled === true"><i class="fas fa-check-circle"></i></span>
+				<span v-show="p.row.enabled === false"><i class="fas fa-times-circle"></i></span>
+				<span v-show="typeof p.row.enabled !== 'boolean'"><i class="fas fa-question-circle"></i></span>
 			</span>
 		</template>
 		<template slot="actions" slot-scope="p">
 			<button title="Details" @click="serviceInfo(p.row)" v-show="supports('describeService')"><i class="fas fa-info"></i></button><button title="Show in Editorr" @click="showInEditor(p.row)" v-show="supports('describeService')"><i class="fas fa-code-branch"></i></button>
-			<button title="Edit" @click="editService(p.row)" v-show="supports('updateService')"><i class="fas fa-edit"></i></button>
+			<button title="Update process graph" @click="updateProcessGraph(p.row)" v-show="supports('updateService')"><i class="fas fa-edit"></i></button>
 			<button title="Delete" @click="deleteService(p.row)" v-show="supports('deleteService')"><i class="fas fa-trash"></i></button>
-			<button title="View on map" @click="viewService(p.row)"><i class="fas fa-map"></i></button>
+			<button v-show="p.row.enabled" title="View on map" @click="viewService(p.row)"><i class="fas fa-map"></i></button>
 		</template>
 	</DataTable>
 </template>
@@ -46,14 +46,16 @@ export default {
 							return "Service #" + row.serviceId.toUpperCase().substr(0,6);
 						}
 						return value;
-					}
+					},
+					edit: this.updateTitle
 				},
 				type: {
 					name: 'Type',
 					format: "UpperCase",
 				},
 				enabled: {
-					name: 'Enabled'
+					name: 'Enabled',
+					edit: this.toggleEnabled
 				},
 				submitted: {
 					name: 'Submitted',
@@ -161,16 +163,31 @@ export default {
 				EventBus.$emit('showServiceInfo', updatedService.getAll());
 			});
 		},
-		editService(service) {
-			// TODO: provide more update options/don't just override the process graph and nothing else
+		updateProcessGraph(service) {
 			EventBus.$emit('getProcessGraph', script => {
-				service.updateService(script)
+				service.updateService({processGraph: script})
 					.then(updatedService => {
-						Utils.ok(this, "Service successfully updated.");
+						Utils.ok(this, "Service process graph successfully updated.");
 						this.updateServiceData(updatedService);
 					})
-					.catch(error => Utils.exception(this, error, "Sorry, could not update service."));;
+					.catch(error => Utils.exception(this, error, "Sorry, could not update service process graph."));
 			}, false);
+		},
+		updateTitle(service, newTitle) {
+			service.updateService({title: newTitle})
+				.then(updatedService => {
+					Utils.ok(this, "Service title successfully updated.");
+					this.updateServiceData(updatedService);
+				})
+				.catch(error => Utils.exception(this, error, "Sorry, could not update service title."));
+		},
+		toggleEnabled(service) {
+			service.updateService({enabled: !service.enabled})
+				.then(updatedService => {
+					Utils.ok(this, "Service successfully changed service state.");
+					this.updateServiceData(updatedService);
+				})
+				.catch(error => Utils.exception(this, error, "Sorry, could not change service state."));
 		},
 		deleteService(service) {
 			service.deleteService()
