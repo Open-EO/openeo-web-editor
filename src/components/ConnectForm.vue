@@ -5,6 +5,7 @@
 				<img src="../assets/logo.png" alt="openEO" />
 				<h2>Web Editor <span class="version" @click="showWebEditorInfo">{{ version }}</span></h2>
 			</header>
+			<div v-if="message" class="message" v-html="message"></div>
 			<h3>Connect to server</h3>
 			<div class="row">
 				<label for="username">Server:</label>
@@ -48,7 +49,8 @@ export default {
 			username: '',
 			password: '',
 			connecting: false,
-			version: Package.version
+			version: Package.version,
+			message: Config.loginMessage
 		};
 	},
 	created() {
@@ -186,6 +188,14 @@ export default {
 }
 #login input, #login button {
 	margin: 3px;
+}
+#login .message {
+	padding: 0.5em;
+	margin-bottom: 1.5em;
+	border: 1px solid #f9d67a;
+	border-radius: 0.5em;
+	background-color: #fbeabc;
+	color: #795600;
 }
 #login .connectBtn {
 	width: 100%;
