@@ -8,7 +8,7 @@
 			<button title="Details" @click="showJobInfo(p.row)" v-show="supports('describeJob')"><i class="fas fa-info"></i></button>
 			<button title="Show in Editor" @click="showInEditor(p.row)" v-show="supports('describeJob')"><i class="fas fa-code-branch"></i></button>
 			<button title="Estimate" @click="estimateJob(p.row)" v-show="supports('estimateJob')"><i class="fas fa-file-invoice-dollar"></i></button>
-			<button title="Edit" @click="editJob(p.row)" v-show="supports('updateJob') && isJobInactive(p.row)"><i class="fas fa-edit"></i></button>
+			<button title="Update process graph" @click="updateProcessGraph(p.row)" v-show="supports('updateJob') && isJobInactive(p.row)"><i class="fas fa-edit"></i></button>
 			<button title="Delete" @click="deleteJob(p.row)" v-show="supports('deleteJob')"><i class="fas fa-trash"></i></button>
 			<button title="Start processing" @click="queueJob(p.row)" v-show="supports('startJob') && isJobInactive(p.row)"><i class="fas fa-play-circle"></i></button>
 			<button title="Cancel processing" @click="cancelJob(p.row)" v-show="supports('stopJob') && isJobActive(p.row)"><i class="fas fa-stop-circle"></i></button>
@@ -23,6 +23,7 @@
 <script>
 import EventBus from '../eventbus.js';
 import WorkPanelMixin from './WorkPanelMixin.vue';
+import Utils from '../utils.js';
 
 export default {
 	name: 'JobPanel',
@@ -42,7 +43,8 @@ export default {
 							return "Job #" + row.jobId.toUpperCase().substr(-6);
 						}
 						return value;
-					}
+					},
+					edit: this.updateTitle
 				},
 				status: {
 					name: 'Status',
@@ -87,7 +89,7 @@ export default {
 					}
 					this.updateJobData(updatedJob);
 				})
-				.catch(error => this.$utils.exception(this, error, "Sorry, could not load job information."));
+				.catch(error => Utils.exception(this, error, "Sorry, could not load job information."));
 		},
 		showInEditor(job) {
 			this.refreshJob(job, updatedJob => {
@@ -111,17 +113,14 @@ export default {
 			if (this.supports('deleteJob')) {
 				buttons.push({text: 'Delete', action: () => this.deleteJob(job)});
 			}
-			this.$utils.confirm(this, 'Job created!', buttons);
+			Utils.confirm(this, 'Job created!', buttons);
 		},
-		createJob(processGraph, outputFormat = null, outputParameters = {}, title = null) {
-			if (!outputFormat) {
-				outputFormat = null;
-			}
-			this.connection.createJob(processGraph, outputFormat, outputParameters, title)
+		createJob(processGraph, title = null) {
+			this.connection.createJob(processGraph, title)
 				.then(job => {
 					EventBus.$emit('jobCreated', job);
 				}).catch(error => {
-					this.$utils.exception(this, error, 'Sorry, could not create a batch job.');
+					Utils.exception(this, error, 'Sorry, could not create a batch job.');
 				});
 		},
 		createJobFromScript() {
@@ -133,30 +132,8 @@ export default {
 				title = null;
 			}
 
-			var supportedFormats = Object.keys(this.connection.supportedOutputFormats.formats).map(v => v.toUpperCase());
-			var format = this.connection.supportedOutputFormats.default;
-			do {
-				var msgPrefix = '';
-				if (format !== this.connection.supportedOutputFormats.default) {
-					msgPrefix = "Specified file format is invalid.\r\n";
-				}
-				var format = prompt(msgPrefix + 'Please specify the targeted file format:', format);
-				if (format === null) {
-					return;
-				}
-				else if (typeof format === 'string') {
-					format = format.toUpperCase();
-					if (!supportedFormats.includes(format)) {
-						format = '';
-					}
-				}
-				else {
-					format = '';
-				}
-			} while(format.length == 0);
-
-			EventBus.$emit('getProcessGraph', (script) => {
-				this.createJob(script, format, {}, title);
+			EventBus.$emit('getProcessGraph', script => {
+				this.createJob(script, title);
 			});
 		},
 		updateJobData(updatedJob) {
@@ -181,7 +158,7 @@ export default {
 					this.$refs.table.removeData(job.jobId);
 				})
 				.catch(error => {
-					this.$utils.exception(this, error, 'Sorry, could not delete job.');
+					Utils.exception(this, error, 'Sorry, could not delete job.');
 				});
 		},
 		executeWatchers() {
@@ -193,17 +170,17 @@ export default {
 							buttons.push({text: 'Download', action: () => this.downloadResults(updated)});
 							buttons.push({text: 'View', action: () => this.viewResults(updated)});
 						}
-						this.$utils.confirm(this, 'Job has finished!', buttons);
+						Utils.confirm(this, 'Job has finished!', buttons);
 					}
 					else if (old.status !== 'error' && updated.status === 'error') {
-						this.$utils.error(this, 'Job has stopped due to an error or timeout.');
+						Utils.error(this, 'Job has stopped due to an error or timeout.');
 					}
 				});
 			}
 		},
 		showJobInfo(job) {
 			this.refreshJob(job, updatedJob => {
-				EventBus.$emit('showModal', 'Job Details', updatedJob.getAll());
+				EventBus.$emit('showJobInfo', updatedJob.getAll());
 			});
 		},
 		estimateJob(job) {
@@ -211,58 +188,65 @@ export default {
 				.then(estimate => {
 					EventBus.$emit('showModal', 'Job Estimate', estimate);
 				})
-				.catch(error => this.$utils.exception(this, error, "Sorry, could not load job estimate."));
+				.catch(error => Utils.exception(this, error, "Sorry, could not load job estimate."));
 		},
-		editJob(job) {
-			// TODO: provide more update options/don't just override the process graph and nothing else
-			EventBus.$emit('getProcessGraph', (script) => {
+		updateProcessGraph(job) {
+			EventBus.$emit('getProcessGraph', script => {
 				job.updateJob(script)
 					.then(updatedJob => {
-						this.$utils.ok(this, "Job successfully updated.");
+						Utils.ok(this, "Job successfully updated.");
 						this.updateJobData(updatedJob);
 					})
-					.catch(error => this.$utils.exception(this, error, "Sorry, could not update job."));;
+					.catch(error => Utils.exception(this, error, "Sorry, could not update job."));;
 			});
+		},
+		updateTitle(job, newTitle) {
+			job.updateJob({title: newTitle})
+				.then(updatedJob => {
+					Utils.ok(this, "Job title successfully updated.");
+					this.updateJobData(updatedJob);
+				})
+				.catch(error => Utils.exception(this, error, "Sorry, could not update job title."));
 		},
 		queueJob(job) {
 			job.startJob()
 				.then(updatedJob => {
-					this.$utils.ok(this, "Job successfully queued.");
+					Utils.ok(this, "Job successfully queued.");
 					this.updateJobData(updatedJob);
 				})
-				.catch(error => this.$utils.exception(this, error, "Sorry, could not queue job."));
+				.catch(error => Utils.exception(this, error, "Sorry, could not queue job."));
 		},
 		cancelJob(job) {
 			job.stopJob()
 				.then(updatedJob => {
-					this.$utils.ok(this, "Job successfully canceled.");
+					Utils.ok(this, "Job successfully canceled.");
 					this.updateJobData(updatedJob);
 				})
-				.catch(error => this.$utils.exception(this, error, "Sorry, could not cancel job."));
+				.catch(error => Utils.exception(this, error, "Sorry, could not cancel job."));
 		},
 		viewResults(job) {			
 			job.listResults().then(info => {
 				if(info.links.length == 0) {
-					this.$utils.error(this, "No download available.");
+					Utils.error(this, "No download available.");
 					return;
 				} else if (info.links.length > 1) {
-					this.$utils.info(this, "Job resulted in multiple files, please download them individually.");
+					Utils.info(this, "Job resulted in multiple files, please download them individually.");
 					return;
 				}
 
-				this.$utils.info(this, 'Data requested. Please wait...');
+				Utils.info(this, 'Data requested. Please wait...');
 				// Send requests without authentication (second parameter false), they should be secured by a token in the URL
 				this.connection.download(info.links[0].href, false)
 					.then(response => EventBus.$emit('showInViewer', response.data, info.links[0].type))
 					.catch(error => {
-						this.$utils.exception(this, error, "Sorry, can't download results.");
+						Utils.exception(this, error, "Sorry, can't download results.");
 					});
 			});
 		},
 		downloadResults(job) {	
 			job.listResults().then(info => {
 				if(info.links.length == 0) {
-					this.$utils.error(this, "No download available.");
+					Utils.error(this, "No download available.");
 				}
 				else {
 					// This can be formatted much nicer and more useful...
@@ -343,23 +327,5 @@ export default {
 }
 #JobPanel td.consumed_credits, #JobPanel td.updated, #JobPanel td.submitted {
 	text-align: right;
-}
-#JobPanel td.status[data-value="submitted"] {
-	color: black;
-}
-#JobPanel td.status[data-value="running"] {
-	color: darkorange;
-}
-#JobPanel td.status[data-value="queued"] {
-	color: darkblue;
-}
-#JobPanel td.status[data-value="finished"] {
-	color: darkgreen;
-}
-#JobPanel td.status[data-value="canceled"] {
-	color: darkgrey;
-}
-#JobPanel td.status[data-value="error"] {
-	color: red;
 }
 </style>

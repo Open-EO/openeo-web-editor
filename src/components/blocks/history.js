@@ -47,7 +47,7 @@ History.prototype.restoreLast = function()
 {
     if (this.history.length) {
         var last = this.history.pop();
-        this.blocks.importData(last);
+        this.blocks.import(last);
     }
 };
 

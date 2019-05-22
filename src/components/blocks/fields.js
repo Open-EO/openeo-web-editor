@@ -4,38 +4,27 @@ import EventBus from '../../eventbus.js';
 /**
  * Parameters managers
  */
-var Fields = function(block)
+var Fields = function(block, schema)
 {
     // Block & meta
     this.block = block;
-    this.meta = this.block.meta;
 
     // Fields
-    this.fields = [];
-    for (var k in this.meta.fields) {
-        this.fields.push(new Field(this.meta.fields[k]));
-    }
-
-    // Indexed fields
+    var output = new Field(schema.returns, "output", block.getDefaultOutputLabel(), true);
+    this.output = output;
     this.inputs = [];
-    this.outputs = [];
     this.editables = [];
-    this.indexedFields = {};
+    this.fields = {
+        output: output
+    };
 
-    // Indexing
-    for (var k in this.fields) {
-        var field = this.fields[k];
-        this.indexedFields[field.name] = field;
-
+    for(var name in schema.parameters) {
+        var field = new Field(schema.parameters[name], name, name);
+        this.inputs.push(field);
         if (field.isEditable()) {
             this.editables.push(field);
         }
-        if ('input' == field.attrs) {
-            this.inputs.push(field);
-        }
-        if ('output' == field.attrs) {
-            this.outputs.push(field);
-        }
+        this.fields[field.name] = field;
     }
 };
 
@@ -44,9 +33,7 @@ var Fields = function(block)
  */
 Fields.prototype.getField = function(name)
 {
-    name = name.toLowerCase();
-
-    return (name in this.indexedFields ? this.indexedFields[name] : null);
+    return (name in this.fields ? this.fields[name] : null);
 };
 
 /**
@@ -54,16 +41,7 @@ Fields.prototype.getField = function(name)
  */
 Fields.prototype.show = function()
 {
-    var title = this.block.meta.name+' #'+this.block.id;
-    var opts = {
-        editables: this.editables,
-        saveCallback: (data) => {
-            this.save(data);
-            EventBus.$emit('closeModal');
-            return false;
-        }
-    };
-    EventBus.$emit('showComponentModal', title, 'ProcessParameterEditor', opts);
+    this.block.blocks.showParameters(this);
 };
 
 /**
@@ -72,9 +50,9 @@ Fields.prototype.show = function()
 Fields.prototype.save = function(serialize)
 {
     var boolFields = {};
-    for (var entry in this.indexedFields) {
-        if (this.indexedFields[entry].type == 'boolean') {
-            boolFields[entry] = this.indexedFields[entry];
+    for (var entry in this.fields) {
+        if (this.fields[entry].type == 'boolean') {
+            boolFields[entry] = this.fields[entry];
         }
     }
 

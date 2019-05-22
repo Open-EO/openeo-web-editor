@@ -1,6 +1,7 @@
 {
   "name": "@openeo/web-editor",
-  "version": "0.3.0",
+  "version": "0.4.0-beta.1",
+  "apiVersions": ["0.4.0"],
   "author": "openEO Consortium",
   "contributors": [
     {
@@ -16,7 +17,7 @@
       "name": "Christoph Friedrich"
     }
   ],
-  "description": "A web-based editor for interactive usage of the openEO API.",
+  "description": "An interactive and easy to use web-based editor for the OpenEO API.",
   "license": "Apache-2.0",
   "homepage": "http://openeo.org",
   "bugs": {
@@ -31,17 +32,20 @@
     "build": "vue-cli-service build"
   },
   "dependencies": {
-    "@openeo/js-client": "^0.3.2",
+    "@openeo/js-client": "^0.4.0-beta.1",
+    "@openeo/js-commons": "^0.4.0-beta.2",
     "@openeo/vue-components": "^0.3.5",
+    "ajv": "^6.10.0",
     "codemirror": "^5.42.2",
     "leaflet": "^1.4.0",
     "leaflet-fullscreen": "^1.0.2",
     "leaflet-geotiff": "^0.2.0",
     "leaflet-side-by-side": "github:digidem/leaflet-side-by-side",
     "vue": "^2.5.22",
-    "vue-ctk-date-time-picker": "^2.0.6",
+    "vue-ctk-date-time-picker": "^2.1.0",
     "vue-snotify": "^3.2.1",
-    "vuedraggable": "^2.17.0"
+    "vuedraggable": "^2.17.0",
+    "vuex": "^3.1.1"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "^3.5.5",

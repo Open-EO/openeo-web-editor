@@ -7,7 +7,7 @@
 			<div class="dataTableFilter" v-if="data.length > 0">
 				<i class="fas fa-search filter-icon"></i>
 				<input type="text" placeholder="Search term" v-model="filterValue">
-				<button @click="clearFilter" :disabled="!hasFilter"><i class="fas fa-times-circle"></i></button>
+				<button type="button" @click="clearFilter" :disabled="!hasFilter"><i class="fas fa-times-circle"></i></button>
 			</div>
 		</div>
 		<table v-if="data.length > 0 || typeof noDataMessage == 'undefined' || noDataMessage == ''">
@@ -15,9 +15,20 @@
 				<th v-for="(col, id) in columns" v-show="!col.hide" :key="id" :class="id">{{ col.name }}</th>
 			</tr>
 			<tr v-for="(row, i) in view" :key="i">
-				<td v-for="(col, id) in columns" v-show="!col.hide" :key="id" :class="id" :data-value="col.stylable ? value(row, col, id) : false">
+				<td v-for="(col, id) in columns" v-show="!col.hide" :key="id" 
+					:class="[id, {'edit': canEdit(col)}]"
+					:title="canEdit(col) ? 'Double-click to change the value' : false"
+					@dblclick="onDblClick($event, row, col, id)"
+					:data-value="col.stylable ? value(row, col, id) : false">
 					<slot :name="id" :row="row" :col="col" :id="id">
-						{{ formattedValue(row, col, id) }}
+						<template v-if="showEditField(row, col, id)">
+							<form @submit.prevent.stop="saveEditField($event, row, col, id)">
+								<input type="text" ref="editField" :value="value(row, col, id)" @blur="saveEditField($event, row, col, id)" @keyup="resetEditFieldEsc($event, row, col, id)" />
+							</form>
+						</template>
+						<template v-else>
+							{{ formattedValue(row, col, id) }}
+						</template>
 					</slot>
 				</td>
 			</tr>
@@ -31,6 +42,7 @@
 
 <script>
 import EventBus from '../eventbus.js';
+import Utils from '../utils.js';
 
 export default {
 	name: 'DataTable',
@@ -41,7 +53,8 @@ export default {
 			view: [],
 			filterValue: null,
 			primaryKey: null,
-			noDataMessage: 'No data specified.'
+			noDataMessage: 'No data specified.',
+			editField: null
 		};
 	},
 	watch: {
@@ -58,12 +71,50 @@ export default {
 		},
 		hasFilter() {
 			return (typeof this.filterValue === 'string' && this.filterValue.length > 0) ? true : false;
-		},
+		}
 	},
 	created() {
 		this.determinePrimaryKey();
 	},
 	methods: {
+		canEdit(col) {
+			return (typeof col.edit === 'function');
+		},
+		showEditField(row, col, id) {
+			return this.canEdit(col) && this.editField != null && this.editField[0] == row && this.editField[1] == id;
+		},
+		onDblClick(event, row, col, id) {
+			if (this.canEdit(col)) {
+				return;
+			}
+
+			var value = this.value(row, col, id);
+			if (typeof value === 'boolean') {
+				var action = this.columns[id].edit;
+				action(row);
+			}
+			else {
+				this.editField = [row, id];
+				this.$nextTick(() => this.$refs.editField[0].focus());
+			}
+			event.preventDefault();
+			event.stopPropagation();
+		},
+		saveEditField(event, row, col, id) {
+			if (this.editField !== null && this.canEdit(col)) {
+				var action = this.columns[id].edit;
+				action(row, this.$refs.editField[0].value);
+
+				this.editField = null;
+				event.preventDefault();
+				event.stopPropagation();
+			}
+		},
+		resetEditFieldEsc(event, row, col, id) {
+			if (event.key == "Escape") {
+				this.editField = null;
+			}
+		},
 		determinePrimaryKey() {
 			for(var col in this.columns) {
 				if (this.columns[col].primaryKey) {
@@ -78,12 +129,12 @@ export default {
 				this.noDataMessage = error;
 				return;
 			}
-			else if (this.$utils.isObject(error)) {
+			else if (Utils.isObject(error)) {
 				if (typeof error.data === 'object' && typeof error.config === 'object' && typeof error.headers === 'object') {
 					// Axios response, handle the data only.
 					error = error.data;
 				}
-				if (this.$utils.isObject(error) && typeof error.message === 'string') {
+				if (Utils.isObject(error) && typeof error.message === 'string') {
 					this.noDataMessage = error.message;
 					return;
 				}
@@ -164,7 +215,7 @@ export default {
 			else {
 				data = row;
 			}
-			if (this.$utils.isObject(col) && typeof col.computedValue === 'function') {
+			if (Utils.isObject(col) && typeof col.computedValue === 'function') {
 				data = col.computedValue(row, data);
 			}
 			return data;
@@ -238,7 +289,7 @@ export default {
 			return ( value / Math.pow(1024, i) ).toFixed(2) * 1 + ' ' + ['B', 'kB', 'MB', 'GB', 'TB'][i];
 		},
 		formatDateTime(value, col) {
-			return this.$utils.formatDateTime(value);
+			return Utils.formatDateTime(value);
 		},
 		formatUpperCase(value, col) {
 			return typeof value === 'string' ? value.toUpperCase() : value;
@@ -266,5 +317,8 @@ export default {
 .dataTableMenu {
 	margin-bottom: 5px;
 	display: flex;
+}
+.edit {
+	cursor: pointer;
 }
 </style>

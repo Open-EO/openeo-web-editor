@@ -4,6 +4,7 @@
 
 <script>
 import EventBus from '../eventbus.js';
+import Utils from '../utils.js';
 
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
@@ -33,7 +34,7 @@ export default {
 	},
 
 	mounted() {
-		this.createMap();
+		this.$nextTick(this.createMap);
 		EventBus.$on('viewWebService', this.viewWebService);
 		EventBus.$on('removeWebService', this.removeWebService);
 	},
@@ -93,7 +94,7 @@ export default {
 					this.updateXYZLayer(service);
 					break;
 				default:
-					this.$utils.error(this, 'Sorry, the service type is not supported by the map.');
+					Utils.error(this, 'Sorry, the service type is not supported by the map.');
 			}
 		},
 
@@ -127,7 +128,7 @@ export default {
 		},
 
 		updateTiffLayer(url) {
-			var id = this.$utils.formatDateTime(Date.now());
+			var id = Utils.formatDateTime(Date.now());
 			if (typeof this.layer[id] === 'undefined') {
 				var renderer = new LeafletGeotiffRenderer();
 				renderer.name = "openEO-geotiff-visualizer";
@@ -162,7 +163,7 @@ export default {
 			var id = service.serviceId;
 			if (typeof this.layer[id] === 'undefined') {
 				var args = service.attributes;
-				if (!this.$utils.isObject(args)) {
+				if (!Utils.isObject(args)) {
 					args = {};
 				};
 				args.name = id.toUpperCase().substr(0,6) + " (WMS)";

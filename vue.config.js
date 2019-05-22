@@ -4,5 +4,8 @@ module.exports = {
 	devServer: {
 		// Port where the dev server runs (int)
 		port: 80
+	},
+	configureWebpack: {
+	  devtool: 'source-map'
 	}
 }

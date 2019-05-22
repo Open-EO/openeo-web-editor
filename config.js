@@ -1,6 +1,16 @@
 export default {
 	// URL of the back-end to start with (string)
 	serverUrl: '',
-	// Whether changing the server in the UI is allowed (boolean)
-	allowServerChange: true
+
+	// A message shown on the login page
+	loginMessage: '',
+
+	// Defaults for notifications
+	snotifyDefaults: {
+		timeout: 5000,
+		titleMaxLength: 30,
+		showProgressBar: true,
+		closeOnClick: true,
+		pauseOnHover: true
+	}, 
 };

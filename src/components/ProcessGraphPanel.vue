@@ -6,7 +6,7 @@
 		</template>
 		<template slot="actions" slot-scope="p">
 			<button title="Details" @click="graphInfo(p.row)" v-show="supports('describeProcessGraph')"><i class="fas fa-info"></i></button>		<button title="Show in Editor" @click="showInEditor(p.row)" v-show="supports('describeProcessGraph')"><i class="fas fa-code-branch"></i></button>
-			<button title="Edit" @click="editGraph(p.row)" v-show="supports('updateProcessGraph')"><i class="fas fa-edit"></i></button>
+			<button title="Update process graph" @click="updateProcessGraph(p.row)" v-show="supports('updateProcessGraph')"><i class="fas fa-edit"></i></button>
 			<button title="Delete" @click="deleteGraph(p.row)" v-show="supports('deleteProcessGraph')"><i class="fas fa-trash"></i></button>
 		</template>
 	</DataTable>
@@ -15,6 +15,7 @@
 <script>
 import EventBus from '../eventbus.js';
 import WorkPanelMixin from './WorkPanelMixin.vue';
+import Utils from '../utils.js';
 
 export default {
 	name: 'ProcessGraphPanel',
@@ -22,12 +23,14 @@ export default {
 	data() {
 		return {
 			columns: {
-				title: {
-					name: 'Title'
-				},
 				processGraphId: {
 					name: 'ID',
-					primaryKey: true
+					primaryKey: true,
+					hide: true
+				},
+				title: {
+					name: 'Title',
+					edit: this.updateTitle
 				},
 				actions: {
 					name: 'Actions',
@@ -51,7 +54,7 @@ export default {
 					}
 					this.updateProcessGraphData(updatedPg);
 				})
-				.catch(error => this.$utils.exception(this, error, 'Sorry, could not load process graph.'));
+				.catch(error => Utils.exception(this, error, 'Sorry, could not load process graph.'));
 		},
 		showInEditor(pg) {
 			this.refreshProcessGraph(pg, updatedPg => {
@@ -67,38 +70,42 @@ export default {
 				title = null;
 			}
 
-			EventBus.$emit('getProcessGraph', (script) => {
+			EventBus.$emit('getProcessGraph', script => {
 				this.connection.createProcessGraph(script, title)
 					.then(data => {
 						this.$refs.table.addData(data);
-						this.$utils.ok(this, 'Process Graph stored at back-end!');
-					}).catch(error => this.$utils.exception(this, error, 'Sorry, could not save the process graph.'));
+						Utils.ok(this, 'Process Graph stored at back-end!');
+					}).catch(error => Utils.exception(this, error, 'Sorry, could not save the process graph.'));
 			});
 		},
 		graphInfo(pg) {
 			this.refreshProcessGraph(pg, updatedPg => {
-				EventBus.$emit('showModal', 'Process Graph Details', updatedPg.getAll());
+				EventBus.$emit('showProcessGraphInfo', updatedPg.getAll());
 			});
 		},
-		editGraph(pg) {
-			// TODO: provide more update options/don't just override the process graph and nothing else
-			EventBus.$emit('getProcessGraph', (script) => {
-				var dataToUpdate= {
-					process_graph: script
-				};
-				pg.updateProcessGraph(dataToUpdate)
+		updateProcessGraph(pg) {
+			EventBus.$emit('getProcessGraph', script => {
+				pg.updateProcessGraph({processGraph: script})
 					.then(updatedPg => {
-						this.$utils.ok(this, 'Process Graph updated!');
+						Utils.ok(this, 'Process Graph updated!');
 						this.updateProcessGraphData(updatedPg);
-					}).catch(error => this.$utils.exception(this, error, 'Sorry, could not update the process graph.'));
+					}).catch(error => Utils.exception(this, error, 'Sorry, could not update the process graph.'));
 			});
+		},
+		updateTitle(pg, newTitle) {
+			pg.updateProcessGraph({title: newTitle})
+				.then(updatePg => {
+					Utils.ok(this, "Process graph title successfully updated.");
+					this.updateProcessGraphData(updatePg);
+				})
+				.catch(error => Utils.exception(this, error, "Sorry, could not update process graph title."));
 		},
 		deleteGraph(pg) {
 			pg.deleteProcessGraph()
 				.then(() => {
 					this.$refs.table.removeData(pg.processGraphId);
 				})
-				.catch(error => this.$utils.exception(this, error, 'Sorry, could not delete process graph.'));
+				.catch(error => Utils.exception(this, error, 'Sorry, could not delete process graph.'));
 		},
 		updateProcessGraphData(updatePg) {
 			this.$refs.table.replaceData(updatePg);

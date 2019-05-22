@@ -1,92 +1,127 @@
+
+import Config from '../config';
+import { Utils as CommonUtils } from '@openeo/js-commons';
+import { mapState, mapActions, mapMutations, mapGetters } from 'vuex';
+
 export default {
 
-	snotifyDefaults: {
-		timeout: 5000,
-		titleMaxLength: 30,
-		showProgressBar: true,
-		closeOnClick: true,
-		pauseOnHover: true
-	},
-
 	exception(vm, error, alt) {
-		console.log(error);
-		var title = null;
-		var message = alt;
+		console.log(error); 
+		var title = null; 
+		var message = alt; 
 		if (this.isObject(error) && typeof error.message === 'string') {
 			if (error.code > 0) {
-				title = "Error #" + error.code;
+				title = "Error #" + error.code; 
 			}
 			else {
-				title = alt;
+				title = alt; 
 			}
-			message = error.message;
+			message = error.message; 
 		}
 		else if (typeof error === 'string') {
-			message = error;
-			title = alt;
+			message = error; 
+			title = alt; 
 		}
-		this.error(vm, message, title);
-	},
+		this.error(vm, message, title); 
+	}, 
 	error(vm, message, title = null) {
-		vm.$snotify.error(message, title, this.snotifyDefaults);
-	},
+		vm.$snotify.error(message, title, Config.snotifyDefaults); 
+	}, 
 	info(vm, message, title = null) {
-		vm.$snotify.info(message, title, this.snotifyDefaults);
-	},
+		vm.$snotify.info(message, title, Config.snotifyDefaults); 
+	}, 
 	ok(vm, message, title = null) {
-		var typeDefaults = {
-			timeout: 2000
-		};
-		vm.$snotify.success(message, title, Object.assign({}, this.snotifyDefaults, typeDefaults));
-	},
+		var typeDefaults =  {
+			timeout:2000
+		}; 
+		vm.$snotify.success(message, title, Object.assign( {}, Config.snotifyDefaults, typeDefaults)); 
+	}, 
 	confirm(vm, message, buttons = []) {
-		var typeDefaults = {
-			timeout: 10000,
-			closeOnClick: false,
-			buttons: buttons
-		};
-		vm.$snotify.confirm(message, null, Object.assign({}, this.snotifyDefaults, typeDefaults));
-	},
+		var typeDefaults =  {
+			timeout:10000, 
+			closeOnClick:false, 
+			buttons:buttons
+		}; 
+		vm.$snotify.confirm(message, null, Object.assign( {}, Config.snotifyDefaults, typeDefaults)); 
+	}, 
 
 	blobToText(blob, callback) {
-		var reader = new FileReader();
-		reader.onload = callback;
-		reader.readAsText(blob);
-	},
+		var reader = new FileReader(); 
+		reader.onload = callback; 
+		reader.readAsText(blob); 
+	}, 
 
 	isChildOfModal(that) {
-		return that.$parent && that.$parent.$options.name == 'Modal';
-	},
+		return that.$parent && that.$parent.$options.name == 'Modal'; 
+	}, 
 
 	getFileNameFromURL(url) {
 		//this removes the anchor at the end, if there is one
-		url = url.substring(0, (url.indexOf("#") == -1) ? url.length : url.indexOf("#"));
+		url = url.substring(0, (url.indexOf("#") == -1)?url.length:url.indexOf("#")); 
 		//this removes the query after the file name, if there is one
-		url = url.substring(0, (url.indexOf("?") == -1) ? url.length : url.indexOf("?"));
+		url = url.substring(0, (url.indexOf("?") == -1)?url.length:url.indexOf("?")); 
 		//this removes everything before the last slash in the path
-		url = url.substring(url.lastIndexOf("/") + 1, url.length);
-		return url;
-	},
+		url = url.substring(url.lastIndexOf("/") + 1, url.length); 
+		return url; 
+	}, 
 
 	formatDateTime(value) {
-		if (!value) {
-			return '';
+		if ( ! value) {
+			return ''; 
 		}
-		let date = new Date(value);
-		return date.toISOString().replace('T', ' ').replace('Z', '').substring(0,19);
+		let date = new Date(value); 
+		return date.toISOString().replace('T', ' ').replace('Z', '').substring(0, 19); 
+	},
+
+	getMimeTypeForOutputFormat(originalOutputFormat) {
+		if (!originalOutputFormat.format) {
+			return null;
+		}
+		var type = originalOutputFormat.format.toLowerCase();
+		switch(type) {
+			case 'png':
+			case 'jpeg':
+			case 'jpg':
+			case 'gif':
+				return 'image/' + type;
+			case 'tif':
+			case 'tiff':
+			case 'gtiff':
+				return 'image/tiff';
+			case 'json':
+				return 'application/json';
+			default:
+				return null;
+		}
 	},
 
 	param(name) {
-		const urlParams = new URLSearchParams(window.location.search);
-		return urlParams.get(name);
-	},
+		const urlParams = new URLSearchParams(window.location.search); 
+		return urlParams.get(name); 
+	}, 
 
 	isUrl(url) {
 		return (typeof url === 'string' && url.length > 0 && url.match(/^https?:\/\//i) !== null);
-	},
+	}, 
 
 	isObject(value) {
-		return (typeof value === 'object' && value !== null && !Array.isArray(value));
-	}
+		return CommonUtils.isObject(value); 
+	},
 
-};
+	size(obj) {
+		return CommonUtils.size(obj);
+	},
+
+	domBoundingBox(el) {
+		var rect = el.getBoundingClientRect();
+		rect.offsetTop = rect.top + document.body.scrollTop;
+		rect.offsetLeft = rect.left + document.body.scrollLeft;
+		return rect;
+	},
+
+	mapState,
+	mapGetters,
+	mapMutations,
+	mapActions
+
+}; 
