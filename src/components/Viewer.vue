@@ -44,15 +44,15 @@ export default {
 	},
 	methods: {
 		showMapViewer() {
-			this.selectTab('mapView');
+			this.$refs.tabs.selectTab('mapView');
 		},
 
 		showImageViewer() {
-			this.selectTab('imageView');
+			this.$refs.tabs.selectTab('imageView');
 		},
 
 		showDataViewer() {
-			this.selectTab('dataView');
+			this.$refs.tabs.selectTab('dataView');
 		},
 
 		showInViewer(blob, originalOutputFormat = null) {
@@ -80,11 +80,8 @@ export default {
 					break;
 				case 'image/tif':
 				case 'image/tiff':
-					// ToDo: This should only execute when it's a GTiff, but for POC let every tiff pass
-//					if (originalOutputFormat.format.toLowerCase() == 'gtiff') {
-						this.$refs.mapViewer.updateTiffLayerBlob(blob);
-						break;
-//					}
+					this.$refs.mapViewer.showGTiffBlob(blob);
+					break;
 				default:
 					Utils.error(this, "Sorry, the returned content type is not supported to view.");
 			}

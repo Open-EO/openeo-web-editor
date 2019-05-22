@@ -103,7 +103,7 @@ export default {
 		executeProcessGraph() {
 			EventBus.$emit('getProcessGraph', script => {
 				Utils.info(this, 'Data requested. Please wait...');
-				this.connection.execute(script)
+				this.connection.computeResult(script)
 					.then(data => EventBus.$emit('showInViewer', data))
 					.catch(error => Utils.exception(this, error, 'Sorry, could not execute process graph.'));
 			});

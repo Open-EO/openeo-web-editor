@@ -38,7 +38,7 @@ export default {
 			return null;
 		},
         selectTab(selectedTab) {
-			var id = typeof selectTab === 'string' ? selectedTab : selectedTab.id;
+			var id = typeof selectedTab === 'string' ? selectedTab : selectedTab.id;
             this.tabs.forEach(tab => {
 				tab.active = (tab.id == id);
             });

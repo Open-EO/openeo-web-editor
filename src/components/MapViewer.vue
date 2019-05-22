@@ -35,7 +35,7 @@ export default {
 
 	mounted() {
 		this.$nextTick(this.createMap);
-		EventBus.$on('viewWebService', this.viewWebService);
+		EventBus.$on('showWebService', this.showWebService);
 		EventBus.$on('removeWebService', this.removeWebService);
 	},
 
@@ -85,7 +85,8 @@ export default {
 			return shownLayers;
 		},
 
-		viewWebService(service) {
+		showWebService(service) {
+			EventBus.$emit('showMapViewer');
 			switch(service.type.toLowerCase()) {
 				case 'wms':
 					this.updateWMSLayer(service);
@@ -96,6 +97,11 @@ export default {
 				default:
 					Utils.error(this, 'Sorry, the service type is not supported by the map.');
 			}
+		},
+
+		showGTiffBlob(blob) {
+			EventBus.$emit('showMapViewer');
+			this.updateTiffLayerBlob(blob);
 		},
 
 		removeWebService(id) {

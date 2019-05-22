@@ -201,8 +201,7 @@ export default {
 		},
 		viewService(service) {
 			Utils.info(this, 'Requesting tiles from server. Please wait...');
-			EventBus.$emit('viewWebService', service);
-			EventBus.$emit('showMapViewer');
+			EventBus.$emit('showWebService', service);
 		},
 		updateServiceData(updatedService) {
 			this.$refs.table.replaceData(updatedService);
