@@ -296,6 +296,7 @@ export default {
 }
 .areaSelector {
 	height: 500px;
+	flex-grow: 1;
 }
 .textarea {
 	width: 100%;

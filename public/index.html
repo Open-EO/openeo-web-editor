@@ -11,7 +11,14 @@
 
 	<body>
 		<div id="app"></div>
-		<noscript>Sorry, the <a href="http://www.openeo.org">openEO</a> Web Editor requires JavaScript to be enabled!</noscript>
+		<script type="text/javascript">
+		window.onload = function() {
+			if (document.getElementById('app')) {
+				document.writeln("Sorry, the openEO Web Editor requires a modern browsers. Please update your browser or use Google Chrome or Mozilla Firefox as alternative.");
+			}
+		}
+		</script>
+		<noscript>Sorry, the openEO Web Editor requires JavaScript to be enabled!</noscript>
 	</body>
 
 </html>

@@ -3,12 +3,6 @@ import Vue from 'vue';
 /*
 # Events
 
-## viewWebService(object $service)
-Shows a web service on the map.
-
-## removeWebService(string $id)
-Removes a web service from the map.
-
 ## getProcessGraph(callback $callback, boolean $silent = false)
 Triggers the script/model currently in the editor to be evaluated runs the callback using the data from the evaluation.
 
@@ -37,10 +31,16 @@ The component to be used must be known (i.e. imported and declared) in the Modal
 
 ## showInViewer(Blob $blob, object $output_args)
 Shows the data with the specified content type in the appropriate area of the viewer.
-Also to enhance viewing experience the "original" output format arguments can be given.
+To enhance viewing experience the "original" output format arguments can be given.
 
 ## showMapViewer()
 Shows the map in the viewer area.
+
+## showWebService(object $service)
+Shows a web service on the map.
+
+## removeWebService(string $id)
+Removes a web service from the map.
 
 ## showImageViewer()
 Shows the image panel in the viewer area.
