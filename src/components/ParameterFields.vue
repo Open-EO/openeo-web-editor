@@ -1,5 +1,5 @@
 <template>
-	<div class="fieldContainer">
+	<div class="fieldContainer" v-if="type !== null">
 		<div class="dataTypeChooser" v-if="field.schemas.length > 1">
 			Data type:
 			<select name="dataType" v-model="type" :disabled="!editable">
@@ -15,6 +15,7 @@
 
 <script>
 import ParameterField from './ParameterField.vue';
+import { JsonSchemaValidator } from '@openeo/js-commons';
 
 export default {
 	name: 'ParameterFields',
@@ -31,10 +32,32 @@ export default {
 	},
 	data() {
 		return {
-			type: 0
+			type: null
 		};
 	},
+	created() {
+		if (this.field.schemas.length > 1) {
+			JsonSchemaValidator.getTypeForValue(this.field.schemas.map(s => s.schema), this.pass)
+				.then(type => {
+					if (Array.isArray(type)) {
+						Utils.info("Data type can't be detected, please select it yourself.");
+						console.log("Parameter schema is ambiguous. Potential types: " + type.join(', ') + ". Value: " + JSON.stringify(this.pass));
+						this.type = type[0];
+					}
+					else {
+						this.type = type;
+					}
+				})
+				.catch(error => {
+					this.type = 0;
+				});
+		}
+		else {
+			this.type = 0;
+		}
+	},
 	methods: {
+
 		getValue() {
 			return this.$refs.field.getValue();
 		}

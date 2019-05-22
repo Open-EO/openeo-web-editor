@@ -2,12 +2,21 @@
 	<div id="container">
 		<ConnectForm v-if="!isConnected" />
 		<IDE v-else />
-		<Modal ref="modal" />
+		<Modal ref="modal" maxWidth="60%" />
 		<vue-snotify />
+		<div ref="webEditorInfo" style="display: none;">
+			<p>{{ pkg.description }}</p>
+			<p>This software is published by the <strong>openEO Consortium</strong> under the <strong>Apache 2.0 license</strong>. Please find more information about the openEO project on our <a href="http://www.openeo.org" target="_blank">homepage</a> and visit the <a href="https://github.com/Open-EO/openeo-web-editor" target="_blank">GitHub repository</a> for information about the Web Editor. Feel encouraged to <strong>report bugs, feature requests and other issues in the <a href="https://github.com/Open-EO/openeo-web-editor/issues" target="_blank">GitHub issue tracker</a></strong>.</p>
+			<h3>Supported API versions:</h3>
+			<ul>
+				<li v-for="v in pkg.apiVersions" :key="v">{{ v }}</li>
+			</ul>
+		</div>
 	</div>
 </template>
 
 <script>
+import Package from '../package.json';
 import EventBus from './eventbus.js';
 import Utils from './utils';
 import ConnectForm from './components/ConnectForm.vue';
@@ -26,10 +35,16 @@ export default {
 		IDE,
 		Modal
 	},
+	data() {
+		return {
+			pkg: Package
+		};
+	},
 	mounted() {
 		EventBus.$on('showMessageModal', this.showMessageModal);
 		EventBus.$on('showHtmlModal', this.showHtmlModal);
 		EventBus.$on('showListModal', this.showListModal);
+		EventBus.$on('showWebEditorInfo', this.showWebEditorInfo);
 	},
 	computed: {
 		...Utils.mapGetters('server', ['isConnected'])
@@ -43,6 +58,9 @@ export default {
 		},
 		showListModal(title, list, listActions) {
 			this.$refs.modal.showList(title, list, listActions);
+		},
+		showWebEditorInfo() {
+			this.showHtmlModal("openEO Web Editor " + Package.version, this.$refs.webEditorInfo);
 		}
 	}
 }
@@ -98,6 +116,19 @@ button {
 	vertical-align: middle;
 	color: #152558;
 	font-weight: normal;
+}
+.logo .version {
+	position: relative;
+	top: -26px;
+	font-size: 11px;
+	background-color: #152558;
+	color: white;
+	padding: 3px;
+	border-radius: 5px;
+	cursor: pointer;
+}
+.logo .version:hover {
+	background-color: #65421F;
 }
 
 .boolean .fa-check-circle {

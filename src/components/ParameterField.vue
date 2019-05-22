@@ -3,6 +3,12 @@
 		<select class="fieldValue" v-if="schema.isEnum()" :name="fieldName" v-model="value" :disabled="!editable">
 			<option v-for="(choice, k) in schema.getEnumChoices()" :key="k" :value="choice">{{ choice }}</option>
 		</select>
+		<select class="fieldValue" v-else-if="type === 'collection-id'" :name="fieldName" v-model="value" :disabled="!editable">
+			<option v-for="c in collections" :key="c.id" :value="c.id">{{ c.id }}</option>
+		</select>
+		<select class="fieldValue" v-else-if="type === 'output-format'" :name="fieldName" v-model="value" :disabled="!editable">
+			<option v-for="(x, format) in outputFormats" :key="format" :value="format.toUpperCase()">{{ format.toUpperCase() }}</option>
+		</select>
 		<template v-else-if="type === 'temporal-interval'">
 			<VueCtkDateTimePicker v-model="value" :disabled="!editable" :range="true" label="Select start and end time" format="YYYY-MM-DD[T]HH:mm:ss[Z]"></VueCtkDateTimePicker>
 			<!-- ToDo: Support open date ranges, probably by using two separate date pickers, see also https://github.com/chronotruck/vue-ctk-date-time-picker/issues/121 -->
@@ -17,15 +23,15 @@
 			<VueCtkDateTimePicker v-model="value" :disabled="!editable" label="Select time" only-time="true" format="HH:mm:ss[Z]" no-button="true"></VueCtkDateTimePicker>
 		</template>
 		<template v-else-if="type === 'bounding-box'">
-			<div id="areaSelector"></div>
+			<div :id="fieldName" class="areaSelector"></div>
 		</template>
 		<div v-else-if="type === 'callback'" class="border">
 			<VisualEditor ref="callbackBuilder" id="inlinePgEditor" :editable="editable" :callbackArguments="schema.getCallbackParameters()" :value="value" />
 		</div>
 		<template v-else-if="type === 'null'">
-			The field will be set to <strong><tt>null</tt></strong>.
+			The field will be set to&nbsp;<strong><tt>null</tt></strong>.
 		</template>
-		<template v-else-if="type === 'array' || type === 'temporal-intervals'">
+		<div v-else-if="type === 'array' || type === 'temporal-intervals'" class="arrayEditor">
 			<draggable v-model="value">
 				<transition-group name="arrayElements">
 					<div class="fieldValue arrayElement" v-for="(e, k) in value" :key="e.id">
@@ -36,7 +42,7 @@
 				</transition-group>
 			</draggable>
 			<button type="button" v-if="editable" @click="addField()"><i class="fas fa-plus"></i> Add</button>
-		</template>
+		</div>
 		<textarea class="fieldValue textarea" v-else-if="useTextarea" v-model="value" :disabled="!editable"></textarea>
 		<input class="fieldValue" v-else-if="type === 'boolean'" :checked="!!value" v-model="value" type="checkbox" :name="fieldName" :disabled="!editable" />
 		<input class="fieldValue" v-else v-model="value" type="text" :name="fieldName" :disabled="!editable" />
@@ -86,6 +92,7 @@ export default {
 		}
 	},
 	computed: {
+		...Utils.mapState('server', ['collections', 'outputFormats']),
 		type() {
 			return this.isItem ? this.schema.arrayOf() : this.schema.dataType();
 		},
@@ -105,12 +112,12 @@ export default {
 		this.value = this.initValue();
 	},
 	mounted() {
-		this.initView();
+		this.$nextTick(this.initView);
 	},
 	methods: {
 		initView() {
 			if (this.type === 'bounding-box') {
-				var map = new L.Map('areaSelector', {zoomControl: this.editable});
+				var map = new L.Map(this.fieldName, {zoomControl: this.editable});
 				var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 					name: 'OpenStreetMap',
 					attribution: 'Map data &copy; <a href="http://www.osm.org">OpenStreetMap</a>'
@@ -155,6 +162,9 @@ export default {
 				else {
 					v = "";
 				}
+			}
+			else if (this.type === 'output-format') {
+				v = typeof this.$props.pass === 'string' ? this.$props.pass.toUpperCase() : this.$props.pass;
 			}
 			else if (this.type === 'callback') {
 				if (Utils.isObject(this.$props.pass) && this.$props.pass.callback) {
@@ -269,8 +279,12 @@ export default {
 </style>
 
 <style scoped>
+.arrayEditor, .arrayEditor > div {
+	width: 100%;
+}
 .arrayElement {
 	transition: all 0.5s;
+	margin-bottom: 0.2em;
 }
 
 .arrayElements-enter, .arrayElements-active {
@@ -280,7 +294,7 @@ export default {
 .mover {
 	padding: 3px 1em;
 }
-#areaSelector {
+.areaSelector {
 	height: 500px;
 }
 .textarea {

@@ -1,5 +1,5 @@
 <template>
-	<div id="modal" v-if="shown" @click="possiblyClose">
+	<div id="modal" v-if="shown" @mousedown="possiblyClose">
 		<div class="modal-container" :style="{'min-width': minWidth, 'max-width': maxWidth}">
 			<header>
 				<h2>{{ title }}</h2>
@@ -7,7 +7,8 @@
 			</header>
 			<main>
 				<slot name="main">
-					<div v-if="html !== null" v-html="html"></div>
+					<div v-if="typeof html === 'string'" v-html="html"></div>
+					<div v-else-if="html !== null && typeof html === 'object'" v-html="html.innerHTML"></div>
 					<template v-else-if="list !== null">
 						<strong class="listEmpty" v-if="listCount == 0">Sorry, no data available.</strong>
 						<ul class="list" v-else>

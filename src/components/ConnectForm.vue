@@ -3,7 +3,7 @@
 		<form @submit.prevent="submitForm">
 			<header class="logo">
 				<img src="../assets/logo.png" alt="openEO" />
-				<h2>Web Editor</h2>
+				<h2>Web Editor <span class="version" @click="showWebEditorInfo">{{ version }}</span></h2>
 			</header>
 			<h3>Connect to server</h3>
 			<div class="row">
@@ -29,6 +29,7 @@
 </template>
 
 <script>
+import Package from '../../package.json';
 import Config from '../../config.js';
 import EventBus from '../eventbus.js';
 import ConnectionMixin from './ConnectionMixin.vue';
@@ -46,7 +47,8 @@ export default {
 			serverUrl: Config.serverUrl,
 			username: '',
 			password: '',
-			connecting: false
+			connecting: false,
+			version: Package.version
 		};
 	},
 	created() {
@@ -110,6 +112,10 @@ export default {
 				Utils.info(this, 'You are working as a guest. Your data will be publicly available!');
 			}
 			this.connecting = false;
+		},
+
+		showWebEditorInfo() {
+			EventBus.$emit('showWebEditorInfo');
 		},
 
 		showServerSelector() {

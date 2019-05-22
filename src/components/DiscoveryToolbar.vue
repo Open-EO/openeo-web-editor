@@ -1,5 +1,5 @@
 <template>
-	<div class="discovery-toolbar" v-if="showCollectionSelector && showProcessSelector">
+	<div class="discovery-toolbar" v-if="showCollectionSelector || showProcessSelector">
 		<div class="collections-toolbar" v-if="showCollectionSelector">
 			<span>Collections:</span>
 			<select id="collection" ref="collection">

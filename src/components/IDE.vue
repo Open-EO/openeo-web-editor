@@ -3,8 +3,8 @@
 		<div id="ide" @mouseup="stopMovingSeparator($event)" @mousemove="moveSeparator($event)">
 			<header class="navbar">
 				<div class="logo">
-					<a href="http://www.openeo.org" target="_blank"><img src="../assets/logo.png" alt="openEO" /></a>
-					<h2>Web Editor</h2>
+					<img src="../assets/logo.png" alt="openEO" />
+					<h2>Web Editor <span class="version" @click="showWebEditorInfo">{{ version }}</span></h2>
 				</div>
 				<ul id="menu">
 					<li><div class="menuItem" @click="showServerInfo" title="Get server information"><i class="fas fa-info fa-fw"></i> Server</div></li>
@@ -32,6 +32,7 @@
 </template>
 
 <script>
+import Package from '../../package.json';
 import EventBus from '../eventbus.js';
 import Utils from '../utils.js';
 import ConnectionMixin from './ConnectionMixin.vue';
@@ -64,7 +65,8 @@ export default {
 	data() {
 		return {
 			moving: false,
-			movingOffset: 0
+			movingOffset: 0,
+			version: Package.version
 		};
 	},
 	computed: {
@@ -149,6 +151,10 @@ export default {
 
 		showServerInfo() {
 			this.$refs.serverInfoModal.show(this.connection, this.outputFormats, this.serviceTypes);
+		},
+
+		showWebEditorInfo() {
+			EventBus.$emit('showWebEditorInfo');
 		}
 
 	}
@@ -207,6 +213,14 @@ export default {
 }
 #ide .logo h2 {
 	color: white;
+}
+#ide .logo .version {
+	background-color: #1665B6;
+	color: white;
+}
+#ide .logo .version:hover {
+	background-color: white;
+	color: #1665B6;
 }
 #menu {
 	list-style-type: none;
