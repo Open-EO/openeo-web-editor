@@ -8,7 +8,8 @@
 			<button title="Details" @click="showJobInfo(p.row)" v-show="supports('describeJob')"><i class="fas fa-info"></i></button>
 			<button title="Show in Editor" @click="showInEditor(p.row)" v-show="supports('describeJob')"><i class="fas fa-code-branch"></i></button>
 			<button title="Estimate" @click="estimateJob(p.row)" v-show="supports('estimateJob')"><i class="fas fa-file-invoice-dollar"></i></button>
-			<button title="Update process graph" @click="updateProcessGraph(p.row)" v-show="supports('updateJob') && isJobInactive(p.row)"><i class="fas fa-edit"></i></button>
+			<button title="Edit metadata" @click="editMetadata(p.row)" v-show="supports('updateJob') && isJobInactive(p.row)"><i class="fas fa-edit"></i></button>
+			<button title="Replace process graph" @click="replaceProcessGraph(p.row)" v-show="supports('updateJob') && isJobInactive(p.row)"><i class="fas fa-retweet"></i></button>
 			<button title="Delete" @click="deleteJob(p.row)" v-show="supports('deleteJob')"><i class="fas fa-trash"></i></button>
 			<button title="Start processing" @click="queueJob(p.row)" v-show="supports('startJob') && isJobInactive(p.row)"><i class="fas fa-play-circle"></i></button>
 			<button title="Cancel processing" @click="cancelJob(p.row)" v-show="supports('stopJob') && isJobActive(p.row)"><i class="fas fa-stop-circle"></i></button>
@@ -24,6 +25,7 @@
 import EventBus from '../eventbus.js';
 import WorkPanelMixin from './WorkPanelMixin.vue';
 import Utils from '../utils.js';
+import Field from './blocks/field';
 
 export default {
 	name: 'JobPanel',
@@ -115,8 +117,32 @@ export default {
 			}
 			Utils.confirm(this, 'Job created!', buttons);
 		},
-		createJob(processGraph, title = null) {
-			this.connection.createJob(processGraph, title)
+		getTitleField() {
+			return new Field('title', 'Title', {type: 'string'});
+		},
+		getDescriptionField() {
+			return new Field('description', 'Description', {type: 'string', format: 'commonmark'}, 'CommonMark (Markdown) is allowed.');
+		},
+		getBillingPlanField() {
+			return new Field('plan', 'Billing plan', {type: 'string', format: 'billing-plan'});
+		},
+		getBudgetField() {
+			return new Field('budget', 'Budget', {type: 'number', format: 'budget', default: null});
+		},
+		createJob(processGraph, data) {
+			if (typeof data.title !== 'string' || data.title.length === 0) {
+				data.title = null;
+			}
+			if (typeof data.description !== 'string' || data.description.length === 0) {
+				data.description = null;
+			}
+			if (typeof data.plan !== 'string' || data.plan.length === 0) {
+				data.plan = null;
+			}
+			if (typeof data.budget !== 'number' || data.budget < 0) {
+				data.budget = null;
+			}
+			this.connection.createJob(processGraph, data.title, data.description, data.plan, data.budget)
 				.then(job => {
 					EventBus.$emit('jobCreated', job);
 				}).catch(error => {
@@ -124,16 +150,14 @@ export default {
 				});
 		},
 		createJobFromScript() {
-			var title = prompt("Please specify a title for the job:");
-			if (title === null) {
-				return;
-			}
-			else if (typeof title !== 'string' || title.length === 0) {
-				title = null;
-			}
-
 			EventBus.$emit('getProcessGraph', script => {
-				this.createJob(script, title);
+				var fields = [
+					this.getTitleField(),
+					this.getDescriptionField(),
+					this.getBillingPlanField(),
+					this.getBudgetField()
+				];
+				EventBus.$emit('showDataForm', "Add a new batch job", fields, data => this.createJob(script, data));
 			});
 		},
 		updateJobData(updatedJob) {
@@ -190,23 +214,32 @@ export default {
 				})
 				.catch(error => Utils.exception(this, error, "Sorry, could not load job estimate."));
 		},
-		updateProcessGraph(job) {
+		replaceProcessGraph(job) {
 			EventBus.$emit('getProcessGraph', script => {
-				job.updateJob(script)
-					.then(updatedJob => {
-						Utils.ok(this, "Job successfully updated.");
-						this.updateJobData(updatedJob);
-					})
-					.catch(error => Utils.exception(this, error, "Sorry, could not update job."));;
+				this.updateJob(job, {processGraph: script});
+			});
+		},
+		editMetadata(oldJob) {
+			this.refreshJob(oldJob, job => {
+				var fields = [
+					this.getTitleField().setValue(job.title),
+					this.getDescriptionField().setValue(job.description),
+					this.getBillingPlanField().setValue(job.plan),
+					this.getBudgetField().setValue(job.budget)
+				];
+				EventBus.$emit('showDataForm', "Edit job #" + job.id, fields, data => this.updateJob(job, data));
 			});
 		},
 		updateTitle(job, newTitle) {
-			job.updateJob({title: newTitle})
+			this.updateJob(job, {title: newTitle});
+		},
+		updateJob(job, data) {
+			job.updateJob(data)
 				.then(updatedJob => {
-					Utils.ok(this, "Job title successfully updated.");
+					Utils.ok(this, "Job successfully updated.");
 					this.updateJobData(updatedJob);
 				})
-				.catch(error => Utils.exception(this, error, "Sorry, could not update job title."));
+				.catch(error => Utils.exception(this, error, "Sorry, could not update job."));;
 		},
 		queueJob(job) {
 			job.startJob()

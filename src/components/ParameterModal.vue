@@ -1,13 +1,13 @@
 <template>
-	<Modal ref="__modal">
+	<Modal ref="__modal" minWidth="60%">
 		<template v-slot:main>
 			<p v-if="editableFields.length === 0">No editable parameters available.</p>
 			<form v-else id="parameterModal" @submit.prevent="save">
 				<div class="fieldRow" v-for="(field, k) in editableFields" :key="k">
 					<label>
-						{{ field.label }}<strong class="required" v-if="field.isRequired()" title="required">*</strong>
-						<div v-if="field.description()" class="description">
-							<Description :description="field.description()" />
+						{{ field.label }}<strong class="required" v-if="field.isRequired" title="required">*</strong>
+						<div v-if="field.description" class="description">
+							<Description :description="field.description" />
 						</div>
 					</label>
 					<ParameterFields :ref="field.name" :editable="editable" :field="field" :pass="field.getValue()" />

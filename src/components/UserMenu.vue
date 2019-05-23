@@ -60,7 +60,7 @@ export default {
 				return this.formatCurrency(this.me.budget);
 			}
 			else {
-				return "Unknown";
+				return "N/A";
 			}
 		},
 		userName() {

@@ -220,7 +220,7 @@ Block.prototype.getHtml = function()
                 key,
                 'connector',
                 'field_' + field.name,
-                ((field.hasValue || !field.isRequired() || field.isOutput()) ? 'hasValue' : 'noValue')
+                ((field.hasValue || !field.isRequired || field.isOutput()) ? 'hasValue' : 'noValue')
             ];
             if (this.isCollection() && field.name === 'id') {
                 classNames.push('hide_collection_id');
@@ -585,7 +585,7 @@ Block.prototype.exportProcessGraph = function()
             values[field.name] = v.length === 1 ? v[0] : v;
         }
         else if (field.hasValue) {
-            if (!field.isRequired() && field.isDefaultValue()) {
+            if (!field.isRequired && field.isDefaultValue()) {
                 continue; // Skip if it's the default value and not required
             }
             values[field.name] = field.getValue();

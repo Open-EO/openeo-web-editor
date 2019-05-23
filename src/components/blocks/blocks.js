@@ -81,8 +81,10 @@ var Blocks = function(errorHandler = null, openParameterEditor = null)
         this.blocks = {};
         this.id = 1;
         this.edgeId = 1;
-        this.innerDiv.innerHTML = '';
-        this.redraw();
+        if (this.innerDiv) {
+            this.innerDiv.innerHTML = '';
+            this.redraw();
+        }
     }
 
     /**
@@ -100,7 +102,7 @@ Blocks.prototype.run = function(selector, editable = true)
     this.editable = editable;
 
     if (!this.div) {
-        alert('blocks.js: Unable to find ' + selector);
+        console.log('blocks.js: Unable to find ' + selector);
     }
 
     // Inject the initial editor
@@ -483,7 +485,6 @@ Blocks.prototype.removeBlock = function(key)
 {
     var block = this.blocks[key];
 
-
     var newEdges = [];
     for (var k in this.edges) {
         var edge = this.edges[k];
@@ -500,6 +501,9 @@ Blocks.prototype.removeBlock = function(key)
         this.selectedBlock = null;
     }
     delete this.blocks[key];
+    if (block.result) {
+        this.setResultNode(block, false);
+    }
     this.redraw();
 };
 

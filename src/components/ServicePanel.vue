@@ -13,7 +13,7 @@
 		</template>
 		<template slot="actions" slot-scope="p">
 			<button title="Details" @click="serviceInfo(p.row)" v-show="supports('describeService')"><i class="fas fa-info"></i></button><button title="Show in Editorr" @click="showInEditor(p.row)" v-show="supports('describeService')"><i class="fas fa-code-branch"></i></button>
-			<button title="Update process graph" @click="updateProcessGraph(p.row)" v-show="supports('updateService')"><i class="fas fa-edit"></i></button>
+			<button title="Replace process graph" @click="updateProcessGraph(p.row)" v-show="supports('updateService')"><i class="fas fa-retweet"></i></button>
 			<button title="Delete" @click="deleteService(p.row)" v-show="supports('deleteService')"><i class="fas fa-trash"></i></button>
 			<button v-show="p.row.enabled" title="View on map" @click="viewService(p.row)"><i class="fas fa-map"></i></button>
 		</template>
