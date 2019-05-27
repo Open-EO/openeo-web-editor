@@ -28,6 +28,7 @@
 		<ServiceInfoModal ref="serviceModal" />
 		<JobInfoModal ref="jobModal" />
 		<ProcessGraphInfoModal ref="pgModal" />
+		<ParameterModal ref="parameterModal" />
 	</div>
 </template>
 
@@ -46,6 +47,7 @@ import ServerInfoModal from './ServerInfoModal.vue';
 import JobInfoModal from './JobInfoModal.vue';
 import ProcessGraphInfoModal from './ProcessGraphInfoModal.vue';
 import ServiceInfoModal from './ServiceInfoModal.vue';
+import ParameterModal from './ParameterModal.vue';
 
 export default {
 	name: 'IDE',
@@ -60,7 +62,8 @@ export default {
 		ServerInfoModal,
 		JobInfoModal,
 		ProcessGraphInfoModal,
-		ServiceInfoModal
+		ServiceInfoModal,
+		ParameterModal
 	},
 	data() {
 		return {
@@ -78,6 +81,7 @@ export default {
 		EventBus.$on('showJobInfo', this.showJobInfo);
 		EventBus.$on('showProcessGraphInfo', this.showProcessGraphInfo);
 		EventBus.$on('showServiceInfo', this.showServiceInfo);
+		EventBus.$on('showDataForm', this.showDataForm);
 		EventBus.$on('getProcessGraph', this.getProcessGraph);
 		EventBus.$on('insertProcessGraph', this.insertProcessGraph);
 		this.updatePositions();
@@ -155,6 +159,11 @@ export default {
 
 		showWebEditorInfo() {
 			EventBus.$emit('showWebEditorInfo');
+		},
+
+		showDataForm(title, fields, saveCallback = null, closeCallback = null) {
+			var editable = typeof saveCallback === 'function';
+			this.$refs.parameterModal.show(title, fields, editable, saveCallback, closeCallback);
 		}
 
 	}

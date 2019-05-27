@@ -10,7 +10,14 @@ var Fields = function(block, schema)
     this.block = block;
 
     // Fields
-    var output = new Field(schema.returns, "output", block.getDefaultOutputLabel(), true);
+    var output = new Field(
+        "output",
+        block.getDefaultOutputLabel(),
+        schema.returns.schema,
+        schema.returns.description,
+        schema.returns.required,
+        true
+    );
     this.output = output;
     this.inputs = [];
     this.editables = [];
@@ -19,7 +26,8 @@ var Fields = function(block, schema)
     };
 
     for(var name in schema.parameters) {
-        var field = new Field(schema.parameters[name], name, name);
+        var p = schema.parameters[name];
+        var field = new Field(name, name, p.schema, p.description, p.required, false, p.experimental, p.deprecated);
         this.inputs.push(field);
         if (field.isEditable()) {
             this.editables.push(field);

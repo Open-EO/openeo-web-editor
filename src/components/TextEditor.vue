@@ -97,7 +97,7 @@ export default {
 
 		insertProcessGraph(pg) {
 			if (!pg) {
-				this.insertToEditor("");
+				this.clearProcessGraph();
 			}
 			else {
 				this.insertToEditor(JSON.stringify(pg, null, 2), true);

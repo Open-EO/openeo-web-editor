@@ -13,7 +13,8 @@
 		</template>
 		<template slot="actions" slot-scope="p">
 			<button title="Details" @click="serviceInfo(p.row)" v-show="supports('describeService')"><i class="fas fa-info"></i></button><button title="Show in Editorr" @click="showInEditor(p.row)" v-show="supports('describeService')"><i class="fas fa-code-branch"></i></button>
-			<button title="Update process graph" @click="updateProcessGraph(p.row)" v-show="supports('updateService')"><i class="fas fa-edit"></i></button>
+			<button title="Edit metadata" @click="editMetadata(p.row)" v-show="supports('updateService')"><i class="fas fa-edit"></i></button>
+			<button title="Replace process graph" @click="replaceProcessGraph(p.row)" v-show="supports('updateService')"><i class="fas fa-retweet"></i></button>
 			<button title="Delete" @click="deleteService(p.row)" v-show="supports('deleteService')"><i class="fas fa-trash"></i></button>
 			<button v-show="p.row.enabled" title="View on map" @click="viewService(p.row)"><i class="fas fa-map"></i></button>
 		</template>
@@ -24,6 +25,7 @@
 import EventBus from '../eventbus.js';
 import WorkPanelMixin from './WorkPanelMixin.vue';
 import Utils from '../utils.js';
+import Field from './blocks/field';
 
 export default {
 	name: 'ServicePanel',
@@ -111,8 +113,51 @@ export default {
 			}
 			Utils.confirm(this, 'Web Service created!', buttons);
 		},
-		createService(processGraph, type, title = null) {
-			this.connection.createService(processGraph, type, title)
+		getTitleField() {
+			return new Field('title', 'Title', {type: 'string'});
+		},
+		getDescriptionField() {
+			return new Field('description', 'Description', {type: 'string', format: 'commonmark'}, 'CommonMark (Markdown) is allowed.');
+		},
+		getServiceTypeField() {
+			return new Field('type', 'Type', {type: 'string', format: 'service-type'}, '', true);
+		},
+		getBillingPlanField() {
+			return new Field('plan', 'Billing plan', {type: 'string', format: 'billing-plan'});
+		},
+		getBudgetField() {
+			return new Field('budget', 'Budget', {type: 'number', format: 'budget', default: null});
+		},
+		getEnabledField() {
+			return new Field('enabled', 'Enabled', {type: 'boolean', default: true});
+		},
+		getParametersField() {
+			return new Field('parameters', 'Parameters', {type: 'object', format: 'service-type-parameters'});
+		},
+		normalizeToDefaultData(data) {
+			if (typeof data.title !== 'undefined' && (typeof data.title !== 'string' || data.title.length === 0)) {
+				data.title = null;
+			}
+			if (typeof data.description !== 'undefined' && (typeof data.description !== 'string' || data.description.length === 0)) {
+				data.description = null;
+			}
+			if (typeof data.enabled !== 'undefined' && typeof data.enabled !== 'boolean') {
+				data.enabled = true;
+			}
+			if (typeof data.parameters !== 'undefined' && !Utils.isObject(data.parameters)) {
+				data.parameters = {};
+			}
+			if (typeof data.plan !== 'undefined' && (typeof data.plan !== 'string' || data.plan.length === 0)) {
+				data.plan = null;
+			}
+			if (typeof data.budget !== 'undefined' && (typeof data.budget !== 'number' || data.budget < 0)) {
+				data.budget = null;
+			}
+			return data;
+		},
+		createService(script, data) {
+			data = this.normalizeToDefaultData(data);
+			this.connection.createService(script, data.type, data.title, data.description, data.enabled, data.parameters, data.plan, data.budget)
 				.then(service => {
 					EventBus.$emit('serviceCreated', service);
 				}).catch(error => {
@@ -120,50 +165,38 @@ export default {
 				});
 		},
 		createServiceFromScript() {
-			var title = prompt("Please specify a title for the service:");
-			if (title === null) {
-				return;
-			}
-			else if (typeof title !== 'string' || title.length === 0) {
-				title = null;
-			}
-
-			var serviceTypes = Object.keys(this.serviceTypes).map(v => v.toUpperCase());
-			var type = '';
-			if (serviceTypes.length == 1) {
-				type = serviceTypes[0];
-			}
-			else {
-				do {
-					var msgPrefix = '';
-					if (type !== '') {
-						msgPrefix = "Specified service type is invalid.\r\n";
-					}
-					var type = prompt(msgPrefix + "Please specify the service type:\r\nOne of: ".serviceTypes.join(', '), type);
-					if (type === null) {
-						return;
-					}
-					else if (typeof type === 'string') {
-						type = type.toUpperCase();
-						if (!serviceTypes.includes(type)) {
-							type = '';
-						}
-					}
-					else {
-						type = '';
-					}
-				} while(type.length == 0);
-			}
-			
-			// ToDo: Ask user for service arguments
-			EventBus.$emit('getProcessGraph', script => this.createService(script, type, title));
+			EventBus.$emit('getProcessGraph', script => {
+				var fields = [
+					this.getServiceTypeField(),
+					this.getTitleField(),
+					this.getDescriptionField(),
+					this.getEnabledField(),
+					this.getBillingPlanField(),
+					this.getBudgetField(),
+					this.getParametersField()
+				];
+				EventBus.$emit('showDataForm', "Create new web service", fields, data => this.createService(script, data));
+			});
+		},
+		editMetadata(oldService) {
+			this.refreshService(oldService, service => {
+				var fields = [
+					this.getTitleField().setValue(service.title),
+					this.getDescriptionField().setValue(service.description),
+					this.getEnabledField().setValue(service.enabled),
+					this.getBillingPlanField().setValue(service.plan),
+					this.getBudgetField().setValue(service.budget),
+					this.getParametersField().setValue(service.parameters)
+				];
+				EventBus.$emit('showDataForm', "Edit web service", fields, data => this.updateService(service, data));
+			});
 		},
 		serviceInfo(service) {
 			this.refreshService(service, updatedService => {
 				EventBus.$emit('showServiceInfo', updatedService.getAll());
 			});
 		},
-		updateProcessGraph(service) {
+		replaceProcessGraph(service) {
 			EventBus.$emit('getProcessGraph', script => {
 				service.updateService({processGraph: script})
 					.then(updatedService => {
@@ -174,20 +207,19 @@ export default {
 			}, false);
 		},
 		updateTitle(service, newTitle) {
-			service.updateService({title: newTitle})
-				.then(updatedService => {
-					Utils.ok(this, "Service title successfully updated.");
-					this.updateServiceData(updatedService);
-				})
-				.catch(error => Utils.exception(this, error, "Sorry, could not update service title."));
+			this.updateService(service, {title: newTitle});
 		},
 		toggleEnabled(service) {
-			service.updateService({enabled: !service.enabled})
+			this.updateService(service, {enabled: !service.enabled});
+		},
+		updateService(service, data) {
+			data = this.normalizeToDefaultData(data);
+			service.updateService(data)
 				.then(updatedService => {
-					Utils.ok(this, "Service successfully changed service state.");
+					Utils.ok(this, "Service successfully updated web service.");
 					this.updateServiceData(updatedService);
 				})
-				.catch(error => Utils.exception(this, error, "Sorry, could not change service state."));
+				.catch(error => Utils.exception(this, error, "Sorry, could not update web service."));
 		},
 		deleteService(service) {
 			service.deleteService()

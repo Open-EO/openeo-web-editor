@@ -1,13 +1,20 @@
 <template>
 	<div class="fieldEditorContainer">
-		<select class="fieldValue" v-if="schema.isEnum()" :name="fieldName" v-model="value" :disabled="!editable">
+		<select class="fieldValue" v-if="schema.isEnum()" :name="fieldName" v-model="value" ref="selectFirst" :disabled="!editable">
 			<option v-for="(choice, k) in schema.getEnumChoices()" :key="k" :value="choice">{{ choice }}</option>
 		</select>
-		<select class="fieldValue" v-else-if="type === 'collection-id'" :name="fieldName" v-model="value" :disabled="!editable">
+		<select class="fieldValue" v-else-if="type === 'collection-id'" :name="fieldName" v-model="value" ref="selectFirst" :disabled="!editable">
 			<option v-for="c in collections" :key="c.id" :value="c.id">{{ c.id }}</option>
 		</select>
-		<select class="fieldValue" v-else-if="type === 'output-format'" :name="fieldName" v-model="value" :disabled="!editable">
+		<select class="fieldValue" v-else-if="type === 'output-format'" :name="fieldName" v-model="value" ref="selectFirst" :disabled="!editable">
 			<option v-for="(x, format) in outputFormats" :key="format" :value="format.toUpperCase()">{{ format.toUpperCase() }}</option>
+		</select>
+		<select class="fieldValue" v-else-if="type === 'service-type'" :name="fieldName" v-model="value" ref="selectFirst" :disabled="!editable">
+			<option v-for="(x, type) in serviceTypes" :key="type" :value="type.toUpperCase()">{{ type.toUpperCase() }}</option>
+		</select>
+		<select class="fieldValue" v-else-if="type === 'billing-plan'" :name="fieldName" v-model="value" ref="selectFirst" :disabled="!editable">
+			<option v-for="plan in capabilities.listPlans()" :key="plan.name" :value="plan.name">{{ plan.name }} ({{ plan.paid ? 'paid' : 'free' }})</option>
+			<!-- ToDo: Select the default plan if no value is set -->
 		</select>
 		<template v-else-if="type === 'temporal-interval'">
 			<VueCtkDateTimePicker v-model="value" :disabled="!editable" :range="true" label="Select start and end time" format="YYYY-MM-DD[T]HH:mm:ss[Z]"></VueCtkDateTimePicker>
@@ -43,7 +50,12 @@
 			</draggable>
 			<button type="button" v-if="editable" @click="addField()"><i class="fas fa-plus"></i> Add</button>
 		</div>
-		<textarea class="fieldValue textarea" v-else-if="useTextarea" v-model="value" :disabled="!editable"></textarea>
+		<template v-else-if="type === 'budget'">
+			<input type="checkbox" v-model="hasBudget" value="1" />
+			<input type="number" min="0.00" step="0.01" :disabled="!hasBudget || !editable" :name="fieldName" v-model="value" />&nbsp;{{ capabilities.currency() }}
+			<!-- ToDo: Set max value of the input to the maximum budget available -->
+		</template>
+		<textarea class="fieldValue textarea" v-else-if="useTextarea" :name="fieldName" v-model="value" :disabled="!editable"></textarea>
 		<input class="fieldValue" v-else-if="type === 'boolean'" :checked="!!value" v-model="value" type="checkbox" :name="fieldName" :disabled="!editable" />
 		<input class="fieldValue" v-else v-model="value" type="text" :name="fieldName" :disabled="!editable" />
 	</div>
@@ -88,16 +100,18 @@ export default {
 	},
 	data() {
 		return {
-			value: null
+			value: null,
+			hasBudget: false
 		}
 	},
 	computed: {
-		...Utils.mapState('server', ['collections', 'outputFormats']),
+		...Utils.mapState('server', ['collections', 'outputFormats', 'serviceTypes']),
+		...Utils.mapGetters('server', ['capabilities']),
 		type() {
 			return this.isItem ? this.schema.arrayOf() : this.schema.dataType();
 		},
 		useTextarea() {
-			return (this.type === 'geojson' || this.type === 'proj-definition' || this.type === 'output-format-options' || this.type === 'process-graph-variables');
+			return (this.type === 'geojson' || this.type === 'proj-definition' || this.type === 'output-format-options' || this.type === "service-type-parameters" || this.type === 'process-graph-variables' || this.type === 'commonmark');
 		},
 		fieldName() {
 			return this.field.name + (Array.isArray(this.field.value) ? '[]' : '');
@@ -149,6 +163,11 @@ export default {
 					map.dragging.disable();
 				}
 			}
+			if (this.$refs.selectFirst && this.$refs.selectFirst.selectedOptions.length === 0) {
+				this.$refs.selectFirst.selectedIndex = 0;
+				// selectedIndex doesn't fire a v-model change, so set the value manually.
+				this.value = this.$refs.selectFirst.value;
+			}
 		},
 		initValue() {
 			var v;
@@ -163,7 +182,7 @@ export default {
 					v = "";
 				}
 			}
-			else if (this.type === 'output-format') {
+			else if (this.type === 'output-format' || this.type === 'service-type') {
 				v = typeof this.$props.pass === 'string' ? this.$props.pass.toUpperCase() : this.$props.pass;
 			}
 			else if (this.type === 'callback') {
@@ -179,6 +198,10 @@ export default {
 					v = null;
 				}
 			}
+			else if (this.type === 'budget') {
+				v = this.$props.pass;
+				this.hasBudget = typeof v === 'number';
+			}
 			else if (this.type === 'array' || this.type === 'temporal-intervals') {
 				v = [];
 				if (Array.isArray(this.$props.pass)) {
@@ -192,7 +215,7 @@ export default {
 			}
 			else if (this.useTextarea) {
 				if (typeof this.$props.pass === 'object') {
-					if (Utils.size() > 0) {
+					if (typeof this.$props.pass === 'object' && this.$props.pass !== null) {
 						v = JSON.stringify(this.$props.pass, null, 2);
 					}
 					else {
@@ -236,18 +259,25 @@ export default {
 				}
 				return values;
 			}
-			else if (this.type === 'number') {
-				return Number.parseFloat(this.value);
+			else if (this.type === 'number' || this.type === 'budget') {
+				var num = Number.parseFloat(this.value);
+				return Number.isNaN(num) ? null : num;
 			}
 			else if (this.type === 'integer') {
-				return Number.parseInt(this.value);
+				var num = Number.parseInt(this.value);
+				return Number.isNaN(num) ? null : num;
 			}
 			else if (this.type === 'null') {
 				return null;
 			}
 			else if (this.useTextarea) {
 				if (typeof this.value === 'string' && this.value.length > 0) {
-					return JSON.parse(this.value);
+					if (typeof this.$props.pass === 'object' && this.$props.pass !== null) {
+						return JSON.parse(this.value);
+					}
+					else {
+						return this.value;
+					}
 				}
 				else {
 					return null;

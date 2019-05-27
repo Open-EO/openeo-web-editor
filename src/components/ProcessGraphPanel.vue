@@ -1,12 +1,13 @@
 <template>
 	<DataTable ref="table" :dataSource="listProcessGraphs" :columns="columns" id="ProcessGraphPanel">
 		<template slot="toolbar">
-			<button title="Add new process graph" @click="addGraph" v-show="supports('createProcessGraph')"><i class="fas fa-plus"></i> Add</button>
+			<button title="Add new process graph" @click="addGraphFromScript" v-show="supports('createProcessGraph')"><i class="fas fa-plus"></i> Add</button>
 			<button title="Refresh process graphs" @click="updateData()"><i class="fas fa-sync-alt"></i></button> <!-- ToDo: Should be done automatically later -->
 		</template>
 		<template slot="actions" slot-scope="p">
 			<button title="Details" @click="graphInfo(p.row)" v-show="supports('describeProcessGraph')"><i class="fas fa-info"></i></button>		<button title="Show in Editor" @click="showInEditor(p.row)" v-show="supports('describeProcessGraph')"><i class="fas fa-code-branch"></i></button>
-			<button title="Update process graph" @click="updateProcessGraph(p.row)" v-show="supports('updateProcessGraph')"><i class="fas fa-edit"></i></button>
+			<button title="Edit metadata" @click="editMetadata(p.row)" v-show="supports('updateProcessGraph')"><i class="fas fa-edit"></i></button>
+			<button title="Replace process graph" @click="replaceProcessGraph(p.row)" v-show="supports('updateProcessGraph')"><i class="fas fa-retweet"></i></button>
 			<button title="Delete" @click="deleteGraph(p.row)" v-show="supports('deleteProcessGraph')"><i class="fas fa-trash"></i></button>
 		</template>
 	</DataTable>
@@ -16,6 +17,7 @@
 import EventBus from '../eventbus.js';
 import WorkPanelMixin from './WorkPanelMixin.vue';
 import Utils from '../utils.js';
+import Field from './blocks/field';
 
 export default {
 	name: 'ProcessGraphPanel',
@@ -61,44 +63,66 @@ export default {
 				EventBus.$emit('insertProcessGraph', updatedPg.processGraph);
 			});
 		},
-		addGraph() {
-			var title = prompt("Please specify a title for the process graph:");
-			if (title === null) {
-				return;
-			}
-			else if (typeof title !== 'string' || title.length === 0) {
-				title = null;
-			}
-
+		getTitleField() {
+			return new Field('title', 'Title', {type: 'string'});
+		},
+		getDescriptionField() {
+			return new Field('description', 'Description', {type: 'string', format: 'commonmark'}, 'CommonMark (Markdown) is allowed.');
+		},
+		addGraphFromScript() {
 			EventBus.$emit('getProcessGraph', script => {
-				this.connection.createProcessGraph(script, title)
-					.then(data => {
-						this.$refs.table.addData(data);
-						Utils.ok(this, 'Process Graph stored at back-end!');
-					}).catch(error => Utils.exception(this, error, 'Sorry, could not save the process graph.'));
+				var fields = [
+					this.getTitleField(),
+					this.getDescriptionField()
+				];
+				EventBus.$emit('showDataForm', "Store a new process graph", fields, data => this.addGraph(script, data));
 			});
+		},
+		normalizeToDefaultData(data) {
+			if (typeof data.title !== 'undefined' && (typeof data.title !== 'string' || data.title.length === 0)) {
+				data.title = null;
+			}
+			if (typeof data.description !== 'undefined' && (typeof data.description !== 'string' || data.description.length === 0)) {
+				data.description = null;
+			}
+			return data;
+		},
+		addGraph(script, data) {
+			data = this.normalizeToDefaultData(data);
+			this.connection.createProcessGraph(script, data.title, data.description)
+				.then(data => {
+					this.$refs.table.addData(data);
+					Utils.ok(this, 'Process Graph successfully stored!');
+				}).catch(error => Utils.exception(this, error, 'Sorry, could not save the process graph.'));
 		},
 		graphInfo(pg) {
 			this.refreshProcessGraph(pg, updatedPg => {
 				EventBus.$emit('showProcessGraphInfo', updatedPg.getAll());
 			});
 		},
-		updateProcessGraph(pg) {
-			EventBus.$emit('getProcessGraph', script => {
-				pg.updateProcessGraph({processGraph: script})
-					.then(updatedPg => {
-						Utils.ok(this, 'Process Graph updated!');
-						this.updateProcessGraphData(updatedPg);
-					}).catch(error => Utils.exception(this, error, 'Sorry, could not update the process graph.'));
+		editMetadata(oldPg) {
+			this.refreshProcessGraph(oldPg, pg => {
+				var fields = [
+					this.getTitleField().setValue(pg.title),
+					this.getDescriptionField().setValue(pg.description)
+				];
+				EventBus.$emit('showDataForm', "Edit metadata for a process graph", fields, data => this.updateMetadata(pg, data));
 			});
 		},
+		replaceProcessGraph(pg) {
+			EventBus.$emit('getProcessGraph', script => this.updateMetadata(pg, {processGraph: script}));
+		},
 		updateTitle(pg, newTitle) {
-			pg.updateProcessGraph({title: newTitle})
+			this.updateMetadata(pg, {title: newTitle});
+		},
+		updateMetadata(pg, data) {
+			data = this.normalizeToDefaultData(data);
+			pg.updateProcessGraph(data)
 				.then(updatePg => {
-					Utils.ok(this, "Process graph title successfully updated.");
+					Utils.ok(this, "Process graph successfully updated.");
 					this.updateProcessGraphData(updatePg);
 				})
-				.catch(error => Utils.exception(this, error, "Sorry, could not update process graph title."));
+				.catch(error => Utils.exception(this, error, "Sorry, could not update process graph."));
 		},
 		deleteGraph(pg) {
 			pg.deleteProcessGraph()

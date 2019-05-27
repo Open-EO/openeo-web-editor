@@ -84,7 +84,7 @@ export default {
 			return this.canEdit(col) && this.editField != null && this.editField[0] == row && this.editField[1] == id;
 		},
 		onDblClick(event, row, col, id) {
-			if (this.canEdit(col)) {
+			if (!this.canEdit(col)) {
 				return;
 			}
 
