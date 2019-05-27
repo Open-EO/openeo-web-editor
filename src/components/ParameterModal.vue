@@ -115,6 +115,10 @@ export default {
 	flex-grow: 1;
 	width: 99%;
 }
+#parameterModal .fieldRow input[type="checkbox"].fieldValue  {
+	display: inline-block;
+	flex-grow: unset;
+}
 
 #parameterModal .description .styled-description {
 	line-height: 1.1em;

@@ -129,19 +129,23 @@ export default {
 		getBudgetField() {
 			return new Field('budget', 'Budget', {type: 'number', format: 'budget', default: null});
 		},
-		createJob(processGraph, data) {
-			if (typeof data.title !== 'string' || data.title.length === 0) {
+		normalizeToDefaultData(data) {
+			if (typeof data.title !== 'undefined' && (typeof data.title !== 'string' || data.title.length === 0)) {
 				data.title = null;
 			}
-			if (typeof data.description !== 'string' || data.description.length === 0) {
+			if (typeof data.description !== 'undefined' && (typeof data.description !== 'string' || data.description.length === 0)) {
 				data.description = null;
 			}
-			if (typeof data.plan !== 'string' || data.plan.length === 0) {
+			if (typeof data.plan !== 'undefined' && (typeof data.plan !== 'string' || data.plan.length === 0)) {
 				data.plan = null;
 			}
-			if (typeof data.budget !== 'number' || data.budget < 0) {
+			if (typeof data.budget !== 'undefined' && (typeof data.budget !== 'number' || data.budget < 0)) {
 				data.budget = null;
 			}
+			return data;
+		},
+		createJob(processGraph, data) {
+			data = this.normalizeToDefaultData(data);
 			this.connection.createJob(processGraph, data.title, data.description, data.plan, data.budget)
 				.then(job => {
 					EventBus.$emit('jobCreated', job);
@@ -157,7 +161,7 @@ export default {
 					this.getBillingPlanField(),
 					this.getBudgetField()
 				];
-				EventBus.$emit('showDataForm', "Add a new batch job", fields, data => this.createJob(script, data));
+				EventBus.$emit('showDataForm', "Create new batch job", fields, data => this.createJob(script, data));
 			});
 		},
 		updateJobData(updatedJob) {
@@ -227,13 +231,14 @@ export default {
 					this.getBillingPlanField().setValue(job.plan),
 					this.getBudgetField().setValue(job.budget)
 				];
-				EventBus.$emit('showDataForm', "Edit job #" + job.id, fields, data => this.updateJob(job, data));
+				EventBus.$emit('showDataForm', "Edit batch job", fields, data => this.updateJob(job, data));
 			});
 		},
 		updateTitle(job, newTitle) {
 			this.updateJob(job, {title: newTitle});
 		},
 		updateJob(job, data) {
+			data = this.normalizeToDefaultData(data);
 			job.updateJob(data)
 				.then(updatedJob => {
 					Utils.ok(this, "Job successfully updated.");

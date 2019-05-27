@@ -39,7 +39,10 @@ export default {
 		if (this.field.schemas.length > 1) {
 			JsonSchemaValidator.getTypeForValue(this.field.schemas.map(s => s.schema), this.pass)
 				.then(type => {
-					if (Array.isArray(type)) {
+					if (typeof type === 'undefined') {
+						this.guessType();
+					}
+					else if (Array.isArray(type)) {
 						Utils.info("Data type can't be detected, please select it yourself.");
 						console.log("Parameter schema is ambiguous. Potential types: " + type.join(', ') + ". Value: " + JSON.stringify(this.pass));
 						this.type = type[0];
@@ -48,16 +51,25 @@ export default {
 						this.type = type;
 					}
 				})
-				.catch(error => {
-					this.type = 0;
-				});
+				.catch(error => this.guessType());
 		}
 		else {
 			this.type = 0;
 		}
 	},
 	methods: {
-
+		guessType() {
+			// Try to set null as default
+			for(var i in this.field.schemas) {
+				console.log(i, typeof this.field.schemas[i].isNull, this.field.schemas[i].isNull());
+				if (this.field.schemas[i].isNull()) {
+					this.type = i;
+					return;
+				}
+			}
+			// Otherwise set first type in list
+			this.type = 0;
+		},
 		getValue() {
 			return this.$refs.field.getValue();
 		}

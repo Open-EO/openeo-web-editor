@@ -78,17 +78,21 @@ export default {
 				EventBus.$emit('showDataForm', "Store a new process graph", fields, data => this.addGraph(script, data));
 			});
 		},
-		addGraph(script, data) {
-			if (typeof data.title !== 'string' || data.title.length === 0) {
+		normalizeToDefaultData(data) {
+			if (typeof data.title !== 'undefined' && (typeof data.title !== 'string' || data.title.length === 0)) {
 				data.title = null;
 			}
-			if (typeof data.description !== 'string' || data.description.length === 0) {
+			if (typeof data.description !== 'undefined' && (typeof data.description !== 'string' || data.description.length === 0)) {
 				data.description = null;
 			}
+			return data;
+		},
+		addGraph(script, data) {
+			data = this.normalizeToDefaultData(data);
 			this.connection.createProcessGraph(script, data.title, data.description)
 				.then(data => {
 					this.$refs.table.addData(data);
-					Utils.ok(this, 'Process Graph stored at back-end!');
+					Utils.ok(this, 'Process Graph successfully stored!');
 				}).catch(error => Utils.exception(this, error, 'Sorry, could not save the process graph.'));
 		},
 		graphInfo(pg) {
@@ -102,7 +106,7 @@ export default {
 					this.getTitleField().setValue(pg.title),
 					this.getDescriptionField().setValue(pg.description)
 				];
-				EventBus.$emit('showDataForm', "Edit metadata for process graph #" + pg.id, fields, data => this.updateMetadata(pg, data));
+				EventBus.$emit('showDataForm', "Edit metadata for a process graph", fields, data => this.updateMetadata(pg, data));
 			});
 		},
 		replaceProcessGraph(pg) {
@@ -112,6 +116,7 @@ export default {
 			this.updateMetadata(pg, {title: newTitle});
 		},
 		updateMetadata(pg, data) {
+			data = this.normalizeToDefaultData(data);
 			pg.updateProcessGraph(data)
 				.then(updatePg => {
 					Utils.ok(this, "Process graph successfully updated.");

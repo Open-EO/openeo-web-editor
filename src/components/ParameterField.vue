@@ -1,15 +1,18 @@
 <template>
 	<div class="fieldEditorContainer">
-		<select class="fieldValue" v-if="schema.isEnum()" :name="fieldName" v-model="value" :disabled="!editable">
+		<select class="fieldValue" v-if="schema.isEnum()" :name="fieldName" v-model="value" ref="selectFirst" :disabled="!editable">
 			<option v-for="(choice, k) in schema.getEnumChoices()" :key="k" :value="choice">{{ choice }}</option>
 		</select>
-		<select class="fieldValue" v-else-if="type === 'collection-id'" :name="fieldName" v-model="value" :disabled="!editable">
+		<select class="fieldValue" v-else-if="type === 'collection-id'" :name="fieldName" v-model="value" ref="selectFirst" :disabled="!editable">
 			<option v-for="c in collections" :key="c.id" :value="c.id">{{ c.id }}</option>
 		</select>
-		<select class="fieldValue" v-else-if="type === 'output-format'" :name="fieldName" v-model="value" :disabled="!editable">
+		<select class="fieldValue" v-else-if="type === 'output-format'" :name="fieldName" v-model="value" ref="selectFirst" :disabled="!editable">
 			<option v-for="(x, format) in outputFormats" :key="format" :value="format.toUpperCase()">{{ format.toUpperCase() }}</option>
 		</select>
-		<select class="fieldValue" v-else-if="type === 'billing-plan'" :name="fieldName" v-model="value" :disabled="!editable">
+		<select class="fieldValue" v-else-if="type === 'service-type'" :name="fieldName" v-model="value" ref="selectFirst" :disabled="!editable">
+			<option v-for="(x, type) in serviceTypes" :key="type" :value="type.toUpperCase()">{{ type.toUpperCase() }}</option>
+		</select>
+		<select class="fieldValue" v-else-if="type === 'billing-plan'" :name="fieldName" v-model="value" ref="selectFirst" :disabled="!editable">
 			<option v-for="plan in capabilities.listPlans()" :key="plan.name" :value="plan.name">{{ plan.name }} ({{ plan.paid ? 'paid' : 'free' }})</option>
 			<!-- ToDo: Select the default plan if no value is set -->
 		</select>
@@ -102,13 +105,13 @@ export default {
 		}
 	},
 	computed: {
-		...Utils.mapState('server', ['collections', 'outputFormats']),
+		...Utils.mapState('server', ['collections', 'outputFormats', 'serviceTypes']),
 		...Utils.mapGetters('server', ['capabilities']),
 		type() {
 			return this.isItem ? this.schema.arrayOf() : this.schema.dataType();
 		},
 		useTextarea() {
-			return (this.type === 'geojson' || this.type === 'proj-definition' || this.type === 'output-format-options' || this.type === 'process-graph-variables' || this.type === 'commonmark');
+			return (this.type === 'geojson' || this.type === 'proj-definition' || this.type === 'output-format-options' || this.type === "service-type-parameters" || this.type === 'process-graph-variables' || this.type === 'commonmark');
 		},
 		fieldName() {
 			return this.field.name + (Array.isArray(this.field.value) ? '[]' : '');
@@ -160,6 +163,11 @@ export default {
 					map.dragging.disable();
 				}
 			}
+			if (this.$refs.selectFirst && this.$refs.selectFirst.selectedOptions.length === 0) {
+				this.$refs.selectFirst.selectedIndex = 0;
+				// selectedIndex doesn't fire a v-model change, so set the value manually.
+				this.value = this.$refs.selectFirst.value;
+			}
 		},
 		initValue() {
 			var v;
@@ -174,7 +182,7 @@ export default {
 					v = "";
 				}
 			}
-			else if (this.type === 'output-format') {
+			else if (this.type === 'output-format' || this.type === 'service-type') {
 				v = typeof this.$props.pass === 'string' ? this.$props.pass.toUpperCase() : this.$props.pass;
 			}
 			else if (this.type === 'callback') {

@@ -25,23 +25,28 @@ class Field extends ProcessSchema {
             return;
         }
         
-        var dataType = this.dataType(true);
-        switch(dataType) {
-            case 'array':
-                this.value = [];
-                break;
-            case 'string':
-                this.value = '';
-                break;
-            case 'integer':
-            case 'number':
-                this.value = 0;
-                break;
-            case 'boolean':
-                this.value = false;
-                break;
-            default:
-                this.value = null;
+        if (this.nullable()) {
+            this.value = null;
+        }
+        else {
+            var dataType = this.dataType(true);
+            switch(dataType) {
+                case 'array':
+                    this.value = [];
+                    break;
+                case 'string':
+                    this.value = '';
+                    break;
+                case 'integer':
+                case 'number':
+                    this.value = 0;
+                    break;
+                case 'boolean':
+                    this.value = false;
+                    break;
+                default:
+                    this.value = null;
+            }
         }
     }
 

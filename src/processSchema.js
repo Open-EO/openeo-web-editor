@@ -100,7 +100,7 @@ class ProcessSubSchema {
 	}
 
 	isNull() {
-		return this.type === 'null';
+		return this.schema.type === 'null';
 	}
 
 	isEditable() {
