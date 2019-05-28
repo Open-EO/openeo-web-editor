@@ -105,7 +105,7 @@ export default {
 				Utils.info(this, 'Data requested. Please wait...');
 				this.connection.computeResult(script)
 					.then(data => EventBus.$emit('showInViewer', data))
-					.catch(error => Utils.exception(this, error, 'Sorry, could not execute process graph.'));
+					.catch(error => Utils.exception(this, error, 'Computation failed'));
 			});
 		},
 	}

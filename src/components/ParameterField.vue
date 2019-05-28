@@ -14,7 +14,6 @@
 		</select>
 		<select class="fieldValue" v-else-if="type === 'billing-plan'" :name="fieldName" v-model="value" ref="selectFirst" :disabled="!editable">
 			<option v-for="plan in capabilities.listPlans()" :key="plan.name" :value="plan.name">{{ plan.name }} ({{ plan.paid ? 'paid' : 'free' }})</option>
-			<!-- ToDo: Select the default plan if no value is set -->
 		</select>
 		<template v-else-if="type === 'temporal-interval'">
 			<VueCtkDateTimePicker v-model="value" :disabled="!editable" :range="true" label="Select start and end time" format="YYYY-MM-DD[T]HH:mm:ss[Z]"></VueCtkDateTimePicker>
@@ -196,6 +195,12 @@ export default {
 				}
 				else {
 					v = null;
+				}
+			}
+			else if (this.type === 'billing-plan') {
+				var defaultPlans = this.capabilities.listPlans().filter(plan => plan.default);
+				if (defaultPlans.length === 1) {
+					v = defaultPlans[0].name;
 				}
 			}
 			else if (this.type === 'budget') {

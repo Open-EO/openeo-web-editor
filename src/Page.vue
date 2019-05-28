@@ -180,6 +180,10 @@ button {
 }
 
 #container .snotifyToast__title {
-	font-size: 1.2em;
+	font-size: 1em;
+	font-weight: bold;
+}
+#container .snotifyToast__body {
+	font-size: 0.9em;
 }
 </style>
