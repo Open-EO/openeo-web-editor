@@ -88,7 +88,7 @@ export default {
 					}
 					this.updateServiceData(updatedService);
 				})
-				.catch(error => Utils.exception(this, error, "Sorry, could not load service information."));
+				.catch(error => Utils.exception(this, error, "Loading service failed"));
 		},
 		showInEditor(service) {
 			this.refreshService(service, updatedService => {
@@ -161,7 +161,7 @@ export default {
 				.then(service => {
 					EventBus.$emit('serviceCreated', service);
 				}).catch(error => {
-					Utils.exception(this, error, 'Sorry, could not create the web service.');
+					Utils.exception(this, error, 'Creating service failed');
 				});
 		},
 		createServiceFromScript() {
@@ -203,7 +203,7 @@ export default {
 						Utils.ok(this, "Service process graph successfully updated.");
 						this.updateServiceData(updatedService);
 					})
-					.catch(error => Utils.exception(this, error, "Sorry, could not update service process graph."));
+					.catch(error => Utils.exception(this, error, "Replacing process graph failed"));
 			}, false);
 		},
 		updateTitle(service, newTitle) {
@@ -219,7 +219,7 @@ export default {
 					Utils.ok(this, "Service successfully updated web service.");
 					this.updateServiceData(updatedService);
 				})
-				.catch(error => Utils.exception(this, error, "Sorry, could not update web service."));
+				.catch(error => Utils.exception(this, error, "Updating service failed"));
 		},
 		deleteService(service) {
 			service.deleteService()
@@ -228,7 +228,7 @@ export default {
 					EventBus.$emit('removeWebService', service.serviceId);
 				})
 				.catch(error => {
-					Utils.exception(this, error, 'Sorry, could not delete service.');
+					Utils.exception(this, error, 'Deleting service failed');
 				});
 		},
 		viewService(service) {

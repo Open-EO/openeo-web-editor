@@ -56,7 +56,7 @@ export default {
 					}
 					this.updateProcessGraphData(updatedPg);
 				})
-				.catch(error => Utils.exception(this, error, 'Sorry, could not load process graph.'));
+				.catch(error => Utils.exception(this, error, 'Loading process graph failed'));
 		},
 		showInEditor(pg) {
 			this.refreshProcessGraph(pg, updatedPg => {
@@ -92,8 +92,8 @@ export default {
 			this.connection.createProcessGraph(script, data.title, data.description)
 				.then(data => {
 					this.$refs.table.addData(data);
-					Utils.ok(this, 'Process Graph successfully stored!');
-				}).catch(error => Utils.exception(this, error, 'Sorry, could not save the process graph.'));
+					Utils.ok(this, 'Process graph successfully stored!');
+				}).catch(error => Utils.exception(this, error, 'Storing process graph failed.'));
 		},
 		graphInfo(pg) {
 			this.refreshProcessGraph(pg, updatedPg => {
@@ -122,14 +122,14 @@ export default {
 					Utils.ok(this, "Process graph successfully updated.");
 					this.updateProcessGraphData(updatePg);
 				})
-				.catch(error => Utils.exception(this, error, "Sorry, could not update process graph."));
+				.catch(error => Utils.exception(this, error, "Updating process graph failed"));
 		},
 		deleteGraph(pg) {
 			pg.deleteProcessGraph()
 				.then(() => {
 					this.$refs.table.removeData(pg.processGraphId);
 				})
-				.catch(error => Utils.exception(this, error, 'Sorry, could not delete process graph.'));
+				.catch(error => Utils.exception(this, error, 'Deleting process graph failed'));
 		},
 		updateProcessGraphData(updatePg) {
 			this.$refs.table.replaceData(updatePg);

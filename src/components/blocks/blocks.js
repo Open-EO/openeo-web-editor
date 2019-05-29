@@ -283,7 +283,7 @@ Blocks.prototype.setResultNode = function(block, result = true) {
         }
     }
     // If we have no new potential result node, communicate to the user.
-    if (!result && !foundNewResultNode) {
+    if (this.getBlockCount() > 0 && !result && !foundNewResultNode) {
         this.showError("No result node available, please specify one.");
     }
     this.redraw();

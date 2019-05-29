@@ -96,7 +96,7 @@ export default {
 				this.connection.describeAccount()
 					.then(data => this.me = data)
 					.catch(error => {
-						Utils.exception(this, error, "Sorry, could not load account information.");
+						Utils.exception(this, error, "Loading account information failed");
 					});
 			}
 		},

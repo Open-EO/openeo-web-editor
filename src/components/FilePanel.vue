@@ -8,8 +8,8 @@
 		<DataTable ref="table" :dataSource="listFiles" :columns="columns">
 			<template slot="toolbar">
 				<button title="Refresh files" @click="updateData()"><i class="fas fa-sync-alt"></i></button> <!-- ToDo: Should be done automatically later -->
-				<button v-show="!subscribed" title="Subscribe to all changes to the file directory" @click="subscribeToFileChanges()"><i class="fas fa-bell"></i></button>
-				<button v-show="subscribed" title="Unsubscribe from all changes to the file directory" @click="unsubscribeFromFileChanges()"><i class="fas fa-bell-slash"></i></button>
+			<!--<button v-show="!subscribed" title="Subscribe to all changes to the file directory" @click="subscribeToFileChanges()"><i class="fas fa-bell"></i></button>
+				<button v-show="subscribed" title="Unsubscribe from all changes to the file directory" @click="unsubscribeFromFileChanges()"><i class="fas fa-bell-slash"></i></button> -->
 			</template>
 			<template slot="actions" slot-scope="p">
 				<button title="Download" @click="downloadFile(p.row)" v-show="supports('downloadFile')"><i class="fas fa-download"></i></button>

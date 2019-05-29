@@ -15,8 +15,8 @@
 			<button title="Cancel processing" @click="cancelJob(p.row)" v-show="supports('stopJob') && isJobActive(p.row)"><i class="fas fa-stop-circle"></i></button>
 			<button title="Download" @click="downloadResults(p.row)" v-show="supports('downloadResults') && hasResults(p.row)"><i class="fas fa-download"></i></button>
 			<button title="View results" @click="viewResults(p.row, true)" v-show="supports('downloadResults') && hasResults(p.row)"><i class="fas fa-eye"></i></button>
-			<button title="Subscribe" @click="subscribeToJob(p.row)" v-show="supports('subscribe') && !jobSubscriptions.includes(p.row)"><i class="fas fa-bell"></i></button>
-			<button title="Unsubscribe" @click="unsubscribeFromJob(p.row)" v-show="supports('unsubscribe') && jobSubscriptions.includes(p.row)"><i class="fas fa-bell-slash"></i></button>
+		<!--<button title="Subscribe" @click="subscribeToJob(p.row)" v-show="supports('subscribe') && !jobSubscriptions.includes(p.row)"><i class="fas fa-bell"></i></button>
+			<button title="Unsubscribe" @click="unsubscribeFromJob(p.row)" v-show="supports('unsubscribe') && jobSubscriptions.includes(p.row)"><i class="fas fa-bell-slash"></i></button>-->
 		</template>
 	</DataTable>
 </template>
@@ -91,7 +91,7 @@ export default {
 					}
 					this.updateJobData(updatedJob);
 				})
-				.catch(error => Utils.exception(this, error, "Sorry, could not load job information."));
+				.catch(error => Utils.exception(this, error, "Loading job failed"));
 		},
 		showInEditor(job) {
 			this.refreshJob(job, updatedJob => {
@@ -216,7 +216,7 @@ export default {
 				.then(estimate => {
 					EventBus.$emit('showModal', 'Job Estimate', estimate);
 				})
-				.catch(error => Utils.exception(this, error, "Sorry, could not load job estimate."));
+				.catch(error => Utils.exception(this, error, "Loading estimate failed"));
 		},
 		replaceProcessGraph(job) {
 			EventBus.$emit('getProcessGraph', script => {
@@ -244,7 +244,7 @@ export default {
 					Utils.ok(this, "Job successfully updated.");
 					this.updateJobData(updatedJob);
 				})
-				.catch(error => Utils.exception(this, error, "Sorry, could not update job."));;
+				.catch(error => Utils.exception(this, error, "Updating job failed"));;
 		},
 		queueJob(job) {
 			job.startJob()
@@ -252,7 +252,7 @@ export default {
 					Utils.ok(this, "Job successfully queued.");
 					this.updateJobData(updatedJob);
 				})
-				.catch(error => Utils.exception(this, error, "Sorry, could not queue job."));
+				.catch(error => Utils.exception(this, error, "Queueing job failed"));
 		},
 		cancelJob(job) {
 			job.stopJob()
@@ -260,7 +260,7 @@ export default {
 					Utils.ok(this, "Job successfully canceled.");
 					this.updateJobData(updatedJob);
 				})
-				.catch(error => Utils.exception(this, error, "Sorry, could not cancel job."));
+				.catch(error => Utils.exception(this, error, "Canceling job failed"));
 		},
 		viewResults(job) {			
 			job.listResults().then(info => {
