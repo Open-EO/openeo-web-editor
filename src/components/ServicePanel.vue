@@ -204,7 +204,7 @@ export default {
 						this.updateServiceData(updatedService);
 					})
 					.catch(error => Utils.exception(this, error, "Replacing process graph failed"));
-			}, false);
+			});
 		},
 		updateTitle(service, newTitle) {
 			this.updateService(service, {title: newTitle});

@@ -4,7 +4,7 @@ import Edge from './edge.js';
 import SVG from './svg.js';
 import Field from './field.js';
 import Utils from '../../utils.js';
-import { JsonSchemaValidator, ProcessGraph, Utils as CommonUtils } from '@openeo/js-commons';
+import { JsonSchemaValidator, ProcessGraph } from '@openeo/js-commons';
 
 /**
  * Manage the blocks
@@ -352,7 +352,7 @@ Blocks.prototype.registerProcess = function(meta)
 
 Blocks.prototype.registerCallbackArgument = function(name, meta)
 {
-    var data = CommonUtils.mergeDeep({}, meta);
+    var data = JSON.parse(JSON.stringify(meta));
     data.returns = {
         name: name,
         attrs: "output",
@@ -768,9 +768,17 @@ Blocks.prototype.exportProcessGraph = function() {
     return nodes;
 };
 
-Blocks.prototype.importProcessGraph = function(processGraph) {
-    // Parse process graph
-    var pg = new ProcessGraph(processGraph);
+Blocks.prototype.importProcessGraph = function(processGraph, registry) {
+    // Parse process 
+    var pg;
+    if (processGraph instanceof ProcessGraph) {
+        // Make a copy
+        pg = new ProcessGraph(processGraph.toJSON(), registry);
+        pg.setParent(processGraph.parentNode, processGraph.parentParameterName);
+    }
+    else {
+        pg = new ProcessGraph(processGraph, registry);
+    }
     pg.parse();
 
     // Import nodes

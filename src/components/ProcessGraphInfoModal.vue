@@ -12,7 +12,7 @@
 
 			<section class="process-graph">
 				<div class="vue-component"><h3>Process Graph</h3></div>
-				<Editor :processGraph="pg.processGraph" :editable="false" id="pgInfoViewer" />
+				<Editor :processGraph="pg.processGraph" :editable="false" :enableExecute="false" id="pgInfoViewer" />
 			</section>
 
 		</template>

@@ -3,8 +3,10 @@ import Vue from 'vue';
 /*
 # Events
 
-## getProcessGraph(callback $callback, boolean $silent = false)
-Triggers the script/model currently in the editor to be evaluated runs the callback using the data from the evaluation.
+## getProcessGraph(callback $success, callback, callback $failure = null, boolean $passNull = false)
+Passes the process graph currently in the editor to the $success callback. If $failure is specified, an error or exception is passed to the callback. Otherwise shows the message in the notification center. $passNull set to true considers null a success and passes it to the corresponding callback.
+$success has one parameter: object processGraph
+$failure has two parameters: string message, object $exception = null
 
 ## insertProcessGraph(object $pg)
 Sends the current process graph and inserts it into the currently active editor.
@@ -53,6 +55,9 @@ Shows collection information in a modal.
 
 ## showProcessInfo(id)
 Shows process information in a modal.
+
+## resizedIDE()
+The panels have been resized.
 
 */
 export default new Vue();

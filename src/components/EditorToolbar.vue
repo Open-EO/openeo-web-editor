@@ -3,12 +3,12 @@
 		<h3 v-if="scriptName">{{ scriptName }}</h3>
 		<div class="sourceToolbar">
 			<slot></slot>
-			<span class="sepl">
-				<button v-if="editable" type="button" @click="newScript" title="Clear current script / New script"><i class="fas fa-file"></i></button>
-				<button v-if="editable" type="button" @click="openScriptChooser" title="Load script from local storage"><i class="fas fa-folder-open"></i></button>
-				<button type="button" @click="saveScript" title="Save script to local storage"><i class="fas fa-save"></i></button>
+			<span class="sepl" v-if="enableLocalStorage || enableClear">
+				<button v-if="enableClear && editable" type="button" @click="newScript" title="Clear current script / New script"><i class="fas fa-file"></i></button>
+				<button v-if="enableLocalStorage && editable" type="button" @click="openScriptChooser" title="Load script from local storage"><i class="fas fa-folder-open"></i></button>
+				<button v-if="enableLocalStorage" type="button" @click="saveScript" title="Save script to local storage"><i class="fas fa-save"></i></button>
 			</span>
-			<button type="button" @click="executeProcessGraph" title="Run current process graph and view results" class="sepl" v-if="editable && this.supports('computeResult')"><i class="fas fa-play"></i></button>
+			<button v-if="enableExecute" type="button" @click="executeProcessGraph" title="Run current process graph and view results" class="sepl"><i class="fas fa-play"></i></button>
 		</div>
 	</div>
 </template>
@@ -35,6 +35,18 @@ export default {
 		onStore: {
 			type: Function,
 			required: true
+		},
+		enableClear: {
+			type: Boolean,
+			default: true
+		},
+		enableLocalStorage: {
+			type: Boolean,
+			default: true
+		},
+		enableExecute: {
+			type: Boolean,
+			default: true
 		}
 	},
 	data() {

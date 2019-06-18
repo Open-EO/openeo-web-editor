@@ -57,6 +57,8 @@ export default {
 
 			this.map.on('layeradd', this.onLayerAdd);
 			this.map.on('overlayremove', this.onOverlayRemove);
+
+			EventBus.$on('resizedIDE', () => this.map.invalidateSize());
 		},
 
 		onLayerAdd(evt) {
@@ -152,7 +154,7 @@ export default {
 
 		updateXYZLayer(service) {
 			var id = service.serviceId;
-			var url = service.url + "/{z}/{x}/{y}";
+			var url = service.url;
 			if (typeof this.layer[id] === 'undefined') {
 				var opts = {
 					name: id.toUpperCase().substr(0,6) + " (XYZ)"

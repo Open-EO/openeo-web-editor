@@ -1,7 +1,7 @@
 <template>
 	<div class="tabs" :id="id">
 		<div class="tabsHeader">
-			<button type="button" v-show="tab.shown" :class="{'tabItem': true, 'tabActive': tab.active }" @click="selectTab(tab)" v-for="tab in tabs" :key="tab.id">
+			<button type="button" v-show="tab.enabled" :class="{'tabItem': true, 'tabActive': tab.active }" @click="selectTab(tab)" v-for="tab in tabs" :key="tab.id">
 				<i :class="['fas', tab.icon]"></i> {{ tab.name }}
 			</button>
 		</div>
@@ -10,10 +10,10 @@
 		</div>
 	</div>
 </template>
-    
+
 <script>
 export default {
-	name: 'Tabs',
+	name: "Tabs",
 	props: {
 		id: {
 			type: String,
@@ -21,33 +21,60 @@ export default {
 		}
 	},
 	data() {
-        return {
+		return {
 			tabs: []
 		};
-    },
-    created() {
-        this.tabs = this.$children;
-    },
-    methods: {
-		getActiveTab() {
-			for(let i in this.tabs) {
-				if (this.tabs[i].active) {
-					return this.tabs[i].id;
+	},
+	created() {
+		this.tabs = this.$children;
+	},
+	mounted() {
+		this.resetActiveTab();
+	},
+	methods: {
+		getTab(id) {
+			for (let i in this.tabs) {
+				if (this.tabs[i].id == id) {
+					return this.tabs[i];
 				}
 			}
 			return null;
 		},
-        selectTab(selectedTab) {
-			var id = typeof selectedTab === 'string' ? selectedTab : selectedTab.id;
-            this.tabs.forEach(tab => {
-				tab.active = (tab.id == id);
-            });
-        },
-		resetActiveTab() {
-			this.selectTab(this.tabs[0]);
+		getActiveTab() {
+			for (let i in this.tabs) {
+				if (this.tabs[i].active) {
+					return this.tabs[i];
+				}
+			}
+			return null;
+		},
+		getActiveTabId() {
+			var tab = this.getActiveTab();
+			if (tab !== null) {
+				return tab.id;
+			}
+			return null;
+		},
+		async selectTab(selectedTab) {
+			var activeTab = this.getActiveTab();
+			if (typeof selectedTab === "string") {
+				// Get tab by id
+				selectedTab = this.getTab(selectedTab);
+			}
+			if (activeTab === selectedTab) {
+				return;
+			}
+			if (selectedTab !== null && await selectedTab.show() && activeTab !== null) {
+				activeTab.hide();
+			}
+		},
+		resetActiveTab(force = false) {
+			if (force || this.getActiveTab() === null) {
+				this.selectTab(this.tabs[0]);
+			}
 		}
-    }
-}
+	}
+};
 </script>
 
 <style>
@@ -65,7 +92,8 @@ export default {
 #viewer .tabs {
 	height: 97%;
 }
-#viewer .tabsBody, #viewer .tabContent {
+#viewer .tabsBody,
+#viewer .tabContent {
 	height: calc(98% - 1em + 16px);
 }
 .tabsHeader {
@@ -80,7 +108,8 @@ export default {
 	width: 100%;
 	border-collapse: collapse;
 }
-.tabContent table td, .tabContent table th {
+.tabContent table td,
+.tabContent table th {
 	border: 1px solid #ddd;
 	padding: 3px;
 }

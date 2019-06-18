@@ -32,7 +32,7 @@
 			<div :id="fieldName" class="areaSelector"></div>
 		</template>
 		<div v-else-if="type === 'callback'" class="border">
-			<VisualEditor ref="callbackBuilder" id="inlinePgEditor" :editable="editable" :callbackArguments="schema.getCallbackParameters()" :value="value" />
+			<VisualEditor ref="callbackBuilder" id="inlinePgEditor" :editable="editable" :callbackArguments="schema.getCallbackParameters()" :value="value" :enableExecute="false" :enableLocalStorage="false" />
 		</div>
 		<template v-else-if="type === 'null'">
 			The field will be set to&nbsp;<strong><tt>null</tt></strong>.
@@ -105,7 +105,7 @@ export default {
 	},
 	computed: {
 		...Utils.mapState('server', ['collections', 'outputFormats', 'serviceTypes']),
-		...Utils.mapGetters('server', ['capabilities']),
+		...Utils.mapGetters('server', ['capabilities', 'processRegistry']),
 		type() {
 			return this.isItem ? this.schema.arrayOf() : this.schema.dataType();
 		},
@@ -186,12 +186,7 @@ export default {
 			}
 			else if (this.type === 'callback') {
 				if (Utils.isObject(this.$props.pass) && this.$props.pass.callback) {
-					if (Utils.isObject(this.$props.pass) && this.$props.pass.callback instanceof ProcessGraph) {
-						v = this.$props.pass.callback.toJSON();
-					}
-					else  {
-						v = this.$props.pass.callback;
-					}
+					v = this.$props.pass.callback;
 				}
 				else {
 					v = null;
@@ -242,7 +237,8 @@ export default {
 			}
 			else if (this.type === 'callback') {
 				var pg = this.$refs.callbackBuilder.makeProcessGraph();
-				var obj = new ProcessGraph(pg);
+				var obj = new ProcessGraph(pg, this.processRegistry);
+				obj.setParent(this.value.parentNode, this.value.parentParameterName);
 				obj.parse();
 				return {
 					callback: obj
