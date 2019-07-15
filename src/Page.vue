@@ -5,11 +5,11 @@
 		<Modal ref="modal" maxWidth="60%" />
 		<vue-snotify />
 		<div ref="webEditorInfo" style="display: none;">
-			<p>{{ pkg.description }}</p>
-			<p>This software is published by the <strong>openEO Consortium</strong> under the <strong>Apache 2.0 license</strong>. Please find more information about the openEO project on our <a href="http://www.openeo.org" target="_blank">homepage</a> and visit the <a href="https://github.com/Open-EO/openeo-web-editor" target="_blank">GitHub repository</a> for information about the Web Editor. Feel encouraged to <strong>report bugs, feature requests and other issues in the <a href="https://github.com/Open-EO/openeo-web-editor/issues" target="_blank">GitHub issue tracker</a></strong>.</p>
-			<h3>Supported API versions:</h3>
-			<ul>
-				<li v-for="v in pkg.apiVersions" :key="v">{{ v }}</li>
+			<p class="aboutPage">{{ pkg.description }}</p>
+			<p class="aboutPage">This software is published by the <strong>openEO Consortium</strong> under the <strong>Apache 2.0 license</strong>. Please find more information about the openEO project on our <a href="http://www.openeo.org" target="_blank">homepage</a> and visit the <a href="https://github.com/Open-EO/openeo-web-editor" target="_blank">GitHub repository</a> for information about the Web Editor. Feel encouraged to <strong>report bugs, feature requests and other issues in the <a href="https://github.com/Open-EO/openeo-web-editor/issues" target="_blank">GitHub issue tracker</a></strong>.</p>
+			<h3 class="aboutPage">Supported API versions:</h3>
+			<ul class="aboutPage">
+				<li v-for="v in pkg.apiVersions" :key="v"><a :href="'https://open-eo.github.io/openeo-api/v/'+v+'/index.html'" target="_blank">{{ v }}</a></li>
 			</ul>
 		</div>
 	</div>
@@ -185,5 +185,14 @@ button {
 }
 #container .snotifyToast__body {
 	font-size: 0.9em;
+}
+
+p.aboutPage {
+	line-height: 1.33em;
+	text-align: justify;
+	margin-top: 0;
+}
+h3.aboutPage {
+	margin-bottom: 0.5em;
 }
 </style>

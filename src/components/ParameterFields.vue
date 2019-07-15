@@ -61,7 +61,6 @@ export default {
 		guessType() {
 			// Try to set null as default
 			for(var i in this.field.schemas) {
-				console.log(i, typeof this.field.schemas[i].isNull, this.field.schemas[i].isNull());
 				if (this.field.schemas[i].isNull()) {
 					this.type = i;
 					return;
