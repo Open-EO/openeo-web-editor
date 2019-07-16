@@ -7,7 +7,8 @@ export default {
 	namespaced: true,
 	state: {
 		storedServers: JSON.parse(localStorage.getItem(serverStorage) || "[]"),
-		storedScripts: JSON.parse(localStorage.getItem(scriptStorage) || "{}")
+		storedScripts: JSON.parse(localStorage.getItem(scriptStorage) || "{}"),
+		scriptName: null
 	},
 	getters: {
 		getScriptByName: (state) => (name) => state.storedScripts[name]
@@ -33,6 +34,9 @@ export default {
 		removeScript(state, name) {
 			Vue.delete(state.storedScripts, name);
 			localStorage.setItem(scriptStorage, JSON.stringify(state.storedScripts));
+		},
+		setScriptName(state, name) {
+			state.scriptName = name;
 		}
 	}
 };

@@ -49,24 +49,19 @@ export default {
 			default: true
 		}
 	},
-	data() {
-		return {
-			scriptName: ''
-		};
-	},
 	computed: {
 		...Utils.mapState('server', ['connection']),
-		...Utils.mapState('editor', ['storedScripts']),
+		...Utils.mapState('editor', ['storedScripts', 'scriptName']),
 		...Utils.mapGetters('server', ['supports'])
 	},
 	methods: {
-		...Utils.mapMutations('editor', ['addScript', 'removeScript']),
+		...Utils.mapMutations('editor', ['addScript', 'removeScript', 'setScriptName']),
 
 		newScript() {
 			var confirmed = confirm("Do you really want to clear the existing script to create a new one?");
 			if (confirmed) {
 				this.onClear();
-				this.scriptName = null;
+				this.setScriptName(null);
 			}
 		},
 
@@ -74,7 +69,7 @@ export default {
 			var pg = this.storedScripts[name];
 			if (pg) {
 				this.onInsert(pg);
-				this.scriptName = name;
+				this.setScriptName(name);
 				return true;  // to close the modal
 			}
 			else {
@@ -108,7 +103,7 @@ export default {
 			}
 			this.onStore(script => {
 				this.addScript({name, script});
-				this.scriptName = name;
+				this.setScriptName(name);
 			});
 		},
 
