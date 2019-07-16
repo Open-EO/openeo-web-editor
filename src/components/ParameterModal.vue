@@ -10,7 +10,7 @@
 							<Description :description="field.description" />
 						</div>
 					</label>
-					<ParameterFields :ref="field.name" :editable="editable" :field="field" :pass="field.getValue()" />
+					<ParameterFields :ref="field.name" :editable="editable" :field="field" :pass="field.getValue()" :processId="processId" />
 				</div>
 			</form>
 		</template>
@@ -39,7 +39,8 @@ export default {
 		return {
 			editableFields: [],
 			editable: true,
-			saveCallback: null
+			saveCallback: null,
+			processId: null
 		};
 	},
 	methods: {
@@ -59,10 +60,11 @@ export default {
 				Utils.exception(this, error);
 			}
 		},
-		show(title, editableFields, editable = true, saveCallback = null, closeCallback = null) {
+		show(title, editableFields, editable = true, saveCallback = null, closeCallback = null, processId = null) {
 			this.editableFields = editableFields;
 			this.editable = editable;
 			this.saveCallback = saveCallback;
+			this.processId = processId;
 			this.$refs.__modal.show(title, closeCallback);
 		}
 	}

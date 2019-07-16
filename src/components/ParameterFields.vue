@@ -9,7 +9,7 @@
 				<i class="fas fa-info-circle"></i> {{ field.schemas[type].description() }}
 			</div>
 		</div>
-		<ParameterField ref="field" :editable="editable" :field="field" :schema="field.schemas[type]" :pass="pass" />
+		<ParameterField ref="field" :editable="editable" :field="field" :schema="field.schemas[type]" :pass="pass" :processId="processId" />
 	</div>
 </template>
 
@@ -28,6 +28,7 @@ export default {
 			type: Boolean,
 			default: true
 		},
+		processId: String,
 		pass: {}
 	},
 	data() {

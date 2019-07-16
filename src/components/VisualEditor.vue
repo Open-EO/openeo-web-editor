@@ -140,7 +140,9 @@ export default {
 				() => {
 					blocks.active = true;
 					return true;
-				}
+				},
+				// process id
+				fields.block.name
 			);
 		},
 

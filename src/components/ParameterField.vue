@@ -92,6 +92,7 @@ export default {
 		},
 		schema: Object,
 		pass: {},
+		processId: String,
 		isItem: {
 			type: Boolean,
 			default: false
@@ -238,7 +239,7 @@ export default {
 			else if (this.type === 'callback') {
 				var pg = this.$refs.callbackBuilder.makeProcessGraph();
 				var obj = new ProcessGraph(pg, this.processRegistry);
-				obj.setParent(this.value.parentNode, this.value.parentParameterName);
+				obj.setParent(this.processId, this.field.name);
 				obj.parse();
 				return {
 					callback: obj

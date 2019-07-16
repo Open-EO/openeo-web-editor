@@ -774,7 +774,7 @@ Blocks.prototype.importProcessGraph = function(processGraph, registry) {
     if (processGraph instanceof ProcessGraph) {
         // Make a copy
         pg = new ProcessGraph(processGraph.toJSON(), registry);
-        pg.setParent(processGraph.parentNode, processGraph.parentParameterName);
+        pg.setParent(processGraph.parentProcessId, processGraph.parentParameterName);
     }
     else {
         pg = new ProcessGraph(processGraph, registry);

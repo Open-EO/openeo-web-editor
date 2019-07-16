@@ -1,5 +1,4 @@
 import Field from './field.js';
-import EventBus from '../../eventbus.js';
 
 /**
  * Parameters managers
