@@ -12,6 +12,8 @@ import { leafletGeotiff, LeafletGeotiffRenderer } from "leaflet-geotiff/leaflet-
 import "leaflet-fullscreen/dist/leaflet.fullscreen.css";
 import fullscreen from "leaflet-fullscreen";
 import sideBySide from "leaflet-side-by-side";
+import 'leaflet-tile-loading-progress-control';
+import 'leaflet-tile-loading-progress-control/dist/Control.TileLoadingProgress.css';
 
 export default {
 	name: 'MapViewer',
@@ -28,6 +30,7 @@ export default {
 				osm: null
 			},
 			layer: {},
+			layerGroup: null,
 			layerControl: null,
 			sideBySideComponent: null
 		}
@@ -54,6 +57,13 @@ export default {
 			});
 			this.baseLayer.osm.addTo(this.map);
 			this.layerControl.addBaseLayer(this.baseLayer.osm, this.baseLayer.osm.options.name);
+
+			this.layerGroup = L.layerGroup([this.baseLayer.osm]);
+			var layerProgress = new L.Control.TileLoadingProgress({
+				leafletElt: this.layerGroup,
+				position: 'bottomleft'
+			});
+			layerProgress.addTo(this.map);
 
 			this.map.on('layeradd', this.onLayerAdd);
 			this.map.on('overlayremove', this.onOverlayRemove);
@@ -113,11 +123,13 @@ export default {
 		},
 
 		addLayerToMap(id) {
+			this.layerGroup.addLayer(this.layer[id]);
 			this.layer[id].addTo(this.map);
 			this.layerControl.addOverlay(this.layer[id], this.layer[id].options.name);
 		},
 
 		removeLayerFromMap(id) {
+			this.layerGroup.removeLayer(this.layer[id]);
 			this.layer[id].removeFrom(this.map);
 			this.layerControl.removeLayer(this.layer[id]);
 			delete this.layer[id];
@@ -190,7 +202,13 @@ export default {
 }
 </script>
 
-<style scoped>
+<style>
+.leaflet-control-progress-bar {
+	background: #fff;
+	border-radius: 4px;
+	border: 2px solid rgba(0,0,0,0.2);
+	padding: 3px;
+}
 #mapCanvas {
 	height: 100%;
 }

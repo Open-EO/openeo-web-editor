@@ -46,6 +46,7 @@
     "leaflet-fullscreen": "^1.0.2",
     "leaflet-geotiff": "^0.2.0",
     "leaflet-side-by-side": "github:digidem/leaflet-side-by-side",
+    "leaflet-tile-loading-progress-control": "^1.0.9",
     "vue": "^2.6.10",
     "vue-ctk-date-time-picker": "^2.1.1",
     "vue-snotify": "^3.2.1",
