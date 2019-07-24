@@ -204,7 +204,7 @@ Block.prototype.getHtml = function()
                     formattedValue = value ? '✔️' : '❌';
                 }
                 else {
-                    formattedValue = value;
+                    formattedValue = value.toString();
                 }
                 if (formattedValue.length > 0) {
                     formattedValue = ': ' + formattedValue;
