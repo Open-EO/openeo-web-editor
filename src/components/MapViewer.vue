@@ -167,9 +167,10 @@ export default {
 		updateXYZLayer(service) {
 			var id = service.serviceId;
 			var url = service.url;
+			var title = service.title ? service.title.substr(0,50) : id.toUpperCase().substr(0,6);
 			if (typeof this.layer[id] === 'undefined') {
 				var opts = {
-					name: id.toUpperCase().substr(0,6) + " (XYZ)"
+					name: title + " (XYZ)"
 				};
 				this.layer[id] = new L.TileLayer(url, opts);
 				this.addLayerToMap(id);
