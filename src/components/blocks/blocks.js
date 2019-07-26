@@ -216,9 +216,9 @@ Blocks.prototype.ready = function(callback)
     }
 };
 
-Blocks.prototype.showParameters = function(fields) {
+Blocks.prototype.showParameters = function(block) {
     if (typeof this.openParameterEditor === 'function') {
-        this.openParameterEditor(this, fields, this.editable);
+        this.openParameterEditor(this, block, this.editable);
     }
 };
 

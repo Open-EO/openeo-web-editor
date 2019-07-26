@@ -129,20 +129,20 @@ export default {
 			this.$refs.schemaModal.show(name, schema, "This is a callback argument. It is a value made available by the process executing this sub-processes for further use. The value will comply to the following data type(s):");
 		},
 
-		openParameterEditor(blocks, fields, editable) {
+		openParameterEditor(blocks, block, editable) {
 			blocks.active = false;
-			var title = fields.block.name+' #'+fields.block.id;
+			var title = block.name+' #'+block.id;
 			this.$refs.parameterModal.show(
-				title, fields.editables, editable,
+				title, block.editables, editable,
 				// save handler
-				editable ? (data => fields.save(data)) : null,
+				editable ? (data => block.save(data)) : null,
 				// close handler
 				() => {
 					blocks.active = true;
 					return true;
 				},
 				// process id
-				fields.block.name
+				block.name
 			);
 		},
 

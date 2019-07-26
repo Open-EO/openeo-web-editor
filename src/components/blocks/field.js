@@ -16,6 +16,9 @@ class Field extends ProcessSchema {
         // Field name
         this.name = name;
         this.label = label;
+
+        // Edges
+        this.edges = [];
     
         // Value
         this.hasValue = false;
@@ -64,6 +67,28 @@ class Field extends ProcessSchema {
 
     isInput() {
         return this.type === 'input';
+    }
+
+    addEdge(edge) {
+        this.edges.push(edge);
+    }
+
+    eraseEdge(edge) {
+        for (var k in this.edges) {
+            if (this.edges[k] == edge) {
+                this.edges.splice(k, 1);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    getEdgeCount() {
+        return this.edges.length;
+    }
+
+    getEdges() {
+        return this.edges;
     }
 
     /**
