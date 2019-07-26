@@ -97,7 +97,7 @@ export default {
 		},
 
 		saveScript() {
-			var name = prompt("Name for the script:", this.scriptName);
+			var name = prompt("Name for the script:", typeof this.scriptName === 'string' ? this.scriptName : "");
 			if (!name) {
 				return;
 			}
