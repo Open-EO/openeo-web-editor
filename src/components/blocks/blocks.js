@@ -633,7 +633,7 @@ Blocks.prototype.tryEndLink = function()
     }
 };
 
-Blocks.prototype.addEdge = function(blockOut, fieldOut, blockIn, fieldIn) {
+Blocks.prototype.addEdge = function(blockOut, fieldOut, blockIn, fieldIn, isDataChange = true) {
     if (!(blockOut instanceof Block)) {
         blockOut = this.getBlockById(blockOut);
     }
@@ -656,7 +656,7 @@ Blocks.prototype.addEdge = function(blockOut, fieldOut, blockIn, fieldIn) {
         var edge = new Edge(id, blockIn, fieldIn, blockOut, fieldOut, this);
     }
 
-    // Check for loops or whether you want to connext the same fields
+    // Check for loops or whether you want to connect the same fields
     var fromTo = edge.fromTo();
     if (fromTo[0] === fromTo[1]) {
         return;
@@ -665,25 +665,35 @@ Blocks.prototype.addEdge = function(blockOut, fieldOut, blockIn, fieldIn) {
         throw 'You can not create a loop';
     }
 
-    // Update result node
-    this.setResultNode(fieldOut.isOutput() ? blockOut : blockIn, false);
-
     // Check type compatibility
-    if (!this.areTypesCompatible(edge.field1, edge.field2)) {
+    if (!this.areTypesCompatible(fieldIn, fieldOut)) {
         throw 'Types are not compatible';
+    }
+
+    // Check whether the data type allows multiple input edges
+    if (fieldIn.getEdgeCount() > 0 && !fieldIn.allowsMultipleEdges()) {
+        throw 'Parameter accepts only one input';
     }
 
     // Check whether the edge exists
     for (var k in this.edges) {
         var other = this.edges[k];
         if (other.same(edge)) {
-            throw 'This edge already exists';
+            throw 'This connection exists already';
         }
     }
 
+    // Create edges
     this.history.save();
-    edge.create();
+    edge.create(isDataChange);
     this.edges.push(edge);
+
+    // Update result node
+    if (isDataChange) {
+        this.setResultNode(fieldOut.isOutput() ? blockOut : blockIn, false);
+    }
+
+    // Update UI
     blockIn.redraw();
     blockOut.redraw();
     this.redraw();
@@ -705,7 +715,7 @@ Blocks.prototype.endLink = function(block, fieldName)
 };
 
 Blocks.prototype.areTypesCompatible = function(t1, t2) {
-    return JsonSchemaValidator.isSchemaCompatible(t1.schema, t2.schema);
+    return JsonSchemaValidator.isSchemaCompatible(t1.schema, t2.schema, false, true);
 }
 
 Blocks.prototype.showError = function(message, title = null) {
@@ -791,14 +801,28 @@ Blocks.prototype.importProcessGraph = function(processGraph, registry) {
 
         var args = node.getArgumentNames();
         for(let i in args) {
+            var val = node.getRawArgumentValue(args[i]);
             switch(node.getArgumentType(args[i])) {
                 case 'result':
-                    var referencedNode = pg.getNode(node.getRawArgumentValue(args[i])); // get the node that is referenced in the argument
-                    this.addEdge(referencedNode.blockId, "output", node.blockId, args[i]);
+                    this.addEdge(pg.getNode(val).blockId, "output", node.blockId, args[i], false);
                     break;
                 case 'callback-argument':
-                    var argName = this.getCallbackArgumentBlockByName(node.getRawArgumentValue(args[i]));
-                    this.addEdge(argName, "output", node.blockId, args[i]);
+                    this.addEdge(this.getCallbackArgumentBlockByName(val), "output", node.blockId, args[i], false);
+                    break;
+                case 'object':
+                case 'array':
+                    // ToDo: This is only doing the first level and is not going deep into the structures
+                    for(let k in val) {
+                        if (!Field.isRef(val[k])) {
+                            continue;
+                        }
+                        else if (val[k].from_node) {
+                            this.addEdge(pg.getNode(val[k].from_node).blockId, "output", node.blockId, args[i], false);
+                        }
+                        else if (val[k].from_argument) {
+                            this.addEdge(this.getCallbackArgumentBlockByName(val[k].from_argument), "output", node.blockId, args[i], false);
+                        }
+                    }
                     break;
             }
         }

@@ -105,7 +105,7 @@ class ProcessSubSchema {
 			return null;
 		}
 		
-		return this.arrayItems.dataTypes();
+		return this.arrayItems.dataType();
 	}
 
 	dataType(native = false) {

@@ -63,6 +63,7 @@ Block.prototype._createOutputField = function(returns) {
         returns.required,
         true
     );
+    this.output.setBlock(this);
     this.fields.output = this.output;
 
 };
@@ -71,6 +72,7 @@ Block.prototype._createInputFields = function(parameters) {
     for(var name in parameters) {
         var p = parameters[name];
         var field = new Field(name, name, p.schema, p.description, p.required, false, p.experimental, p.deprecated);
+        field.setBlock(this);
         this.inputs.push(field);
         if (field.isEditable()) {
             this.editables.push(field);
@@ -195,25 +197,24 @@ Block.prototype.getHtml = function()
             var formattedValue = '';
             if (field && field.isEditable() && !this.blocks.compactMode) {
                 var value = field.getValue();
-                if (field.getEdgeCount() > 0) { // TODO
-                    formattedValue = '';
-                }
-                else if (typeof value === 'object') {
+                if (typeof value === 'object') {
                     if (value === null) {
                         formattedValue = 'N/A';
                     }
                     else {
                         if (Array.isArray(value)) {
-                            formattedValue = 'List(' + value.length + ')';
+                            var title = VueUtils.htmlentities(value.map(v => typeof v === 'string' ? v : JSON.stringify(v)).join(", "));
+                            formattedValue = '<span title="' + title + '">List(' + value.length + ')</span>';
                         }
                         else if (value.callback instanceof ProcessGraph) {
                             formattedValue = 'Callback';
                         }
-                        else {
-                            formattedValue = 'Object';
+                        else if (value.from_argument || value.from_node) {
+                            formattedValue = '';
                         }
-                        
-                        formattedValue = '<span title="' + VueUtils.htmlentities(formattedValue) + '">' + formattedValue + '</span>';
+                        else {
+                            formattedValue = '<span title="' + VueUtils.htmlentities(JSON.stringify(value)) + '">Object</span>';
+                        }
                     }
                 }
                 else if (typeof value === 'string' && value.length > 10) {
@@ -557,26 +558,7 @@ Block.prototype.exportProcessGraph = function()
     var values = {};
     for (var k in this.inputs) {
         var field = this.inputs[k];
-        if (field.getEdgeCount() > 0) {
-            // Convert incoming nodes into a list of references or a single reference to a result of another node
-            var v = [];
-            var edges = field.getEdges();
-            for(var i in edges) {
-                var otherBlock = edges[i].getOtherBlock(this);
-                if (otherBlock.isCallbackArgument()) {
-                    v.push({
-                        from_argument: otherBlock.name
-                    });
-                }
-                else {
-                    v.push({
-                        from_node: otherBlock.id
-                    });
-                }
-            }
-            values[field.name] = v.length === 1 ? v[0] : v;
-        }
-        else if (field.hasValue) {
+        if (field.hasValue) {
             if (!field.isRequired && field.isDefaultValue()) {
                 continue; // Skip if it's the default value and not required
             }
@@ -637,8 +619,7 @@ Block.prototype.save = function(serialize)
         this.getField(key).setValue(false);
     }
 
-    this.block.render();
-    this.block.redraw();
+    this.render();
 };
 
 export default Block;

@@ -122,7 +122,7 @@ Edge.prototype.collide = function(x, y)
 /**
  * Initializes the edge and do some tests
  */ 
-Edge.prototype.create = function()
+Edge.prototype.create = function(isDataChange = true)
 {
     // You can't link a block to itself
     if (this.block1 == this.block2) {
@@ -134,8 +134,8 @@ Edge.prototype.create = function()
         throw 'You have to link an input with an output';
     }
 
-    this.field1.addEdge(this);
-    this.field2.addEdge(this);
+    this.field1.addEdge(this, isDataChange);
+    this.field2.addEdge(this, isDataChange);
     this.block1.render();
     this.block2.render();
 };
