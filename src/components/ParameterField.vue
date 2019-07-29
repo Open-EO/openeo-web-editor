@@ -379,6 +379,8 @@ export default {
 }
 .border {
 	border: 1px solid #ccc;
+	width: 100%;
+	height: 100%;
 }
 .externalData span {
 	display: inline-block; 
