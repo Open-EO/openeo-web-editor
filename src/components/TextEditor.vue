@@ -71,12 +71,15 @@ export default {
 			}
 		}
 	},
-	mounted() {
-		this.editor = CodeMirror(document.getElementById(this.id), this.editorOptions);
-		this.editor.setSize(null, "100%");
-		this.insertProcessGraph(this.value);
-	},
 	methods: {
+		onShow() {
+			if (this.editor === null) {
+				this.editor = CodeMirror(document.getElementById(this.id), this.editorOptions);
+				this.editor.setSize(null, "100%");
+				this.insertProcessGraph(this.value);
+			}
+		},
+
 		clearProcessGraph() {
 			this.insertToEditor("", true);
 		},

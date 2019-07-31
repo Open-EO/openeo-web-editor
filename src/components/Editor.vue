@@ -123,6 +123,7 @@ export default {
 		},
 
 		transferProcessGraph() {
+			this.activeEditor.onShow();
 			this.insertProcessGraph(this.pgToInsert);
 			this.pgToInsert = null;
 		}

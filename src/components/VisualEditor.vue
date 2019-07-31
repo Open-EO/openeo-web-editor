@@ -82,7 +82,6 @@ export default {
 		);
 	},
 	mounted() {
-		this.$nextTick(this.initBlocks);
 		EventBus.$on('showSchemaModal', this.showSchemaModal);
 	},
 	watch: {
@@ -91,12 +90,14 @@ export default {
 		}
 	},
 	methods: {
-		initBlocks() {
-			this.blocks.run("#" + this.id, this.editable);
+		onShow() {
+			if (!this.blocks.isReady) {
+				this.blocks.run("#" + this.id, this.editable);
 
-			this.registerProcesses();
-			this.makeCallbackArguments();
-			this.insertProcessGraph(this.value, false);
+				this.registerProcesses();
+				this.makeCallbackArguments();
+				this.insertProcessGraph(this.value, false);
+			}
 		},
 
 		perfectScale() {
