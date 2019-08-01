@@ -1,5 +1,5 @@
 <template>
-	<div class="tabs" :id="id">
+	<div :class="{tabs: true, hide: !hasEnabledTabs} " :id="id">
 		<div class="tabsHeader">
 			<button type="button" v-show="tab.enabled" :class="{'tabItem': true, 'tabActive': tab.active }" @click="selectTab(tab)" v-for="tab in tabs" :key="tab.id">
 				<i :class="['fas', tab.icon]"></i> {{ tab.name }}
@@ -25,11 +25,16 @@ export default {
 			tabs: []
 		};
 	},
-	created() {
-		this.tabs = this.$children;
-	},
 	mounted() {
-		this.resetActiveTab();
+		if (Array.isArray(this.$children)) {
+			this.tabs = this.$children;
+			this.resetActiveTab();
+		}
+	},
+	computed: {
+		hasEnabledTabs() {
+			return this.tabs.filter(t => t.enabled).length > 0;
+		}
 	},
 	methods: {
 		getTab(id) {
@@ -61,10 +66,14 @@ export default {
 				// Get tab by id
 				selectedTab = this.getTab(selectedTab);
 			}
-			if (!selectedTab || activeTab === selectedTab) {
+			if (activeTab === selectedTab) {
 				return;
 			}
-			if (selectedTab !== null && await selectedTab.show() && activeTab !== null) {
+			if (!selectedTab || typeof selectedTab.show !== 'function') {
+				console.error("Invalid tab", selectedTab);
+				return;
+			}
+			if (await selectedTab.show() && activeTab !== null) {
 				activeTab.hide();
 			}
 		},
@@ -91,6 +100,9 @@ export default {
 	border-radius: 3px;
 	border: 1px solid #aaa;
 	margin-bottom: 10px;
+}
+.tabs.hide {
+	display: none;
 }
 #viewer .tabs {
 	height: 97%;
