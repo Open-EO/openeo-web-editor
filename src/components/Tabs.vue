@@ -1,5 +1,5 @@
 <template>
-	<div class="tabs" :id="id" v-if="hasEnabledTabs">
+	<div class="tabs" :id="id">
 		<div class="tabsHeader">
 			<button type="button" v-show="tab.enabled" :class="{'tabItem': true, 'tabActive': tab.active }" @click="selectTab(tab)" v-for="tab in tabs" :key="tab.id">
 				<i :class="['fas', tab.icon]"></i> {{ tab.name }}
@@ -30,11 +30,6 @@ export default {
 	},
 	mounted() {
 		this.resetActiveTab();
-	},
-	computed: {
-		hasEnabledTabs() {
-			return this.tabs.filter(t => t.enabled).length > 0;
-		}
 	},
 	methods: {
 		getTab(id) {
