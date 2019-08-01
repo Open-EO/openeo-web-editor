@@ -100,9 +100,6 @@ export default {
 		showWebService(service) {
 			EventBus.$emit('showMapViewer');
 			switch(service.type.toLowerCase()) {
-				case 'wms':
-					this.updateWMSLayer(service);
-					break;
 				case 'xyz':
 					this.updateXYZLayer(service);
 					break;
@@ -177,24 +174,6 @@ export default {
 			}
 			else {
 				this.layer[id].setUrl(url, false);
-			}
-		},
-
-		updateWMSLayer(service) {
-			var id = service.serviceId;
-			if (typeof this.layer[id] === 'undefined') {
-				var args = service.attributes;
-				if (!Utils.isObject(args)) {
-					args = {};
-				};
-				args.name = id.toUpperCase().substr(0,6) + " (WMS)";
-				args.service = args.service || 'WMS';
-				args.format = args.format || 'image/jpeg';
-				this.layer[id] = L.tileLayer.wms(service.url, args);
-				this.addLayerToMap(id);
-			}
-			else {
-				this.layer[id].setUrl(service.url, false);
 			}
 		}
 
