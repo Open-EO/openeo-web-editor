@@ -61,7 +61,7 @@ export default {
 				// Get tab by id
 				selectedTab = this.getTab(selectedTab);
 			}
-			if (activeTab === selectedTab) {
+			if (!selectedTab || activeTab === selectedTab) {
 				return;
 			}
 			if (selectedTab !== null && await selectedTab.show() && activeTab !== null) {
