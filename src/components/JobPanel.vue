@@ -289,10 +289,19 @@ export default {
 				else {
 					// This can be formatted much nicer and more useful...
 					var urls = info.links.map(v => v.href);
-					EventBus.$emit('showComponentModal', 'Download results' + (info.title ? ' for: ' + info.title : ''), 'List', {
-						dataSource: urls,
-						actions: []
-					});
+					EventBus.$emit(
+						'showListModal', 
+						'Download results' + (info.title ? ' for: ' + info.title : ''),
+						urls,
+						[
+							{
+								callback: url => {
+									window.open(url, '_blank');
+									return false; // Don't close the modal by default to allow downloading multiple files
+								}
+							}
+						]
+					);
 				}
 			});
 		},

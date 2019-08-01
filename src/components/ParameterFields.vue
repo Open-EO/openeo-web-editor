@@ -9,7 +9,7 @@
 				<i class="fas fa-info-circle"></i> {{ field.schemas[type].description() }}
 			</div>
 		</div>
-		<ParameterField ref="field" :editable="editable" :field="field" :schema="field.schemas[type]" :pass="pass" />
+		<ParameterField ref="field" :editable="editable" :field="field" :schema="field.schemas[type]" :pass="pass" :processId="processId" />
 	</div>
 </template>
 
@@ -28,6 +28,7 @@ export default {
 			type: Boolean,
 			default: true
 		},
+		processId: String,
 		pass: {}
 	},
 	data() {
@@ -61,7 +62,6 @@ export default {
 		guessType() {
 			// Try to set null as default
 			for(var i in this.field.schemas) {
-				console.log(i, typeof this.field.schemas[i].isNull, this.field.schemas[i].isNull());
 				if (this.field.schemas[i].isNull()) {
 					this.type = i;
 					return;

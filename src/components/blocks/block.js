@@ -1,4 +1,4 @@
-import Fields from './fields.js';
+import Field from './field.js';
 import EventBus from '../../eventbus.js';
 import VueUtils from '@openeo/vue-components/utils.js';
 import { ProcessGraph } from '@openeo/js-commons';
@@ -7,10 +7,10 @@ import Utils from '../../utils.js';
 /**
  * Creates an instance of a block
  */
-var Block = function(blocks, name, type, meta, id)
+var Block = function(blocks, name, type, schema, id)
 {
     this.blocks = blocks;
-    this.meta = meta;
+    this.meta = schema;
     this.name = name;
     this.type = type;
 
@@ -35,9 +35,6 @@ var Block = function(blocks, name, type, meta, id)
     // Last scale
     this.lastScale = null;
 
-    // Parameters
-    this.fields = new Fields(this, meta);
-
     // Position
     this.x = 0;
     this.y = 0;
@@ -45,12 +42,48 @@ var Block = function(blocks, name, type, meta, id)
     // Which field has focus?
     this.focusedField = null;
 
-    // Edges
-    this.edges = {};
-    
-
     // Is result node?inputs
     this.result = false;
+
+    // Parameters
+    this.output = null;
+    this.inputs = [];
+    this.editables = [];
+    this.fields = {};
+    this._createOutputField(schema.returns);
+    this._createInputFields(schema.parameters, schema.parameter_order);
+};
+
+Block.prototype._createOutputField = function(returns) {
+    this.output = new Field(
+        "output",
+        this.getDefaultOutputLabel(),
+        returns.schema,
+        returns.description,
+        returns.required,
+        true
+    );
+    this.output.setBlock(this);
+    this.fields.output = this.output;
+
+};
+
+Block.prototype._createInputFields = function(parameters, parameter_order) {
+    var paramNames = Object.keys(parameters);
+    if (!Array.isArray(parameter_order) || parameter_order.length !== paramNames.length) {
+        parameter_order = paramNames;
+    }
+    for(var i in parameter_order) {
+        var name = parameter_order[i];
+        var p = parameters[name];
+        var field = new Field(name, name, p.schema, p.description, p.required, false, p.experimental, p.deprecated);
+        field.setBlock(this);
+        this.inputs.push(field);
+        if (field.isEditable()) {
+            this.editables.push(field);
+        }
+        this.fields[field.name] = field;
+    }
 };
 
 Block.prototype.setResult = function(val) {
@@ -59,7 +92,7 @@ Block.prototype.setResult = function(val) {
 }
 
 Block.prototype.getHeight = function() {
-    return 20 + this.fields.inputs.length * 15;
+    return 20 + this.inputs.length * 15;
 };
 
 Block.prototype.getWidth = function() {
@@ -72,19 +105,12 @@ Block.prototype.getWidth = function() {
 };
 
 Block.prototype.hasInputs = function() {
-    return this.fields.inputs.length > 0;
-};
-
-Block.prototype.getEdgeCount = function(fieldName) {
-    if(Array.isArray(this.edges[fieldName])) {
-        return this.edges[fieldName].length;
-    }
-    return 0;
+    return this.inputs.length > 0;
 };
 
 Block.prototype.hasOutputEdges = function() {
-    return this.getEdgeCount(this.fields.output.name) > 0;
-}
+    return this.output.getEdgeCount() > 0;
+};
 
 Block.prototype.getDefaultOutputLabel = function() {
     if (this.isCallbackArgument()) {
@@ -93,7 +119,7 @@ Block.prototype.getDefaultOutputLabel = function() {
     else {
         return "Output";
     }
-}
+};
 
 /**
  * Set the values
@@ -101,7 +127,7 @@ Block.prototype.getDefaultOutputLabel = function() {
 Block.prototype.setValues = function(values, json = false)
 {
     for (var fieldName in values) {
-        var field = this.fields.getField(fieldName);
+        var field = this.getField(fieldName);
         if (field !== null) {
             field.setValue(json ? JSON.parse(values[fieldName]) : values[fieldName]);
         }
@@ -113,7 +139,7 @@ Block.prototype.setValues = function(values, json = false)
  */
 Block.prototype.getValue = function(name)
 {
-    var field = this.fields.getField(name);
+    var field = this.getField(name);
     if (field) {
         return field.getValue();
     } else {
@@ -130,7 +156,7 @@ Block.prototype.isCallbackArgument = function() {
 };
 
 Block.prototype.getCollectionName = function() {
-    return this.fields.getField('id').getValue();
+    return this.getField('id').getValue();
 }
 
 /**
@@ -160,7 +186,7 @@ Block.prototype.getHtml = function()
         }
         html += '<span class="info" title="Details"><i class="fas fa-info"></i></span>';
     }
-    if (typeof this.blocks.openParameterEditor === 'function' && this.fields.editables.length > 0 && !this.isCallbackArgument()) {
+    if (typeof this.blocks.openParameterEditor === 'function' && this.editables.length > 0 && !this.isCallbackArgument()) {
         html += '<span class="settings" title="Change parameter values"><i class="fas fa-sliders-h"></i></span>';
     }
     html += '</div></div>';
@@ -176,25 +202,24 @@ Block.prototype.getHtml = function()
             var formattedValue = '';
             if (field && field.isEditable() && !this.blocks.compactMode) {
                 var value = field.getValue();
-                if (this.getEdgeCount(field.name) > 0) {
-                    formattedValue = '';
-                }
-                else if (typeof value === 'object') {
+                if (typeof value === 'object') {
                     if (value === null) {
                         formattedValue = 'N/A';
                     }
                     else {
                         if (Array.isArray(value)) {
-                            formattedValue = 'List(' + value.length + ')';
+                            var title = VueUtils.htmlentities(value.map(v => typeof v === 'string' ? v : JSON.stringify(v)).join(", "));
+                            formattedValue = '<span title="' + title + '">List(' + value.length + ')</span>';
                         }
                         else if (value.callback instanceof ProcessGraph) {
                             formattedValue = 'Callback';
                         }
-                        else {
-                            formattedValue = 'Object';
+                        else if (value.from_argument || value.from_node) {
+                            formattedValue = '';
                         }
-                        
-                        formattedValue = '<span title="' + VueUtils.htmlentities(formattedValue) + '">' + formattedValue + '</span>';
+                        else {
+                            formattedValue = '<span title="' + VueUtils.htmlentities(JSON.stringify(value)) + '">Object</span>';
+                        }
                     }
                 }
                 else if (typeof value === 'string' && value.length > 10) {
@@ -204,7 +229,7 @@ Block.prototype.getHtml = function()
                     formattedValue = value ? '✔️' : '❌';
                 }
                 else {
-                    formattedValue = value;
+                    formattedValue = value.toString();
                 }
                 if (formattedValue.length > 0) {
                     formattedValue = ': ' + formattedValue;
@@ -242,8 +267,8 @@ Block.prototype.getHtml = function()
         html += '</div>';
     };
 
-    handle('input', this.fields.inputs);
-    handle('output', [this.fields.output]);
+    handle('input', this.inputs);
+    handle('output', [this.output]);
 
     html += "</div>";
 
@@ -306,8 +331,8 @@ Block.prototype.redraw = function(selected)
     }
 
     // Changing the circle rendering
-    for (var fieldName in this.fields.fields) {
-        var field = this.fields.fields[fieldName];
+    for (var fieldName in this.fields) {
+        var field = this.fields[fieldName];
         var fieldDiv = this.div.querySelector('.field_' + fieldName);
         if (!fieldDiv) {
             continue;
@@ -320,12 +345,14 @@ Block.prototype.redraw = function(selected)
         if (!fieldDiv.classList.contains('hasValue')) {
             fieldDiv.classList.add('noValue');
         }
-        if (fieldName in this.edges && this.getEdgeCount(fieldName) > 0) {
+
+        if (field.getEdgeCount() > 0) {
             connector.classList.add('io_active');
             fieldDiv.classList.remove('noValue');
 
-            for (var n in this.edges[fieldName]) {
-                if (this.edges[fieldName][n].selected) {
+            var edges = field.getEdges();
+            for (var n in edges) {
+                if (edges[n].selected) {
                     connector.classList.add('io_selected');
                 }
             }
@@ -410,7 +437,7 @@ Block.prototype.initListeners = function()
     var settingsEl = this.div.querySelector('.settings');
     if (settingsEl) {
         settingsEl.addEventListener('click', evt => {
-            this.fields.show();
+            this.blocks.showParameters(this);
             evt.preventDefault();
             evt.stopPropagation();
         });
@@ -464,36 +491,6 @@ Block.prototype.linkPositionFor = function(fieldName)
 };
 
 /**
- * Add an edge
- */
-Block.prototype.addEdge = function(fieldName, edge)
-{
-    var tab = [];
-
-    if (this.edges[fieldName] != undefined) {
-        tab = this.edges[fieldName];
-    }
-
-    tab.push(edge);
-    this.edges[fieldName] = tab;
-};
-
-/**
- * Erase an edge
- */
-Block.prototype.eraseEdge = function(fieldName, edge)
-{
-    if (this.edges[fieldName] != undefined) {
-        for (var k in this.edges[fieldName]) {
-            if (this.edges[fieldName][k] == edge) {
-                this.edges[fieldName].splice(k, 1);
-                break;
-            }
-        }
-    }
-};
-
-/**
  * Erase the block
  */
 Block.prototype.erase = function()
@@ -542,8 +539,8 @@ Block.prototype.allSuccessors = function()
 Block.prototype.export = function()
 {
     var values = {};
-    for (var k in this.fields.editables) {
-        var field = this.fields.editables[k];
+    for (var k in this.editables) {
+        var field = this.editables[k];
         values[field.name] = JSON.stringify(field.getValue());
     }
 
@@ -564,27 +561,9 @@ Block.prototype.exportProcessGraph = function()
     }
 
     var values = {};
-    for (var k in this.fields.inputs) {
-        var field = this.fields.inputs[k];
-        if (this.getEdgeCount(field.name) > 0) {
-            // Convert incoming nodes into a list of references or a single reference to a result of another node
-            var v = [];
-            for(var i in this.edges[field.name]) {
-                var otherBlock = this.edges[field.name][i].getOtherBlock(this);
-                if (otherBlock.isCallbackArgument()) {
-                    v.push({
-                        from_argument: otherBlock.name
-                    });
-                }
-                else {
-                    v.push({
-                        from_node: otherBlock.id
-                    });
-                }
-            }
-            values[field.name] = v.length === 1 ? v[0] : v;
-        }
-        else if (field.hasValue) {
+    for (var k in this.inputs) {
+        var field = this.inputs[k];
+        if (field.hasValue) {
             if (!field.isRequired && field.isDefaultValue()) {
                 continue; // Skip if it's the default value and not required
             }
@@ -605,11 +584,47 @@ Block.prototype.exportProcessGraph = function()
 };
 
 /**
- * Gets the field
+ * Getting a field by name
  */
 Block.prototype.getField = function(name)
 {
-    return this.fields.getField(name);
+    return (name in this.fields ? this.fields[name] : null);
+};
+
+/**
+ * Saves the form
+ */
+Block.prototype.save = function(serialize)
+{
+    var boolFields = {};
+    for (var entry in this.fields) {
+        if (this.fields[entry].type == 'boolean') {
+            boolFields[entry] = this.fields[entry];
+        }
+    }
+
+    for (var key in serialize) {
+        var newKey = key;
+        var isArray = false;
+        if (newKey.substr(newKey.length-2, 2) == '[]') {
+            newKey = newKey.substr(0, newKey.length-2);
+            isArray = true;
+        }
+        if (serialize[key] == null && isArray) {
+            serialize[key] = [];
+        }
+
+        if (newKey in boolFields) {
+            delete boolFields[newKey];
+        }
+        this.getField(newKey).setValue(serialize[key]);
+    }
+
+    for (var key in boolFields) {
+        this.getField(key).setValue(false);
+    }
+
+    this.render();
 };
 
 export default Block;

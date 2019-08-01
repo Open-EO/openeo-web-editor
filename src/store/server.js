@@ -1,4 +1,5 @@
 import { OpenEO } from '@openeo/js-client';
+import { ProcessRegistry } from '@openeo/js-commons';
 
 const getDefaultState = () => {
 	return {
@@ -27,7 +28,14 @@ export default {
 			}
 			return amount + currency;
 		},
-		isConnected: (state) => state.connection !== null && (!state.requireAuthentication || state.userId !== null)
+		isConnected: (state) => state.connection !== null && (!state.requireAuthentication || state.userId !== null),
+		processRegistry: (state) => {
+			var registry = new ProcessRegistry();
+			for (var i in state.processes) {
+				registry.add(state.processes[i]);
+			}
+			return registry;
+		}
 	},
 	actions: {
 		async connect({commit}, {url, requireAuthentication}) {

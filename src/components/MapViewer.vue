@@ -12,6 +12,8 @@ import { leafletGeotiff, LeafletGeotiffRenderer } from "leaflet-geotiff/leaflet-
 import "leaflet-fullscreen/dist/leaflet.fullscreen.css";
 import fullscreen from "leaflet-fullscreen";
 import sideBySide from "leaflet-side-by-side";
+import 'leaflet-tile-loading-progress-control';
+import 'leaflet-tile-loading-progress-control/dist/Control.TileLoadingProgress.css';
 
 export default {
 	name: 'MapViewer',
@@ -28,6 +30,7 @@ export default {
 				osm: null
 			},
 			layer: {},
+			layerGroup: null,
 			layerControl: null,
 			sideBySideComponent: null
 		}
@@ -55,8 +58,17 @@ export default {
 			this.baseLayer.osm.addTo(this.map);
 			this.layerControl.addBaseLayer(this.baseLayer.osm, this.baseLayer.osm.options.name);
 
+			this.layerGroup = L.layerGroup([this.baseLayer.osm]);
+			var layerProgress = new L.Control.TileLoadingProgress({
+				leafletElt: this.layerGroup,
+				position: 'bottomleft'
+			});
+			layerProgress.addTo(this.map);
+
 			this.map.on('layeradd', this.onLayerAdd);
 			this.map.on('overlayremove', this.onOverlayRemove);
+
+			EventBus.$on('resizedIDE', () => this.map.invalidateSize());
 		},
 
 		onLayerAdd(evt) {
@@ -88,9 +100,6 @@ export default {
 		showWebService(service) {
 			EventBus.$emit('showMapViewer');
 			switch(service.type.toLowerCase()) {
-				case 'wms':
-					this.updateWMSLayer(service);
-					break;
 				case 'xyz':
 					this.updateXYZLayer(service);
 					break;
@@ -111,11 +120,13 @@ export default {
 		},
 
 		addLayerToMap(id) {
+			this.layerGroup.addLayer(this.layer[id]);
 			this.layer[id].addTo(this.map);
 			this.layerControl.addOverlay(this.layer[id], this.layer[id].options.name);
 		},
 
 		removeLayerFromMap(id) {
+			this.layerGroup.removeLayer(this.layer[id]);
 			this.layer[id].removeFrom(this.map);
 			this.layerControl.removeLayer(this.layer[id]);
 			delete this.layer[id];
@@ -152,34 +163,17 @@ export default {
 
 		updateXYZLayer(service) {
 			var id = service.serviceId;
-			var url = service.url + "/{z}/{x}/{y}";
+			var url = service.url;
+			var title = service.title ? service.title.substr(0,50) : id.toUpperCase().substr(0,6);
 			if (typeof this.layer[id] === 'undefined') {
 				var opts = {
-					name: id.toUpperCase().substr(0,6) + " (XYZ)"
+					name: title + " (XYZ)"
 				};
 				this.layer[id] = new L.TileLayer(url, opts);
 				this.addLayerToMap(id);
 			}
 			else {
 				this.layer[id].setUrl(url, false);
-			}
-		},
-
-		updateWMSLayer(service) {
-			var id = service.serviceId;
-			if (typeof this.layer[id] === 'undefined') {
-				var args = service.attributes;
-				if (!Utils.isObject(args)) {
-					args = {};
-				};
-				args.name = id.toUpperCase().substr(0,6) + " (WMS)";
-				args.service = args.service || 'WMS';
-				args.format = args.format || 'image/jpeg';
-				this.layer[id] = L.tileLayer.wms(service.url, args);
-				this.addLayerToMap(id);
-			}
-			else {
-				this.layer[id].setUrl(service.url, false);
 			}
 		}
 
@@ -188,7 +182,13 @@ export default {
 }
 </script>
 
-<style scoped>
+<style>
+.leaflet-control-progress-bar {
+	background: #fff;
+	border-radius: 4px;
+	border: 2px solid rgba(0,0,0,0.2);
+	padding: 3px;
+}
 #mapCanvas {
 	height: 100%;
 }

@@ -16,15 +16,16 @@
 			<button title="Edit metadata" @click="editMetadata(p.row)" v-show="supports('updateService')"><i class="fas fa-edit"></i></button>
 			<button title="Replace process graph" @click="replaceProcessGraph(p.row)" v-show="supports('updateService')"><i class="fas fa-retweet"></i></button>
 			<button title="Delete" @click="deleteService(p.row)" v-show="supports('deleteService')"><i class="fas fa-trash"></i></button>
-			<button v-show="p.row.enabled" title="View on map" @click="viewService(p.row)"><i class="fas fa-map"></i></button>
+			<button v-show="p.row.enabled && isMapServiceSupported(p.row.type)" title="View on map" @click="viewService(p.row)"><i class="fas fa-map"></i></button>
 		</template>
 	</DataTable>
 </template>
 
 <script>
-import EventBus from '../eventbus.js';
+import Config from '../../config';
+import EventBus from '../eventbus';
 import WorkPanelMixin from './WorkPanelMixin.vue';
-import Utils from '../utils.js';
+import Utils from '../utils';
 import Field from './blocks/field';
 
 export default {
@@ -74,6 +75,12 @@ export default {
 		EventBus.$on('serviceCreated', this.serviceCreated);
 	},
 	methods: {
+		isMapServiceSupported(mapType) {
+			if (typeof mapType !== 'string') {
+				return false;
+			}
+			return Config.supportedMapServices.includes(mapType.toLowerCase());
+		},
 		listServices() {
 			return this.connection.listServices();
 		},
@@ -102,9 +109,10 @@ export default {
 
 			this.$refs.table.addData(service);
 
-			var buttons = [
-				{text: 'View on map', action: () => this.viewService(service)}
-			];
+			var buttons = [];
+			if (this.isMapServiceSupported(service.type)) {
+				buttons.push({text: 'View on map', action: () => this.viewService(service)});
+			}
 			if (this.supports('describeService')) {
 				buttons.push({text: 'Details', action: () => this.serviceInfo(service)});
 			}
@@ -204,7 +212,7 @@ export default {
 						this.updateServiceData(updatedService);
 					})
 					.catch(error => Utils.exception(this, error, "Replacing process graph failed"));
-			}, false);
+			});
 		},
 		updateTitle(service, newTitle) {
 			this.updateService(service, {title: newTitle});

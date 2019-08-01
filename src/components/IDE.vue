@@ -88,8 +88,8 @@ export default {
 	},
 	methods: {
 
-		getProcessGraph(callback, silent = false, passNull = false) {
-			this.$refs.editor.getProcessGraph(callback, silent, passNull);
+		getProcessGraph(success, failure = null, passNull = false) {
+			this.$refs.editor.getProcessGraph(success, failure, passNull);
 		},
 
 		insertProcessGraph(pg) {
@@ -118,6 +118,7 @@ export default {
 		moveSeparator(evt) {
 			if (this.moving) {
 				this.$refs.workspace.style.width = evt.x - this.movingOffset + "px";
+				EventBus.$emit('resizedIDE');
 				evt.preventDefault();
 				evt.stopPropagation();
 			}
@@ -126,6 +127,7 @@ export default {
 		centerSeparator() {
 			this.moving = false;
 			this.$refs.workspace.style.width = '60%';
+			EventBus.$emit('resizedIDE');
 		},
 
 		showCollectionInfo(id) {

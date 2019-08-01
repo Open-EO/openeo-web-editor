@@ -3,8 +3,10 @@ import Vue from 'vue';
 /*
 # Events
 
-## getProcessGraph(callback $callback, boolean $silent = false)
-Triggers the script/model currently in the editor to be evaluated runs the callback using the data from the evaluation.
+## getProcessGraph(callback $success, callback, callback $failure = null, boolean $passNull = false)
+Passes the process graph currently in the editor to the $success callback. If $failure is specified, an error or exception is passed to the callback. Otherwise shows the message in the notification center. $passNull set to true considers null a success and passes it to the corresponding callback.
+$success has one parameter: object processGraph
+$failure has two parameters: string message, object $exception = null
 
 ## insertProcessGraph(object $pg)
 Sends the current process graph and inserts it into the currently active editor.
@@ -18,16 +20,17 @@ Closes the modal
 ## serviceCreated(object $service)
 Triggered when a service was created successfully, parameter is the Service object returned by the openeo-js-client lib.
 
-## showModal(string $title, string $contents)
-Shows a modal with the specified title and contents.
-If $content is a string, it is treated as raw text, so HTML in it will NOT be rendered.
-If $content object is an object, it is rendered as a more readable list via the ObjectTree component.
-The last case is a shorthand for showComponentModal($title, 'ObjectTree', {data: $data})
+## showMessageModal(string $title, string $message)
+Shows a simple text message in a modal.
 
-## showComponentModal(string $title, string $compname, object $props)
-Shows a modal with the specified title and an instance of the $compname component.
-The component can be supplied with props by passing them as an object with the props' names as the keys and the props' contents as the values, e.g. {propname1: 'content', propname2: {foo: 'bar'}}
-The component to be used must be known (i.e. imported and declared) in the Modal component.
+## showHtmlModal(string $title, string $html)
+Shows rendered HTML in a modal.
+
+## showListModal(string $title, array $list, array $listActions)
+Shows a list in a modal.
+
+## showWebEditorInfo()
+Showa information about the web editor in a modal.
 
 ## showInViewer(Blob $blob, object $output_args)
 Shows the data with the specified content type in the appropriate area of the viewer.
@@ -53,6 +56,9 @@ Shows collection information in a modal.
 
 ## showProcessInfo(id)
 Shows process information in a modal.
+
+## resizedIDE()
+The panels have been resized.
 
 */
 export default new Vue();

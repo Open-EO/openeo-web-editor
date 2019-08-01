@@ -1,5 +1,5 @@
 <template>
-    <div v-show="shown && active" class="tabContent">
+	<div v-show="enabled && active" class="tabContent">
 		<slot name="tab" :tab="this"></slot>
 	</div>
 </template>
@@ -8,16 +8,16 @@
 <script>
 export default {
 	name: 'Tab',
-    props: {
-        id: {
+	props: {
+		id: {
 			type: String,
 			required: true
 		},
-        name: {
+		name: {
 			type: String,
 			required: true
 		},
-        icon: {
+		icon: {
 			type: String,
 			required: true
 		},
@@ -25,29 +25,60 @@ export default {
 			type: Boolean,
 			default: false
 		},
-		shown: {
+		enabled: {
 			type: Boolean,
 			default: true
 		},
-		onActivate: {
+		onBeforeShow: {
+			type: Function,
+			default: null
+		},
+		onShow: {
+			type: Function,
+			default: null
+		},
+		onHide: {
 			type: Function,
 			default: null
 		}
-    },
-    data() {
-        return {
+	},
+	data() {
+		return {
 			active: false
-        };
+		};
 	},
 	watch: {
-		active() {
-			if (typeof this.onActivate === 'function') {
-				this.onActivate();
+		active(newValue) {
+			// Make sure the component is really shown by using nextTick...
+			if (newValue && typeof this.onShow === 'function') {
+				this.$nextTick(() => this.onShow());
+			}
+			else if (!newValue && typeof this.onHide === 'function') {
+				this.$nextTick(() => this.onHide());
 			}
 		}
 	},
-    mounted() {
-        this.active = this.selected;
-    }
+	mounted() {
+		if (this.selected) {
+			this.show();
+		}
+		else {
+			this.active = false;
+		}
+	},
+	methods: {
+		async show() {
+			if (this.active) {
+				return true;
+			}
+			if (typeof this.onBeforeShow !== 'function' || await this.onBeforeShow()) {
+				this.active = true;
+			}
+			return this.active;
+		},
+		hide() {
+			this.active = false;
+		}
+	}
 }
 </script>

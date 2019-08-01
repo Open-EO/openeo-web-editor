@@ -29,7 +29,7 @@
 
 			<section class="process-graph">
 				<div class="vue-component"><h3>Process Graph</h3></div>
-				<Editor :processGraph="service.processGraph" :editable="false" id="servicePgViewer" />
+				<Editor :processGraph="service.processGraph" :editable="false" :enableExecute="false" id="servicePgViewer" />
 			</section>
 
 			<section class="vue-component parameters" v-if="hasParameters">

@@ -1,8 +1,7 @@
 <template>
 	<div id="FilePanel">
 		<div v-show="supports('uploadFile')" class="addFile">
-			<input type="file" name="uploadUserFile" id="uploadUserFile">
-			<button title="Add new file" id="uploadUserFileBtn" @click="uploadFile()" v-show="!uploadProgress"><i class="fas fa-upload"></i></button>
+			<input type="file" name="uploadUserFile" id="uploadUserFile" @change="uploadFiles" multiple>
 		</div>
 		<div class="percent"><div class="used" :class="{error: uploadErrored}" :style="'width: ' + this.uploadProgress + '%; opacity: ' + this.uploadFadeOut"></div></div>
 		<DataTable ref="table" :dataSource="listFiles" :columns="columns">
@@ -50,9 +49,21 @@ export default {
 			},
 			subscribed: false,
 			uploadProgress: 0,
+			uploadProgressPerFile: [],
 			uploadErrored: false,
 			uploadFadeOut: 1
 		};
+	},
+	watch: {
+		uploadProgressPerFile: {
+			deep: true,
+			handler() {
+				this.uploadProgress = this.uploadProgressPerFile.reduce((a,b) => a + b, 0) / this.uploadProgressPerFile.length;
+				if (this.uploadProgress > 99.9999) {
+					this.finishAllUploads();
+				}
+			}
+		}
 	},
   	methods: {
 		listFiles() {
@@ -61,25 +72,37 @@ export default {
 		updateData() {
 			this.updateTable(this.$refs.table, 'listFiles', 'uploadFile');
 		},
-		uploadFile() {
-			var field = document.getElementById('uploadUserFile');
-			var file = field.files[0];
-
+		uploadFiles(e) {
+			var files = e.target.files || e.dataTransfer.files;
+			if (!files || !files.length) {
+				Utils.info(this, 'Please select files to upload.');
+				return;
+			}
+			this.uploadProgressPerFile = [];
+			this.uploadProgress = 0;
+			this.uploadErrored = false;
+			for (let i = 0; i < files.length; i++) {
+				this.uploadFile(files[i], i);
+			}
+		},
+		uploadFile(file, i) {
+			this.uploadProgressPerFile.push(0);
+			if (typeof file.name !== 'string') {
+				return;
+			}
 			var virtualFile = this.connection.openFile(file.name);
-			virtualFile.uploadFile(file, percent => this.uploadProgress = percent)
+			virtualFile.uploadFile(file, percent => this.$set(this.uploadProgressPerFile, i, percent))
 				.then(uploadedFile => {
 					this.$refs.table.replaceData(uploadedFile);
-					this.uploadProgress = 100;
-					this.fadeOutUploadProgress();
-					field.value = '';
-					Utils.ok(this, 'File upload completed.');
+					this.$set(this.uploadProgressPerFile, i, 100);
+					Utils.ok(this, 'File upload completed.', file.name);
 				}).catch(error => {
 					console.log(error);
-					this.fadeOutUploadProgress();
-					Utils.exception(this, error, 'Sorry, file upload failed.');
+					Utils.exception(this, error, file.name);
 				});
 		},
-		fadeOutUploadProgress() {
+		finishAllUploads() {
+			document.getElementById('uploadUserFile').value = '';
 			var t = setInterval(() => {
 				this.uploadFadeOut -= 0.05;
 				if (this.uploadFadeOut < 0) {

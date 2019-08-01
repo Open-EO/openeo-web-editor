@@ -1,6 +1,6 @@
 <template>
 	<div id="VisualEditor" ref="visualEditor">
-		<EditorToolbar :editable="editable" :onStore="getProcessGraph" :onInsert="insertProcessGraph" :onClear="clearProcessGraph">
+		<EditorToolbar :editable="editable" :onStore="getProcessGraph" :onInsert="insertProcessGraph" :onClear="clearProcessGraph" :enableClear="enableClear" :enableExecute="enableExecute" :enableLocalStorage="enableLocalStorage">
 			<button type="button" @click="blocks.deleteEvent()" v-show="editable && blocks.canDelete()" title="Delete selected elements"><i class="fas fa-trash"></i></button>
 			<button type="button" @click="blocks.undo()" v-show="editable && blocks.hasUndo()" title="Undo last change"><i class="fas fa-undo-alt"></i></button>
 			<button type="button" @click="blocks.toggleCompact()" :class="{compactActive: blocks.compactMode}" title="Compact Mode"><i class="fas fa-compress-arrows-alt"></i></button>
@@ -25,6 +25,7 @@ import EditorToolbar from './EditorToolbar.vue';
 import DiscoveryToolbar from './DiscoveryToolbar.vue';
 import ParameterModal from './ParameterModal.vue'; // Add a paremeter modal to each visual editor, otherwise we can't open a parameter modal over a parameter modal (e.g. edit the parameters of a callback)
 import SchemaModal from './SchemaModal.vue';
+import { ProcessGraph } from '@openeo/js-commons';
 
 export default {
 	name: 'VisualEditor',
@@ -50,10 +51,23 @@ export default {
 		},
 		callbackArguments: {
 			type: Object
+		},
+		enableClear: {
+			type: Boolean,
+			default: true
+		},
+		enableLocalStorage: {
+			type: Boolean,
+			default: true
+		},
+		enableExecute: {
+			type: Boolean,
+			default: true
 		}
 	},
 	computed: {
-		...Utils.mapState('server', ['processes', 'collections'])
+		...Utils.mapState('server', ['processes', 'collections']),
+		...Utils.mapGetters('server', ['processRegistry'])
 	},
 	data() {
 		return {
@@ -68,7 +82,6 @@ export default {
 		);
 	},
 	mounted() {
-		this.$nextTick(this.initBlocks);
 		EventBus.$on('showSchemaModal', this.showSchemaModal);
 	},
 	watch: {
@@ -77,12 +90,14 @@ export default {
 		}
 	},
 	methods: {
-		initBlocks() {
-			this.blocks.run("#" + this.id, this.editable);
+		onShow() {
+			if (!this.blocks.isReady) {
+				this.blocks.run("#" + this.id, this.editable);
 
-			this.registerProcesses();
-			this.makeCallbackArguments();
-			this.insertProcessGraph(this.value, false);
+				this.registerProcesses();
+				this.makeCallbackArguments();
+				this.insertProcessGraph(this.value, false);
+			}
 		},
 
 		perfectScale() {
@@ -115,23 +130,26 @@ export default {
 			this.$refs.schemaModal.show(name, schema, "This is a callback argument. It is a value made available by the process executing this sub-processes for further use. The value will comply to the following data type(s):");
 		},
 
-		openParameterEditor(blocks, fields, editable) {
+		openParameterEditor(blocks, block, editable) {
 			blocks.active = false;
-			var title = fields.block.name+' #'+fields.block.id;
+			var title = block.name+' #'+block.id;
 			this.$refs.parameterModal.show(
-				title, fields.editables, editable,
+				title, block.editables, editable,
 				// save handler
-				editable ? (data => fields.save(data)) : null,
+				editable ? (data => block.save(data)) : null,
 				// close handler
 				() => {
 					blocks.active = true;
 					return true;
-				}
+				},
+				// process id
+				block.name
 			);
 		},
 
 		clearProcessGraph() {
 			this.blocks.clear();
+			this.makeCallbackArguments();
 		},
 
 		registerProcesses() {
@@ -146,13 +164,30 @@ export default {
 			}
 		},
 
-		getProcessGraph(callback, silent = false, passNull = false) {
-			var pg = this.makeProcessGraph(silent);
-			if (pg !== null || passNull) {
-				callback(pg);
+		getProcessGraph(success, failure, passNull = false) {
+			var processGraph = null;
+			try {
+				processGraph = this.makeProcessGraph();
+			} catch (error) {
+				failure('No valid model specified.', error);
+				return;
 			}
-			else if (!silent) {
-				Utils.error(this, 'No valid model specified.');
+
+			if (processGraph !== null) {
+				try {
+					var pg = new ProcessGraph(processGraph, this.processRegistry);
+					pg.parse();
+				} catch(error) {
+					failure('Process graph invalid', error);
+					return;
+				}
+			}
+
+			if (processGraph !== null || passNull) {
+				success(processGraph);
+			}
+			else {
+				failure('No model specified.');
 			}
 		},
 
@@ -166,7 +201,7 @@ export default {
 			try {
 				// import process graph and scale it "perfectly"! :-)
 				this.makeCallbackArguments();
-				this.blocks.importProcessGraph(processGraph);
+				this.blocks.importProcessGraph(processGraph, this.processRegistry);
 				this.blocks.perfectScale();
 			} catch (error) {
 				// If an error occured: show it an restore the last working state from history.
@@ -179,18 +214,8 @@ export default {
 			return success;
 		},
 
-		makeProcessGraph(silent = false) {
-			try {
-				return this.blocks.exportProcessGraph();
-			} catch (error) {
-				if (!silent) {
-					Utils.exception(this, error);
-				}
-				else {
-					console.log(error);
-				}
-				return null;
-			}
+		makeProcessGraph() {
+			return this.blocks.exportProcessGraph();
 		},
 
 		makeCallbackArguments() {

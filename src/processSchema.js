@@ -1,16 +1,9 @@
-import { Utils as CommonUtils } from '@openeo/js-commons';
-
 class ProcessSchema {
 	
 	constructor(schema) {
 		this.schema = schema;
-		// ToDo: schema.not is not supported
-		if (schema.allOf) {
-			// ToDo: Mergin allOF is not always correct, but should be enough in mostly all cases.
-			var merged = CommonUtils.mergeDeep({}, schema.allOf);
-			this.schemas = [new ProcessSubSchema(merged)];
-		}
-		else if (schema.oneOf || schema.anyOf) {
+		// ToDo: schema.not and schema.allOf is not supported - see also _convertSchemaToArray in jsonschema.js of openeo-js-commons.
+		if (schema.oneOf || schema.anyOf) {
 			this.schemas = (schema.oneOf || schema.anyOf).map(s => new ProcessSubSchema(s));
 		}
 		else if (Array.isArray(schema.type)) {
@@ -112,7 +105,7 @@ class ProcessSubSchema {
 			return null;
 		}
 		
-		return this.arrayItems.dataTypes();
+		return this.arrayItems.dataType();
 	}
 
 	dataType(native = false) {

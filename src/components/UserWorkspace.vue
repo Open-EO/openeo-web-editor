@@ -58,9 +58,6 @@ export default {
 		supportsFiles() {
 			return (this.supports('listFiles') || this.supports('uploadFile'));
 		}
-	},
-	mounted() {
-		this.$refs.tabs.resetActiveTab();
 	}
 }
 </script>

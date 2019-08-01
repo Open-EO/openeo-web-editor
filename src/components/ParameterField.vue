@@ -1,6 +1,18 @@
 <template>
 	<div class="fieldEditorContainer">
-		<select class="fieldValue" v-if="schema.isEnum()" :name="fieldName" v-model="value" ref="selectFirst" :disabled="!editable">
+		<template v-if="isResult">
+			<div class="fieldValue externalData fromNode">
+				<span>Output of <tt>#{{ value.from_node }}</tt></span>
+			</div>
+			<button type="button" v-if="isArray" @click="convertToArray()"><i class="fas fa-list"></i> Convert to Array</button>
+		</template>
+		<template v-else-if="isCallbackArgument">
+			<div class="fieldValue externalData fromArgument">
+				<span>Value of callback argument <tt>{{ value.from_argument }}</tt></span>
+			</div>
+			<button type="button" v-if="isArray" @click="convertToArray()"><i class="fas fa-list"></i> Convert to array</button>
+		</template>
+		<select class="fieldValue" v-else-if="schema.isEnum()" :name="fieldName" v-model="value" ref="selectFirst" :disabled="!editable">
 			<option v-for="(choice, k) in schema.getEnumChoices()" :key="k" :value="choice">{{ choice }}</option>
 		</select>
 		<select class="fieldValue" v-else-if="type === 'collection-id'" :name="fieldName" v-model="value" ref="selectFirst" :disabled="!editable">
@@ -32,17 +44,17 @@
 			<div :id="fieldName" class="areaSelector"></div>
 		</template>
 		<div v-else-if="type === 'callback'" class="border">
-			<VisualEditor ref="callbackBuilder" id="inlinePgEditor" :editable="editable" :callbackArguments="schema.getCallbackParameters()" :value="value" />
+			<VisualEditor ref="callbackBuilder" id="inlinePgEditor" :editable="editable" :callbackArguments="schema.getCallbackParameters()" :value="value" :enableExecute="false" :enableLocalStorage="false" />
 		</div>
 		<template v-else-if="type === 'null'">
 			The field will be set to&nbsp;<strong><tt>null</tt></strong>.
 		</template>
-		<div v-else-if="type === 'array' || type === 'temporal-intervals'" class="arrayEditor">
+		<div v-else-if="isArray" class="arrayEditor">
 			<draggable v-model="value">
 				<transition-group name="arrayElements">
 					<div class="fieldValue arrayElement" v-for="(e, k) in value" :key="e.id">
-						<ParameterField ref="arrayFields" :editable="editable" :field="field" :schema="schema" :pass="e.value" :isItem="true" />
-						<button v-if="editable" type="button" @click="removeField(k)"><i class="fas fa-trash"></i></button>
+						<ParameterField :ref="e.id" :editable="editable" :field="field" :schema="schema" :pass="e.value" :isItem="true" />
+						<button v-if="editable" class="arrayElementDelete" type="button" @click="removeField(k)"><i class="fas fa-trash"></i></button>
 						<div class="mover" v-if="editable"><i class="fas fa-arrows-alt"></i></div>
 					</div>
 				</transition-group>
@@ -92,6 +104,7 @@ export default {
 		},
 		schema: Object,
 		pass: {},
+		processId: String,
 		isItem: {
 			type: Boolean,
 			default: false
@@ -105,7 +118,7 @@ export default {
 	},
 	computed: {
 		...Utils.mapState('server', ['collections', 'outputFormats', 'serviceTypes']),
-		...Utils.mapGetters('server', ['capabilities']),
+		...Utils.mapGetters('server', ['capabilities', 'processRegistry']),
 		type() {
 			return this.isItem ? this.schema.arrayOf() : this.schema.dataType();
 		},
@@ -114,6 +127,15 @@ export default {
 		},
 		fieldName() {
 			return this.field.name + (Array.isArray(this.field.value) ? '[]' : '');
+		},
+		isResult() {
+			return Utils.isObject(this.value) && this.value.from_node;
+		},
+		isCallbackArgument() {
+			return Utils.isObject(this.value) && this.value.from_argument;
+		},
+		isArray() {
+			return (this.type === 'array' || this.type === 'temporal-intervals');
 		}
 	},
 	watch: {
@@ -170,7 +192,10 @@ export default {
 		},
 		initValue() {
 			var v;
-			if (this.type === 'temporal-interval') {
+			if (Utils.isObject(this.$props.pass) && (this.$props.pass.from_argument || this.$props.pass.from_node)) {
+				v = this.$props.pass;
+			}
+			else if (this.type === 'temporal-interval') {
 				if (Array.isArray(this.$props.pass) && this.$props.pass.length >= 2) {
 					v = {
 						start: this.$props.pass[0],
@@ -186,12 +211,7 @@ export default {
 			}
 			else if (this.type === 'callback') {
 				if (Utils.isObject(this.$props.pass) && this.$props.pass.callback) {
-					if (Utils.isObject(this.$props.pass) && this.$props.pass.callback instanceof ProcessGraph) {
-						v = this.$props.pass.callback.toJSON();
-					}
-					else  {
-						v = this.$props.pass.callback;
-					}
+					v = this.$props.pass.callback;
 				}
 				else {
 					v = null;
@@ -207,16 +227,8 @@ export default {
 				v = this.$props.pass;
 				this.hasBudget = typeof v === 'number';
 			}
-			else if (this.type === 'array' || this.type === 'temporal-intervals') {
-				v = [];
-				if (Array.isArray(this.$props.pass)) {
-					for(var i in this.$props.pass) {
-						v.push({
-							id: i,
-							value: this.$props.pass[i]
-						});
-					}
-				}
+			else if (this.isArray) {
+				v = this.initArray(this.$props.pass);
 			}
 			else if (this.useTextarea) {
 				if (typeof this.$props.pass === 'object') {
@@ -237,12 +249,16 @@ export default {
 			return v;
 		},
 		getValue() {
-			if (this.type === 'temporal-interval') {
+			if (this.isCallbackArgument || this.isResult) {
+				return this.value; // Pass through
+			}
+			else if (this.type === 'temporal-interval') {
 				return [this.value.start, this.value.end];
 			}
 			else if (this.type === 'callback') {
 				var pg = this.$refs.callbackBuilder.makeProcessGraph();
-				var obj = new ProcessGraph(pg);
+				var obj = new ProcessGraph(pg, this.processRegistry);
+				obj.setParent(this.processId, this.field.name);
 				obj.parse();
 				return {
 					callback: obj
@@ -257,10 +273,11 @@ export default {
 					north: +this.value.getNorth().toFixed(6),
 				};
 			}
-			else if (this.type === 'array' || this.type === 'temporal-intervals') {
+			else if (this.isArray) {
 				var values = [];
-				for(var i in this.$refs.arrayFields) {
-					values.push(this.$refs.arrayFields[i].getValue());
+				for(var i in this.value) {
+					var fieldId = this.value[i].id;
+					values.push(this.$refs[fieldId][0].getValue());
 				}
 				return values;
 			}
@@ -288,9 +305,29 @@ export default {
 					return null;
 				}
 			}
+			else if (this.type === 'any' || this.type === 'mixed') {
+				// Try to guess whether it is a number or not
+				var num = Number(this.value);
+				return Number.isNaN(num) ? this.value : num;
+			}
 			else {
 				return this.value;
 			}
+		},
+		initArray(arr) {
+			var v = [];
+			if (Array.isArray(arr)) {
+				for(var i in arr) {
+					v.push({
+						id: "arrayElement" + i,
+						value: arr[i]
+					});
+				}
+			}
+			return v;
+		},
+		convertToArray() {
+			this.value = this.initArray([this.value]);
 		},
 		addField() {
 			this.value.push({
@@ -319,13 +356,16 @@ export default {
 }
 .arrayElement {
 	transition: all 0.5s;
-	margin-bottom: 0.2em;
+	margin-bottom: 0.3em;
 }
 
 .arrayElements-enter, .arrayElements-active {
 	opacity: 0;
 }
-
+.arrayElementDelete {
+	margin-left: 5px;
+	margin-right: 5px;
+}
 .mover {
 	padding: 3px 1em;
 }
@@ -339,5 +379,17 @@ export default {
 }
 .border {
 	border: 1px solid #ccc;
+	width: 100%;
+	height: 100%;
+}
+.externalData span {
+	display: inline-block; 
+	background-color: #ddd;
+	padding: 2px 5px;
+	border-radius: 3px;
+}
+.externalData tt {
+	font-size: 1.1em;
+	font-weight: bold;
 }
 </style>
