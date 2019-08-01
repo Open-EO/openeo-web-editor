@@ -12,5 +12,10 @@ export default {
 		showProgressBar: true,
 		closeOnClick: true,
 		pauseOnHover: true
-	}, 
+	},
+
+	// List of supported web map services (all lower-cased)
+	supportedMapServices: [
+		'xyz'
+	]
 };
