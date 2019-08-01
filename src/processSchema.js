@@ -67,6 +67,7 @@ class ProcessSchema {
 
 	dataTypes(includeNull = false, native = false) {
 		var types = this.schemas.map(s => s.dataType(native));
+		types = types.filter((v, i, a) => a.indexOf(v) === i); // Return each type only once
 		if (!includeNull) {
 			types = types.filter(s => s !== 'null');
 		}

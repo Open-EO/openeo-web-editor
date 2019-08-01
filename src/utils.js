@@ -6,7 +6,7 @@ import { mapState, mapActions, mapMutations, mapGetters } from 'vuex';
 export default {
 
 	exception(vm, error, alt) {
-		console.log(error); 
+		console.error(error); 
 		var title = null; 
 		var message = alt; 
 		if (this.isObject(error) && typeof error.message === 'string') {

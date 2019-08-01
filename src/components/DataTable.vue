@@ -139,7 +139,7 @@ export default {
 					return;
 				}
 			}
-			console.log(error);
+			console.warn(error);
 			this.noDataMessage = "Sorry, an unknown error has occured.";
 		},
 		retrieveData() {
@@ -273,7 +273,7 @@ export default {
 					value = this['format' + col.format](value, col);
 				}
 				else {
-					console.log(col.format + ' is an invalid formatter.');
+					console.warn(col.format + ' is an invalid formatter.');
 				}
 			}
 			else if (typeof col.format === 'function') {
