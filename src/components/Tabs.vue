@@ -69,6 +69,9 @@ export default {
 			}
 		},
 		resetActiveTab(force = false) {
+			if (this.tabs.length === 0) {
+				return;
+			}
 			if (force || this.getActiveTab() === null) {
 				this.selectTab(this.tabs[0]);
 			}

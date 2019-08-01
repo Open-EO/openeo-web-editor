@@ -66,7 +66,7 @@ export default {
 	},
 	watch: {
 		active(newVal) {
-			if (newVal) {
+			if (newVal && this.editor !== null) {
 				this.editor.refresh();
 			}
 		}
