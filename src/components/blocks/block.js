@@ -51,7 +51,7 @@ var Block = function(blocks, name, type, schema, id)
     this.editables = [];
     this.fields = {};
     this._createOutputField(schema.returns);
-    this._createInputFields(schema.parameters);
+    this._createInputFields(schema.parameters, schema.parameter_order);
 };
 
 Block.prototype._createOutputField = function(returns) {
@@ -68,8 +68,13 @@ Block.prototype._createOutputField = function(returns) {
 
 };
 
-Block.prototype._createInputFields = function(parameters) {
-    for(var name in parameters) {
+Block.prototype._createInputFields = function(parameters, parameter_order) {
+    var paramNames = Object.keys(parameters);
+    if (!Array.isArray(parameter_order) || parameter_order.length !== paramNames.length) {
+        parameter_order = paramNames;
+    }
+    for(var i in parameter_order) {
+        var name = parameter_order[i];
         var p = parameters[name];
         var field = new Field(name, name, p.schema, p.description, p.required, false, p.experimental, p.deprecated);
         field.setBlock(this);
