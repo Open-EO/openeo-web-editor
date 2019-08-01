@@ -70,7 +70,7 @@ export default {
 				return;
 			}
 			if (!selectedTab || typeof selectedTab.show !== 'function') {
-				console.error("Invalid tab", selectedTab);
+				console.warn("Invalid tab", selectedTab);
 				return;
 			}
 			if (await selectedTab.show() && activeTab !== null) {

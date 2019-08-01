@@ -45,7 +45,7 @@ export default {
 					}
 					else if (Array.isArray(type)) {
 						Utils.info("Data type can't be detected, please select it yourself.");
-						console.log("Parameter schema is ambiguous. Potential types: " + type.join(', ') + ". Value: " + JSON.stringify(this.pass));
+						console.warn("Parameter schema is ambiguous. Potential types: " + type.join(', ') + ". Value: " + JSON.stringify(this.pass));
 						this.type = type[0];
 					}
 					else {

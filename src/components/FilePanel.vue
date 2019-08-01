@@ -97,7 +97,7 @@ export default {
 					this.$set(this.uploadProgressPerFile, i, 100);
 					Utils.ok(this, 'File upload completed.', file.name);
 				}).catch(error => {
-					console.log(error);
+					console.error(error);
 					Utils.exception(this, error, file.name);
 				});
 		},
@@ -129,7 +129,7 @@ export default {
 			this.connection.subscribe(
 				'openeo.files', {},
 				(data, info) => {
-					console.log("File change: " + JSON.stringify(data));
+					console.info("File change: " + JSON.stringify(data));
 				}
 			);
 			this.subscribed = true;

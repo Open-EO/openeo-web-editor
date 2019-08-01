@@ -310,19 +310,19 @@ export default {
 			this.connection.subscribe(
 				'openeo.jobs.debug', params,
 				(data, info) => {
-					console.log("Debugging information for job " + id + ": " + JSON.stringify(data));
+					console.info("Debugging information for job " + id + ": " + JSON.stringify(data));
 				}
 			);
 			this.connection.subscribe(
 				'openeo.jobs.output', params,
 				(data, info) => {
-					console.log("Output from job " + id + ": " + JSON.stringify(data));
+					console.info("Output from job " + id + ": " + JSON.stringify(data));
 				}
 			);
 			this.connection.subscribe(
 				'openeo.jobs.status', params,
 				(data, info) => {
-					console.log("Status information for job " + id + ": " + JSON.stringify(data));
+					console.info("Status information for job " + id + ": " + JSON.stringify(data));
 				}
 			);
 			this.jobSubscriptions.push(id);
