@@ -55,6 +55,7 @@ export default {
 	},
 	data() {
 		return {
+			lastPgToInsert: null,
 			pgToInsert: null
 		};
 	},
@@ -124,7 +125,11 @@ export default {
 
 		transferProcessGraph() {
 			this.activeEditor.onShow();
-			this.insertProcessGraph(this.pgToInsert);
+			// Don't update process graph if it hasn' changed
+			if (!this.lastPgToInsert || JSON.stringify(this.pgToInsert) !== this.lastPgToInsert) {
+				this.insertProcessGraph(this.pgToInsert);
+				this.lastPgToInsert = JSON.stringify(this.pgToInsert);
+			}
 			this.pgToInsert = null;
 		}
 
