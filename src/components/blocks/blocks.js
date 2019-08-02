@@ -17,7 +17,10 @@ var Blocks = function(errorHandler = null, openParameterEditor = null)
     this.editable = true;
 
     // View center & scale
-    this.center = {};
+    this.center = {
+        x: 0,
+        y: 0
+    };
     this.newBlockOffset = 0;
     this.scale = 1.3;
     this.redrawTimeout = null;
@@ -102,7 +105,8 @@ Blocks.prototype.run = function(selector, editable = true)
     this.editable = editable;
 
     if (!this.div) {
-        console.log('blocks.js: Unable to find ' + selector);
+        console.error('blocks.js: Unable to find ' + selector);
+        return;
     }
 
     // Inject the initial editor
@@ -119,7 +123,6 @@ Blocks.prototype.run = function(selector, editable = true)
     var rect = Utils.domBoundingBox(this.div);
     this.center.x = rect.width/2;
     this.center.y = rect.height/2;
-    this.newBlockOffset = 0;
 
     // Listen for mouse position
     this.div.addEventListener('mousemove', event => {
@@ -222,19 +225,6 @@ Blocks.prototype.showParameters = function(block) {
     }
 };
 
-/**
- * Gets the mouse position
- */
-Blocks.prototype.getPosition = function()
-{
-    var position = {};
-    position.x = (this.mouseX-this.center.x)/this.scale;
-    position.y = (this.mouseY-this.center.y)/this.scale;
-
-    return position;
-};
-
-
 Blocks.prototype.hasUndo = function()
 {
     if (this.history === null) {
@@ -316,8 +306,9 @@ Blocks.prototype.addBlock = function(name, type, x, y, values = {})
         throw "'" + name + "' not available.";
     }
     var block = new Block(this, name, type, this.moduleTypes[type][name], this.id);
-    block.x = x === null ? (-block.getWidth()/2 + this.newBlockOffset) : x;
-    block.y = y === null ? (-block.getHeight()/2 + this.newBlockOffset) : y;
+    var rect = Utils.domBoundingBox(this.div);
+    block.x = x === null ? (-this.center.x + rect.width/2 - block.getWidth()/2 + this.newBlockOffset) : x;
+    block.y = y === null ? (-this.center.y + rect.height/2 - block.getHeight()/2 + this.newBlockOffset) : y;
     if (this.newBlockOffset < 150) {
         this.newBlockOffset += 10;
     }
@@ -601,7 +592,7 @@ Blocks.prototype.doRedraw = function()
                 'stroke-width': 3*this.scale
             });
         } catch (error) {
-            console.log(error);
+            console.error(error);
             this.linking = null;
         }
     }
@@ -723,7 +714,7 @@ Blocks.prototype.showError = function(message, title = null) {
         this.errorHandler(message, title);
     }
     else {
-        console.log(title, message);
+        console.error(title, message);
     }
 }
 
@@ -950,7 +941,6 @@ Blocks.prototype.perfectScale = function()
     }
 
     var rect = this.div.getBoundingClientRect();
-
     var scaleA = rect.width/(xMax-xMin);
     var scaleB = rect.height/(yMax-yMin);
     var scale = Math.min(scaleA, scaleB);
