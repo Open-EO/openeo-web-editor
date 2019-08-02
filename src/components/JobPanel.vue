@@ -283,7 +283,7 @@ export default {
 		},
 		downloadResults(job) {	
 			job.listResults().then(info => {
-				if(info.links.length == 0) {
+				if(!Array.isArray(info.links) || info.links.length == 0) {
 					Utils.error(this, "No download available.");
 				}
 				else {
