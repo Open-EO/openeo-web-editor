@@ -69,6 +69,9 @@ export default {
 			watchers: []
 		};
 	},
+	computed: {
+		...Utils.mapGetters('server', ['supportsBilling', 'supportsBillingPlans'])
+	},
 	created() {
 		EventBus.$on('jobCreated', this.jobCreated);
 	},
@@ -158,8 +161,8 @@ export default {
 				var fields = [
 					this.getTitleField(),
 					this.getDescriptionField(),
-					this.getBillingPlanField(),
-					this.getBudgetField()
+					this.supportsBillingPlans ? this.getBillingPlanField() : null,
+					this.supportsBilling ? this.getBudgetField() : null
 				];
 				EventBus.$emit('showDataForm', "Create new batch job", fields, data => this.createJob(script, data));
 			});
@@ -228,8 +231,8 @@ export default {
 				var fields = [
 					this.getTitleField().setValue(job.title),
 					this.getDescriptionField().setValue(job.description),
-					this.getBillingPlanField().setValue(job.plan),
-					this.getBudgetField().setValue(job.budget)
+					this.supportsBillingPlans ? this.getBillingPlanField().setValue(job.plan) : null,
+					this.supportsBilling ? this.getBudgetField().setValue(job.budget) : null
 				];
 				EventBus.$emit('showDataForm', "Edit batch job", fields, data => this.updateJob(job, data));
 			});

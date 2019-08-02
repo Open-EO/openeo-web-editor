@@ -35,7 +35,9 @@ export default {
 				registry.add(state.processes[i]);
 			}
 			return registry;
-		}
+		},
+		supportsBilling: (state) => state.connection !== null && state.connection.capabilities().currency() !== null,
+		supportsBillingPlans: (state) => state.connection !== null && state.connection.capabilities().currency() !== null && state.connection.capabilities().listPlans().length > 0
 	},
 	actions: {
 		async connect({commit}, {url, requireAuthentication}) {

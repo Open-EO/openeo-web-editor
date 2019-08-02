@@ -32,7 +32,8 @@ export default {
 	name: 'ServicePanel',
 	mixins: [WorkPanelMixin],
 	computed: {
-		...Utils.mapState('server', ['serviceTypes'])
+		...Utils.mapState('server', ['serviceTypes']),
+		...Utils.mapGetters('server', ['supportsBilling', 'supportsBillingPlans'])
 	},
 	data() {
 		return {
@@ -179,8 +180,8 @@ export default {
 					this.getTitleField(),
 					this.getDescriptionField(),
 					this.getEnabledField(),
-					this.getBillingPlanField(),
-					this.getBudgetField(),
+					this.supportsBillingPlans ? this.getBillingPlanField() : null,
+					this.supportsBilling ? this.getBudgetField() : null,
 					this.getParametersField()
 				];
 				EventBus.$emit('showDataForm', "Create new web service", fields, data => this.createService(script, data));
@@ -192,8 +193,8 @@ export default {
 					this.getTitleField().setValue(service.title),
 					this.getDescriptionField().setValue(service.description),
 					this.getEnabledField().setValue(service.enabled),
-					this.getBillingPlanField().setValue(service.plan),
-					this.getBudgetField().setValue(service.budget),
+					this.supportsBillingPlans ? this.getBillingPlanField().setValue(service.plan) : null,
+					this.supportsBilling ? this.getBudgetField().setValue(service.budget) : null,
 					this.getParametersField().setValue(service.parameters)
 				];
 				EventBus.$emit('showDataForm', "Edit web service", fields, data => this.updateService(service, data));

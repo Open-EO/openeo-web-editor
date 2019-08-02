@@ -165,7 +165,7 @@ export default {
 
 		showDataForm(title, fields, saveCallback = null, closeCallback = null) {
 			var editable = typeof saveCallback === 'function';
-			this.$refs.parameterModal.show(title, fields, editable, saveCallback, closeCallback);
+			this.$refs.parameterModal.show(title, fields.filter(f => f !== null), editable, saveCallback, closeCallback);
 		}
 
 	}
