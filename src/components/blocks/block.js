@@ -326,8 +326,7 @@ Block.prototype.redraw = function(selected)
     if (this.lastScale != this.blocks.scale) {
         this.div.style.fontSize = Math.round(this.blocks.scale*this.defaultFont)+'px';
         this.div.style.width = Math.round(this.blocks.scale*this.getWidth())+'px';
-
-        this.lastScale = this.blocks.scale
+        this.lastScale = this.blocks.scale;
     }
 
     // Changing the circle rendering

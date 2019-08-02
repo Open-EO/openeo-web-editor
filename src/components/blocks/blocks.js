@@ -307,8 +307,8 @@ Blocks.prototype.addBlock = function(name, type, x, y, values = {})
     }
     var block = new Block(this, name, type, this.moduleTypes[type][name], this.id);
     var rect = Utils.domBoundingBox(this.div);
-    block.x = x === null ? (-this.center.x + rect.width/2 - block.getWidth()/2 + this.newBlockOffset) : x;
-    block.y = y === null ? (-this.center.y + rect.height/2 - block.getHeight()/2 + this.newBlockOffset) : y;
+    block.x = x === null ? ((-this.center.x + rect.width/2)/this.scale - block.getWidth()/2 + this.newBlockOffset) : x;
+    block.y = y === null ? ((-this.center.y + rect.height/2)/this.scale - block.getHeight()/2 + this.newBlockOffset) : y;
     if (this.newBlockOffset < 150) {
         this.newBlockOffset += 10;
     }
@@ -943,11 +943,9 @@ Blocks.prototype.perfectScale = function()
     var rect = this.div.getBoundingClientRect();
     var scaleA = rect.width/(xMax-xMin);
     var scaleB = rect.height/(yMax-yMin);
-    var scale = Math.min(scaleA, scaleB);
-
-    this.scale = scale;
-    this.center.x = rect.width/2 - scale*(xMin+xMax)/2.0;
-    this.center.y = rect.height/2 - scale*(yMin+yMax)/2.0;
+    this.scale = Math.min(scaleA, scaleB);
+    this.center.x = rect.width/2 - this.scale*(xMin+xMax)/2.0;
+    this.center.y = rect.height/2 - this.scale*(yMin+yMax)/2.0;
     this.newBlockOffset = 0;
 
     this.redraw();
