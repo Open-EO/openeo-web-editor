@@ -2,7 +2,7 @@
 	<Tabs ref="tabs" id="processGraphContent">
 		<Tab id="visual" name="Visual Model" icon="fa-code-branch" :selected="true" :onBeforeShow="prepareProcessGraph" :onShow="transferProcessGraph">
 			<template v-slot:tab="{ tab }">
-				<VisualEditor ref="graphBuilder" :active="tab.active" :editable="editable" :value="processGraph" :id="id + '_visual'" :enableClear="enableClear" :enableExecute="enableExecute" :enableLocalStorage="enableLocalStorage" />
+				<VisualEditor ref="graphBuilder" :active="tab.active" :editable="editable" :value="processGraph" :id="id + '_visual'" :enableClear="enableClear" :enableExecute="enableExecute" :enableLocalStorage="enableLocalStorage" :showDiscoveryToolbar="showDiscoveryToolbar" />
 			</template>
 		</Tab>
 		<Tab id="source" name="Process Graph" icon="fa-code" :onBeforeShow="prepareProcessGraph" :onShow="transferProcessGraph">
@@ -51,6 +51,10 @@ export default {
 		enableExecute: {
 			type: Boolean,
 			default: true
+		},
+		showDiscoveryToolbar: {
+			type: Boolean,
+			default: true
 		}
 	},
 	data() {
@@ -90,6 +94,14 @@ export default {
 				};
 			}
 			this.activeEditor.getProcessGraph(success, failure, passNull);
+		},
+
+		insertProcess(id) {
+			this.activeEditor.insertProcess(id);
+		},
+
+		insertCollection(id) {
+			this.activeEditor.insertCollection(id);
 		},
 
 		insertProcessGraph(pg) {

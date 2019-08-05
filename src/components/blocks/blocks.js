@@ -9,10 +9,11 @@ import { JsonSchemaValidator, ProcessGraph } from '@openeo/js-commons';
 /**
  * Manage the blocks
  */
-var Blocks = function(errorHandler = null, openParameterEditor = null)
+var Blocks = function(errorHandler = null, openParameterEditor = null, openSchemaModal = null)
 {
     this.errorHandler = errorHandler;
     this.openParameterEditor = openParameterEditor;
+    this.openSchemaModal = openSchemaModal;
     this.active = true;
     this.editable = true;
 
@@ -225,6 +226,12 @@ Blocks.prototype.showParameters = function(block) {
     }
 };
 
+Blocks.prototype.showSchema = function(name, schema) {
+    if (typeof this.openSchemaModal === 'function') {
+        this.openSchemaModal(name, schema);
+    }
+};
+
 Blocks.prototype.hasUndo = function()
 {
     if (this.history === null) {
@@ -278,6 +285,17 @@ Blocks.prototype.setResultNode = function(block, result = true) {
     }
     this.redraw();
 }
+
+Blocks.prototype.getPositionForPageXY = function(x, y) {
+    var rect = Utils.domBoundingBox(this.div);
+    if (x !== null) {
+        x = (x - rect.offsetLeft - this.center.x) / this.scale;
+    }
+    if (y !== null) {
+        y = (y - rect.offsetTop - this.center.y) / this.scale;
+    }
+    return {x: x, y: y};
+};
 
 /**
  * Adds a block

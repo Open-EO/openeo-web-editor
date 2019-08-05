@@ -12,12 +12,16 @@
 				</ul>
 			</header>
 			<main class="page">
-				<div id="workspace" ref="workspace">
-					<Editor ref="editor" id="mainEditor" />
-					<UserWorkspace />
+				<div id="discovery" ref="discovery">
+					<DiscoveryToolbar class="toolbar" :onAddCollection="insertCollection" :onAddProcess="insertProcess" />
 				</div>
-				<hr id="separator" ref="separator" @dblclick="centerSeparator()" @mousedown="startMovingSeparator($event)" />
-				<div id="viewer">
+				<hr class="separator" ref="separator0" @dblclick="centerSeparator(0)" @mousedown="startMovingSeparator($event, 0)" />
+				<div id="workspace" ref="workspace">
+					<Editor ref="editor" class="mainEditor" :showDiscoveryToolbar="false" />
+					<UserWorkspace class="userContent" />
+				</div>
+				<hr class="separator" ref="separator1" @dblclick="centerSeparator(1)" @mousedown="startMovingSeparator($event, 1)" />
+				<div id="viewer" ref="viewer">
 					<Viewer />
 				</div>
 			</main>
@@ -48,11 +52,13 @@ import JobInfoModal from './JobInfoModal.vue';
 import ProcessGraphInfoModal from './ProcessGraphInfoModal.vue';
 import ServiceInfoModal from './ServiceInfoModal.vue';
 import ParameterModal from './ParameterModal.vue';
+import DiscoveryToolbar from './DiscoveryToolbar.vue';
 
 export default {
 	name: 'IDE',
 	mixins: [ConnectionMixin],
 	components: {
+		DiscoveryToolbar,
 		Editor,
 		Viewer,
 		UserMenu,
@@ -69,6 +75,20 @@ export default {
 		return {
 			moving: false,
 			movingOffset: 0,
+			separators: [
+				{
+					left: 'discovery',
+					right: 'workspace',
+					anchor: 'left',
+					width: "20%"
+				},
+				{
+					left: 'workspace',
+					right: 'viewer',
+					anchor: 'right',
+					width: "30%"
+				}
+			],
 			version: Package.version
 		};
 	},
@@ -84,7 +104,9 @@ export default {
 		EventBus.$on('showDataForm', this.showDataForm);
 		EventBus.$on('getProcessGraph', this.getProcessGraph);
 		EventBus.$on('insertProcessGraph', this.insertProcessGraph);
-		this.updatePositions();
+		window.onresize = (event) => {
+			EventBus.$emit('resizedIDE');
+		};
 	},
 	methods: {
 
@@ -96,18 +118,18 @@ export default {
 			this.$refs.editor.insertProcessGraph(pg);
 		},
 
-		updatePositions() {
-			var workspaceWidth = parseFloat(window.getComputedStyle(this.$refs.workspace).width);
-			var x = window.pageXOffset || document.documentElement.scrollLeft;
-			var separatorX = this.$refs.separator.getBoundingClientRect().left + x;
-			this.movingOffset = separatorX - workspaceWidth;
+		insertCollection(id) {
+			this.$refs.editor.insertCollection(id);
 		},
 
-		startMovingSeparator(evt) {
+		insertProcess(id) {
+			this.$refs.editor.insertProcess(id);
+		},
+
+		startMovingSeparator(evt, id) {
 			this.moving = false;
 			if (evt.which === 1) {
-				this.moving = true;
-				this.updatePositions();
+				this.moving = id;
 			}
 		},
 
@@ -116,17 +138,37 @@ export default {
 		},
 
 		moveSeparator(evt) {
-			if (this.moving) {
-				this.$refs.workspace.style.width = evt.x - this.movingOffset + "px";
+			if (this.moving !== false && this.separators[this.moving]) {
+				var sep = this.separators[this.moving];
+				var elem = this.$refs[sep[sep.anchor]];
+				var x;
+				if (sep.anchor === 'right') {
+					x = Math.max(document.body.scrollWidth, document.documentElement.scrollWidth, document.body.offsetWidth, document.documentElement.offsetWidth, document.documentElement.clientWidth) - evt.x;
+				}
+				else {
+					x = evt.x;
+				}
+				elem.style.width = x + "px";
 				EventBus.$emit('resizedIDE');
 				evt.preventDefault();
 				evt.stopPropagation();
 			}
 		},
 
-		centerSeparator() {
+		centerSeparator(id) {
 			this.moving = false;
-			this.$refs.workspace.style.width = '60%';
+			var sep = this.separators[id];
+			if (!sep) {
+				return;
+			}
+
+			var elem = this.$refs[sep[sep.anchor]];
+			if (elem.getBoundingClientRect().width < 220) {
+				elem.style.width = sep.width;
+			}
+			else {
+				elem.style.width = 0;
+			}
 			EventBus.$emit('resizedIDE');
 		},
 
@@ -183,19 +225,43 @@ export default {
 }
 #workspace, #viewer {
 	overflow: auto;
+	box-sizing: border-box;
+}
+#discovery {
+	width: 20%;
+	min-width: 200px;
+}
+#discovery .search-box {
+	margin: 1em;
+}
+#discovery .category {
+	padding: 5px 1em;;
 }
 #workspace {
 	padding: 1em;
-	width: 60%;
+	flex-grow: 1;
+	width: 50%;
 	min-width: 300px;
 	overflow-y: auto;
+	display: flex;
+	flex-direction: column;
 }
 #viewer {
-	flex: 1;
 	padding: 1em;
 	min-width: 200px;
+	width: 30%;
 }
-#separator {
+#viewer .tabs {
+	height: 100%;
+}
+#viewer .tabsBody,
+#viewer .tabContent {
+	height: calc(98% - 1em + 16px);
+}
+.userContent {
+	flex-grow: 1;
+}
+.separator {
 	border: 0;
 	padding: 3px;
 	margin: 0;

@@ -1,20 +1,36 @@
 <template>
-	<div class="discovery-toolbar" v-if="showCollectionSelector || showProcessSelector">
-		<div class="collections-toolbar" v-if="showCollectionSelector">
-			<span>Collections:</span>
-			<select id="collection" ref="collection">
-				<option v-for="d in collections" :key="d.id" :value="d.id">{{ d.id }}</option>
-			</select>
-			<button type="button" id="insertCollection" @click="insertCollection" title="Insert into script"><i class="fas fa-plus"></i></button>
-			<button type="button" @click="showSelectedCollectionInfo" title="Show details" v-show="supports('describeCollection')"><i class="fas fa-info"></i></button>
-		</div>
-		<div class="processes-toolbar" v-if="showProcessSelector">
-			<span>Processes:</span>
-			<select id="processes" ref="process">
-				<option v-for="p in processes" :key="p.id" :value="p.id" :title="p.summary ? p.summary : ''">{{ p.id }}</option>
-			</select>
-			<button type="button" id="insertProcesses" @click="insertProcess" title="Insert into script"><i class="fas fa-plus"></i></button>
-			<button type="button" @click="showSelectedProcessInfo" title="Show details" v-show="supports('listProcesses')"><i class="fas fa-info"></i></button>
+	<div class="discovery-toolbar">
+        <div class="search-box">
+            <span class="icon">🔎</span>
+            <input type="search" v-model="searchTerm" placeholder="Search" title="Search in collections and processes" />
+        </div>
+		<div class="search-results">
+			<div :class="{ category: true, collections: true, expanded: expanded.collections }">
+				<strong @click="toggle('collections')" :title="'Collections ('+collectionCount+')'"><span class="toggle">▸</span> Collections</strong>
+				<template v-if="collectionCount">
+					<div class="discovery-entity" v-for="e in filtered.collections" :key="e.id" draggable="true" @dragstart="onDrag($event, 'collection', e.id)">
+						<div class="discovery-info" @click="showCollectionInfo(e.id)">
+							<strong>{{ e.id }}</strong>
+						</div>
+						<button class="discovery-button" type="button" @click="insertCollection(e.id)" title="Insert"><i class="fas fa-plus"></i></button>
+					</div>
+				</template>
+				<div class="noData" v-else>No collections available.</div>
+			</div>
+
+			<div :class="{ category: true, processes: true, expanded: expanded.processes }">
+				<strong @click="toggle('processes')" :title="'Processes ('+processCount+')'"><span class="toggle">▸</span> Processes</strong>
+				<template v-if="processCount">
+					<div class="discovery-entity" v-for="e in filtered.processes" :key="e.id" draggable="true" @dragstart="onDrag($event, 'process', e.id)">
+						<div class="discovery-info" @click="showProcessInfo(e.id)">
+							<strong :title="e.id">{{ e.id }}</strong>
+							<small v-if="e.summary" :title="e.summary">{{ e.summary }}</small>
+						</div>
+						<button class="discovery-button" type="button" @click="insertProcess(e.id)" title="Insert"><i class="fas fa-plus"></i></button>
+					</div>
+				</template>
+				<div class="noData" v-else>No processes available.</div>
+			</div>
 		</div>
 	</div>
 </template>
@@ -38,31 +54,110 @@ export default {
 			required: true
 		}
 	},
+	data() {
+		return {
+			searchTerm: '',
+			expanded: {
+				collections: false,
+				processes: false
+			},
+			filtered: {
+				collections: [],
+				processes: []
+			}
+		};
+	},
+	created() {
+		this.filter('processes');
+		this.filter('collections');
+	},
+	watch: {
+		processes() {
+			if (typeof this.processes !== 'object') {
+				return;
+			}
+			this.filter('processes');
+		},
+		collections() {
+			if (typeof this.collections !== 'object') {
+				return;
+			}
+			this.filter('collections');
+		},
+		searchTerm() {
+			this.filter('processes');
+			this.filter('collections');
+		}
+	},
 	computed: {
 		...Utils.mapState('server', ['processes', 'collections']),
-
-		showCollectionSelector() {
-			return this.supports('listCollections') && this.collections.length > 0;
+		collectionCount() {
+			if (this.supports('listCollections') && Array.isArray(this.filtered.collections)) {
+				return this.filtered.collections.length;
+			}
+			return 0;
 		},
-
-		showProcessSelector() {
-			return this.supports('listProcesses') && this.processes.length > 0;
-		},
+		processCount() {
+			if (this.supports('listProcesses') && Array.isArray(this.filtered.processes)) {
+				return this.filtered.processes.length;
+			}
+			return 0;
+		}
 	},
 	methods: {
-		showSelectedCollectionInfo() {
-			EventBus.$emit('showCollectionInfo', this.$refs.collection.value);
+		onDrag(event, type, data) {
+			event.dataTransfer.setData("application/openeo-" + type, data);
+			event.dataTransfer.setData("text/plain", data);
 		},
-
-		showSelectedProcessInfo() {
-			EventBus.$emit('showProcessInfo', this.$refs.process.value);
+		filter(type) {
+			if (this.searchTerm) {
+				var filterFn = e => {
+					var term = this.searchTerm.toLowerCase();
+					if (e.id.toLowerCase().includes(term)) {
+						return true;
+					}
+					else if (typeof e.summary === 'string' && e.summary.toLowerCase().includes(term)) {
+						return true;
+					}
+					return false;
+				}
+				this.filtered[type] = this[type].filter(filterFn);
+				this.$nextTick(() => this.expandAll());
+			}
+			else {
+				this.filtered[type] = this[type];
+				this.$nextTick(() => this.collapseAll());
+			}
 		},
-		insertCollection() {
-			this.onAddCollection(this.$refs.collection.value);
+		collapseAll() {
+			this.toggleAll(false);
 		},
-
-		insertProcess() {
-			this.onAddProcess(this.$refs.process.value);
+		expandAll() {
+			this.toggleAll(true);
+		},
+		toggleAll(state) {
+			for (var key in this.expanded) {
+				this.expanded[key] = state;
+			}
+		},
+		toggle(type, expand = null) {
+			this.expanded[type] = expand === null ? !this.expanded[type] : expand;
+		},
+		showCollectionInfo(id) {
+			if (this.supports('listCollections')) {
+				EventBus.$emit('showCollectionInfo', id);
+			}
+		},
+		showProcessInfo(id) {
+			if (this.supports('listProcesses')) {
+				EventBus.$emit('showProcessInfo', id);
+			}
+		},
+		insertCollection(id) {
+			this.onAddCollection(id);
+		},
+		insertProcess(id) {
+			this.onAddProcess(id);
 		}
 	}
 }
@@ -70,21 +165,115 @@ export default {
 
 <style scoped>
 .discovery-toolbar {
-	border-top: 1px solid #ccc;
-	padding: 5px;
+	width: 100%;
+	height: 100%;
 	display: flex;
-	flex-wrap: wrap;
-	justify-content: space-between;
+	flex-direction: column;
+	overflow: hidden; /* to hide .search-box .icon */
 }
-.collections-toolbar, .processes-toolbar {
-	display: flex;
-    flex-direction: row;
-    align-items: center;
-	min-width: 200px;
+
+.search-box {
+    margin: 5px;
+    position: relative;
 }
-#collection, #processes {
+.search-box input, .search-box .icon {
+	height: 1.5em;
+	font-size: 1em;
+	margin: 0;
+}
+
+.search-box input {
+    padding: 0.25em 0.3em;
+    padding-left: 1.9em;
+    z-index: 1;
+	display: inline-block;
+	border: 1px solid #ccc;
+	box-sizing: content-box;
+	background-color: #fff;
+	width: calc(100% - 2.2em);
+}
+.search-box .icon {
+    user-select: none;
+    margin-top: 0.3em;
+    margin-left: 0.3em;
+    width: 1em;
+    z-index: 2;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.search-results {
+	overflow-y: auto;
 	flex-grow: 1;
-	margin-left: 0.2em;
-	min-width: 100px;
+}
+
+.category {
+	padding: 5px;
+}
+.category strong {
+	cursor: pointer;
+	overflow: hidden;
+	white-space: nowrap;
+}
+.category strong .toggle {
+	display: inline-block;
+}
+.category.expanded strong .toggle {
+	transform: rotate(90deg);
+}
+.discovery-entity, .noData {
+	display: none;
+}
+.category.expanded .noData {
+	display: block;
+	margin: 0.25em 0;
+}
+.category.expanded .discovery-entity {
+	display: flex;
+	margin: 0.25em 0;
+	border: 1px solid #ddd;
+	border-radius: 3px;
+	cursor: pointer;
+	user-select: none;
+	font-size: 0.9em;
+}
+.discovery-info {
+	flex-grow: 1;
+	padding: 5px;
+	width: 100%;                   
+	overflow: hidden; 
+}
+.discovery-info:hover {
+	background-color: #eee;
+}
+.discovery-entity strong {
+	display: block;
+	font-weight: normal;
+	white-space: nowrap;
+	width: 100%;                   
+	overflow: hidden; 
+	text-overflow: ellipsis;
+	color: #1665B6;
+}
+.discovery-info:hover strong {
+	color: #000;
+}
+.discovery-entity small {
+	margin-top: 0.25em;
+	display: block;
+}
+.discovery-button {
+	display: block;
+	margin: 0;
+	padding: 5px;
+	background-color: #fff;
+	color: #aaa;
+	border: 0;
+	border-left: 1px solid #ddd;
+}
+.discovery-button:hover {
+	background-color: #eee;
+	color: #000;
 }
 </style>

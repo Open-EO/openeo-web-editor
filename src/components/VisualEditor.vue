@@ -10,8 +10,10 @@
 				<span v-show="!isFullScreen"><i class="fas fa-expand"></i></span>
 			</button>
 		</EditorToolbar>
-		<div :id="id" class="graphBuilder"></div>
-		<DiscoveryToolbar v-if="editable" :onAddCollection="insertCollection" :onAddProcess="insertProcess" />
+		<div class="editorSplitter">
+			<DiscoveryToolbar v-if="showDiscoveryToolbar && editable" class="discoveryToolbar" :onAddCollection="insertCollection" :onAddProcess="insertProcess" />
+			<div :id="id" class="graphBuilder" @drop="onDrop($event)" @dragover="allowDrop($event)"></div>
+		</div>
 		<SchemaModal ref="schemaModal" />
 		<ParameterModal ref="parameterModal" />
 	</div>
@@ -63,6 +65,10 @@ export default {
 		enableExecute: {
 			type: Boolean,
 			default: true
+		},
+		showDiscoveryToolbar: {
+			type: Boolean,
+			default: true
 		}
 	},
 	computed: {
@@ -78,11 +84,14 @@ export default {
 	beforeMount() {
 		this.blocks = new Blocks(
 			this.errorHandler,
-			(blocks, fields, editable) => this.openParameterEditor(blocks, fields, editable)
+			(blocks, fields, editable) => this.openParameterEditor(blocks, fields, editable),
+			(name, schema) => this.showSchemaModal(name, schema)
 		);
 	},
 	mounted() {
-		EventBus.$on('showSchemaModal', this.showSchemaModal);
+		if (this.active) {
+			this.onShow();
+		}
 	},
 	watch: {
 		processes() {
@@ -90,6 +99,23 @@ export default {
 		}
 	},
 	methods: {
+		allowDrop(ev) {
+			ev.preventDefault();
+		},
+
+		onDrop(event) {
+			var process = event.dataTransfer.getData("application/openeo-process");
+			var collection = event.dataTransfer.getData("application/openeo-collection");
+			if (process) {
+				event.preventDefault();
+				this.insertProcess(process, event.pageX, event.pageY);
+			}
+			else if (collection) {
+				event.preventDefault();
+				this.insertCollection(collection, event.pageX, event.pageY);
+			}
+		},
+
 		onShow() {
 			if (!this.blocks.isReady) {
 				this.blocks.run("#" + this.id, this.editable);
@@ -234,17 +260,19 @@ export default {
 			this.makeModel(pg, addToHistory);
 		},
 
-		insertCollection(name) {
+		insertCollection(name, x = null, y = null) {
 			try {
-				this.blocks.addCollection(name);
+				var pos = this.blocks.getPositionForPageXY(x, y);
+				this.blocks.addCollection(name, pos.x, pos.y);
 			} catch(error) {
 				Utils.exception(this, error);
 			}
 		},
 
-		insertProcess(name) {
+		insertProcess(name, x = null, y = null) {
 			try {
-				this.blocks.addProcess(name);
+				var pos = this.blocks.getPositionForPageXY(x, y);
+				this.blocks.addProcess(name, pos.x, pos.y);
 			} catch(error) {
 				Utils.exception(this, error);
 			}
@@ -267,6 +295,26 @@ export default {
 	background-color: white;
 }
 
+#VisualEditor .editorSplitter {
+	display: flex;
+	height: 400px;
+}
+
+#VisualEditor .discoveryToolbar {
+	width: 25%;
+	min-width: 150px;
+	border-right: 1px solid #ddd;
+}
+#VisualEditor.fullscreen .discoveryToolbar {
+	width: 15%;
+	min-width: 250px;
+}
+
+.graphBuilder {
+	height: 100%;
+	flex-grow: 1;
+}
+
 #VisualEditor.fullscreen {
 	position: absolute;
 	top: 0;
@@ -278,11 +326,8 @@ export default {
 	flex-direction: column;
 }
 
-.graphBuilder {
-	height: 400px;
-}
-#VisualEditor.fullscreen .graphBuilder {
-	flex-grow: 1;
+#VisualEditor.fullscreen .editorSplitter {
+	height: 100%;
 }
 
 .compactActive {

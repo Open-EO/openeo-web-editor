@@ -58,7 +58,7 @@ Shows collection information in a modal.
 Shows process information in a modal.
 
 ## resizedIDE()
-The panels have been resized.
+The panels or the browser window have been resized.
 
 */
 export default new Vue();

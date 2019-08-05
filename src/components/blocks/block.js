@@ -55,6 +55,9 @@ var Block = function(blocks, name, type, schema, id)
 };
 
 Block.prototype._createOutputField = function(returns) {
+    if (!Utils.isObject(returns)) {
+        return;
+    }
     this.output = new Field(
         "output",
         this.getDefaultOutputLabel(),
@@ -69,6 +72,9 @@ Block.prototype._createOutputField = function(returns) {
 };
 
 Block.prototype._createInputFields = function(parameters, parameter_order) {
+    if (!Utils.isObject(parameters)) {
+        return;
+    }
     var paramNames = Object.keys(parameters);
     if (!Array.isArray(parameter_order) || parameter_order.length !== paramNames.length) {
         parameter_order = paramNames;
@@ -457,7 +463,7 @@ Block.prototype.initListeners = function()
     if (infoEl) {
         infoEl.addEventListener('click', evt => {
             if (this.isCallbackArgument()) {
-                EventBus.$emit('showSchemaModal', this.name, this.meta.returns.schema);
+                this.blocks.showSchema(this.name, this.meta.returns.schema);
             }
             else if(this.isCollection()) {
                 EventBus.$emit('showCollectionInfo', this.getCollectionName());

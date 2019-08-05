@@ -1,8 +1,9 @@
 <template>
-	<div :class="{tabs: true, hide: !hasEnabledTabs} " :id="id">
+	<div :class="{tabs: true, hide: !hasEnabledTabs, hideNames: hideNames} " :id="id">
 		<div class="tabsHeader">
-			<button type="button" v-show="tab.enabled" :class="{'tabItem': true, 'tabActive': tab.active }" @click="selectTab(tab)" v-for="tab in tabs" :key="tab.id">
-				<i :class="['fas', tab.icon]"></i> {{ tab.name }}
+			<button type="button" v-show="tab.enabled" :class="{tabItem: true, tabActive: tab.active }" @click="selectTab(tab)" :title="tab.name" v-for="tab in tabs" :key="tab.id">
+				<i :class="['fas', tab.icon]"></i>
+				<span class="tabName">{{ tab.name }}</span>
 			</button>
 		</div>
 		<div class="tabsBody">
@@ -12,6 +13,8 @@
 </template>
 
 <script>
+import EventBus from '../eventbus.js';
+
 export default {
 	name: "Tabs",
 	props: {
@@ -22,7 +25,8 @@ export default {
 	},
 	data() {
 		return {
-			tabs: []
+			tabs: [],
+			hideNames: false
 		};
 	},
 	mounted() {
@@ -30,6 +34,8 @@ export default {
 			this.tabs = this.$children;
 			this.resetActiveTab();
 		}
+
+		EventBus.$on('resizedIDE', this.onResize);
 	},
 	computed: {
 		hasEnabledTabs() {
@@ -37,6 +43,12 @@ export default {
 		}
 	},
 	methods: {
+		onResize() {
+			try {
+				var tabsHeaderWidth = document.getElementById(this.id).getElementsByClassName('tabsHeader')[0].getBoundingClientRect().width;
+				this.hideNames = tabsHeaderWidth < this.tabs.length * 75;
+			} catch(e) {}
+		},
 		getTab(id) {
 			for (let i in this.tabs) {
 				if (this.tabs[i].id == id) {
@@ -99,25 +111,18 @@ export default {
 .tabs {
 	border-radius: 3px;
 	border: 1px solid #aaa;
-	margin-bottom: 10px;
 }
 .tabs.hide {
 	display: none;
 }
-#viewer .tabs {
-	height: 97%;
+.tabs .tabName {
+	margin-left: 0.25em;
 }
-#viewer .tabsBody,
-#viewer .tabContent {
-	height: calc(98% - 1em + 16px);
+.tabs.hideNames .tabName {
+	display: none;
 }
 .tabsHeader {
 	background-color: #f9f9f9;
-}
-#userContent .tabContent {
-	padding: 5px;
-	min-height: 200px;
-	max-height: 350px;
 }
 .tabContent table {
 	width: 100%;
@@ -151,6 +156,9 @@ export default {
 	min-width: 5em;
 	text-overflow: ellipsis;
 	overflow: hidden;
+}
+.tabs.hideNames .tabItem {
+	min-width: 3em;
 }
 .tabItem:hover {
 	color: black;

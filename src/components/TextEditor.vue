@@ -2,7 +2,6 @@
 	<div id="TextEditor">
 		<EditorToolbar :editable="editable" :onStore="getProcessGraph" :onInsert="insertProcessGraph" :onClear="clearProcessGraph" :enableClear="enableClear" :enableExecute="enableExecute" :enableLocalStorage="enableLocalStorage" />
 		<div :id="id" class="sourceCodeEditor"></div>
-		<DiscoveryToolbar v-if="editable" :onAddCollection="insertToEditor" :onAddProcess="insertToEditor" />
 	</div>
 </template>
 
@@ -10,7 +9,6 @@
 import EventBus from '../eventbus.js';
 import Utils from '../utils.js';
 import EditorToolbar from './EditorToolbar.vue';
-import DiscoveryToolbar from './DiscoveryToolbar.vue';
 import { ProcessGraph } from '@openeo/js-commons';
 
 import 'codemirror/lib/codemirror.css';
@@ -20,8 +18,7 @@ import CodeMirror from 'codemirror';
 export default {
 	name: 'TextEditor',
 	components: {
-		EditorToolbar,
-		DiscoveryToolbar
+		EditorToolbar
 	},
 	props: {
 		id: String,
@@ -64,10 +61,15 @@ export default {
 			editor: null
 		}
 	},
+	mounted() {
+		if (this.active) {
+			this.onShow();
+		}
+	},
 	watch: {
 		active(newVal) {
-			if (newVal && this.editor !== null) {
-				this.editor.refresh();
+			if (newVal) {
+				this.onShow();
 			}
 		}
 	},
@@ -77,6 +79,9 @@ export default {
 				this.editor = CodeMirror(document.getElementById(this.id), this.editorOptions);
 				this.editor.setSize(null, "100%");
 				this.insertProcessGraph(this.value);
+			}
+			else {
+				this.editor.refresh();
 			}
 		},
 

@@ -61,3 +61,14 @@ export default {
 	}
 }
 </script>
+
+<style>
+#userContent {
+	margin-top: 1em;
+}
+#userContent .tabContent {
+	padding: 5px;
+	min-height: 200px;
+	max-height: 350px;
+}
+</style>
