@@ -138,7 +138,7 @@ export default {
 		},
 
 		moveSeparator(evt) {
-			if (this.moving !== false && this.separators[this.moving]) {
+			if (this.moving !== false && this.separators[this.moving] && evt.movementX !== 0) {
 				var sep = this.separators[this.moving];
 				var elem = this.$refs[sep[sep.anchor]];
 				var x;
@@ -148,7 +148,7 @@ export default {
 				else {
 					x = evt.x;
 				}
-				elem.style.width = x + "px";
+				elem.style.width = x + 'px';
 				EventBus.$emit('resizedIDE');
 				evt.preventDefault();
 				evt.stopPropagation();
@@ -240,7 +240,6 @@ export default {
 #workspace {
 	padding: 1em;
 	flex-grow: 1;
-	width: 50%;
 	min-width: 300px;
 	overflow-y: auto;
 	display: flex;
