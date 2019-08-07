@@ -1,5 +1,6 @@
 <template>
-	<div id="FilePanel">
+	<div id="FilePanel" @dragenter="dropZoneInfo(true)" @dragleave="dropZoneInfo(false)" @drop="uploadFiles($event)" @dragover="allowDrop($event)">
+		<div class="dropZone" v-show="showUploadDropHint">To upload files, drop them here.</div>
 		<div v-show="supports('uploadFile')" class="addFile">
 			<input type="file" name="uploadUserFile" id="uploadUserFile" @change="uploadFiles" multiple>
 		</div>
@@ -51,7 +52,8 @@ export default {
 			uploadProgress: 0,
 			uploadProgressPerFile: [],
 			uploadErrored: false,
-			uploadFadeOut: 1
+			uploadFadeOut: 1,
+			showUploadDropHint: 0
 		};
 	},
 	watch: {
@@ -66,6 +68,15 @@ export default {
 		}
 	},
   	methods: {
+		allowDrop(ev) {
+			if(this.supports('uploadFile')) {
+				ev.preventDefault();
+				ev.stopPropagation();
+			}
+		},
+		dropZoneInfo(show) {
+			this.showUploadDropHint += show ? 1 : -1;
+		},
 		listFiles() {
 			return this.connection.listFiles();
 		},
@@ -73,8 +84,21 @@ export default {
 			this.updateTable(this.$refs.table, 'listFiles', 'uploadFile');
 		},
 		uploadFiles(e) {
-			var files = e.target.files || e.dataTransfer.files;
-			if (!files || !files.length) {
+			this.showUploadDropHint = 0;
+			var files = [];
+			if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
+				files = e.dataTransfer.files;
+				e.preventDefault();
+				e.stopPropagation();
+			}
+			else if (e.target && e.target.files && e.target.files.length){
+				files = e.target.files;
+			}
+			if(!this.supports('uploadFile')) {
+				Utils.error(this, 'Uploading files is not supported.');
+				return;
+			}
+			else if (files.length === 0) {
 				Utils.info(this, 'Please select files to upload.');
 				return;
 			}
@@ -143,6 +167,26 @@ export default {
 </script>
 
 <style>
+#FilePanel {
+	position: relative;
+	height: 100%;
+	width: 100%;
+}
+#FilePanel .dropZone {
+	width: 100%;
+	height: 100%;
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 2;
+	opacity: 0.8;
+	background-color: #fff;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	font-size: 1.5em;
+	font-weight: bold;
+}
 #FilePanel .addFile {
 	display: flex;
 	padding-bottom: 1px;
