@@ -96,6 +96,9 @@ export default {
 	watch: {
 		processes() {
 			this.registerProcesses();
+		},
+		collections() {
+			this.registerCollections();
 		}
 	},
 	methods: {
@@ -121,6 +124,7 @@ export default {
 				this.blocks.run("#" + this.id, this.editable);
 
 				this.registerProcesses();
+				this.registerCollections();
 				this.makeCallbackArguments();
 				this.insertProcessGraph(this.value, false);
 			}
@@ -176,6 +180,13 @@ export default {
 		clearProcessGraph() {
 			this.blocks.clear();
 			this.makeCallbackArguments();
+		},
+
+		registerCollections() {
+			this.blocks.unregisterCollectionDefaults();
+			for(var i in this.collections) {
+				this.blocks.registerCollectionDefaults(this.collections[i]);
+			}
 		},
 
 		registerProcesses() {

@@ -60,6 +60,9 @@ var Blocks = function(errorHandler = null, openParameterEditor = null, openSchem
     // Blocks types
     this.moduleTypes = {};
 
+    // Collection default values
+    this.collectionDefaults = {};
+
     // Instances
     this.blocks = {};
 
@@ -302,7 +305,13 @@ Blocks.prototype.getPositionForPageXY = function(x, y) {
  */
 Blocks.prototype.addCollection = function(name, x = null, y = null)
 {
-    return this.addBlock('load_collection', 'process', x, y, {id: name, spatial_extent: null, temporal_extent: null});
+    var spatialExtent = null;
+    var temporalExtent = null;
+    if (typeof this.collectionDefaults[name] === 'object') {
+        spatialExtent = this.collectionDefaults[name].spatialExtent;
+        temporalExtent = this.collectionDefaults[name].temporalExtent;
+    }
+    return this.addBlock('load_collection', 'process', x, y, {id: name, spatial_extent: spatialExtent, temporal_extent: temporalExtent});
 };
 
 Blocks.prototype.addProcess = function(name, x = null, y = null)
@@ -343,6 +352,10 @@ Blocks.prototype.addBlock = function(name, type, x, y, values = {})
     return block;
 };
 
+Blocks.prototype.unregisterCollectionDefaults = function() {
+    this.collectionDefaults = {};
+}
+
 Blocks.prototype.unregisterProcesses = function() {
     this.moduleTypes['process'] = {};
 }
@@ -350,6 +363,23 @@ Blocks.prototype.unregisterProcesses = function() {
 Blocks.prototype.unregisterCallbackArguments = function() {
     this.moduleTypes['callback-arguments'] = {};
 }
+
+Blocks.prototype.registerCollectionDefaults = function(collection) {
+    try {
+		var hasZ = collection.extent.spatial.length > 4;
+        this.collectionDefaults[collection.id] = {
+            spatialExtent: {
+                west: collection.extent.spatial[0],
+                east: collection.extent.spatial[hasZ ? 3 : 2],
+                south: collection.extent.spatial[1],
+                north: collection.extent.spatial[hasZ ? 4 : 3]
+            },
+            temporalExtent: collection.extent.temporal
+        };
+    } catch (error) {
+        console.log(error);
+    }
+};
 
 /**
  * Registers a new block type
