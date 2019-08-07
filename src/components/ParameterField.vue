@@ -330,6 +330,9 @@ export default {
 			this.value = this.initArray([this.value]);
 		},
 		addField() {
+			if (!Array.isArray(this.value)) {
+				this.value = [];
+			}
 			this.value.push({
 				id: this.value.length,
 				value: null
