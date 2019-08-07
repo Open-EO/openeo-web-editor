@@ -1,6 +1,6 @@
 <template>
 	<div id="imageViewer" ref="imageContainer">
-		<span ref="emptyMsg" v-show="visibleContent == 'text'"></span>
+		<div ref="emptyMsg" class="noDataMessage" v-show="visibleContent == 'text'"></div>
 		<img ref="image" v-show="visibleContent == 'image'" @click="resize" />
 	</div>
 </template>
@@ -72,9 +72,3 @@ export default {
 	}
 };
 </script>
-
-<style>
-#imageViewer {
-	padding: 5px;
-}
-</style>

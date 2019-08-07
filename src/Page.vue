@@ -195,4 +195,10 @@ p.aboutPage {
 h3.aboutPage {
 	margin-bottom: 0.5em;
 }
+
+.noDataMessage {
+	text-align: center;
+	margin: 1em;
+	font-weight: bold;
+}
 </style>

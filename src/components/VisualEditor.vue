@@ -1,5 +1,5 @@
 <template>
-	<div id="VisualEditor" ref="visualEditor">
+	<div class="visualEditor" ref="visualEditor">
 		<EditorToolbar :editable="editable" :onStore="getProcessGraph" :onInsert="insertProcessGraph" :onClear="clearProcessGraph" :enableClear="enableClear" :enableExecute="enableExecute" :enableLocalStorage="enableLocalStorage">
 			<button type="button" @click="blocks.deleteEvent()" v-show="editable && blocks.canDelete()" title="Delete selected elements"><i class="fas fa-trash"></i></button>
 			<button type="button" @click="blocks.undo()" v-show="editable && blocks.hasUndo()" title="Undo last change"><i class="fas fa-undo-alt"></i></button>
@@ -291,21 +291,25 @@ export default {
 </script>
 
 <style>
-#VisualEditor {
+.visualEditor {
 	background-color: white;
-}
-
-#VisualEditor .editorSplitter {
+	height: 100%;
 	display: flex;
-	height: 400px;
+	flex-direction: column;
 }
 
-#VisualEditor .discoveryToolbar {
+.visualEditor .editorSplitter {
+	display: flex;
+	height: 100%;
+	flex-grow: 1;
+}
+
+.visualEditor .discoveryToolbar {
 	width: 25%;
 	min-width: 150px;
 	border-right: 1px solid #ddd;
 }
-#VisualEditor.fullscreen .discoveryToolbar {
+.visualEditor.fullscreen .discoveryToolbar {
 	width: 15%;
 	min-width: 250px;
 }
@@ -315,7 +319,7 @@ export default {
 	flex-grow: 1;
 }
 
-#VisualEditor.fullscreen {
+.visualEditor.fullscreen {
 	position: absolute;
 	top: 0;
 	left: 0;
@@ -326,7 +330,7 @@ export default {
 	flex-direction: column;
 }
 
-#VisualEditor.fullscreen .editorSplitter {
+.visualEditor.fullscreen .editorSplitter {
 	height: 100%;
 }
 

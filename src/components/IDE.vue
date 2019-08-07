@@ -17,7 +17,7 @@
 				</div>
 				<hr class="separator" ref="separator0" @dblclick="centerSeparator(0)" @mousedown="startMovingSeparator($event, 0)" />
 				<div id="workspace" ref="workspace">
-					<Editor ref="editor" class="mainEditor" :showDiscoveryToolbar="false" />
+					<Editor ref="editor" class="mainEditor" id="main" :showDiscoveryToolbar="false" />
 					<UserWorkspace class="userContent" />
 				</div>
 				<hr class="separator" ref="separator1" @dblclick="centerSeparator(1)" @mousedown="startMovingSeparator($event, 1)" />
@@ -223,10 +223,6 @@ export default {
 #ide main, #workspace, #viewer, #wrapper {
 	height: 100%;
 }
-#workspace, #viewer {
-	overflow: auto;
-	box-sizing: border-box;
-}
 #discovery {
 	width: 20%;
 	min-width: 200px;
@@ -237,28 +233,29 @@ export default {
 #discovery .category {
 	padding: 5px 1em;;
 }
-#workspace {
+#workspace, #viewer {
+	box-sizing: border-box;
 	padding: 1em;
+}
+#workspace {
 	flex-grow: 1;
 	min-width: 300px;
-	overflow-y: auto;
+	width: 300px; /* Set a fixed size so that the box doesn't change size when tabs are changed or so. flex-grow will make the width larger/smaller anyway */
 	display: flex;
 	flex-direction: column;
 }
 #viewer {
-	padding: 1em;
 	min-width: 200px;
 	width: 30%;
 }
-#viewer .tabs {
-	height: 100%;
-}
-#viewer .tabsBody,
-#viewer .tabContent {
-	height: calc(98% - 1em + 16px);
+.mainEditor {
+	min-height: 300px;
+	height: 50vh;
+	flex-grow: 1;
 }
 .userContent {
 	flex-grow: 1;
+	height: 50%;
 }
 .separator {
 	border: 0;
@@ -267,6 +264,9 @@ export default {
 	border-right: 1px dotted #65421F;
 	border-left: 1px dotted #65421F;
 	cursor: e-resize;
+}
+.infoViewer {
+	height: 450px;
 }
 #ide header.navbar {
 	width: 100%;

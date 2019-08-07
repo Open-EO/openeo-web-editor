@@ -68,7 +68,7 @@ export default {
 }
 #userContent .tabContent {
 	padding: 5px;
+	height: calc(100% - 12px);
 	min-height: 200px;
-	max-height: 350px;
 }
 </style>

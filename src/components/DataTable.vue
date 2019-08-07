@@ -302,11 +302,6 @@ export default {
 .filter-icon {
 	margin-right: 3px;
 }
-.noDataMessage {
-	text-align: center;
-	margin: 1em;
-	font-weight: bold;
-}
 .noSearchResults td {
 	text-align: center;
 }

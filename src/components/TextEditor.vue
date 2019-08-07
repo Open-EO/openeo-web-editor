@@ -1,5 +1,5 @@
 <template>
-	<div id="TextEditor">
+	<div class="textEditor">
 		<EditorToolbar :editable="editable" :onStore="getProcessGraph" :onInsert="insertProcessGraph" :onClear="clearProcessGraph" :enableClear="enableClear" :enableExecute="enableExecute" :enableLocalStorage="enableLocalStorage" />
 		<div :id="id" class="sourceCodeEditor"></div>
 	</div>
@@ -142,7 +142,14 @@ export default {
 </script>
 
 <style scoped>
+.textEditor {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+}
 .sourceCodeEditor {
-	height: 400px;
+	flex-grow: 1;
+	height: 100%;
+	overflow: auto;
 }
 </style>

@@ -102,15 +102,21 @@ export default {
 </script>
 
 <style>
-.tabContent {
-	background-color: white;
-	border-top: 1px solid #ddd;
-	overflow: auto;
-	padding-top: 1px;
-}
 .tabs {
 	border-radius: 3px;
 	border: 1px solid #aaa;
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+}
+.tabsHeader {
+	display: flex;
+	background-color: #f9f9f9;
+}
+.tabsBody {
+	flex-grow: 1;
+	overflow: auto;
+	height: 100%;
 }
 .tabs.hide {
 	display: none;
@@ -121,10 +127,13 @@ export default {
 .tabs.hideNames .tabName {
 	display: none;
 }
-.tabsHeader {
-	background-color: #f9f9f9;
+.tabContent {
+	background-color: white;
+	border-top: 1px solid #ddd;
+	padding-top: 1px;
+	height: calc(100% - 2px);
 }
-.tabContent table {
+.tabContent .dataTable, .tabContent table {
 	width: 100%;
 	border-collapse: collapse;
 }
@@ -132,12 +141,6 @@ export default {
 .tabContent table th {
 	border: 1px solid #ddd;
 	padding: 3px;
-}
-.tabsHeader {
-	display: flex;
-}
-#processGraphContent .tabsHeader {
-	display: flex;
 }
 .tabItem:first-of-type {
 	margin-left: 5px;

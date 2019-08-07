@@ -1,5 +1,5 @@
 <template>
-	<Modal ref="__modal" minWidth="60%">
+	<Modal ref="__modal" minWidth="60%" maxWidth="90%">
 		<template v-slot:main>
 			<p v-if="editableFields.length === 0">No editable parameters available.</p>
 			<form v-else id="parameterModal" @submit.prevent="save">
@@ -98,8 +98,8 @@ export default {
 	border-top: 1px dotted #ccc;
 }
 #parameterModal .fieldRow label {
-	min-width: 40%;
-	width: 40%;
+	min-width: 35%;
+	width: 35%;
 }
 #parameterModal .fieldRow .fieldEditorContainer {
 	flex-grow: 1;

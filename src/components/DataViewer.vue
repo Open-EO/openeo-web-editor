@@ -1,7 +1,8 @@
 <template>
 	<div id="dataViewer">
-		<span v-if="isText()">{{ nl2br(content) }}</span>
-		<ObjectTree v-else :data="content"></ObjectTree>
+		<div class="text" v-if="isText()">{{ nl2br(content) }}</div>
+		<ObjectTree class="tree" v-else-if="content" :data="content"></ObjectTree>
+		<div ref="emptyMsg" class="noDataMessage" v-else>Nothing to show.</div>
 	</div>
 </template>
 
@@ -17,7 +18,7 @@ export default {
 	},
 	data() {
 		return {
-			content: null,
+			content: null
 		};
 	},
 	mounted() {
@@ -30,7 +31,7 @@ export default {
 		},
 
 		reset() {
-			this.content = 'Nothing to show.';
+			this.content = null;
 		},
 
 		showJson(data) {
@@ -74,7 +75,7 @@ export default {
 </script>
 
 <style scoped>
-#dataViewer {
+#dataViewer .text, #dataViewer .tree {
 	padding: 5px;
 }
 </style>

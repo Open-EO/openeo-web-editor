@@ -44,7 +44,7 @@
 			<div :id="fieldName" class="areaSelector"></div>
 		</template>
 		<div v-else-if="type === 'callback'" class="border">
-			<VisualEditor ref="callbackBuilder" id="inlinePgEditor" :editable="editable" :callbackArguments="schema.getCallbackParameters()" :value="value" :enableExecute="false" :enableLocalStorage="false" />
+			<VisualEditor ref="callbackBuilder" class="callbackEditor" id="inlinePgEditor" :editable="editable" :callbackArguments="schema.getCallbackParameters()" :value="value" :enableExecute="false" :enableLocalStorage="false" />
 		</div>
 		<template v-else-if="type === 'null'">
 			The field will be set to&nbsp;<strong><tt>null</tt></strong>.
@@ -391,5 +391,10 @@ export default {
 .externalData tt {
 	font-size: 1.1em;
 	font-weight: bold;
+}
+.callbackEditor {
+	height: 450px;
+	min-width: 50vw;
+	width: 100%;
 }
 </style>

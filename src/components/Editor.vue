@@ -1,5 +1,5 @@
 <template>
-	<Tabs ref="tabs" id="processGraphContent">
+	<Tabs class="editor" ref="tabs" id="processGraphContent">
 		<Tab id="visual" name="Visual Model" icon="fa-code-branch" :selected="true" :onBeforeShow="prepareProcessGraph" :onShow="transferProcessGraph">
 			<template v-slot:tab="{ tab }">
 				<VisualEditor ref="graphBuilder" :active="tab.active" :editable="editable" :value="processGraph" :id="id + '_visual'" :enableClear="enableClear" :enableExecute="enableExecute" :enableLocalStorage="enableLocalStorage" :showDiscoveryToolbar="showDiscoveryToolbar" />
@@ -10,7 +10,7 @@
 				<TextEditor ref="sourceEditor" :active="tab.active" :editable="editable" :value="processGraph" :id="id + '_text'" :enableClear="enableClear" :enableExecute="enableExecute" :enableLocalStorage="enableLocalStorage" />
 			</template>
 		</Tab>
-	</tabs>
+	</Tabs>
 </template>
 
 <script>
