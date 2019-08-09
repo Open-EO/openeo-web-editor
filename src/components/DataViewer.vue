@@ -36,12 +36,10 @@ export default {
 
 		showJson(data) {
 			this.content = data;
-			EventBus.$emit('showDataViewer');
 		},
 
 		showText(data) {
 			this.content = data;
-			EventBus.$emit('showDataViewer');
 		},
 
 		showBlob(blob, mimeType = null) {

@@ -424,10 +424,11 @@ export default {
 .blocks_js_editor .block .blockicon
 {
 	white-space: nowrap;
+	text-align: center;
 }
 
 
-.blocks_js_editor .block .blockicon svg
+.blocks_js_editor .block .blockicon i
 {
 	min-width: 1.4em;
 	cursor: pointer;
@@ -435,7 +436,7 @@ export default {
 	margin-left: 0.1em;
 }
 
-.blocks_js_editor .block .blockicon svg:hover {
+.blocks_js_editor .block .blockicon i:hover {
 	opacity:1.0;
 }
 

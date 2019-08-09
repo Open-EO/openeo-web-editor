@@ -17,9 +17,10 @@ You can use the online **[demo](https://open-eo.github.io/openeo-web-editor/demo
 
 ## Built With
 * [Vue.js](https://vuejs.org/) and some plugins - UI framework
-* [Leaflet](http://leafletjs.com/) and multiple plugins - Map visualization
+* [OpenLayers](http://openlayers.org/) and multiple extensions - Map visualization
 * [CodeMirror](https://codemirror.net/) - Source code editor
 * [openEO JS Client](https://github.com/Open-EO/openeo-js-client) - openEO client
+* and more...
 
 ## License
 This project is licensed under the Apache 2.0 license - see the [LICENSE.md](LICENSE.md) file for details.

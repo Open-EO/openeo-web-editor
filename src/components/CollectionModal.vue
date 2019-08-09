@@ -4,7 +4,7 @@
 			<div class="docgen">
 				<Collection :collectionData="collection" :version="version">
 					<template slot="collection-spatial-extent">
-						<div id="collectionMap"></div>
+						<MapViewer id="collectionMap" :show="showMap" :showExtent="collection.extent.spatial"></MapViewer>
 					</template>
 				</Collection>
 			</div>
@@ -13,21 +13,22 @@
 </template>
 
 <script>
-import "leaflet/dist/leaflet.css";
-import L from "leaflet";
+import MapViewer from './MapViewer';
 import Modal from './Modal.vue';
 import Collection from '@openeo/vue-components/components/Collection.vue';
 
 export default {
 	name: 'CollectionModal',
 	components: {
+		MapViewer,
 		Modal,
 		Collection
 	},
 	data() {
 		return {
 			version: null,
-			collection: null
+			collection: null,
+			showMap: false
 		};
 	},
 	methods: {
@@ -35,20 +36,9 @@ export default {
 			this.version = version;
 			this.collection = collection;
 			this.$refs.modal.show(collection.id);
-			this.$nextTick(this.initMap);
-		},
-		initMap() {
-			var map = new L.Map('collectionMap');
-			var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-				name: 'OpenStreetMap',
-				attribution: 'Map data &copy; <a href="http://www.osm.org">OpenStreetMap</a>'
+			this.$nextTick(() => {
+				this.showMap = true;
 			});
-			osm.addTo(map);
-
-			var rectangle = L.rectangle([[this.collection.extent.spatial[3], this.collection.extent.spatial[0]], [this.collection.extent.spatial[1], this.collection.extent.spatial[2]]]);
-			rectangle.addTo(map);
-
-			map.fitBounds(rectangle.getBounds());
 		}
 	}
 }
