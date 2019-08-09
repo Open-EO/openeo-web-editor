@@ -72,9 +72,6 @@ export default {
 			}
 		};
 	},
-	created() {
-		EventBus.$on('serviceCreated', this.serviceCreated);
-	},
 	methods: {
 		isMapServiceSupported(mapType) {
 			if (typeof mapType !== 'string') {
@@ -168,7 +165,7 @@ export default {
 			data = this.normalizeToDefaultData(data);
 			this.connection.createService(script, data.type, data.title, data.description, data.enabled, data.parameters, data.plan, data.budget)
 				.then(service => {
-					EventBus.$emit('serviceCreated', service);
+					this.serviceCreated(service);
 				}).catch(error => {
 					Utils.exception(this, error, 'Creating service failed');
 				});

@@ -72,9 +72,6 @@ export default {
 	computed: {
 		...Utils.mapGetters('server', ['supportsBilling', 'supportsBillingPlans'])
 	},
-	created() {
-		EventBus.$on('jobCreated', this.jobCreated);
-	},
 	mounted() {
 		window.setInterval(this.executeWatchers, 10000);
 	},
@@ -151,7 +148,7 @@ export default {
 			data = this.normalizeToDefaultData(data);
 			this.connection.createJob(processGraph, data.title, data.description, data.plan, data.budget)
 				.then(job => {
-					EventBus.$emit('jobCreated', job);
+					this.jobCreated(job);
 				}).catch(error => {
 					Utils.exception(this, error, 'Sorry, could not create a batch job.');
 				});

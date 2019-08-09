@@ -63,7 +63,6 @@ export default {
 	},
 	mounted() {
 		EventBus.$on('showModal', this.showModal);
-		EventBus.$on('closeModal', this.close);
 	},
     computed: {
 		listCount() {
