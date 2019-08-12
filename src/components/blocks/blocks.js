@@ -311,20 +311,20 @@ Blocks.prototype.addCollection = function(name, x = null, y = null)
         spatialExtent = this.collectionDefaults[name].spatialExtent;
         temporalExtent = this.collectionDefaults[name].temporalExtent;
     }
-    return this.addBlock('load_collection', 'process', x, y, {id: name, spatial_extent: spatialExtent, temporal_extent: temporalExtent});
+    return this.createBlock('load_collection', 'process', x, y, {id: name, spatial_extent: spatialExtent, temporal_extent: temporalExtent});
 };
 
-Blocks.prototype.addProcess = function(name, x = null, y = null)
+Blocks.prototype.addProcess = function(name, x = null, y = null, id = null)
 {
-    return this.addBlock(name, 'process', x, y);
+    return this.createBlock(name, 'process', x, y, {}, id);
 };
 
 Blocks.prototype.addCallbackArgument = function(name, x = null, y = null)
 {
-    return this.addBlock(name, 'callback-argument', x, y);
+    return this.createBlock(name, 'callback-argument', x, y);
 };
 
-Blocks.prototype.addBlock = function(name, type, x, y, values = {})
+Blocks.prototype.createBlock = function(name, type, x, y, values = {}, id = null)
 {
     if (!(type in this.moduleTypes)) {
         throw "Invalid module type specified.";
@@ -332,7 +332,7 @@ Blocks.prototype.addBlock = function(name, type, x, y, values = {})
     if (!(name in this.moduleTypes[type])) {
         throw "'" + name + "' not available.";
     }
-    var block = new Block(this, name, type, this.moduleTypes[type][name], this.id);
+    var block = new Block(this, name, type, this.moduleTypes[type][name], id);
     var rect = Utils.domBoundingBox(this.div);
     block.x = x === null ? ((-this.center.x + rect.width/2)/this.scale - block.getWidth()/2 + this.newBlockOffset) : x;
     block.y = y === null ? ((-this.center.y + rect.height/2)/this.scale - block.getHeight()/2 + this.newBlockOffset) : y;
@@ -343,12 +343,10 @@ Blocks.prototype.addBlock = function(name, type, x, y, values = {})
         block.result = true;
     }
     block.setValues(values);
-    block.create(this.innerDiv);
+    this.addBlock(block);
     if (!block.isCallbackArgument()) {
         this.history.save();
     }
-    this.blocks[this.id] = block;
-    this.id++;
     return block;
 };
 
@@ -865,11 +863,11 @@ Blocks.prototype.importProcessGraph = function(processGraph, registry) {
 Blocks.prototype.importNodesFromProcessGraph = function(nodes, x = 0, y = 0) {
     for(let i in nodes) {
         var node = nodes[i];
-        if (node.blockId > 0) {
+        if (node.blockId) {
             continue; // Node has already been added
         }
 
-        var block = this.addProcess(node.process_id, x, y);
+        var block = this.addProcess(node.process_id, x, y, node.id);
         if (block) {
             block.setValues(node.arguments);
             block.render();
@@ -877,10 +875,35 @@ Blocks.prototype.importNodesFromProcessGraph = function(nodes, x = 0, y = 0) {
         block.result = node.isResultNode;
         node.blockId = block.id;
 
-        this.importNodesFromProcessGraph(node.getNextNodes(), x + block.getWidth() + 20, y, block);
+        this.importNodesFromProcessGraph(node.getNextNodes(), x + block.getWidth() + 20, y);
         y += block.getHeight() + 20;
     }
 };
+
+Blocks.prototype.incrementId = function(id = null) {
+    if (id === null) {
+        id = this.id;
+        this.id++;
+    }
+    else if (!isNaN(parseInt(id))) {
+        this.id = Math.max(this.id, parseInt(id)+1);
+    }
+    else if (typeof id !== 'string' || id.length === 0) {
+        throw "Invalid node id specified";
+    }
+    return id;
+}
+
+Blocks.prototype.addBlock = function(block) {
+    if (block instanceof Block) {
+        block.id = this.incrementId(block.id);
+        block.create(this.innerDiv);
+        this.blocks[block.id] = block;
+    }
+    else {
+        throw "Parameter must be of type 'Block'";
+    }
+}
 
 /**
  * Import some data
@@ -911,9 +934,7 @@ Blocks.prototype.import = function(scene)
                     block.x = data.x;
                     block.y = data.y;
                     block.setValues(data.values, true);
-                    this.id = Math.max(this.id, block.id+1);
-                    block.create(this.innerDiv);
-                    this.blocks[data.id] = block;
+                    this.addBlock(block);
                 }
                 else {
                     errors.push('Block #'+k+ ': Unable to create a block of type ' + data.type);
