@@ -241,14 +241,6 @@ export default {
 			this.toggleSwipeControl();
 		},
 
-		showGeoTiffBlob(blob) {
-			this.updateTiffLayer(URL.createObjectURL(blob));
-		},
-
-		updateTiffLayer(url) {
-			// ToDo: Implement GTiff support
-		},
-
 		updateXYZLayer(service) {
 			var id = service.serviceId;
 			var url = service.url;

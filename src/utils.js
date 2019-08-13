@@ -73,30 +73,6 @@ export default {
 		return date.toISOString().replace('T', ' ').replace('Z', '').substring(0, 19); 
 	},
 
-	getMimeTypeForOutputFormat(originalOutputFormat) {
-		if (!originalOutputFormat.format) {
-			return null;
-		}
-		var type = originalOutputFormat.format.toLowerCase();
-		switch(type) {
-			case 'jpeg':
-			case 'jpg':
-				return 'image/jpeg';
-			case 'png':
-			case 'gif':
-				return 'image/' + type;
-			case 'tif':
-			case 'tiff':
-				return 'image/tiff';
-			case 'gtiff':
-				return 'image/tiff; application=geotiff';
-			case 'json':
-				return 'application/json';
-			default:
-				return null;
-		}
-	},
-
 	param(name) {
 		const urlParams = new URLSearchParams(window.location.search); 
 		return urlParams.get(name); 

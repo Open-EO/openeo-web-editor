@@ -56,20 +56,20 @@ export default {
 		showDataViewer() {
 			this.$refs.tabs.selectTab('dataView');
 		},
-		showViewer(blob, originalOutputFormat = null) {
-			if (!(blob instanceof Blob)) {
-				throw 'No blob specified.';
+		showViewer(data) {
+			var type = null;
+			if (data instanceof Blob) {
+				type = data.type;
 			}
-			var mimeType = blob.type;
-			// Try to detect invalid mime types
-			if (originalOutputFormat !== null && (!mimeType || mimeType.indexOf('/') === -1 || mimeType.indexOf('*') !== -1)) {
-				mimeType = Utils.getMimeTypeForOutputFormat(originalOutputFormat);
+			else {
+				Utils.error(this, "Sorry, the data can't be handled.");
 			}
-			if (typeof mimeType !== 'string') {
+
+			if (typeof type !== 'string' || type.indexOf('/') === -1 || type.indexOf('*') !== -1) {
 				Utils.error(this, "Sorry, can't detect media type.");
 			}
 
-			var mime = contentType.parse(mimeType.toLowerCase());
+			var mime = contentType.parse(type.toLowerCase());
 			switch(mime.type) {
 				case 'image/png':
 				case 'image/jpg':
@@ -83,14 +83,8 @@ export default {
 					this.showDataViewer();
 					this.$refs.dataViewer.showBlob(blob, mimeType);
 					break;
-				case 'image/tiff':
-//					if (mime.parameters['application'] === 'geotiff') {
-						this.showMapViewer();
-						this.$refs.mapViewer.showGeoTiffBlob(blob);
-						break;
-//					}
 				default:
-					Utils.error(this, "Sorry, the returned content type is not supported to view.");
+					Utils.error(this, "Sorry, the content type is not supported.");
 			}
 		}
 	}
