@@ -33,15 +33,7 @@ export default {
 			type: Boolean,
 			default: false
 		},
-		onBeforeShow: {
-			type: Function,
-			default: null
-		},
-		onShow: {
-			type: Function,
-			default: null
-		},
-		onHide: {
+		allowShow: {
 			type: Function,
 			default: null
 		},
@@ -58,11 +50,11 @@ export default {
 	watch: {
 		active(newValue) {
 			// Make sure the component is really shown by using nextTick...
-			if (newValue && typeof this.onShow === 'function') {
-				this.$nextTick(() => this.onShow());
+			if (newValue) {
+				this.$nextTick(() => this.$emit('show', this));
 			}
-			else if (!newValue && typeof this.onHide === 'function') {
-				this.$nextTick(() => this.onHide());
+			else {
+				this.$nextTick(() => this.$emit('hide', this));
 			}
 		}
 	},
@@ -79,7 +71,7 @@ export default {
 			if (this.active) {
 				return true;
 			}
-			if (typeof this.onBeforeShow !== 'function' || await this.onBeforeShow()) {
+			if (typeof this.allowShow !== 'function' || await this.allowShow()) {
 				this.active = true;
 			}
 			return this.active;
@@ -88,9 +80,7 @@ export default {
 			this.active = false;
 		},
 		close() {
-			if (typeof this.onClose === 'function') {
-				this.onClose(this.id);
-			}
+			this.$emit('close', this);
 		}
 	}
 }

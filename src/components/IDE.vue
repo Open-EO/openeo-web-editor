@@ -15,12 +15,12 @@
 				<div id="discovery" ref="discovery">
 					<DiscoveryToolbar class="toolbar" :onAddCollection="insertCollection" :onAddProcess="insertProcess" />
 				</div>
-				<hr class="separator" ref="separator0" @dblclick="centerSeparator(0)" @mousedown="startMovingSeparator($event, 0)" />
+				<hr class="separator" ref="separator0" @dblclick="centerSeparator($event, 0)" @mousedown="startMovingSeparator($event, 0)" />
 				<div id="workspace" ref="workspace">
 					<Editor ref="editor" class="mainEditor" id="main" :showDiscoveryToolbar="false" />
 					<UserWorkspace class="userContent" />
 				</div>
-				<hr class="separator" ref="separator1" @dblclick="centerSeparator(1)" @mousedown="startMovingSeparator($event, 1)" />
+				<hr class="separator" ref="separator1" @dblclick="centerSeparator($event, 1)" @mousedown="startMovingSeparator($event, 1)" />
 				<div id="viewer" ref="viewer">
 					<Viewer />
 				</div>
@@ -104,9 +104,10 @@ export default {
 		EventBus.$on('showDataForm', this.showDataForm);
 		EventBus.$on('getProcessGraph', this.getProcessGraph);
 		EventBus.$on('insertProcessGraph', this.insertProcessGraph);
-		window.onresize = (event) => {
-			EventBus.$emit('resizedIDE');
-		};
+
+		window.addEventListener('resize', event => {
+			EventBus.$emit('windowResized', event);
+		});
 	},
 	methods: {
 
@@ -149,13 +150,13 @@ export default {
 					x = evt.x;
 				}
 				elem.style.width = x + 'px';
-				EventBus.$emit('resizedIDE');
+				EventBus.$emit('windowResized', evt);
 				evt.preventDefault();
 				evt.stopPropagation();
 			}
 		},
 
-		centerSeparator(id) {
+		centerSeparator(event, id) {
 			this.moving = false;
 			var sep = this.separators[id];
 			if (!sep) {
@@ -169,7 +170,7 @@ export default {
 			else {
 				elem.style.width = 0;
 			}
-			EventBus.$emit('resizedIDE');
+			EventBus.$emit('windowResized', event);
 		},
 
 		showCollectionInfo(id) {
@@ -348,5 +349,15 @@ export default {
 }
 #menu li .dropdown .item button {
 	width: 100%;
+}
+
+.tabContent .dataTable, .tabContent table {
+	width: 100%;
+	border-collapse: collapse;
+}
+.tabContent table td,
+.tabContent table th {
+	border: 1px solid #ddd;
+	padding: 3px;
 }
 </style>

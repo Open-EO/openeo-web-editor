@@ -131,7 +131,7 @@ export default {
 				}
 			}
 
-			EventBus.$on('resizedIDE', () => this.map.updateSize());
+			EventBus.$on('windowResized', () => this.map.invalidateSize());
 		},
 
 		addRectangle(w, e, n, s) {

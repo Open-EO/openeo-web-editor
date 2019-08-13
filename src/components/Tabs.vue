@@ -1,6 +1,6 @@
 <template>
-	<div :class="{tabs: true, hide: !hasEnabledTabs, hideNames: hideNames} " :id="id">
-		<div class="tabsHeader">
+	<div :class="{tabs: true, hide: !hasEnabledTabs, hideNames: hideNames}" :id="id">
+		<div class="tabsHeader" ref="tabsHeader">
 			<button type="button" v-show="tab.enabled" :class="{tabItem: true, tabActive: tab.active }" @click="selectTab(tab)" :title="tab.name" v-for="tab in tabs" :key="tab.id">
 				<i v-if="tab.icon" :class="['fas', tab.icon]"></i>
 				<span class="tabName">{{ tab.name }}</span>
@@ -36,7 +36,7 @@ export default {
 			this.resetActiveTab();
 		}
 
-		EventBus.$on('resizedIDE', this.onResize);
+		EventBus.$on('windowResized', this.onResize);
 	},
 	computed: {
 		hasEnabledTabs() {
@@ -45,10 +45,8 @@ export default {
 	},
 	methods: {
 		onResize() {
-			try {
-				var tabsHeaderWidth = document.getElementById(this.id).getElementsByClassName('tabsHeader')[0].getBoundingClientRect().width;
-				this.hideNames = tabsHeaderWidth < this.tabs.length * 75;
-			} catch(e) {}
+			var tabsHeaderWidth = this.$refs.tabsHeader.getBoundingClientRect().width;
+			this.hideNames = tabsHeaderWidth < this.tabs.length * 75;
 		},
 		getTab(id) {
 			for (let i in this.tabs) {
@@ -141,15 +139,6 @@ export default {
 	border-top: 1px solid #ddd;
 	padding-top: 1px;
 	height: calc(100% - 2px);
-}
-.tabContent .dataTable, .tabContent table {
-	width: 100%;
-	border-collapse: collapse;
-}
-.tabContent table td,
-.tabContent table th {
-	border: 1px solid #ddd;
-	padding: 3px;
 }
 .tabItem:first-of-type {
 	margin-left: 5px;

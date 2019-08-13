@@ -4,9 +4,7 @@
 			<JobPanel />
 		</Tab>
 		<Tab v-if="supportsServices" id="services" name="Web Services" icon="fa-cloud">
-			<template v-slot:tab>
-				<ServicePanel />
-			</template>
+			<ServicePanel />
 		</Tab>
 		<Tab v-if="supportsProcessGraphs" id="storedProcessGraphs" name="Process Graphs" icon="fa-code-branch">
 			<ProcessGraphPanel />

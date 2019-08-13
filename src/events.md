@@ -44,5 +44,5 @@ Removes a web service from the map.
 
 ## UI
 
-### resizedIDE()
+### windowResized()
 The panels or the browser window have been resized.
