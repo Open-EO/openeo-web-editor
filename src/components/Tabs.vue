@@ -2,7 +2,7 @@
 	<div :class="{tabs: true, hide: !hasEnabledTabs, hideNames: hideNames} " :id="id">
 		<div class="tabsHeader">
 			<button type="button" v-show="tab.enabled" :class="{tabItem: true, tabActive: tab.active }" @click="selectTab(tab)" :title="tab.name" v-for="tab in tabs" :key="tab.id">
-				<i :class="['fas', tab.icon]"></i>
+				<i v-if="tab.icon" :class="['fas', tab.icon]"></i>
 				<span class="tabName">{{ tab.name }}</span>
 			</button>
 		</div>

@@ -18,8 +18,7 @@ export default {
 			required: true
 		},
 		icon: {
-			type: String,
-			required: true
+			type: String
 		},
 		selected: {
 			type: Boolean,
