@@ -1,6 +1,6 @@
 <template>
 	<div v-show="enabled && active" class="tabContent">
-		<slot name="tab" :tab="this"></slot>
+		<slot :tab="this"></slot>
 	</div>
 </template>
 
