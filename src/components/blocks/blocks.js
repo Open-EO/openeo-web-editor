@@ -364,14 +364,8 @@ Blocks.prototype.unregisterCallbackArguments = function() {
 
 Blocks.prototype.registerCollectionDefaults = function(collection) {
     try {
-		var hasZ = collection.extent.spatial.length > 4;
         this.collectionDefaults[collection.id] = {
-            spatialExtent: {
-                west: collection.extent.spatial[0],
-                east: collection.extent.spatial[hasZ ? 3 : 2],
-                south: collection.extent.spatial[1],
-                north: collection.extent.spatial[hasZ ? 4 : 3]
-            },
+            spatialExtent: Utils.extentToBBox(collection.extent.spatial),
             temporalExtent: collection.extent.temporal
         };
     } catch (error) {

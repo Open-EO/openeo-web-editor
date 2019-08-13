@@ -36,7 +36,6 @@ export default {
 		
 		showImage(src) {
 			this.setMessage('Loading image...');
-			EventBus.$emit('showImageViewer');
 			this.$refs.image.onload = () => {
 				this.visibleContent = 'image';
 			};

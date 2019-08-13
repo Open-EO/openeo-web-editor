@@ -275,7 +275,7 @@ export default {
 				Utils.info(this, 'Data requested. Please wait...');
 				// Send requests without authentication (second parameter false), they should be secured by a token in the URL
 				this.connection.download(info.links[0].href, false)
-					.then(response => EventBus.$emit('showInViewer', response.data, info.links[0].type))
+					.then(response => EventBus.$emit('showViewer', response.data, info.links[0].type))
 					.catch(error => {
 						Utils.exception(this, error, "Sorry, can't download results.");
 					});

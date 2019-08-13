@@ -36,6 +36,10 @@ export default {
 		allowShow: {
 			type: Function,
 			default: null
+		},
+		onClose: {
+			type: Function,
+			default: null
 		}
 	},
 	data() {

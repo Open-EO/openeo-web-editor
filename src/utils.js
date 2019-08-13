@@ -73,28 +73,6 @@ export default {
 		return date.toISOString().replace('T', ' ').replace('Z', '').substring(0, 19); 
 	},
 
-	getMimeTypeForOutputFormat(originalOutputFormat) {
-		if (!originalOutputFormat.format) {
-			return null;
-		}
-		var type = originalOutputFormat.format.toLowerCase();
-		switch(type) {
-			case 'png':
-			case 'jpeg':
-			case 'jpg':
-			case 'gif':
-				return 'image/' + type;
-			case 'tif':
-			case 'tiff':
-			case 'gtiff':
-				return 'image/tiff';
-			case 'json':
-				return 'application/json';
-			default:
-				return null;
-		}
-	},
-
 	param(name) {
 		const urlParams = new URLSearchParams(window.location.search); 
 		return urlParams.get(name); 
@@ -117,6 +95,16 @@ export default {
 		rect.offsetTop = rect.top + document.body.scrollTop;
 		rect.offsetLeft = rect.left + document.body.scrollLeft;
 		return rect;
+	},
+
+	extentToBBox(extent) {
+		var hasZ = extent.length > 4;
+        return {
+			west: extent[0],
+			east: extent[hasZ ? 3 : 2],
+			south: extent[1],
+			north: extent[hasZ ? 4 : 3]
+		};
 	},
 
 	mapState,

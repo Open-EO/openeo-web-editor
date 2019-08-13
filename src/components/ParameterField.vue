@@ -41,7 +41,7 @@
 			<VueCtkDateTimePicker v-model="value" :disabled="!editable" label="Select time" only-time="true" format="HH:mm:ss[Z]" no-button="true"></VueCtkDateTimePicker>
 		</template>
 		<template v-else-if="type === 'bounding-box'">
-			<div :id="fieldName" class="areaSelector"></div>
+			<MapViewer ref="bboxMap" :id="fieldName" :showAreaSelector="true" :readOnly="editable" :center="[0,0]" :zoom="1" class="areaSelector"></MapViewer>
 		</template>
 		<div v-else-if="type === 'callback'" class="border">
 			<VisualEditor ref="callbackBuilder" class="callbackEditor" id="inlinePgEditor" :editable="editable" :callbackArguments="schema.getCallbackParameters()" :value="value" :enableExecute="false" :enableLocalStorage="false" />
@@ -78,11 +78,7 @@ import draggable from 'vuedraggable';
 import VueCtkDateTimePicker from 'vue-ctk-date-time-picker';
 import 'vue-ctk-date-time-picker/dist/vue-ctk-date-time-picker.css';
 
-import "leaflet/dist/leaflet.css";
-import L from "leaflet";
-import areaSelect from "./leaflet-areaselect/leaflet-areaselect.js";
-import "./leaflet-areaselect/leaflet-areaselect.css";
-
+import MapViewer from './MapViewer';
 
 import { ProcessGraph } from '@openeo/js-commons';
 import Utils from '../utils.js';
@@ -91,6 +87,7 @@ export default {
 	name: 'ParameterField',
 	components: {
 		draggable,
+		MapViewer,
 		// Asynchronously load the component to avoid circular references.
 		// See https://vuejs.org/v2/guide/components-edge-cases.html#Circular-References-Between-Components
 		VisualEditor: () => import('./VisualEditor.vue'),
@@ -152,37 +149,17 @@ export default {
 	methods: {
 		initView() {
 			if (this.type === 'bounding-box') {
-				var map = new L.Map(this.fieldName, {zoomControl: this.editable});
-				var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-					name: 'OpenStreetMap',
-					attribution: 'Map data &copy; <a href="http://www.osm.org">OpenStreetMap</a>'
-				});
-				osm.addTo(map);
-
-				var areaSelect = L.areaSelect({editable: this.editable});
-				areaSelect.addTo(map);
 				if (Utils.isObject(this.value) && Object.keys(this.value).length >= 4) {
-					this.value = L.latLngBounds(
-						L.latLng(this.value.south, this.value.west),
-						L.latLng(this.value.north, this.value.east)
-					);
-					areaSelect.setBounds(this.value);
+					this.$refs.bboxMap.areaSelect.setBounds(this.value);
 				}
-				else {
-					map.setView([0,0], 1);
-					this.value = areaSelect.getBounds();
-				}
-				areaSelect.on("change", () => {
-					this.value = areaSelect.getBounds();
-				});
-				if (!this.editable) {
+/*				if (!this.editable) {
 					map.touchZoom.disable();
 					map.doubleClickZoom.disable();
 					map.scrollWheelZoom.disable();
 					map.boxZoom.disable();
 					map.keyboard.disable();
 					map.dragging.disable();
-				}
+				} */
 			}
 			if (this.$refs.selectFirst && this.$refs.selectFirst.selectedOptions.length === 0) {
 				this.$refs.selectFirst.selectedIndex = 0;
@@ -265,13 +242,7 @@ export default {
 				};
 			}
 			else if (this.type === 'bounding-box') {
-				return	{
-					// Round to 6 decimals, the leading + removes the trailing zeros appended by toFixed.
-					west: +this.value.getWest().toFixed(6),
-					south: +this.value.getSouth().toFixed(6),
-					east: +this.value.getEast().toFixed(6),
-					north: +this.value.getNorth().toFixed(6),
-				};
+				return this.$refs.bboxMap.areaSelect.getBounds();
 			}
 			else if (this.isArray) {
 				var values = [];

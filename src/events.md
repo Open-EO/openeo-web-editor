@@ -32,24 +32,14 @@ Shows process information in a modal.
 
 ## Viewer & Web Services
 
-### showInViewer(Blob $blob, object $output_args)
-Shows the data with the specified content type in the appropriate area of the viewer.
-To enhance viewing experience the "original" output format arguments can be given.
-
-### showMapViewer()
-Shows the map in the viewer area.
+### showViewer(Blob|Object $data)
+Shows the data in the viewer. Either a blob or link object (with href, title and type properties).
 
 ### showWebService(object $service)
 Shows a web service on the map.
 
 ### removeWebService(string $id)
 Removes a web service from the map.
-
-### showImageViewer()
-Shows the image panel in the viewer area.
-
-### showMapDataViewer()
-Shows the data panel in the viewer area.
 
 ## UI
 
