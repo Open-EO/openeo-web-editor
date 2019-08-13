@@ -4,6 +4,7 @@
 			<button type="button" v-show="tab.enabled" :class="{tabItem: true, tabActive: tab.active }" @click="selectTab(tab)" :title="tab.name" v-for="tab in tabs" :key="tab.id">
 				<i v-if="tab.icon" :class="['fas', tab.icon]"></i>
 				<span class="tabName">{{ tab.name }}</span>
+				<span class="tabClose" @click.prevent.stop="closeTab(tab)" v-if="tab.closable"><i class="far fa-times-circle"></i></span>
 			</button>
 		</div>
 		<div class="tabsBody">
@@ -89,6 +90,14 @@ export default {
 				activeTab.hide();
 			}
 		},
+		closeTab(tab) {
+			var index = this.tabs.findIndex(t => t.id === tab.id);
+			if (index !== -1) {
+				this.tabs.splice(index, 1);
+				tab.close();
+				this.resetActiveTab();
+			}
+		},
 		resetActiveTab(force = false) {
 			if (this.tabs.length === 0) {
 				return;
@@ -163,11 +172,18 @@ export default {
 .tabs.hideNames .tabItem {
 	min-width: 3em;
 }
-.tabItem:hover {
+.tabItem:hover .fas, .tabItem:hover .tabName {
 	color: black;
 }
 .tabItem:focus {
 	outline: none;
+}
+.tabClose {
+	display: inline-block;
+	margin-left: 5px;
+}
+.tabClose:hover {
+	color: red;
 }
 div.tabActive {
 	display: block;
@@ -175,6 +191,8 @@ div.tabActive {
 button.tabActive {
 	background-color: white;
 	color: black;
+	padding-bottom: 6px;
 	margin-bottom: -1px;
+	z-index: 1;
 }
 </style>
