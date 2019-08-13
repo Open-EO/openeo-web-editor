@@ -53,5 +53,5 @@ Shows the data panel in the viewer area.
 
 ## UI
 
-### resizedIDE()
+### windowResized()
 The panels or the browser window have been resized.

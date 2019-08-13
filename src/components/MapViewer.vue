@@ -68,7 +68,7 @@ export default {
 			this.map.on('layeradd', this.onLayerAdd);
 			this.map.on('overlayremove', this.onOverlayRemove);
 
-			EventBus.$on('resizedIDE', () => this.map.invalidateSize());
+			EventBus.$on('windowResized', () => this.map.invalidateSize());
 		},
 
 		onLayerAdd(evt) {
