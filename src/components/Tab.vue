@@ -18,7 +18,8 @@ export default {
 			required: true
 		},
 		icon: {
-			type: String
+			type: String,
+			default: null
 		},
 		selected: {
 			type: Boolean,
@@ -27,6 +28,10 @@ export default {
 		enabled: {
 			type: Boolean,
 			default: true
+		},
+		closable: {
+			type: Boolean,
+			default: false
 		},
 		onBeforeShow: {
 			type: Function,
@@ -37,6 +42,10 @@ export default {
 			default: null
 		},
 		onHide: {
+			type: Function,
+			default: null
+		},
+		onClose: {
 			type: Function,
 			default: null
 		}
@@ -77,6 +86,11 @@ export default {
 		},
 		hide() {
 			this.active = false;
+		},
+		close() {
+			if (typeof this.onClose === 'function') {
+				this.onClose(this.id);
+			}
 		}
 	}
 }
