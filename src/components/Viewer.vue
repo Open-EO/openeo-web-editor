@@ -1,19 +1,15 @@
 <template>
 	<Tabs id="viewerContent" ref="tabs">
 		<Tab id="mapView" name="Map" icon="fa-map" :selected="true">
-			<template v-slot:tab="{ tab }">
+			<template v-slot:default="{ tab }">
 				<MapViewer id="mapCanvas" ref="mapViewer" :show="tab.active" />
 			</template>
 		</Tab>
 		<Tab id="imageView" name="Images" icon="fa-image">
-			<template v-slot:tab>
-				<ImageViewer ref="imageViewer" />
-			</template>
+			<ImageViewer ref="imageViewer" />
 		</Tab>
 		<Tab id="dataView" name="Data" icon="fa-database">
-			<template v-slot:tab>
-				<DataViewer ref="dataViewer" />
-			</template>
+			<DataViewer ref="dataViewer" />
 		</Tab>
 	</tabs>
 </template>

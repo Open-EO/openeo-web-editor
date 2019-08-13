@@ -1,9 +1,7 @@
 <template>
 	<Tabs id="userContent" ref="tabs" v-show="isConnected">
 		<Tab v-if="supportsJobs" id="jobs" name="Batch Jobs" icon="fa-tasks">
-			<template v-slot:tab>
-				<JobPanel />
-			</template>
+			<JobPanel />
 		</Tab>
 		<Tab v-if="supportsServices" id="services" name="Web Services" icon="fa-cloud">
 			<template v-slot:tab>
@@ -11,14 +9,10 @@
 			</template>
 		</Tab>
 		<Tab v-if="supportsProcessGraphs" id="storedProcessGraphs" name="Process Graphs" icon="fa-code-branch">
-			<template v-slot:tab>
-				<ProcessGraphPanel />
-			</template>
+			<ProcessGraphPanel />
 		</Tab>
 		<Tab v-if="supportsFiles" id="files" name="Files" icon="fa-file">
-			<template v-slot:tab>
-				<FilePanel />
-			</template>
+			<FilePanel />
 		</Tab>
 	</Tabs>
 </template>
