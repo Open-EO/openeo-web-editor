@@ -1,5 +1,5 @@
 import Field from './field.js';
-import EventBus from '../../eventbus.js';
+import EventBus from '@openeo/vue-components/eventbus.js';
 import VueUtils from '@openeo/vue-components/utils.js';
 import { ProcessGraph } from '@openeo/js-commons';
 import Utils from '../../utils.js';

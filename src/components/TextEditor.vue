@@ -6,7 +6,7 @@
 </template>
 
 <script>
-import EventBus from '../eventbus.js';
+import EventBus from '@openeo/vue-components/eventbus.js';
 import Utils from '../utils.js';
 import EditorToolbar from './EditorToolbar.vue';
 import { ProcessGraph } from '@openeo/js-commons';

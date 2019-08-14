@@ -1,12 +1,12 @@
 <template>
 	<Tabs class="editor" ref="tabs" id="processGraphContent">
 		<Tab id="visual" name="Visual Model" icon="fa-code-branch" :selected="true" :allowShow="prepareProcessGraph" @show="transferProcessGraph">
-			<template v-slot:default="{ tab }">
+			<template #default="{ tab }">
 				<VisualEditor ref="graphBuilder" :active="tab.active" :editable="editable" :value="processGraph" :id="id + '_visual'" :enableClear="enableClear" :enableExecute="enableExecute" :enableLocalStorage="enableLocalStorage" :showDiscoveryToolbar="showDiscoveryToolbar" />
 			</template>
 		</Tab>
 		<Tab id="source" name="Process Graph" icon="fa-code" :allowShow="prepareProcessGraph" @show="transferProcessGraph">
-			<template v-slot:default="{ tab }">
+			<template #default="{ tab }">
 				<TextEditor ref="sourceEditor" :active="tab.active" :editable="editable" :value="processGraph" :id="id + '_text'" :enableClear="enableClear" :enableExecute="enableExecute" :enableLocalStorage="enableLocalStorage" />
 			</template>
 		</Tab>
@@ -14,10 +14,10 @@
 </template>
 
 <script>
-import EventBus from '../eventbus.js';
+import EventBus from '@openeo/vue-components/eventbus.js';
 import Utils from '../utils.js';
-import Tabs from './Tabs.vue';
-import Tab from './Tab.vue';
+import Tabs from '@openeo/vue-components/components/Tabs.vue';
+import Tab from '@openeo/vue-components/components/Tab.vue';
 import ConnectionMixin from './ConnectionMixin.vue';
 import VisualEditor from './VisualEditor.vue';
 import TextEditor from './TextEditor.vue';

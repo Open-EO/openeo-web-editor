@@ -1,24 +1,26 @@
 <template>
 	<Tabs id="viewerContent" ref="tabs">
-		<Tab id="mapView" name="Map" icon="fa-map" :selected="true">
-			<template v-slot:default="{ tab }">
-				<MapViewer id="mapCanvas" ref="mapViewer" :show="tab.active" />
-			</template>
-		</Tab>
-		<Tab id="imageView" name="Images" icon="fa-image">
-			<ImageViewer ref="imageViewer" />
-		</Tab>
-		<Tab id="dataView" name="Data" icon="fa-database">
-			<DataViewer ref="dataViewer" />
-		</Tab>
-	</tabs>
+		<template #default="{ tabs }">
+			<Tab id="mapView" name="Map" icon="fa-map" :selected="true">
+				<template #default="{ tab }">
+					<MapViewer id="mapCanvas" ref="mapViewer" :show="tab.active" />
+				</template>
+			</Tab>
+		</template>
+		<template #imageView>
+			<ImageViewer ref="dataViewer" />
+		</template>
+		<template #dataView>
+			<DataViewer ref="imageViewer" />
+		</template>
+	</Tabs>
 </template>
 
 <script>
-import EventBus from '../eventbus.js';
+import EventBus from '@openeo/vue-components/eventbus.js';
 import Utils from '../utils.js';
-import Tabs from './Tabs.vue';
-import Tab from './Tab.vue';
+import Tabs from '@openeo/vue-components/components/Tabs.vue';
+import Tab from '@openeo/vue-components/components/Tab.vue';
 import DataViewer from './DataViewer.vue';
 import ImageViewer from './ImageViewer.vue';
 import MapViewer from './MapViewer.vue'
@@ -38,6 +40,11 @@ export default {
 
 		EventBus.$on('showWebService', this.showWebService);
 		EventBus.$on('removeWebService', this.removeWebService);
+
+		window.setTimeout(() => {
+			this.$refs.tabs.addTab("Images", "fa-image", null, "imageView", true);
+			this.$refs.tabs.addTab("Data", "fa-database", null, "dataView");
+		}, 1000);
 	},
 	methods: {
 		showWebService(service) {

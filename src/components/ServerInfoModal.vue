@@ -1,6 +1,6 @@
 <template>
 	<Modal ref="modal">
-		<template v-slot:main>
+		<template #main>
 			<div class="vue-component server-info">
 				<Capabilities :capabilities="capabilities" :url="url" />
 				<template v-if="services">

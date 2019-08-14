@@ -37,7 +37,7 @@
 
 <script>
 import Config from '../../config.js';
-import EventBus from '../eventbus.js';
+import EventBus from '@openeo/vue-components/eventbus.js';
 import ConnectionMixin from './ConnectionMixin.vue';
 import Utils from '../utils.js';
 

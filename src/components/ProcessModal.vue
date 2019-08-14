@@ -1,6 +1,6 @@
 <template>
 	<Modal ref="modal">
-		<template v-slot:main>
+		<template #main>
 			<div class="docgen">
 				<!-- ToDo: Implement processReferenceBuilder -->
 				<Process :processData="process" :version="version" :provideDownload="false"></Process>

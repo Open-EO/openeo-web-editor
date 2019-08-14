@@ -23,7 +23,7 @@
 
 <script>
 import Config from '../../config';
-import EventBus from '../eventbus';
+import EventBus from '@openeo/vue-components/eventbus.js';
 import WorkPanelMixin from './WorkPanelMixin.vue';
 import Utils from '../utils';
 import Field from './blocks/field';

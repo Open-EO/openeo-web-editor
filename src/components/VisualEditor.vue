@@ -20,7 +20,7 @@
 </template>
 
 <script>
-import EventBus from '../eventbus.js';
+import EventBus from '@openeo/vue-components/eventbus.js';
 import Blocks from './blocks/blocks.js';
 import Utils from '../utils.js';
 import EditorToolbar from './EditorToolbar.vue';
