@@ -728,6 +728,11 @@ Blocks.prototype.addEdge = function(blockOut, fieldOut, blockIn, fieldIn, isData
         this.setResultNode(fieldOut.isOutput() ? blockOut : blockIn, false);
     }
 
+    this.linking = null;
+    this.selectedBlock = null;
+    blockIn.focusedField = null;
+    blockOut.focusedField = null;
+
     // Update UI
     blockIn.redraw();
     blockOut.redraw();
@@ -744,9 +749,6 @@ Blocks.prototype.endLink = function(block, fieldName)
     } catch (error) {
         this.showError(error);
     }
-
-    this.linking = null;
-    this.selectedBlock = null;
 };
 
 Blocks.prototype.areTypesCompatible = function(t1, t2) {

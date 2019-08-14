@@ -175,7 +175,6 @@ Block.prototype.setComment = function(comment) {
     else {
         this.comment = null;
     }
-    console.log(this.comment);
     this.render();
 };
 
@@ -396,6 +395,9 @@ Block.prototype.redraw = function(selected)
                 }
             }
         }
+        if (field.isLinking()) {
+            connector.classList.add('io_selected');
+        }
         if (field.isOutput() && this.result) {
             connector.classList.add('result');
         }
@@ -482,7 +484,11 @@ Block.prototype.initListeners = function()
         }
 
         // Handle focus on the I/Os
-        circle.addEventListener('mouseover', () => this.focusedField = fieldName);
+        circle.addEventListener('mouseover', () => {
+            if (this.blocks.linking) {
+                this.focusedField = fieldName;
+            }
+        });
         circle.addEventListener('mouseout', () => this.focusedField = null);
     }
 
