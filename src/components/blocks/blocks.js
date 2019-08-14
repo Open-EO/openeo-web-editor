@@ -223,9 +223,13 @@ Blocks.prototype.ready = function(callback)
     }
 };
 
-Blocks.prototype.showParameters = function(block) {
-    if (typeof this.openParameterEditor === 'function') {
-        this.openParameterEditor(this, block, this.editable);
+Blocks.prototype.canShowParameters = function() {
+    return (typeof this.openParameterEditor === 'function');
+};
+
+Blocks.prototype.showParameters = function(block, field = null) {
+    if (this.canShowParameters()) {
+        this.openParameterEditor(this, block, this.editable, field);
     }
 };
 
@@ -369,7 +373,7 @@ Blocks.prototype.registerCollectionDefaults = function(collection) {
             temporalExtent: collection.extent.temporal
         };
     } catch (error) {
-        console.log(error);
+        console.warn(error);
     }
 };
 
@@ -869,6 +873,7 @@ Blocks.prototype.importNodesFromProcessGraph = function(nodes, x = 0, y = 0) {
 
         var block = this.addProcess(node.process_id, x, y, node.id);
         if (block) {
+            block.setComment(node.description);
             block.setValues(node.arguments);
             block.render();
         }
@@ -933,6 +938,7 @@ Blocks.prototype.import = function(scene)
                     var block = new Block(this, data.name, data.type, this.moduleTypes[data.type][data.name], data.id);
                     block.x = data.x;
                     block.y = data.y;
+                    block.setComment(data.comment);
                     block.setValues(data.values, true);
                     this.addBlock(block);
                 }

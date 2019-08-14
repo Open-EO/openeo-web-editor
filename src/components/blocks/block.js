@@ -42,8 +42,11 @@ var Block = function(blocks, name, type, schema, id)
     // Which field has focus?
     this.focusedField = null;
 
-    // Is result node?inputs
+    // Is result node?
     this.result = false;
+
+    // Comment for process graph node
+    this.comment = null;
 
     // Parameters
     this.output = null;
@@ -163,7 +166,29 @@ Block.prototype.isCallbackArgument = function() {
 
 Block.prototype.getCollectionName = function() {
     return this.getField('id').getValue();
-}
+};
+
+Block.prototype.setComment = function(comment) {
+    if (typeof comment === 'string') {
+        this.comment = comment;
+    }
+    else {
+        this.comment = null;
+    }
+    console.log(this.comment);
+    this.render();
+};
+
+Block.prototype.getComment = function() {
+    var comment = this.div.querySelector('.editComment');
+    if (comment && typeof comment.value === 'string' && comment.value.length > 0) {
+        this.comment = comment.value;
+    }
+    else {
+        this.comment = null;
+    }
+    return this.comment;
+};
 
 /**
  * Returns the render of the block
@@ -187,12 +212,17 @@ Block.prototype.getHtml = function()
     var html = '<div class="blockTitle"><span class="titleText" title="'+title+'">'+header+'</span>';
     html += '<div class="blockicon">';
     if (!this.blocks.compactMode) {
-        if (this.blocks.editable && !this.isCallbackArgument()) {
-            html += '<span class="delete" title="Remove (DEL)"><i class="fas fa-trash"></i></span>';
+        if (this.blocks.editable) {
+            if (this.comment === null) {
+                html += '<span class="addComment" title="Add comment"><i class="fas fa-comment-medical"></i></span>'
+            }
+            if (!this.isCallbackArgument()) {
+                html += '<span class="delete" title="Remove (DEL)"><i class="fas fa-trash"></i></span>';
+            }
         }
         html += '<span class="info" title="Details"><i class="fas fa-info"></i></span>';
     }
-    if (typeof this.blocks.openParameterEditor === 'function' && this.editables.length > 0 && !this.isCallbackArgument()) {
+    if (this.canChangeParameters()) {
         html += '<span class="settings" title="Change parameter values"><i class="fas fa-sliders-h"></i></span>';
     }
     html += '</div></div>';
@@ -277,6 +307,10 @@ Block.prototype.getHtml = function()
     handle('output', [this.output]);
 
     html += "</div>";
+
+    if (!this.blocks.compactMode && this.comment !== null) {
+        html += '<textarea class="editComment" placeholder="Type comment here...">' + VueUtils.htmlentities(this.comment) + '</textarea>';
+    }
 
     return html;
 };
@@ -410,18 +444,32 @@ Block.prototype.initListeners = function()
 
     var connectors = this.div.querySelectorAll('.connector');
     for(let connector of connectors) {
+        let fieldName = connector.getAttribute('rel');
+
+        // Allow clicking on the field name to open the editor
+        let field = this.getField(fieldName);
+        if (field && field.isInput() && this.canChangeParameters()) {
+            connector.addEventListener('dblclick', () => this.blocks.showParameters(this, fieldName));
+        }
+
         // Draw a link
+        let circles = connector.getElementsByClassName('circle');
+        let circle = circles.length > 0 ? connector.getElementsByClassName('circle')[0] : null;
+        if (!circle) {
+            continue;
+        }
+
         if (this.blocks.editable) {
-            connector.addEventListener('mousedown', event => {
+            circle.addEventListener('mousedown', event => {
                 if (event.which == 1) {
-                    this.blocks.beginLink(this, connector.getAttribute('rel'));
+                    this.blocks.beginLink(this, fieldName);
                     event.preventDefault();
                     event.stopPropagation();
                 }
             });
 
             // Allow specifying the result node
-            connector.addEventListener('click', event => {
+            circle.addEventListener('click', event => {
                 if (event.which == 1) {
                     if (this.hasOutputEdges()) {
                         this.blocks.showError("A result node can't have outgoing edges.");
@@ -434,8 +482,8 @@ Block.prototype.initListeners = function()
         }
 
         // Handle focus on the I/Os
-        connector.addEventListener('mouseover', () => this.focusedField = connector.getAttribute('rel'));
-        connector.addEventListener('mouseout', () => this.focusedField = null);
+        circle.addEventListener('mouseover', () => this.focusedField = fieldName);
+        circle.addEventListener('mouseout', () => this.focusedField = null);
     }
 
     // Handle the parameters
@@ -458,6 +506,29 @@ Block.prototype.initListeners = function()
         });
     }
 
+    // Handle the add comment icon
+    var commentEl = this.div.querySelector('.addComment');
+    if (commentEl) {
+        commentEl.addEventListener('click', evt => {
+            this.setComment("");
+            evt.preventDefault();
+            evt.stopPropagation();
+        });
+    }
+
+    // Update the comment (box)
+    var editCommentEl = this.div.querySelector('.editComment');
+    if (editCommentEl) {
+        editCommentEl.addEventListener('change', evt => {
+            if (typeof evt.target.value === 'string' && evt.target.value.length > 0) {
+                this.setComment(evt.target.value);
+            }
+            else {
+                this.setComment(null);
+            }
+        });
+    }
+
     // Show the description
     var infoEl = this.div.querySelector('.info');
     if (infoEl) {
@@ -475,6 +546,10 @@ Block.prototype.initListeners = function()
             evt.stopPropagation();
         });
     }
+};
+
+Block.prototype.canChangeParameters = function() {
+    return (this.blocks.canShowParameters() && this.editables.length > 0 && !this.isCallbackArgument());
 };
 
 /**
@@ -555,7 +630,8 @@ Block.prototype.export = function()
         y: this.y,
         type: this.type,
         name: this.name,
-        values: values
+        values: values,
+        comment: this.getComment()
     };
 };
 
@@ -580,7 +656,9 @@ Block.prototype.exportProcessGraph = function()
         process_id: this.name,
         arguments: values
     };
-
+    if (typeof this.comment === 'string' && this.comment.length > 0) {
+        json.description = this.getComment();
+    }
     if (this.result) {
         json.result = true;
     }

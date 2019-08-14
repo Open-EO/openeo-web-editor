@@ -4,7 +4,7 @@
 			<p v-if="editableFields.length === 0">No editable parameters available.</p>
 			<form v-else id="parameterModal" @submit.prevent="save">
 				<div class="fieldRow" v-for="(field, k) in editableFields" :key="k">
-					<label>
+					<label :class="{ highlight: field.name === selectFieldName }">
 						{{ field.label }}<strong class="required" v-if="field.isRequired" title="required">*</strong>
 						<div v-if="field.description" class="description">
 							<Description :description="field.description" />
@@ -14,7 +14,7 @@
 				</div>
 			</form>
 		</template>
-		<template v-if="typeof this.saveCallback === 'function'" v-slot:footer>
+		<template v-if="typeof saveCallback === 'function'" v-slot:footer>
 			<div class="footer">
 				<button class="save" @click="save">Save</button>
 			</div>
@@ -39,9 +39,15 @@ export default {
 		return {
 			editableFields: [],
 			editable: true,
+			selectFieldName: null,
 			saveCallback: null,
 			processId: null
 		};
+	},
+	mounted() {
+		if (this.selectFieldName && this.$refs[this.selectFieldName]) {
+			this.$refs[this.selectFieldName].scrollIntoView();
+		}
 	},
 	methods: {
 		save() {
@@ -60,11 +66,12 @@ export default {
 				Utils.exception(this, error);
 			}
 		},
-		show(title, editableFields, editable = true, saveCallback = null, closeCallback = null, processId = null) {
+		show(title, editableFields, editable = true, saveCallback = null, closeCallback = null, processId = null, selectFieldName = null) {
 			this.editableFields = editableFields;
 			this.editable = editable;
 			this.saveCallback = saveCallback;
 			this.processId = processId;
+			this.selectFieldName = selectFieldName;
 			this.$refs.__modal.show(title, closeCallback);
 		}
 	}
@@ -100,6 +107,11 @@ export default {
 #parameterModal .fieldRow label {
 	min-width: 35%;
 	width: 35%;
+}
+#parameterModal .fieldRow label.highlight {
+	width: calc(35% - 5px);
+    border-left: 5px solid red;
+    padding-left: 5px;
 }
 #parameterModal .fieldRow .fieldEditorContainer {
 	flex-grow: 1;
