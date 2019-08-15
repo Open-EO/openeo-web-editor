@@ -43,7 +43,6 @@ export default class AreaSelect {
 
                 this.width = parseInt(Math.abs(bottomLeft[0] - topRight[0]));
                 this.height = parseInt(Math.abs(bottomLeft[1] - topRight[1]));
-                console.log(this.width, this.height);
                 this.render();
             }
         });

@@ -5,31 +5,27 @@
             <input type="search" v-model="searchTerm" placeholder="Search" title="Search in collections and processes" />
         </div>
 		<div class="search-results">
-			<div :class="{ category: true, collections: true, expanded: expanded.collections }">
-				<strong @click="toggle('collections')" :title="'Collections ('+collectionCount+')'"><span class="toggle">▸</span> Collections</strong>
-				<template v-if="collectionCount">
-					<div class="discovery-entity" v-for="e in filtered.collections" :key="e.id" draggable="true" @dragstart="onDrag($event, 'collection', e.id)">
-						<div class="discovery-info" @click="showCollectionInfo(e.id)">
-							<strong>{{ e.id }}</strong>
-						</div>
-						<button class="discovery-button" type="button" @click="insertCollection(e.id)" title="Insert"><i class="fas fa-plus"></i></button>
+			<div :class="{ category: true, collections: true, expanded: collectionsExpanded }">
+				<strong @click="toggle('collections')" :title="'Collections ('+collectionsCount+')'"><span class="toggle">▸</span> Collections</strong>
+				<div class="discovery-entity" v-for="(e, i) in collections" v-show="collectionsShow[i]" :key="e.id" draggable="true" @dragstart="onDrag($event, 'collection', e.id)">
+					<div class="discovery-info" @click="showCollectionInfo(e.id)">
+						<strong>{{ e.id }}</strong>
 					</div>
-				</template>
-				<div class="noData" v-else>No collections available.</div>
+					<button class="discovery-button" type="button" @click="insertCollection(e.id)" title="Insert"><i class="fas fa-plus"></i></button>
+				</div>
+				<div class="noData" v-if="!collectionsCount">No collections available.</div>
 			</div>
 
-			<div :class="{ category: true, processes: true, expanded: expanded.processes }">
-				<strong @click="toggle('processes')" :title="'Processes ('+processCount+')'"><span class="toggle">▸</span> Processes</strong>
-				<template v-if="processCount">
-					<div class="discovery-entity" v-for="e in filtered.processes" :key="e.id" draggable="true" @dragstart="onDrag($event, 'process', e.id)">
-						<div class="discovery-info" @click="showProcessInfo(e.id)">
-							<strong :title="e.id">{{ e.id }}</strong>
-							<small v-if="e.summary" :title="e.summary">{{ e.summary }}</small>
-						</div>
-						<button class="discovery-button" type="button" @click="insertProcess(e.id)" title="Insert"><i class="fas fa-plus"></i></button>
+			<div :class="{ category: true, processes: true, expanded: processesExpanded }">
+				<strong @click="toggle('processes')" :title="'Processes ('+processesCount+')'"><span class="toggle">▸</span> Processes</strong>
+				<div class="discovery-entity" v-for="(e, i) in processes" v-show="processesShow[i]" :key="e.id" draggable="true" @dragstart="onDrag($event, 'process', e.id)">
+					<div class="discovery-info" @click="showProcessInfo(e.id)">
+						<strong :title="e.id">{{ e.id }}</strong>
+						<small v-if="e.summary" :title="e.summary">{{ e.summary }}</small>
 					</div>
-				</template>
-				<div class="noData" v-else>No processes available.</div>
+					<button class="discovery-button" type="button" @click="insertProcess(e.id)" title="Insert"><i class="fas fa-plus"></i></button>
+				</div>
+				<div class="noData" v-if="!processesCount">No processes available.</div>
 			</div>
 		</div>
 	</div>
@@ -57,14 +53,13 @@ export default {
 	data() {
 		return {
 			searchTerm: '',
-			expanded: {
-				collections: false,
-				processes: false
-			},
-			filtered: {
-				collections: [],
-				processes: []
-			}
+			collectionsExpanded: false,
+			processesExpanded: false,
+			collectionsShow: [],
+			processesShow: [],
+			collectionsCount: 0,
+			processesCount: 0,
+			timeout: null
 		};
 	},
 	created() {
@@ -85,24 +80,18 @@ export default {
 			this.filter('collections');
 		},
 		searchTerm() {
-			this.filter('processes');
-			this.filter('collections');
+			if (this.timeout !== null) {
+				clearTimeout(this.timeout);
+			}
+			this.timeout = setTimeout(() => {
+				this.timeout = null;
+				this.filter('processes');
+				this.filter('collections');
+			}, 500);
 		}
 	},
 	computed: {
-		...Utils.mapState('server', ['processes', 'collections']),
-		collectionCount() {
-			if (this.supports('listCollections') && Array.isArray(this.filtered.collections)) {
-				return this.filtered.collections.length;
-			}
-			return 0;
-		},
-		processCount() {
-			if (this.supports('listProcesses') && Array.isArray(this.filtered.processes)) {
-				return this.filtered.processes.length;
-			}
-			return 0;
-		}
+		...Utils.mapState('server', ['processes', 'collections'])
 	},
 	methods: {
 		onDrag(event, type, data) {
@@ -110,38 +99,40 @@ export default {
 			event.dataTransfer.setData("text/plain", data);
 		},
 		filter(type) {
+			var count = 0;
+			var show = [];
+			var expand = false;
+			var term = this.searchTerm.toLowerCase();
 			if (this.searchTerm) {
-				var filterFn = e => {
-					var term = this.searchTerm.toLowerCase();
-					if (e.id.toLowerCase().includes(term)) {
-						return true;
+				show = this[type].map(e => {
+					var matches = this.filterFn(e, term);
+					if (matches) {
+						count++;
 					}
-					else if (typeof e.summary === 'string' && e.summary.toLowerCase().includes(term)) {
-						return true;
-					}
-					return false;
-				}
-				this.filtered[type] = this[type].filter(filterFn);
-				this.$nextTick(() => this.expandAll());
+					return matches;
+				});
+				expand = true;
 			}
 			else {
-				this.filtered[type] = this[type];
-				this.$nextTick(() => this.collapseAll());
+				show = this[type].map(() => true);
+				count = this[type].length;
 			}
+			this[type + 'Show'] = show;
+			this[type + 'Count'] = count;
+			this.toggle(type, expand);
 		},
-		collapseAll() {
-			this.toggleAll(false);
-		},
-		expandAll() {
-			this.toggleAll(true);
-		},
-		toggleAll(state) {
-			for (var key in this.expanded) {
-				this.expanded[key] = state;
+		filterFn(e, term) {
+			if (e.id.toLowerCase().includes(term)) {
+				return true;
 			}
+			else if (typeof e.summary === 'string' && e.summary.toLowerCase().includes(term)) {
+				return true;
+			}
+			return false;
 		},
 		toggle(type, expand = null) {
-			this.expanded[type] = expand === null ? !this.expanded[type] : expand;
+			var key = type + 'Expanded';
+			this[key] = expand === null ? !this[key] : expand;
 		},
 		showCollectionInfo(id) {
 			if (this.supports('listCollections')) {

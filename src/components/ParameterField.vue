@@ -350,6 +350,7 @@ export default {
 .textarea {
 	width: 100%;
 	height: 200px;
+	font-family: monospace;
 }
 .border {
 	border: 1px solid #ccc;

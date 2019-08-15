@@ -84,7 +84,7 @@ export default {
 	beforeMount() {
 		this.blocks = new Blocks(
 			this.errorHandler,
-			(blocks, fields, editable) => this.openParameterEditor(blocks, fields, editable),
+			(blocks, fields, editable, field) => this.openParameterEditor(blocks, fields, editable, field),
 			(name, schema) => this.showSchemaModal(name, schema)
 		);
 	},
@@ -160,7 +160,7 @@ export default {
 			this.$refs.schemaModal.show(name, schema, "This is a callback argument. It is a value made available by the process executing this sub-processes for further use. The value will comply to the following data type(s):");
 		},
 
-		openParameterEditor(blocks, block, editable) {
+		openParameterEditor(blocks, block, editable, selectField) {
 			blocks.active = false;
 			var title = block.name+' #'+block.id;
 			this.$refs.parameterModal.show(
@@ -173,7 +173,8 @@ export default {
 					return true;
 				},
 				// process id
-				block.name
+				block.name,
+				selectField
 			);
 		},
 
@@ -515,9 +516,21 @@ export default {
 	background-color: #888 !important;
 }
 
-.blocks_js_editor input,
-.blocks_js_editor textarea
-{
-	font-family:Courier;
+.blocks_js_editor .editComment {
+	padding: 0.3em 0.2em;
+	box-sizing: border-box;
+	font-size: 0.9em;
+	line-height: 1em;
+	overflow: auto;
+	border: 0;
+	border-top: 1px dotted #ccc;
+	background-color: transparent;
+	width: 100%;
+	max-width: 100%;
+	height: 3.7em;
+	resize: none;
+}
+.blocks_js_editor .editComment:focus {
+	outline: 0;
 }
 </style>

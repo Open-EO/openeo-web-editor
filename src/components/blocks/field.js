@@ -211,9 +211,14 @@ class Field extends ProcessSchema {
         return false;
     }
 
+    isLinking() {
+        var link = this.block.blocks.linking;
+        return (this.name === this.block.focusedField || (Array.isArray(link) && this.block.id === link[0].id && this.name === link[1]));
+    }
+
     addEdge(edge, isDataChange = true) {
         this.edges.push(edge);
-        if (isDataChange) {
+        if (isDataChange && this.isInput()) {
             this._addValueForEdge(edge);
         }
         return this; // Allow chaining
