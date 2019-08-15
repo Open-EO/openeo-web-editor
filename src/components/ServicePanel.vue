@@ -239,7 +239,7 @@ export default {
 		},
 		viewService(service) {
 			Utils.info(this, 'Requesting tiles from server. Please wait...');
-			EventBus.$emit('showWebService', service);
+			EventBus.$emit('viewWebService', service);
 		},
 		updateServiceData(updatedService) {
 			this.$refs.table.replaceData(updatedService);

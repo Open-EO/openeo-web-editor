@@ -32,10 +32,19 @@ Shows process information in a modal.
 
 ## Viewer & Web Services
 
-### showViewer(Blob|Object $data)
-Shows the data in the viewer. Either a blob or link object (with href, title and type properties).
+### viewBlob(Blob $data, $title = null)
+Shows the Blob object in the viewer.
 
-### showWebService(object $service)
+### viewLink(Object $data, $title = null)
+Shows the link in the viewer. A link object must contain href and type properties and may contain a title.
+
+### viewSyncResults(object $processGraph)
+Executes the process graph and shows the result.
+
+### viewJobResults(object $jobResult, object $job = null)
+Shows data from a job result document.
+
+### viewWebService(object $service)
 Shows a web service on the map.
 
 ### removeWebService(string $id)

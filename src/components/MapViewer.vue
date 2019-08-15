@@ -7,15 +7,16 @@ import EventBus from '@openeo/vue-components/eventbus.js';
 import Utils from '../utils.js';
 
 import 'ol/ol.css';
-import { defaults as defaultControls, FullScreen, ScaleLine } from 'ol/control.js';
+import { defaults as defaultControls, FullScreen, ScaleLine } from 'ol/control';
 import Feature from 'ol/Feature';
 import Map from 'ol/Map';
 import View from 'ol/View';
 import { Polygon, fromExtent as PolygonFromExtent } from 'ol/geom/Polygon';
 import { fromLonLat } from 'ol/proj';
 import Projection from 'ol/proj/Projection';
-import {Fill, Stroke, Style} from 'ol/style.js';
+import {Fill, Stroke, Style} from 'ol/style';
 import TileLayer from 'ol/layer/Tile';
+import TileJSON from 'ol/source/TileJSON';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import OSM from 'ol/source/OSM';
@@ -239,6 +240,17 @@ export default {
 			this.userLayers.removeLayer(this.layer[id]);
 			delete this.layer[id];
 			this.toggleSwipeControl();
+		},
+
+		updateGeoTiffLayer(url, title = null) {
+			var layer = new TileLayer({
+				source: new TileJSON({
+					url: 'http://tiles.rdnt.io/tiles?url=' + encodeURIComponent(url),
+					crossOrigin: 'anonymous'
+				})
+			});
+			this.addLayerToMap(title ? title : "GeoTiff", layer);
+			// ToDo: Implement full/native GTiff support
 		},
 
 		updateXYZLayer(service) {

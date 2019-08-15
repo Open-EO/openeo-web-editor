@@ -13,35 +13,36 @@ import Utils from '../utils.js';
 
 export default {
 	name: 'DataViewer',
+	props: {
+		data: {
+			type: Object,
+			required: true
+		}
+	},
 	components:  {
 		ObjectTree
 	},
-	data() {
-		return {
-			content: null
-		};
-	},
 	mounted() {
-		this.reset();
+		if (this.data.blob) {
+			this.showBlob(this.data.blob, this.data.type);
+		}
+		else if (this.data.url) {
+			// ToDo
+		}
+		else {
+
+		}
 	},
 	methods: {
-
 		isText() {
 			return (typeof this.content === 'string');
 		},
-
-		reset() {
-			this.content = null;
-		},
-
 		showJson(data) {
 			this.content = data;
 		},
-
 		showText(data) {
 			this.content = data;
 		},
-
 		showBlob(blob, mimeType = null) {
 			if (mimeType == null) {
 				mimeType = blob.type;
@@ -60,7 +61,6 @@ export default {
 					break;
 			}
 		},
-
 		nl2br (str) {
 			if (typeof str === 'undefined' || str === null) {
 				return '';
