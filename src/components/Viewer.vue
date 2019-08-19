@@ -103,7 +103,7 @@ export default {
 				data.blob = meta;
 			}
 			else {
-				Utils.error(this, "Sorry, invalid data rreceived.");
+				Utils.error(this, "Sorry, invalid data received.");
 			}
 
 			if (typeof data.type !== 'string' || data.type.indexOf('/') === -1 || data.type.indexOf('*') !== -1) {
@@ -124,9 +124,16 @@ export default {
 						this.$refs.mapViewer.updateGeoTiffLayer(data.url, this.makeTitle(title, "GeoTiff"));
 						break;
 					}
-				default:
+					else {
+						Utils.error('Sorry, TIFF as blob not supported by the viewer.');
+					}
+				case 'application/json':
+				case 'text/plain':
+				case 'text/html':
 					this.$refs.tabs.addTab(this.makeTitle(title, "Data"), "fa-database", data, null, true, true);
 					break;
+				default:
+					Utils.error('Sorry, content type not supported by the viewer.');
 			}
 		}
 	}
