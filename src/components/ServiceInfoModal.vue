@@ -1,6 +1,6 @@
 <template>
 	<Modal ref="modal" minWidth="80%">
-		<template v-slot:main>
+		<template #main>
 			<section class="vue-component basedata">
 				<div class="tabular"><label>ID:</label> <code class="value">{{ service.id }}</code></div>
 				<div class="tabular"><label>Type:</label> <span class="value">{{ type }}</span></div>

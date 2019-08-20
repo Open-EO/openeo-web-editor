@@ -23,7 +23,7 @@
 
 <script>
 import Config from '../../config';
-import EventBus from '../eventbus';
+import EventBus from '@openeo/vue-components/eventbus.js';
 import WorkPanelMixin from './WorkPanelMixin.vue';
 import Utils from '../utils';
 import Field from './blocks/field';
@@ -239,7 +239,7 @@ export default {
 		},
 		viewService(service) {
 			Utils.info(this, 'Requesting tiles from server. Please wait...');
-			EventBus.$emit('showWebService', service);
+			EventBus.$emit('viewWebService', service);
 		},
 		updateServiceData(updatedService) {
 			this.$refs.table.replaceData(updatedService);

@@ -1,6 +1,6 @@
 <template>
 	<Modal ref="modal">
-		<template v-slot:main>
+		<template #main>
 			<div class="docgen">
 				<Collection :collectionData="collection" :version="version">
 					<template slot="collection-spatial-extent">

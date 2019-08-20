@@ -22,7 +22,7 @@
 </template>
 
 <script>
-import EventBus from '../eventbus.js';
+import EventBus from '@openeo/vue-components/eventbus.js';
 import WorkPanelMixin from './WorkPanelMixin.vue';
 import Utils from '../utils.js';
 import Field from './blocks/field';
@@ -263,22 +263,15 @@ export default {
 				.catch(error => Utils.exception(this, error, "Canceling job failed"));
 		},
 		viewResults(job) {			
+			Utils.info(this, 'Data requested. Please wait...');
+
 			job.listResults().then(info => {
 				if(info.links.length == 0) {
-					Utils.error(this, "No download available.");
-					return;
-				} else if (info.links.length > 1) {
-					Utils.info(this, "Job resulted in multiple files, please download them individually.");
+					Utils.error(this, "No results available.");
 					return;
 				}
 
-				Utils.info(this, 'Data requested. Please wait...');
-				// Send requests without authentication (second parameter false), they should be secured by a token in the URL
-				this.connection.download(info.links[0].href, false)
-					.then(response => EventBus.$emit('showViewer', response.data, info.links[0].type))
-					.catch(error => {
-						Utils.exception(this, error, "Sorry, can't download results.");
-					});
+				EventBus.$emit('viewJobResults', info, job);
 			});
 		},
 		downloadResults(job) {	

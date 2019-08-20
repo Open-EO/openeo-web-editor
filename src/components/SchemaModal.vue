@@ -1,6 +1,6 @@
 <template>
 	<Modal ref="modal">
-		<template v-slot:main>
+		<template #main>
 			<div id="schemaModal">
 				<p class="message" v-if="message">{{ message }}</p>
 				<JsonSchema :schema="schema"></JsonSchema>

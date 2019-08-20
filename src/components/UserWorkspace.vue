@@ -16,10 +16,10 @@
 </template>
 
 <script>
-import EventBus from '../eventbus.js';
+import EventBus from '@openeo/vue-components/eventbus.js';
 import Utils from '../utils.js';
-import Tabs from './Tabs.vue';
-import Tab from './Tab.vue';
+import Tabs from '@openeo/vue-components/components/Tabs.vue';
+import Tab from '@openeo/vue-components/components/Tab.vue';
 import ConnectionMixin from './ConnectionMixin.vue';
 import FilePanel from './FilePanel.vue';
 import JobPanel from './JobPanel.vue';

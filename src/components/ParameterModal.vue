@@ -1,6 +1,6 @@
 <template>
 	<Modal ref="__modal" minWidth="60%" maxWidth="90%">
-		<template v-slot:main>
+		<template #main>
 			<p v-if="editableFields.length === 0">No editable parameters available.</p>
 			<form v-else id="parameterModal" @submit.prevent="save">
 				<div class="fieldRow" v-for="(field, k) in editableFields" :key="k">
@@ -14,7 +14,7 @@
 				</div>
 			</form>
 		</template>
-		<template v-if="typeof saveCallback === 'function'" v-slot:footer>
+		<template v-if="typeof saveCallback === 'function'" #footer>
 			<div class="footer">
 				<button class="save" @click="save">Save</button>
 			</div>

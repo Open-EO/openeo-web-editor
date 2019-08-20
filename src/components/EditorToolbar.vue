@@ -14,7 +14,7 @@
 </template>
 
 <script>
-import EventBus from '../eventbus.js';
+import EventBus from '@openeo/vue-components/eventbus.js';
 import Utils from '../utils.js';
 
 export default {
@@ -110,9 +110,7 @@ export default {
 		executeProcessGraph() {
 			EventBus.$emit('getProcessGraph', script => {
 				Utils.info(this, 'Data requested. Please wait...');
-				this.connection.computeResult(script)
-					.then(data => EventBus.$emit('showViewer', data))
-					.catch(error => Utils.exception(this, error, 'Computation failed'));
+				EventBus.$emit('viewSyncResult', script);
 			});
 		},
 	}

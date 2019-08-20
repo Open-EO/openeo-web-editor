@@ -17,7 +17,7 @@
 
 <script>
 import Package from '../package.json';
-import EventBus from './eventbus.js';
+import EventBus from '@openeo/vue-components/eventbus.js';
 import Utils from './utils';
 import ConnectForm from './components/ConnectForm.vue';
 import IDE from './components/IDE.vue';
