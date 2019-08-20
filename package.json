@@ -38,7 +38,7 @@
   "dependencies": {
     "@openeo/js-client": "^0.4.1",
     "@openeo/js-commons": "^0.4.5",
-    "@openeo/vue-components": "^0.4.0",
+    "@openeo/vue-components": "^0.4.1",
     "ajv": "^6.10.0",
     "codemirror": "^5.47.0",
     "content-type": "^1.0.4",
