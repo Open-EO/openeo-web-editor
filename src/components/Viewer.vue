@@ -37,7 +37,7 @@ export default {
 		EventBus.$on('viewBlob', this.showViewer);
 		EventBus.$on('viewLink', this.showViewer);
 
-		EventBus.$on('viewSyncResults', this.showSyncResults);
+		EventBus.$on('viewSyncResult', this.showSyncResults);
 		EventBus.$on('viewJobResults', this.showJobResults);
 		EventBus.$on('viewWebService', this.showWebService);
 		EventBus.$on('removeWebService', this.removeWebService);
@@ -62,7 +62,7 @@ export default {
 			this.$refs.tabs.selectTab('mapView');
 		},
 		showSyncResults(pg) {
-			this.connection.computeResult(script)
+			this.connection.computeResult(pg)
 				.then(data => this.showViewer(data))
 				.catch(error => Utils.exception(this, error, 'Computation failed'));
 		},
@@ -122,18 +122,18 @@ export default {
 					if (data.url && data.parameters.application === 'geotiff') {
 						this.showMapViewer();
 						this.$refs.mapViewer.updateGeoTiffLayer(data.url, this.makeTitle(title, "GeoTiff"));
-						break;
 					}
 					else {
-						Utils.error('Sorry, TIFF as blob not supported by the viewer.');
+						Utils.error(this, 'Sorry, TIFF as blob not supported by the viewer.');
 					}
+					break;
 				case 'application/json':
 				case 'text/plain':
 				case 'text/html':
 					this.$refs.tabs.addTab(this.makeTitle(title, "Data"), "fa-database", data, null, true, true);
 					break;
 				default:
-					Utils.error('Sorry, content type not supported by the viewer.');
+					Utils.error(this, 'Sorry, content type not supported by the viewer.');
 			}
 		}
 	}

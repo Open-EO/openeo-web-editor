@@ -68,7 +68,7 @@ export default {
 					.catch(error => Utils.exception(this, error, "Sorry, can't download file."));
 			}
 			else {
-					Utils.error('Sorry, internal data format not supported by the viewer.');
+					Utils.error(this, 'Sorry, internal data format not supported by the viewer.');
 			}
 		},
 		nl2br (str) {
