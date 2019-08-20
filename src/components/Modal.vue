@@ -1,11 +1,11 @@
 <template>
 	<div id="modal" v-if="shown" @mousedown="possiblyClose">
 		<div class="modal-container" :style="{'min-width': minWidth, 'max-width': maxWidth}">
-			<header>
+			<header class="modal-header">
 				<h2>{{ title }}</h2>
 				<span class="close" @click="close"><i class="fa fa-times" aria-hidden="true"></i></span>
 			</header>
-			<main>
+			<main class="modal-content">
 				<slot name="main">
 					<div v-if="typeof html === 'string'" v-html="html"></div>
 					<div v-else-if="html !== null && typeof html === 'object'" v-html="html.innerHTML"></div>
@@ -23,7 +23,7 @@
 					<template v-else>{{ message }}</template>
 				</slot>
 			</main>
-			<footer>
+			<footer class="modal-footer">
 				<slot name="footer"></slot>
 			</footer>
 		</div>
@@ -173,7 +173,7 @@ export default {
 	box-shadow: 8px 8px 8px 0px rgba(0,0,0,0.3);
 }
 
-#modal header {
+#modal .modal-header {
 	background-color: #1665B6;
 	color: white;
 	margin: 0;
@@ -183,28 +183,28 @@ export default {
 	align-items: center;
 }
 
-#modal header h2 {
+#modal .modal-header h2 {
 	display: inline-block;
 	flex-grow: 1;
 	margin: 0;
 	font-size: 1.5rem;
 }
 
-#modal main {
+#modal .modal-content {
     padding: 1rem;
 	overflow: auto;
 	flex-grow: 1;
 }
 
-#modal .inline main {
+#modal .inline .modal-content {
 	padding: 0;
 }
 
-#modal footer:empty {
+#modal .modal-footer:empty {
 	display: none;
 }
 
-#modal footer {
+#modal .modal-footer {
 	background-color: #eee;
 	margin: 0;
 	padding: 1rem;
