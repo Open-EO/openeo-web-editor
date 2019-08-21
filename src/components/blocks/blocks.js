@@ -463,7 +463,7 @@ Blocks.prototype.canvasClicked = function()
     this.selectedSide = null;
 
     for (var k in this.blocks) {
-        if (this.blocks[k].hasFocus) {
+        if (this.blocks[k].isHovered) {
             this.selectedBlock = k;
         }
     }
@@ -661,7 +661,7 @@ Blocks.prototype.tryEndLink = function()
 {
     for (var k in this.blocks) {
         var block = this.blocks[k];
-        if (block.hasFocus && block.focusedField) {
+        if (block.isHovered && block.focusedField) {
             this.endLink(block, block.focusedField);
             break;
         }

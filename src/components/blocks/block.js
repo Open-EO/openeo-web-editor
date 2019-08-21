@@ -23,8 +23,8 @@ var Block = function(blocks, name, type, schema, id)
     // Id
     this.id = id;
 
-    // Do I have focus ?
-    this.hasFocus = false;
+    // Hovered during edge creation?
+    this.isHovered = false;
 
     // HTML Element (object)
     this.div = null;
@@ -320,10 +320,10 @@ Block.prototype.getHtml = function()
 Block.prototype.render = function()
 {
     this.lastScale = null;
-    this.hasFocus = false;
+    this.isHovered = false;
     this.div.innerHTML = this.getHtml();
     this.initListeners();
-    this.redraw();
+    this.redraw(this.blocks.selectedBlock === this);
 };
 
 /**
@@ -441,8 +441,8 @@ Block.prototype.initListeners = function()
     html.addEventListener('mouseup', () => this.drag = null);
 
     // Handle focus
-    this.div.addEventListener('mouseover', () => this.hasFocus = true);
-    this.div.addEventListener('mouseout', () => this.hasFocus = false);
+    this.div.addEventListener('mouseover', () => this.isHovered = true);
+    this.div.addEventListener('mouseout', () => this.isHovered = false);
 
     var connectors = this.div.querySelectorAll('.connector');
     for(let connector of connectors) {
@@ -516,7 +516,9 @@ Block.prototype.initListeners = function()
     var commentEl = this.div.querySelector('.addComment');
     if (commentEl) {
         commentEl.addEventListener('click', evt => {
+            this.blocks.selectedBlock = this;
             this.setComment("");
+            this.div.querySelector('.editComment').focus();
             evt.preventDefault();
             evt.stopPropagation();
         });
@@ -525,6 +527,11 @@ Block.prototype.initListeners = function()
     // Update the comment (box)
     var editCommentEl = this.div.querySelector('.editComment');
     if (editCommentEl) {
+        editCommentEl.addEventListener('blur', evt => {
+            if (typeof evt.target.value !== 'string' || evt.target.value.length === 0) {
+                this.setComment(null);
+            }
+        });
         editCommentEl.addEventListener('change', evt => {
             if (typeof evt.target.value === 'string' && evt.target.value.length > 0) {
                 this.setComment(evt.target.value);
