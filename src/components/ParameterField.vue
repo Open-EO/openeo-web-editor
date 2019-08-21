@@ -32,13 +32,13 @@
 			<!-- ToDo: Support open date ranges, probably by using two separate date pickers, see also https://github.com/chronotruck/vue-ctk-date-time-picker/issues/121 -->
 		</template>
 		<template v-else-if="type === 'date-time'">
-			<VueCtkDateTimePicker v-model="value" :disabled="!editable" label="Select date and time" format="YYYY-MM-DD[T]HH:mm:ss[Z]" no-button="true" locale="en-gb"></VueCtkDateTimePicker>
+			<VueCtkDateTimePicker v-model="value" :disabled="!editable" label="Select date and time" format="YYYY-MM-DD[T]HH:mm:ss[Z]" :no-button="true" locale="en-gb"></VueCtkDateTimePicker>
 		</template>
 		<template v-else-if="type === 'date'">
-			<VueCtkDateTimePicker v-model="value" :disabled="!editable" label="Select date" only-date="true" format="YYYY-MM-DD" no-button="true" locale="en-gb"></VueCtkDateTimePicker>
+			<VueCtkDateTimePicker v-model="value" :disabled="!editable" label="Select date" :only-date="true" format="YYYY-MM-DD" formatted="ll" :no-button="true" locale="en-gb"></VueCtkDateTimePicker>
 		</template>
 		<template v-else-if="type === 'time'">
-			<VueCtkDateTimePicker v-model="value" :disabled="!editable" label="Select time" only-time="true" format="HH:mm:ss[Z]" no-button="true" locale="en-gb"></VueCtkDateTimePicker>
+			<VueCtkDateTimePicker v-model="value" :disabled="!editable" label="Select time" :only-time="true" format="HH:mm:ss[Z]" formatted="LT" :no-button="true" locale="en-gb"></VueCtkDateTimePicker>
 		</template>
 		<template v-else-if="type === 'bounding-box'">
 			<MapViewer ref="bboxMap" :id="fieldName" :showAreaSelector="true" :readOnly="editable" :center="[0,0]" :zoom="1" class="areaSelector"></MapViewer>
