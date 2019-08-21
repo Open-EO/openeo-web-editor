@@ -28,17 +28,17 @@
 			<option v-for="plan in capabilities.listPlans()" :key="plan.name" :value="plan.name">{{ plan.name }} ({{ plan.paid ? 'paid' : 'free' }})</option>
 		</select>
 		<template v-else-if="type === 'temporal-interval'">
-			<VueCtkDateTimePicker v-model="value" :disabled="!editable" :range="true" label="Select start and end time" format="YYYY-MM-DD[T]HH:mm:ss[Z]"></VueCtkDateTimePicker>
+			<VueCtkDateTimePicker v-model="value" :disabled="!editable" :range="true" label="Select start and end time" format="YYYY-MM-DD[T]HH:mm:ss[Z]" locale="en-gb"></VueCtkDateTimePicker>
 			<!-- ToDo: Support open date ranges, probably by using two separate date pickers, see also https://github.com/chronotruck/vue-ctk-date-time-picker/issues/121 -->
 		</template>
 		<template v-else-if="type === 'date-time'">
-			<VueCtkDateTimePicker v-model="value" :disabled="!editable" label="Select date and time" format="YYYY-MM-DD[T]HH:mm:ss[Z]" no-button="true"></VueCtkDateTimePicker>
+			<VueCtkDateTimePicker v-model="value" :disabled="!editable" label="Select date and time" format="YYYY-MM-DD[T]HH:mm:ss[Z]" no-button="true" locale="en-gb"></VueCtkDateTimePicker>
 		</template>
 		<template v-else-if="type === 'date'">
-			<VueCtkDateTimePicker v-model="value" :disabled="!editable" label="Select date" only-date="true" format="YYYY-MM-DD" no-button="true"></VueCtkDateTimePicker>
+			<VueCtkDateTimePicker v-model="value" :disabled="!editable" label="Select date" only-date="true" format="YYYY-MM-DD" no-button="true" locale="en-gb"></VueCtkDateTimePicker>
 		</template>
 		<template v-else-if="type === 'time'">
-			<VueCtkDateTimePicker v-model="value" :disabled="!editable" label="Select time" only-time="true" format="HH:mm:ss[Z]" no-button="true"></VueCtkDateTimePicker>
+			<VueCtkDateTimePicker v-model="value" :disabled="!editable" label="Select time" only-time="true" format="HH:mm:ss[Z]" no-button="true" locale="en-gb"></VueCtkDateTimePicker>
 		</template>
 		<template v-else-if="type === 'bounding-box'">
 			<MapViewer ref="bboxMap" :id="fieldName" :showAreaSelector="true" :readOnly="editable" :center="[0,0]" :zoom="1" class="areaSelector"></MapViewer>
