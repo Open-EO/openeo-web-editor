@@ -174,17 +174,20 @@ Blocks.prototype.run = function(selector, editable = true)
     });
 
     // Binding the mouse wheel
-    this.div.addEventListener('mousewheel', event => {
+    var mousewheelEventFn = event => {
         var dX = this.mouseX - this.center.x;
         var dY = this.mouseY - this.center.y;
-        var deltaScale = Math.pow(1.1, event.deltaY / 40 * -1);
+        var wheelDelta = Math.max(-1, Math.min(1, event.wheelDelta || -event.detail)); // Browser compatibility, see https://embed.plnkr.co/plunk/skVoXt
+        var deltaScale = Math.pow(1.1, wheelDelta);
         this.center.x -= dX*(deltaScale-1);
         this.center.y -= dY*(deltaScale-1);
         this.newBlockOffset = 0;
         this.scale *= deltaScale;
         this.redraw();
         event.preventDefault();
-    });
+    };
+    this.div.addEventListener('DOMMouseScroll', mousewheelEventFn); // Firefox
+    this.div.addEventListener('mousewheel', mousewheelEventFn); // All other browsers
 
     this.history = new History(this);
 
