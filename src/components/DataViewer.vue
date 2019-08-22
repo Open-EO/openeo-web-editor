@@ -7,7 +7,6 @@
 </template>
 
 <script>
-import EventBus from '@openeo/vue-components/eventbus.js';
 import ObjectTree from '@openeo/vue-components/components/ObjectTree.vue';
 import Utils from '../utils.js';
 
@@ -64,7 +63,7 @@ export default {
 			}
 			else if (this.data.url) {
 				this.connection.download(this.data.url, false)
-					.then(response => EventBus.$emit('showViewer', response.data, this.data.type))
+					.then(response => this.emit('showViewer', response.data, this.data.type))
 					.catch(error => Utils.exception(this, error, "Sorry, can't download file."));
 			}
 			else {

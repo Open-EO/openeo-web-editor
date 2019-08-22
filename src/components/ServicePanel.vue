@@ -23,14 +23,14 @@
 
 <script>
 import Config from '../../config';
-import EventBus from '@openeo/vue-components/eventbus.js';
+import EventBusMixin from './EventBuxMixin.vue';
 import WorkPanelMixin from './WorkPanelMixin.vue';
 import Utils from '../utils';
 import Field from './blocks/field';
 
 export default {
 	name: 'ServicePanel',
-	mixins: [WorkPanelMixin],
+	mixins: [WorkPanelMixin, EventBusMixin],
 	computed: {
 		...Utils.mapState('server', ['serviceTypes']),
 		...Utils.mapGetters('server', ['supportsBilling', 'supportsBillingPlans'])
@@ -97,7 +97,7 @@ export default {
 		},
 		showInEditor(service) {
 			this.refreshService(service, updatedService => {
-				EventBus.$emit('insertProcessGraph', updatedService.processGraph);
+				this.emit('insertProcessGraph', updatedService.processGraph);
 			});
 		},
 		serviceCreated(service) {
@@ -171,7 +171,7 @@ export default {
 				});
 		},
 		createServiceFromScript() {
-			EventBus.$emit('getProcessGraph', script => {
+			this.emit('getProcessGraph', script => {
 				var fields = [
 					this.getServiceTypeField(),
 					this.getTitleField(),
@@ -181,7 +181,7 @@ export default {
 					this.supportsBilling ? this.getBudgetField() : null,
 					this.getParametersField()
 				];
-				EventBus.$emit('showDataForm', "Create new web service", fields, data => this.createService(script, data));
+				this.emit('showDataForm', "Create new web service", fields, data => this.createService(script, data));
 			});
 		},
 		editMetadata(oldService) {
@@ -194,16 +194,16 @@ export default {
 					this.supportsBilling ? this.getBudgetField().setValue(service.budget) : null,
 					this.getParametersField().setValue(service.parameters)
 				];
-				EventBus.$emit('showDataForm', "Edit web service", fields, data => this.updateService(service, data));
+				this.emit('showDataForm', "Edit web service", fields, data => this.updateService(service, data));
 			});
 		},
 		serviceInfo(service) {
 			this.refreshService(service, updatedService => {
-				EventBus.$emit('showServiceInfo', updatedService.getAll());
+				this.emit('showServiceInfo', updatedService.getAll());
 			});
 		},
 		replaceProcessGraph(service) {
-			EventBus.$emit('getProcessGraph', script => {
+			this.emit('getProcessGraph', script => {
 				service.updateService({processGraph: script})
 					.then(updatedService => {
 						Utils.ok(this, "Service process graph successfully updated.");
@@ -231,7 +231,7 @@ export default {
 			service.deleteService()
 				.then(() => {
 					this.$refs.table.removeData(service.serviceId);
-					EventBus.$emit('removeWebService', service.serviceId);
+					this.emit('removeWebService', service.serviceId);
 				})
 				.catch(error => {
 					Utils.exception(this, error, 'Deleting service failed');
@@ -239,7 +239,7 @@ export default {
 		},
 		viewService(service) {
 			Utils.info(this, 'Requesting tiles from server. Please wait...');
-			EventBus.$emit('viewWebService', service);
+			this.emit('viewWebService', service);
 		},
 		updateServiceData(updatedService) {
 			this.$refs.table.replaceData(updatedService);

@@ -31,7 +31,7 @@
 </template>
 
 <script>
-import EventBus from '@openeo/vue-components/eventbus.js';
+import EventBusMixin from './EventBuxMixin.vue';
 import Utils from '../utils.js';
 
 const getDefaultState = () => {
@@ -48,6 +48,7 @@ const getDefaultState = () => {
 
 export default {
 	name: 'Modal',
+	mixins: [EventBusMixin],
 	props: {
 		minWidth: {
 			type: String,
@@ -62,7 +63,7 @@ export default {
 		return getDefaultState();
 	},
 	mounted() {
-		EventBus.$on('showModal', this.showModal);
+		this.listen('showModal', this.showModal);
 	},
     computed: {
 		listCount() {

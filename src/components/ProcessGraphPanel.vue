@@ -14,14 +14,14 @@
 </template>
 
 <script>
-import EventBus from '@openeo/vue-components/eventbus.js';
+import EventBusMixin from './EventBuxMixin.vue';
 import WorkPanelMixin from './WorkPanelMixin.vue';
 import Utils from '../utils.js';
 import Field from './blocks/field';
 
 export default {
 	name: 'ProcessGraphPanel',
-	mixins: [WorkPanelMixin],
+	mixins: [WorkPanelMixin, EventBusMixin],
 	data() {
 		return {
 			columns: {
@@ -60,7 +60,7 @@ export default {
 		},
 		showInEditor(pg) {
 			this.refreshProcessGraph(pg, updatedPg => {
-				EventBus.$emit('insertProcessGraph', updatedPg.processGraph);
+				this.emit('insertProcessGraph', updatedPg.processGraph);
 			});
 		},
 		getTitleField() {
@@ -70,12 +70,12 @@ export default {
 			return new Field('description', 'Description', {type: 'string', format: 'commonmark'}, 'CommonMark (Markdown) is allowed.');
 		},
 		addGraphFromScript() {
-			EventBus.$emit('getProcessGraph', script => {
+			this.emit('getProcessGraph', script => {
 				var fields = [
 					this.getTitleField(),
 					this.getDescriptionField()
 				];
-				EventBus.$emit('showDataForm', "Store a new process graph", fields, data => this.addGraph(script, data));
+				this.emit('showDataForm', "Store a new process graph", fields, data => this.addGraph(script, data));
 			});
 		},
 		normalizeToDefaultData(data) {
@@ -97,7 +97,7 @@ export default {
 		},
 		graphInfo(pg) {
 			this.refreshProcessGraph(pg, updatedPg => {
-				EventBus.$emit('showProcessGraphInfo', updatedPg.getAll());
+				this.emit('showProcessGraphInfo', updatedPg.getAll());
 			});
 		},
 		editMetadata(oldPg) {
@@ -106,11 +106,11 @@ export default {
 					this.getTitleField().setValue(pg.title),
 					this.getDescriptionField().setValue(pg.description)
 				];
-				EventBus.$emit('showDataForm', "Edit metadata for a process graph", fields, data => this.updateMetadata(pg, data));
+				this.emit('showDataForm', "Edit metadata for a process graph", fields, data => this.updateMetadata(pg, data));
 			});
 		},
 		replaceProcessGraph(pg) {
-			EventBus.$emit('getProcessGraph', script => this.updateMetadata(pg, {processGraph: script}));
+			this.emit('getProcessGraph', script => this.updateMetadata(pg, {processGraph: script}));
 		},
 		updateTitle(pg, newTitle) {
 			this.updateMetadata(pg, {title: newTitle});

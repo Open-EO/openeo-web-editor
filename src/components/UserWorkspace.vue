@@ -16,7 +16,6 @@
 </template>
 
 <script>
-import EventBus from '@openeo/vue-components/eventbus.js';
 import Utils from '../utils.js';
 import Tabs from '@openeo/vue-components/components/Tabs.vue';
 import Tab from '@openeo/vue-components/components/Tab.vue';

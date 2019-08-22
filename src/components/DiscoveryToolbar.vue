@@ -33,13 +33,13 @@
 
 <script>
 import Config from '../../config.js';
-import EventBus from '@openeo/vue-components/eventbus.js';
+import EventBusMixin from './EventBuxMixin.vue';
 import ConnectionMixin from './ConnectionMixin.vue';
 import Utils from '../utils.js';
 
 export default {
 	name: 'DiscoveryToolbar',
-	mixins: [ConnectionMixin],
+	mixins: [ConnectionMixin, EventBusMixin],
 	props: {
 		onAddCollection: {
 			type: Function,
@@ -136,12 +136,12 @@ export default {
 		},
 		showCollectionInfo(id) {
 			if (this.supports('listCollections')) {
-				EventBus.$emit('showCollectionInfo', id);
+				this.emit('showCollectionInfo', id);
 			}
 		},
 		showProcessInfo(id) {
 			if (this.supports('listProcesses')) {
-				EventBus.$emit('showProcessInfo', id);
+				this.emit('showProcessInfo', id);
 			}
 		},
 		insertCollection(id) {

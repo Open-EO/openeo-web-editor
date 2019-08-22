@@ -22,14 +22,14 @@
 </template>
 
 <script>
-import EventBus from '@openeo/vue-components/eventbus.js';
+import EventBusMixin from './EventBuxMixin.vue';
 import WorkPanelMixin from './WorkPanelMixin.vue';
 import Utils from '../utils.js';
 import Field from './blocks/field';
 
 export default {
 	name: 'JobPanel',
-	mixins: [WorkPanelMixin],
+	mixins: [WorkPanelMixin, EventBusMixin],
 	data() {
 		return {
 			columns: {
@@ -95,7 +95,7 @@ export default {
 		},
 		showInEditor(job) {
 			this.refreshJob(job, updatedJob => {
-				EventBus.$emit('insertProcessGraph', updatedJob.processGraph);
+				this.emit('insertProcessGraph', updatedJob.processGraph);
 			});
 		},
 		jobCreated(job) {
@@ -154,14 +154,14 @@ export default {
 				});
 		},
 		createJobFromScript() {
-			EventBus.$emit('getProcessGraph', script => {
+			this.emit('getProcessGraph', script => {
 				var fields = [
 					this.getTitleField(),
 					this.getDescriptionField(),
 					this.supportsBillingPlans ? this.getBillingPlanField() : null,
 					this.supportsBilling ? this.getBudgetField() : null
 				];
-				EventBus.$emit('showDataForm', "Create new batch job", fields, data => this.createJob(script, data));
+				this.emit('showDataForm', "Create new batch job", fields, data => this.createJob(script, data));
 			});
 		},
 		updateJobData(updatedJob) {
@@ -208,18 +208,18 @@ export default {
 		},
 		showJobInfo(job) {
 			this.refreshJob(job, updatedJob => {
-				EventBus.$emit('showJobInfo', updatedJob.getAll());
+				this.emit('showJobInfo', updatedJob.getAll());
 			});
 		},
 		estimateJob(job) {
 			job.estimateJob()
 				.then(estimate => {
-					EventBus.$emit('showModal', 'Job Estimate', estimate);
+					this.emit('showModal', 'Job Estimate', estimate);
 				})
 				.catch(error => Utils.exception(this, error, "Loading estimate failed"));
 		},
 		replaceProcessGraph(job) {
-			EventBus.$emit('getProcessGraph', script => {
+			this.emit('getProcessGraph', script => {
 				this.updateJob(job, {processGraph: script});
 			});
 		},
@@ -231,7 +231,7 @@ export default {
 					this.supportsBillingPlans ? this.getBillingPlanField().setValue(job.plan) : null,
 					this.supportsBilling ? this.getBudgetField().setValue(job.budget) : null
 				];
-				EventBus.$emit('showDataForm', "Edit batch job", fields, data => this.updateJob(job, data));
+				this.emit('showDataForm', "Edit batch job", fields, data => this.updateJob(job, data));
 			});
 		},
 		updateTitle(job, newTitle) {
@@ -271,7 +271,7 @@ export default {
 					return;
 				}
 
-				EventBus.$emit('viewJobResults', info, job);
+				this.emit('viewJobResults', info, job);
 			});
 		},
 		downloadResults(job) {	
@@ -282,7 +282,7 @@ export default {
 				else {
 					// This can be formatted much nicer and more useful...
 					var urls = info.links.map(v => v.href);
-					EventBus.$emit(
+					this.emit(
 						'showListModal', 
 						'Download results' + (info.title ? ' for: ' + info.title : ''),
 						urls,

@@ -14,11 +14,12 @@
 </template>
 
 <script>
-import EventBus from '@openeo/vue-components/eventbus.js';
+import EventBusMixin from './EventBuxMixin.vue';
 import Utils from '../utils.js';
 
 export default {
 	name: 'EditorToolbar',
+	mixins: [EventBusMixin],
 	props: {
 		editable: {
 			type: Boolean,
@@ -79,7 +80,7 @@ export default {
 		},
 		
 		openScriptChooser() {
-			EventBus.$emit(
+			this.emit(
 				'showListModal', 
 				'Select script to load',
 				this.storedScripts,
@@ -108,9 +109,9 @@ export default {
 		},
 
 		executeProcessGraph() {
-			EventBus.$emit('getProcessGraph', script => {
+			this.emit('getProcessGraph', script => {
 				Utils.info(this, 'Data requested. Please wait...');
-				EventBus.$emit('viewSyncResult', script);
+				this.emit('viewSyncResult', script);
 			});
 		},
 	}

@@ -15,7 +15,7 @@
 </template>
 
 <script>
-import EventBus from '@openeo/vue-components/eventbus.js';
+import EventBusMixin from './EventBuxMixin.vue';
 import Utils from '../utils.js';
 import Tabs from '@openeo/vue-components/components/Tabs.vue';
 import Tab from '@openeo/vue-components/components/Tab.vue';
@@ -26,6 +26,7 @@ import contentType from 'content-type';
 
 export default {
 	name: 'Viewer',
+	mixins: [EventBusMixin],
 	components: {
 		Tab,
 		Tabs,
@@ -34,13 +35,13 @@ export default {
 		MapViewer
 	},
 	mounted() {
-		EventBus.$on('viewBlob', this.showViewer);
-		EventBus.$on('viewLink', this.showViewer);
+		this.listen('viewBlob', this.showViewer);
+		this.listen('viewLink', this.showViewer);
 
-		EventBus.$on('viewSyncResult', this.showSyncResults);
-		EventBus.$on('viewJobResults', this.showJobResults);
-		EventBus.$on('viewWebService', this.showWebService);
-		EventBus.$on('removeWebService', this.removeWebService);
+		this.listen('viewSyncResult', this.showSyncResults);
+		this.listen('viewJobResults', this.showJobResults);
+		this.listen('viewWebService', this.showWebService);
+		this.listen('removeWebService', this.removeWebService);
 	},
 	data() {
 		return {

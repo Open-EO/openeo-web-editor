@@ -31,7 +31,6 @@
 </template>
 
 <script>
-import EventBus from '@openeo/vue-components/eventbus.js';
 import WorkPanelMixin from './WorkPanelMixin.vue';
 import LinkList from '@openeo/vue-components/components/LinkList.vue';
 import Utils from '../utils.js';

@@ -3,7 +3,7 @@
 </template>
 
 <script>
-import EventBus from '@openeo/vue-components/eventbus.js';
+import EventBusMixin from './EventBuxMixin.vue';
 import Utils from '../utils.js';
 
 import 'ol/ol.css';
@@ -32,6 +32,7 @@ import AreaSelect from './openlayers/areaselect';
 
 export default {
 	name: 'MapViewer',
+	mixins: [EventBusMixin],
 	props: {
 		id: {
 			type: String,
@@ -132,7 +133,13 @@ export default {
 				}
 			}
 
-			EventBus.$on('windowResized', () => this.map ? this.map.updateSize() : undefined);
+			this.listen('windowResized', this.updateMapSize);
+		},
+
+		updateMapSize() {
+			if (this.map) {
+				this.map.updateSize()
+			}
 		},
 
 		addRectangle(w, e, n, s) {

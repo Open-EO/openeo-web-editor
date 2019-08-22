@@ -38,7 +38,7 @@
 
 <script>
 import Package from '../../package.json';
-import EventBus from '@openeo/vue-components/eventbus.js';
+import EventBusMixin from './EventBuxMixin.vue';
 import Utils from '../utils.js';
 import ConnectionMixin from './ConnectionMixin.vue';
 import UserMenu from './UserMenu.vue';
@@ -56,7 +56,7 @@ import DiscoveryToolbar from './DiscoveryToolbar.vue';
 
 export default {
 	name: 'IDE',
-	mixins: [ConnectionMixin],
+	mixins: [ConnectionMixin, EventBusMixin],
 	components: {
 		DiscoveryToolbar,
 		Editor,
@@ -96,17 +96,17 @@ export default {
 		...Utils.mapState('server', ['collections', 'processes', 'outputFormats', 'serviceTypes']),
 	},
 	mounted() {
-		EventBus.$on('showCollectionInfo', this.showCollectionInfo);
-		EventBus.$on('showProcessInfo', this.showProcessInfo);
-		EventBus.$on('showJobInfo', this.showJobInfo);
-		EventBus.$on('showProcessGraphInfo', this.showProcessGraphInfo);
-		EventBus.$on('showServiceInfo', this.showServiceInfo);
-		EventBus.$on('showDataForm', this.showDataForm);
-		EventBus.$on('getProcessGraph', this.getProcessGraph);
-		EventBus.$on('insertProcessGraph', this.insertProcessGraph);
+		this.listen('showCollectionInfo', this.showCollectionInfo);
+		this.listen('showProcessInfo', this.showProcessInfo);
+		this.listen('showJobInfo', this.showJobInfo);
+		this.listen('showProcessGraphInfo', this.showProcessGraphInfo);
+		this.listen('showServiceInfo', this.showServiceInfo);
+		this.listen('showDataForm', this.showDataForm);
+		this.listen('getProcessGraph', this.getProcessGraph);
+		this.listen('insertProcessGraph', this.insertProcessGraph);
 
 		window.addEventListener('resize', event => {
-			EventBus.$emit('windowResized', event);
+			this.emit('windowResized', event);
 		});
 	},
 	methods: {
@@ -150,7 +150,7 @@ export default {
 					x = evt.x;
 				}
 				elem.style.width = x + 'px';
-				EventBus.$emit('windowResized', evt);
+				this.emit('windowResized', evt);
 				evt.preventDefault();
 				evt.stopPropagation();
 			}
@@ -170,7 +170,7 @@ export default {
 			else {
 				elem.style.width = 0;
 			}
-			EventBus.$emit('windowResized', event);
+			this.emit('windowResized', event);
 		},
 
 		showCollectionInfo(id) {
@@ -203,7 +203,7 @@ export default {
 		},
 
 		showWebEditorInfo() {
-			EventBus.$emit('showWebEditorInfo');
+			this.emit('showWebEditorInfo');
 		},
 
 		showDataForm(title, fields, saveCallback = null, closeCallback = null) {

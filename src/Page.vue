@@ -17,7 +17,7 @@
 
 <script>
 import Package from '../package.json';
-import EventBus from '@openeo/vue-components/eventbus.js';
+import EventBusMixin from './components/EventBuxMixin.vue';
 import Utils from './utils';
 import ConnectForm from './components/ConnectForm.vue';
 import IDE from './components/IDE.vue';
@@ -30,6 +30,7 @@ window.axios = axios;
 
 export default {
 	name: 'openeo-web-editor',
+	mixins: [EventBusMixin],
 	components: {
 		ConnectForm,
 		IDE,
@@ -41,10 +42,10 @@ export default {
 		};
 	},
 	mounted() {
-		EventBus.$on('showMessageModal', this.showMessageModal);
-		EventBus.$on('showHtmlModal', this.showHtmlModal);
-		EventBus.$on('showListModal', this.showListModal);
-		EventBus.$on('showWebEditorInfo', this.showWebEditorInfo);
+		this.listen('showMessageModal', this.showMessageModal);
+		this.listen('showHtmlModal', this.showHtmlModal);
+		this.listen('showListModal', this.showListModal);
+		this.listen('showWebEditorInfo', this.showWebEditorInfo);
 	},
 	computed: {
 		...Utils.mapGetters('server', ['isConnected'])

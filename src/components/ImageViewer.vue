@@ -5,8 +5,6 @@
 </template>
 
 <script>
-import EventBus from '@openeo/vue-components/eventbus.js';
-
 export default {
 	name: 'ImageViewer',
 	props: {

@@ -32,13 +32,13 @@
 <script>
 import Package from '../../package.json';
 import Config from '../../config.js';
-import EventBus from '@openeo/vue-components/eventbus.js';
+import EventBusMixin from './EventBuxMixin.vue';
 import ConnectionMixin from './ConnectionMixin.vue';
 import Utils from '../utils.js';
 
 export default {
 	name: 'ConnectForm',
-	mixins: [ConnectionMixin],
+	mixins: [ConnectionMixin, EventBusMixin],
 	computed: {
 		...Utils.mapState('server', ['connectionError', 'discoveryErrors']),
 		...Utils.mapState('editor', ['storedServers'])
@@ -117,11 +117,11 @@ export default {
 		},
 
 		showWebEditorInfo() {
-			EventBus.$emit('showWebEditorInfo');
+			this.emit('showWebEditorInfo');
 		},
 
 		showServerSelector() {
-			EventBus.$emit(
+			this.emit(
 				'showListModal', 
 				"Select previously used server",
 				this.storedServers,

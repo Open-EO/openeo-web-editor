@@ -1,5 +1,4 @@
 <script>
-import EventBus from '@openeo/vue-components/eventbus.js';
 import DataTable from './DataTable.vue';
 import ConnectionMixin from './ConnectionMixin.vue'
 

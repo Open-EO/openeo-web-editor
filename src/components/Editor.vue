@@ -14,7 +14,6 @@
 </template>
 
 <script>
-import EventBus from '@openeo/vue-components/eventbus.js';
 import Utils from '../utils.js';
 import Tabs from '@openeo/vue-components/components/Tabs.vue';
 import Tab from '@openeo/vue-components/components/Tab.vue';
@@ -63,7 +62,7 @@ export default {
 			pgToInsert: null
 		};
 	},
-	computed: {
+	methods: {
 		activeEditor() {
 			if (this.$refs.tabs.getActiveTabId() === 'source') {
 				return this.$refs.sourceEditor;
@@ -79,9 +78,7 @@ export default {
 			else {
 				return this.$refs.graphBuilder;
 			}
-		}
-	},
-	methods: {
+		},
 		getProcessGraph(success, failure = null, passNull = false) {
 			if (failure === null) {
 				failure = (message, exception = null) => {
@@ -93,21 +90,17 @@ export default {
 					}
 				};
 			}
-			this.activeEditor.getProcessGraph(success, failure, passNull);
+			this.activeEditor().getProcessGraph(success, failure, passNull);
 		},
-
 		insertProcess(id) {
-			this.activeEditor.insertProcess(id);
+			this.activeEditor().insertProcess(id);
 		},
-
 		insertCollection(id) {
-			this.activeEditor.insertCollection(id);
+			this.activeEditor().insertCollection(id);
 		},
-
 		insertProcessGraph(pg) {
-			this.activeEditor.insertProcessGraph(pg);
+			this.activeEditor().insertProcessGraph(pg);
 		},
-
 		prepareProcessGraph() {
 			if (this.editable) {
 				return new Promise((resolve, reject) => {
@@ -135,9 +128,10 @@ export default {
 			}
 		},
 
-		transferProcessGraph() {
-			this.activeEditor.onShow();
-			// Don't update process graph if it hasn' changed
+		transferProcessGraph(tab) {
+			this.activeEditor().onShow();
+			// Don't update process graph if it hasn't changed
+			// ToDo: Check whether JSON.stringify is deterministic, otherwise use object-hash or something similar. 
 			if (!this.lastPgToInsert || JSON.stringify(this.pgToInsert) !== this.lastPgToInsert) {
 				this.insertProcessGraph(this.pgToInsert);
 				this.lastPgToInsert = JSON.stringify(this.pgToInsert);
