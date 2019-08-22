@@ -32,7 +32,7 @@
 <script>
 import Package from '../../package.json';
 import Config from '../../config.js';
-import EventBusMixin from './EventBuxMixin.vue';
+import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
 import ConnectionMixin from './ConnectionMixin.vue';
 import Utils from '../utils.js';
 

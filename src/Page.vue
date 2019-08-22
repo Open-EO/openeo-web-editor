@@ -17,7 +17,7 @@
 
 <script>
 import Package from '../package.json';
-import EventBusMixin from './components/EventBuxMixin.vue';
+import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
 import Utils from './utils';
 import ConnectForm from './components/ConnectForm.vue';
 import IDE from './components/IDE.vue';

@@ -22,7 +22,7 @@
 </template>
 
 <script>
-import EventBusMixin from './EventBuxMixin.vue';
+import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
 import WorkPanelMixin from './WorkPanelMixin.vue';
 import Utils from '../utils.js';
 import Field from './blocks/field';

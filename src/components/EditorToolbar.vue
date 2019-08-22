@@ -14,7 +14,7 @@
 </template>
 
 <script>
-import EventBusMixin from './EventBuxMixin.vue';
+import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
 import Utils from '../utils.js';
 
 export default {

@@ -38,7 +38,7 @@
 
 <script>
 import Package from '../../package.json';
-import EventBusMixin from './EventBuxMixin.vue';
+import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
 import Utils from '../utils.js';
 import ConnectionMixin from './ConnectionMixin.vue';
 import UserMenu from './UserMenu.vue';
