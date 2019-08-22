@@ -101,12 +101,12 @@ class Field extends ProcessSchema {
         }
         else if (otherBlock.isCallbackArgument()) {
             return {
-                from_argument: otherBlock.name
+                from_argument: String(otherBlock.name)
             };
         }
         else {
             return {
-                from_node: otherBlock.id
+                from_node: String(otherBlock.id)
             };
         }
     }
