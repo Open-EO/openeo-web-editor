@@ -45,6 +45,7 @@
     "core-js": "^2.6.9",
     "ol": "^5.3.3",
     "ol-ext": "^3.1.4",
+    "regenerator-runtime": "^0.13.3",
     "vue": "^2.6.10",
     "vue-ctk-date-time-picker": "^2.1.1",
     "vue-snotify": "^3.2.1",
