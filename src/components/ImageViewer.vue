@@ -1,6 +1,7 @@
 <template>
-	<div id="imageViewer" ref="imageContainer">
-		<img ref="image" @click="resize" alt="Loading image..." />
+	<div class="imageViewer" ref="imageContainer">
+		<div ref="loading" class="noDataMessage"><i class="fas fa-spinner fa-spin"></i> Loading image...</div>
+		<img ref="image" @click="resize" alt="" />
 	</div>
 </template>
 
@@ -26,7 +27,7 @@ export default {
 		showImage(src) {
 			this.$refs.image.src = src;
 			this.$refs.image.onload = () => {
-				this.$refs.image.alt = "Image";
+				this.$refs.loading.style.display = 'none';
 			};
 		},
 		showImageBlob(data) {
@@ -51,3 +52,21 @@ export default {
 	}
 };
 </script>
+
+<style scoped>
+.imageViewer {
+	position: relative;
+}
+.imageViewer .noDataMessage {
+	z-index: 0;
+    position: absolute;
+    top: 0;
+    left: 0;
+	width: 100%;
+	margin-left: 0;
+	margin-right: 0;
+}
+.imageViewer img {
+	z-index: 1;
+}
+</style>

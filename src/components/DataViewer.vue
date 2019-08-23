@@ -1,8 +1,9 @@
 <template>
-	<div id="dataViewer">
-		<div class="text" v-if="typeof content === 'string'">{{ content }}</div>
+	<div class="dataViewer">
+		<div class="noDataMessage" v-if="isError">{{ content.message }}</div>
+		<div class="text" v-else-if="typeof content === 'string'">{{ content }}</div>
 		<ObjectTree class="tree" v-else-if="content !== null" :data="content"></ObjectTree>
-		<div ref="emptyMsg" class="noDataMessage" v-else>Nothing to show.</div>
+		<div class="noDataMessage" v-else><i class="fas fa-spinner fa-spin"></i> Loading data...</div>
 	</div>
 </template>
 
@@ -24,7 +25,10 @@ export default {
 		ObjectTree
 	},
 	computed: {
-		...Utils.mapState('server', ['connection'])
+		...Utils.mapState('server', ['connection']),
+		isError() {
+			return (this.content instanceof Error);
+		}
 	},
 	data() {
 		return {
@@ -33,43 +37,43 @@ export default {
 	},
 	watch: {
 		data() {
-			this.processData();
+			this.processData(this.data);
 		}
 	},
 	created() {
-		this.processData();
+		this.processData(this.data);
 	},
 	methods: {
-		processData() {
-			if (this.data.blob) {
-				switch(this.data.type) {
-					case 'application/json':
-						Utils.blobToText(this.data.blob, event => {
+		processData(data) {
+			if (data instanceof Blob) {
+				switch(data.type) {
+					case 'application/jason':
+						Utils.blobToText(data, event => {
 							var json = JSON.parse(event.target.result);
 							this.content = json;
 						});
 						break;
 					case 'text/plain':
-						Utils.blobToText(blob, event => {
+						Utils.blobToText(data, event => {
 							this.content = nl2br(event.target.result);
 						});
 						break;
 					case 'text/html':
-						Utils.blobToText(blob, event => {
+						Utils.blobToText(data, event => {
 							this.content = event.target.result;
 						});
 						break;
 					default:
-						Utils.error(this, "Sorry, content type not supported by the data viewer.");
+						this.error("Sorry, content type not supported.");
 				}
 			}
-			else if (this.data.url) {
-				this.connection.download(this.data.url, false)
-					.then(response => this.emit('showViewer', response.data, this.data.type))
+			else if (data.url) {
+				this.connection.download(data.url, false)
+					.then(response => this.processData(response.data))
 					.catch(error => Utils.exception(this, error, "Sorry, can't download file."));
 			}
 			else {
-					Utils.error(this, 'Sorry, internal data format not supported by the viewer.');
+				this.error('Sorry, internal data format not supported.');
 			}
 		},
 		nl2br (str) {
@@ -77,14 +81,17 @@ export default {
 				return '';
 			}
 			return (str + '').replace(/([^>\r\n]?)(\r\n|\n\r|\r|\n)/g, '$1<br>$2');
+		},
+		error(msg) {
+			this.content = new Error(msg);
+//			Utils.error(this, msg);
 		}
-
 	}
 };
 </script>
 
 <style scoped>
-#dataViewer .text, #dataViewer .tree {
+.dataViewer .text, .dataViewer .tree {
 	padding: 5px;
 }
 </style>
