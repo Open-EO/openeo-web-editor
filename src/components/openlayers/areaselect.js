@@ -37,7 +37,7 @@ export default class AreaSelect {
     setBounds(bounds) {
         var ws = fromLonLat([bounds.west, bounds.south]);
         var en = fromLonLat([bounds.east, bounds.north]);
-        this.map.getView().fit([...ws, ...en], {
+        var fitOptions = {
             callback: () => {
                 var bottomLeft = this.map.getPixelFromCoordinate(ws);
                 var topRight = this.map.getPixelFromCoordinate(en);
@@ -46,7 +46,13 @@ export default class AreaSelect {
                 this.height = parseInt(Math.abs(bottomLeft[1] - topRight[1]));
                 this.render();
             }
-        });
+        };
+        // Make a bigger extent visible so that user can get a better overview (they can't pan/zoom).
+        var size = this.map.getSize();
+        if (!this.editable && size) {
+            fitOptions.padding = [size[0]/3, size[1]/3, size[0]/3, size[1]/3];
+        }
+        this.map.getView().fit([...ws, ...en], fitOptions);
     }
 
 	createElement(tag, classNames, parent) {
@@ -82,7 +88,6 @@ export default class AreaSelect {
         }
 
         this.map.on("change:size", () => this.onInteraction());
-        this.map.on("change:view", () => this.onInteraction());
     }
     
     setUpHandlerEvents(handle, xMod, yMod) {
@@ -120,7 +125,6 @@ export default class AreaSelect {
     }
     
     onInteraction() {
-
         this.render();
     }
     
