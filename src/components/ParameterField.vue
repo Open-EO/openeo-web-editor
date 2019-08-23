@@ -41,7 +41,7 @@
 			<VueCtkDateTimePicker v-model="value" :disabled="!editable" label="Select time" :only-time="true" format="HH:mm:ss[Z]" formatted="LT" :no-button="true" locale="en-gb"></VueCtkDateTimePicker>
 		</template>
 		<template v-else-if="type === 'bounding-box'">
-			<MapViewer ref="bboxMap" :id="fieldName" :showAreaSelector="true" :readOnly="editable" :center="[0,0]" :zoom="1" class="areaSelector"></MapViewer>
+			<MapViewer ref="bboxMap" :id="fieldName" :showAreaSelector="true" :editable="editable" :center="[0,0]" :zoom="1" class="areaSelector"></MapViewer>
 		</template>
 		<div v-else-if="type === 'callback'" class="border">
 			<VisualEditor ref="callbackBuilder" class="callbackEditor" id="inlinePgEditor" :editable="editable" :callbackArguments="schema.getCallbackParameters()" :value="value" :enableExecute="false" :enableLocalStorage="false" />

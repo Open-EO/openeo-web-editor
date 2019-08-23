@@ -58,9 +58,9 @@ export default {
 			// type: Boolean or Array with WGS84 coords: west, south, east, north
 			default: false
 		},
-		readOnly: {
+		editable: {
 			type: Boolean,
-			default: false
+			default: true
 		}
 	},
 	data() {
@@ -102,7 +102,13 @@ export default {
 				baseLayer: true,
 				title: "OpenStreetMap"
 			});
-			this.map = new Map({
+			var customControls = [
+				new FullScreen(),
+				new LayerSwitcher(),
+				new ScaleLine(),
+				this.progress.getControl()
+			];
+			var mapOptions = {
 				target: this.id,
 				layers: [
 					this.baseLayer
@@ -110,14 +116,16 @@ export default {
 				view: new View({
 					center: fromLonLat([this.center[1], this.center[0]]),
 					zoom: this.zoom
-				}),
-				controls: defaultControls().extend([
-					new FullScreen(),
-					new LayerSwitcher(),
-					new ScaleLine(),
-					this.progress.getControl()
-				])
-			});
+				})
+			};
+			if (!this.editable) {
+				mapOptions.interactions = [];
+				mapOptions.controls = customControls;
+			}
+			else {
+				mapOptions.controls = defaultControls().extend(customControls);
+			}
+			this.map = new Map(mapOptions);
 
 			if (this.showExtent) {
 				var bbox = Utils.extentToBBox(this.showExtent);
@@ -138,7 +146,7 @@ export default {
 
 		updateMapSize() {
 			if (this.map) {
-				this.map.updateSize()
+				this.map.updateSize();
 			}
 		},
 
@@ -167,9 +175,9 @@ export default {
 		},
 
 		addAreaSelector(w, e, n, s) {
-			this.areaSelect = new AreaSelect(this.map);
-			if (typeof w !== 'undefined') {
-				this.areaSelect.setBounds();
+			this.areaSelect = new AreaSelect(this.map, this.editable);
+			if (typeof w !== 'undefined' && typeof e !== 'undefined' && typeof n !== 'undefined' && typeof s !== 'undefined') {
+				this.areaSelect.setBounds(w, e, n, s);
 			}
 		},
 

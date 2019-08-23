@@ -98,6 +98,11 @@ export default {
 		},
 		collections() {
 			this.registerCollections();
+		},
+		active(newVal) {
+			if (newVal) {
+				this.onShow();
+			}
 		}
 	},
 	methods: {

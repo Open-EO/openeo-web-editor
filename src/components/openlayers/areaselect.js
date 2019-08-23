@@ -3,12 +3,13 @@ import { fromLonLat, toLonLat } from 'ol/proj';
 
 export default class AreaSelect {
 
-	constructor(map, width = null, height = null) {
+	constructor(map, editable = true, width = null, height = null) {
         this.map = map;
         var size = this.map.getSize();
         this.width = width || (size[0] > 0 ? size[0] * 0.7 : 300);
         this.height = height || (size[1] > 0 ? size[1] * 0.7 : 200);
-		this.moving = false;
+        this.moving = false;
+        this.editable = editable;
 		this.createElements();
 		this.addControls();
 		this.render();
@@ -68,23 +69,23 @@ export default class AreaSelect {
         this.leftShade = this.createElement("div", "ol-areaselect-shade", this.overlayContainer);
         this.rightShade = this.createElement("div", "ol-areaselect-shade", this.overlayContainer);
         
-        this.nwHandle = this.createElement("div", "ol-areaselect-handle");
-        this.swHandle = this.createElement("div", "ol-areaselect-handle");
-        this.neHandle = this.createElement("div", "ol-areaselect-handle");
-        this.seHandle = this.createElement("div", "ol-areaselect-handle");
-        
-        this.setUpHandlerEvents(this.nwHandle);
-        this.setUpHandlerEvents(this.neHandle, -1, 1);
-        this.setUpHandlerEvents(this.swHandle, 1, -1);
-        this.setUpHandlerEvents(this.seHandle, -1, -1);
+        if (this.editable) {
+            this.nwHandle = this.createElement("div", "ol-areaselect-handle");
+            this.swHandle = this.createElement("div", "ol-areaselect-handle");
+            this.neHandle = this.createElement("div", "ol-areaselect-handle");
+            this.seHandle = this.createElement("div", "ol-areaselect-handle");
+            
+            this.setUpHandlerEvents(this.nwHandle, 1, 1);
+            this.setUpHandlerEvents(this.neHandle, -1, 1);
+            this.setUpHandlerEvents(this.swHandle, 1, -1);
+            this.setUpHandlerEvents(this.seHandle, -1, -1);
+        }
 
-        this.map.on("change:size", () => this.onMapResize());
+        this.map.on("change:size", () => this.onInteraction());
+        this.map.on("change:view", () => this.onInteraction());
     }
     
     setUpHandlerEvents(handle, xMod, yMod) {
-        xMod = xMod || 1;
-        yMod = yMod || 1;
-
 		var onMouseMove = (event) => {
 			if (!this.moving) {
 				return;
@@ -118,13 +119,13 @@ export default class AreaSelect {
         });
     }
     
-    onMapResize() {
+    onInteraction() {
+
         this.render();
     }
     
     render() {
 		var size = this.map.getSize();
-        var handleOffset = Math.round(this.nwHandle.offsetWidth/2);
         var topBottomHeight = Math.round((size[1] - this.height)/2);
 		var leftRightWidth = Math.round((size[0] - this.width)/2);
 
@@ -144,10 +145,13 @@ export default class AreaSelect {
             right: 0
         });
         
-        this.setElementDimensions(this.nwHandle, {left: leftRightWidth-handleOffset, top: topBottomHeight-7});
-        this.setElementDimensions(this.neHandle, {right: leftRightWidth-handleOffset, top: topBottomHeight-7});
-        this.setElementDimensions(this.swHandle, {left: leftRightWidth-handleOffset, bottom: topBottomHeight-7});
-        this.setElementDimensions(this.seHandle, {right: leftRightWidth-handleOffset, bottom: topBottomHeight-7});
+        if (this.editable) {
+            var handleOffset = Math.round(this.nwHandle.offsetWidth/2);
+            this.setElementDimensions(this.nwHandle, {left: leftRightWidth-handleOffset, top: topBottomHeight-7});
+            this.setElementDimensions(this.neHandle, {right: leftRightWidth-handleOffset, top: topBottomHeight-7});
+            this.setElementDimensions(this.swHandle, {left: leftRightWidth-handleOffset, bottom: topBottomHeight-7});
+            this.setElementDimensions(this.seHandle, {right: leftRightWidth-handleOffset, bottom: topBottomHeight-7});
+        }
     }
         
 	setElementDimensions(element, dimension) {
@@ -160,10 +164,12 @@ export default class AreaSelect {
 	}
 
 	addControls() {
-		this.addControl(this.nwHandle);
-		this.addControl(this.neHandle);
-		this.addControl(this.swHandle);
-		this.addControl(this.seHandle);
+        if (this.editable) {
+            this.addControl(this.nwHandle);
+            this.addControl(this.neHandle);
+            this.addControl(this.swHandle);
+            this.addControl(this.seHandle);
+        }
 	}
 	
 	addControl(element) {

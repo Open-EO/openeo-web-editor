@@ -20,6 +20,7 @@ import Tab from '@openeo/vue-components/components/Tab.vue';
 import ConnectionMixin from './ConnectionMixin.vue';
 import VisualEditor from './VisualEditor.vue';
 import TextEditor from './TextEditor.vue';
+import stringify from 'fast-stable-stringify';
 
 export default {
 	name: 'Editor',
@@ -59,7 +60,7 @@ export default {
 	data() {
 		return {
 			lastPgToInsert: null,
-			pgToInsert: null
+			pgToInsert: this.processGraph
 		};
 	},
 	methods: {
@@ -130,11 +131,11 @@ export default {
 
 		transferProcessGraph(tab) {
 			this.activeEditor().onShow();
-			// Don't update process graph if it hasn't changed
-			// ToDo: Check whether JSON.stringify is deterministic, otherwise use object-hash or something similar. 
-			if (!this.lastPgToInsert || JSON.stringify(this.pgToInsert) !== this.lastPgToInsert) {
+			// Don't update process graph if it hasn't changed.
+			// use fast-stable-stringify as it's stable/deterministic. 
+			if (!this.editable || !this.lastPgToInsert || stringify(this.pgToInsert) !== this.lastPgToInsert) {
 				this.insertProcessGraph(this.pgToInsert);
-				this.lastPgToInsert = JSON.stringify(this.pgToInsert);
+				this.lastPgToInsert = stringify(this.pgToInsert);
 			}
 			this.pgToInsert = null;
 		}
