@@ -7,11 +7,13 @@
 </template>
 
 <script>
+import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
 import ObjectTree from '@openeo/vue-components/components/ObjectTree.vue';
 import Utils from '../utils.js';
 
 export default {
 	name: 'DataViewer',
+	mixins: [EventBusMixin],
 	props: {
 		data: {
 			type: Object,
