@@ -20,7 +20,6 @@ import Package from '../package.json';
 import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
 import Utils from './utils';
 import ConnectForm from './components/ConnectForm.vue';
-import IDE from './components/IDE.vue';
 import Modal from './components/Modal.vue';
 import axios from 'axios';
 import Vue from 'vue';
@@ -33,7 +32,7 @@ export default {
 	mixins: [EventBusMixin],
 	components: {
 		ConnectForm,
-		IDE,
+		IDE: () => import('./components/IDE.vue'),
 		Modal
 	},
 	data() {
@@ -68,7 +67,7 @@ export default {
 </script>
 
 <style>
-@import url('https://fonts.googleapis.com/css?family=Ubuntu');
+@import url('https://fonts.googleapis.com/css?family=Ubuntu&display=swap');
 
 html, body, #container {
 	height: 100%;

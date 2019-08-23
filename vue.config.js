@@ -10,12 +10,16 @@ module.exports = {
 	configureWebpack: {
 		devtool: 'source-map',
 		plugins: [
-			new webpack.ContextReplacementPlugin(/moment[/\\]locale$/, /en-gb/),
-		]
-	},
-	pluginOptions: {
-		webpackBundleAnalyzer: {
-			openAnalyzer: false
+			new webpack.ContextReplacementPlugin(/moment[/\\]locale$/, /en-gb/)
+		],
+		optimization: {
+			splitChunks: {
+				chunks: 'all',
+				maxSize: 300000,
+				minSize: 300000,
+				maxInitialRequests: 8,
+				maxAsyncRequests: 1
+			}
 		}
 	}
 }
