@@ -60,7 +60,7 @@ export default {
 		}
 	},
 	methods: {
-		...Utils.mapActions('server', ['connect', 'authenticateBasic']),
+		...Utils.mapActions('server', ['connect', 'authenticateBasic', 'describeAccount']),
 		...Utils.mapMutations('editor', ['addServer', 'removeServer']),
 
 		async submitForm() {
@@ -101,6 +101,7 @@ export default {
 					}
 					else if (this.supports('authenticateBasic')) {
 						await this.authenticateBasic({username: this.username, password: this.password});
+						await this.describeAccount();
 						Utils.ok(this, 'Login successful.');
 					}
 					else {

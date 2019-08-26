@@ -6,6 +6,7 @@ const getDefaultState = () => {
 		connection: null,
 		requireAuthentication: true,
 		userId: null,
+		userInfo: {},
 		connectionError: null,
 		discoveryErrors: [],
 		outputFormats: {},
@@ -80,14 +81,14 @@ export default {
 			if (capabilities.hasFeature('listFileTypes')) {
 				promises.push(connection.listFileTypes()
 					.then(response => commit('outputFormats', response))
-					.catch(error => commit('addDiscoveryError', error)))
+					.catch(error => commit('addDiscoveryError', error)));
 			}
 
 			// Request supported service types
 			if (capabilities.hasFeature('listServiceTypes')) {
 				promises.push(connection.listServiceTypes()
 					.then(response => commit('serviceTypes', response))
-					.catch(error => commit('addDiscoveryError', error)))
+					.catch(error => commit('addDiscoveryError', error)));
 			}
 	
 			await Promise.all(promises);
@@ -106,6 +107,20 @@ export default {
 			else {
 				throw "Sorry, Basic authentication is not supported.";
 			}
+		},
+
+		// Request user account info
+		async describeAccount(cx) {
+			if (cx.getters.supports('describeAccount') && cx.state.userId) {
+				var response = await cx.state.connection.describeAccount();
+				console.log(response);
+				cx.commit('userInfo', response);
+			}
+			else {
+				commit('userInfo', {
+					userId: cx.state.userId
+				});
+			}
 		}
 	},
 	mutations: {
@@ -117,6 +132,9 @@ export default {
 		},
 		userId(state, userId) {
 			state.userId = userId;
+		},
+		userInfo(state, info) {
+			state.userInfo = info;
 		},
 		outputFormats(state, outputFormats) {
 			state.outputFormats = outputFormats;

@@ -16,12 +16,11 @@
 			</div>
 			<div class="item" v-if="hasStorage">
 				<h4>Storage</h4>
-				<div class="storagePercent"><div class="used" :style="'width: ' + this.storageUsedPercent + '%'"></div></div>
-				<div class="nowrap">Used {{ formatMegabyte(this.storageUsed) }} of {{ formatMegabyte(this.me.storage.quota) }}.</div>
+				<div class="storagePercent"><div class="used" :style="'width: ' + storageUsedPercent + '%'"></div></div>
+				<div class="nowrap">Used {{ formatMegabyte(storageUsed) }} of {{ formatMegabyte(userInfo.storage.quota) }}.</div>
 			</div>
-			<div class="item" v-if="Array.isArray(me.links) && me.links.length > 0">
-				<h4>Additional resources</h4>
-				<LinkList :links="me.links" />
+			<div class="item" v-for="(link, key) in links" :key="key">
+				<a :href="link.href" target="_blank" :rel="link.rel">{{ link.title }}</a>
 			</div>
 			<div class="item">
 				<button class="navButton" type="button" @click.prevent="reset()"><i class="fas fa-sign-out-alt"></i> Logout</button>
@@ -31,32 +30,48 @@
 </template>
 
 <script>
-import WorkPanelMixin from './WorkPanelMixin.vue';
-import LinkList from '@openeo/vue-components/components/LinkList.vue';
 import Utils from '../utils.js';
 
 export default {
 	name: 'UserMenu',
-	mixins: [WorkPanelMixin],
-	components: {
-		LinkList
-	},
-	data() {
-		return {
-			me: {}
-		}
-	},
 	computed: {
+		...Utils.mapState('server', ['userInfo', 'userId']),
 		...Utils.mapGetters('server', ['formatCurrency']),
+		links() {
+			var links = [];
+			if (Array.isArray(this.userInfo.links)) {
+				for(var i in this.userInfo.links) {
+					var link = this.userInfo.links[i];
+					if (typeof link.rel === 'string' && link.rel.toLowerCase() === 'self') {
+						continue;
+					}
+					if (typeof link.title !== 'string' || link.title.length === 0) {
+						if (typeof link.rel === 'string' && link.rel.length > 1) {
+							link.title = link.rel.charAt(0).toUpperCase() + link.rel.slice(1);
+						}
+						else {
+							link.title = link.href.replace(/^https?:\/\/(www.)?/i, '').replace(/\/$/i, '');
+						}
+					}
+					links.push(link);
+				}
+			}
+			return links.sort((a, b) => a.title.localeCompare(b.title));
+		},
 		hasBudget() {
-			return typeof this.me.budget === 'number' && this.me.budget >= 0;
+			return this.userInfo.budget === null || (typeof this.userInfo.budget === 'number' && this.userInfo.budget >= 0);
 		},
 		hasStorage() {
-			return Utils.isObject(this.me.storage) && typeof this.me.storage.quota === 'number' && typeof this.me.storage.free === 'number';
+			return Utils.isObject(this.userInfo.storage) && typeof this.userInfo.storage.quota === 'number' && typeof this.userInfo.storage.free === 'number';
 		},
 		budget() {
 			if (this.hasBudget) {
-				return this.formatCurrency(this.me.budget);
+				if (this.userInfo.budget === null) {
+					return "Unlimited";
+				}
+				else {
+					return this.formatCurrency(this.userInfo.budget);
+				}
 			}
 			else {
 				return "N/A";
@@ -74,31 +89,17 @@ export default {
 			if (!this.hasStorage) {
 				return null;
 			}
-			return this.me.storage.quota - this.me.storage.free;
+			return this.userInfo.storage.quota - this.userInfo.storage.free;
 		},
 		storageUsedPercent() {
 			if (!this.hasStorage) {
 				return null;
 			}
-			return Math.round(this.storageUsed / this.me.storage.quota * 100);
+			return Math.round(this.storageUsed / this.userInfo.storage.quota * 100);
 		}
 	},
 	methods: {
 		...Utils.mapMutations('server', ['reset']),
-
-		updateData() {
-			if (!this.connection) {
-				return;
-			}
-
-			if (this.supports('describeAccount') && this.userId) {
-				this.connection.describeAccount()
-					.then(data => this.me = data)
-					.catch(error => {
-						Utils.exception(this, error, "Loading account information failed");
-					});
-			}
-		},
 		formatMegabyte(num) {
 			var gb = 1024*1024*1024;
 			if (num > gb) {

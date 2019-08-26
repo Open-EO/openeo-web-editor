@@ -1,54 +1,57 @@
 <template>
 	<div class="fieldEditorContainer">
+		<!-- Result Node -->
 		<template v-if="isResult">
 			<div class="fieldValue externalData fromNode">
 				<span>Output of <tt>#{{ value.from_node }}</tt></span>
 			</div>
 			<button type="button" v-if="isArray" @click="convertToArray()"><i class="fas fa-list"></i> Convert to Array</button>
 		</template>
+		<!-- Callback Argument -->
 		<template v-else-if="isCallbackArgument">
 			<div class="fieldValue externalData fromArgument">
 				<span>Value of callback argument <tt>{{ value.from_argument }}</tt></span>
 			</div>
 			<button type="button" v-if="isArray" @click="convertToArray()"><i class="fas fa-list"></i> Convert to array</button>
 		</template>
+		<!-- Enum -->
 		<select class="fieldValue" v-else-if="schema.isEnum()" :name="fieldName" v-model="value" ref="selectFirst" :disabled="!editable">
 			<option v-for="(choice, k) in schema.getEnumChoices()" :key="k" :value="choice">{{ choice }}</option>
 		</select>
+		<!-- Collection ID -->
 		<select class="fieldValue" v-else-if="type === 'collection-id'" :name="fieldName" v-model="value" ref="selectFirst" :disabled="!editable">
 			<option v-for="c in collections" :key="c.id" :value="c.id">{{ c.id }}</option>
 		</select>
+		<!-- Output Format -->
 		<select class="fieldValue" v-else-if="type === 'output-format'" :name="fieldName" v-model="value" ref="selectFirst" :disabled="!editable">
 			<option v-for="(x, format) in outputFormats" :key="format" :value="format.toUpperCase()">{{ format.toUpperCase() }}</option>
 		</select>
+		<!-- Service Type -->
 		<select class="fieldValue" v-else-if="type === 'service-type'" :name="fieldName" v-model="value" ref="selectFirst" :disabled="!editable">
 			<option v-for="(x, type) in serviceTypes" :key="type" :value="type.toUpperCase()">{{ type.toUpperCase() }}</option>
 		</select>
+		<!-- Billing Plan -->
 		<select class="fieldValue" v-else-if="type === 'billing-plan'" :name="fieldName" v-model="value" ref="selectFirst" :disabled="!editable">
 			<option v-for="plan in capabilities.listPlans()" :key="plan.name" :value="plan.name">{{ plan.name }} ({{ plan.paid ? 'paid' : 'free' }})</option>
 		</select>
-		<template v-else-if="type === 'temporal-interval'">
-			<VueCtkDateTimePicker v-model="value" :disabled="!editable" :range="true" label="Select start and end time" format="YYYY-MM-DD[T]HH:mm:ss[Z]" locale="en-gb"></VueCtkDateTimePicker>
-			<!-- ToDo: Support open date ranges, probably by using two separate date pickers, see also https://github.com/chronotruck/vue-ctk-date-time-picker/issues/121 -->
-		</template>
-		<template v-else-if="type === 'date-time'">
-			<VueCtkDateTimePicker v-model="value" :disabled="!editable" label="Select date and time" format="YYYY-MM-DD[T]HH:mm:ss[Z]" :no-button="true" locale="en-gb"></VueCtkDateTimePicker>
-		</template>
-		<template v-else-if="type === 'date'">
-			<VueCtkDateTimePicker v-model="value" :disabled="!editable" label="Select date" :only-date="true" format="YYYY-MM-DD" formatted="ll" :no-button="true" locale="en-gb"></VueCtkDateTimePicker>
-		</template>
-		<template v-else-if="type === 'time'">
-			<VueCtkDateTimePicker v-model="value" :disabled="!editable" label="Select time" :only-time="true" format="HH:mm:ss[Z]" formatted="LT" :no-button="true" locale="en-gb"></VueCtkDateTimePicker>
-		</template>
-		<template v-else-if="type === 'bounding-box'">
-			<MapViewer ref="bboxMap" :id="fieldName" :showAreaSelector="true" :editable="editable" :center="[0,0]" :zoom="1" class="areaSelector"></MapViewer>
-		</template>
+		<!-- Temporal Interval -->
+		<!-- ToDo: Support open date ranges, probably by using two separate date pickers, see also https://github.com/chronotruck/vue-ctk-date-time-picker/issues/121 -->
+		<VueCtkDateTimePicker v-else-if="type === 'temporal-interval'" v-model="value" :disabled="!editable" :range="true" label="Select start and end time" format="YYYY-MM-DD[T]HH:mm:ss[Z]" locale="en-gb"></VueCtkDateTimePicker>
+		<!-- Single date and time -->
+		<VueCtkDateTimePicker v-else-if="type === 'date-time'" v-model="value" :disabled="!editable" label="Select date and time" format="YYYY-MM-DD[T]HH:mm:ss[Z]" :no-button="true" locale="en-gb"></VueCtkDateTimePicker>
+		<!-- Single date -->
+		<VueCtkDateTimePicker v-else-if="type === 'date'" v-model="value" :disabled="!editable" label="Select date" :only-date="true" format="YYYY-MM-DD" formatted="ll" :no-button="true" locale="en-gb"></VueCtkDateTimePicker>
+		<!-- Single time -->
+		<VueCtkDateTimePicker v-else-if="type === 'time'" v-model="value" :disabled="!editable" label="Select time" :only-time="true" format="HH:mm:ss[Z]" formatted="LT" :no-button="true" locale="en-gb"></VueCtkDateTimePicker>
+		<!--Bounding Box -->
+		<MapViewer v-else-if="type === 'bounding-box'" ref="bboxMap" :id="fieldName" :showAreaSelector="true" :editable="editable" :center="[0,0]" :zoom="1" class="areaSelector"></MapViewer>
+		<!-- Callback -->
 		<div v-else-if="type === 'callback'" class="border">
 			<VisualEditor ref="callbackBuilder" class="callbackEditor" id="inlinePgEditor" :editable="editable" :callbackArguments="schema.getCallbackParameters()" :value="value" :enableExecute="false" :enableLocalStorage="false" />
 		</div>
-		<template v-else-if="type === 'null'">
-			The field will be set to&nbsp;<strong><tt>null</tt></strong>.
-		</template>
+		<!-- Null -->
+		<template v-else-if="type === 'null'">The field will be set to&nbsp;<strong><tt>null</tt></strong>.</template>
+		<!-- Arrays -->
 		<div v-else-if="isArray" class="arrayEditor">
 			<draggable v-model="value">
 				<transition-group name="arrayElements">
@@ -61,13 +64,23 @@
 			</draggable>
 			<button type="button" v-if="editable" @click="addField()"><i class="fas fa-plus"></i> Add</button>
 		</div>
+		<!-- Budget -->
 		<template v-else-if="type === 'budget'">
 			<input type="checkbox" v-model="hasBudget" value="1" />
 			<input type="number" min="0.00" step="0.01" :disabled="!hasBudget || !editable" :name="fieldName" v-model="value" />&nbsp;{{ capabilities.currency() }}
 			<!-- ToDo: Set max value of the input to the maximum budget available -->
 		</template>
+		<!-- Multiline text / Textarea -->
 		<textarea class="fieldValue textarea" v-else-if="useTextarea" :name="fieldName" v-model="value" :disabled="!editable"></textarea>
+		<!-- Boolean -->
 		<input class="fieldValue" v-else-if="type === 'boolean'" :checked="!!value" v-model="value" type="checkbox" :name="fieldName" :disabled="!editable" />
+		<!-- Integer -->
+		<input class="fieldValue" v-else-if="type === 'integer'" v-model="value" type="number" :min="numericMin" :max="numericMax" :step="1" :name="fieldName" :disabled="!editable" />
+		<!-- Number -->
+		<input class="fieldValue" v-else-if="type === 'number'" v-model="value" type="number" :min="numericMin" :max="numericMax" :step="0.01" :name="fieldName" :disabled="!editable" />
+		<!-- URL -->
+		<input class="fieldValue" v-else-if="type === 'url' || type === 'uri'" v-model="value" type="url" :name="fieldName" :disabled="!editable" />
+		<!-- String and all other -->
 		<input class="fieldValue" v-else v-model="value" type="text" :name="fieldName" :disabled="!editable" />
 	</div>
 </template>
@@ -133,6 +146,18 @@ export default {
 		},
 		isArray() {
 			return (this.type === 'array' || this.type === 'temporal-intervals');
+		},
+		numericMin() {
+			if (typeof this.schema.minimum === 'number') {
+				return this.schema.minimum;
+			}
+			return ""; // Empty seems to be the default for the input element
+		},
+		numericMax() {
+			if (typeof this.schema.maximum === 'number') {
+				return this.schema.maximum;
+			}
+			return ""; // Empty seems to be the default for the input element
 		}
 	},
 	watch: {
@@ -152,14 +177,6 @@ export default {
 				if (Utils.isObject(this.value) && Object.keys(this.value).length >= 4) {
 					this.$refs.bboxMap.areaSelect.setBounds(this.value);
 				}
-/*				if (!this.editable) {
-					map.touchZoom.disable();
-					map.doubleClickZoom.disable();
-					map.scrollWheelZoom.disable();
-					map.boxZoom.disable();
-					map.keyboard.disable();
-					map.dragging.disable();
-				} */
 			}
 			if (this.$refs.selectFirst && this.$refs.selectFirst.selectedOptions.length === 0) {
 				this.$refs.selectFirst.selectedIndex = 0;

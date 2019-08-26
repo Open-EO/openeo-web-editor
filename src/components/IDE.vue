@@ -89,7 +89,9 @@ export default {
 					width: "30%"
 				}
 			],
-			version: Package.version
+			version: Package.version,
+			resizeListener: null,
+			userInfoUpdater: null
 		};
 	},
 	computed: {
@@ -105,11 +107,20 @@ export default {
 		this.listen('getProcessGraph', this.getProcessGraph);
 		this.listen('insertProcessGraph', this.insertProcessGraph);
 
-		window.addEventListener('resize', event => {
-			this.emit('windowResized', event);
-		});
+		this.resizeListener = (event) => this.emit('windowResized', event);
+		window.addEventListener('resize', this.resizeListener);
+		this.userInfoUpdater = setInterval(this.describeAccount, 2*60*1000); // Refresh user data every 2 minutes
+	},
+	beforeDestroy() {
+		if (this.resizeListener !== null) {
+			window.removeEventListener('resize', this.resizeListener);
+		}
+		if (this.userInfoUpdater !== null) {
+			clearInterval(this.userInfoUpdater);
+		}
 	},
 	methods: {
+		...Utils.mapActions('server', ['describeAccount']),
 
 		getProcessGraph(success, failure = null, passNull = false) {
 			this.$refs.editor.getProcessGraph(success, failure, passNull);

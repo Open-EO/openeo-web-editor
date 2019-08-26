@@ -1,6 +1,6 @@
 <script>
 import DataTable from './DataTable.vue';
-import ConnectionMixin from './ConnectionMixin.vue'
+import ConnectionMixin from './ConnectionMixin.vue';
 
 export default {
 	mixins: [ConnectionMixin],
