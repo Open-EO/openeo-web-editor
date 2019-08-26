@@ -22,6 +22,10 @@
 		<select class="fieldValue" v-else-if="type === 'collection-id'" :name="fieldName" v-model="value" ref="selectFirst" :disabled="!editable">
 			<option v-for="c in collections" :key="c.id" :value="c.id">{{ c.id }}</option>
 		</select>
+		<!-- EPSG Codes -->
+		<select class="fieldValue" v-else-if="type === 'epsg-code'" :name="fieldName" v-model="value" :disabled="!editable">
+			<option v-for="(name, code) in epsgCodes" :key="code" :value="code">{{ code }}: {{ name }}</option>
+		</select>
 		<!-- Output Format -->
 		<select class="fieldValue" v-else-if="type === 'output-format'" :name="fieldName" v-model="value" ref="selectFirst" :disabled="!editable">
 			<option v-for="(x, format) in outputFormats" :key="format" :value="format.toUpperCase()">{{ format.toUpperCase() }}</option>
@@ -123,7 +127,8 @@ export default {
 	data() {
 		return {
 			value: null,
-			hasBudget: false
+			hasBudget: false,
+			epsgCodes: []
 		}
 	},
 	computed: {
@@ -177,6 +182,9 @@ export default {
 				if (Utils.isObject(this.value) && Object.keys(this.value).length >= 4) {
 					this.$refs.bboxMap.areaSelect.setBounds(this.value);
 				}
+			}
+			else if (this.type === 'epsg-code') {
+				this.loadEpsgCodes();
 			}
 			if (this.$refs.selectFirst && this.$refs.selectFirst.selectedOptions.length === 0) {
 				this.$refs.selectFirst.selectedIndex = 0;
@@ -242,6 +250,13 @@ export default {
 			}
 			return v;
 		},
+		loadEpsgCodes() {
+			if (!this.epsgCodes.length) {
+				import('../assets/epsg.json').then(({default: json}) => {
+					this.epsgCodes = json;
+				});
+			}
+		},
 		getValue() {
 			if (this.isCallbackArgument || this.isResult) {
 				return this.value; // Pass through
@@ -273,7 +288,7 @@ export default {
 				var num = Number.parseFloat(this.value);
 				return Number.isNaN(num) ? null : num;
 			}
-			else if (this.type === 'integer') {
+			else if (this.type === 'integer' || this.type === 'epsg-code') {
 				var num = Number.parseInt(this.value);
 				return Number.isNaN(num) ? null : num;
 			}

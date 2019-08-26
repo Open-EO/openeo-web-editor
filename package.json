@@ -32,8 +32,9 @@
     "url": "https://github.com/Open-EO/openeo-web-editor.git"
   },
   "scripts": {
-    "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build --report"
+    "build:epsg": "node src/build-epsg.js",
+    "serve": "npm run build:epsg && vue-cli-service serve",
+    "build": "npm run build:epsg && vue-cli-service build --report"
   },
   "dependencies": {
     "@openeo/js-client": "^0.4.1",
@@ -56,6 +57,7 @@
   "devDependencies": {
     "@vue/cli-plugin-babel": "^3.9.2",
     "@vue/cli-service": "^3.9.2",
+    "epsg-index": "^1.0.0",
     "vue-template-compiler": "^2.6.10"
   },
   "browserslist": [
