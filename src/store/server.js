@@ -117,7 +117,7 @@ export default {
 				cx.commit('userInfo', response);
 			}
 			else {
-				commit('userInfo', {
+				cx.commit('userInfo', {
 					userId: cx.state.userId
 				});
 			}
