@@ -47,7 +47,7 @@ export default {
 		processData(data) {
 			if (data instanceof Blob) {
 				switch(data.type) {
-					case 'application/jason':
+					case 'application/json':
 						Utils.blobToText(data, event => {
 							var json = JSON.parse(event.target.result);
 							this.content = json;
