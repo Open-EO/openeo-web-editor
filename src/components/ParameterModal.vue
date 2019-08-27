@@ -10,7 +10,7 @@
 							<Description :description="field.description" />
 						</div>
 					</label>
-					<ParameterFields :ref="field.name" :editable="editable" :field="field" :pass="field.getValue()" :processId="processId" />
+					<ParameterFields :uid="uid" :ref="field.name" :editable="editable" :field="field" :pass="field.getValue()" :processId="processId" />
 				</div>
 			</form>
 		</template>
@@ -37,6 +37,7 @@ export default {
 	},
 	data() {
 		return {
+			uid: '_' + Math.random().toString(36).substr(2, 9),
 			editableFields: [],
 			editable: true,
 			selectFieldName: null,
@@ -79,20 +80,20 @@ export default {
 </script>
 
 <style scoped>
-.description {
-	font-size: 0.8em;
-	width: 100%;
-}
-.required {
-	color: red;
-	font-weight: bold;
-}
 .footer {
 	text-align: right;
 }
 </style>
 
 <style>
+#parameterModal .fieldRow .description {
+	font-size: 0.8em;
+	width: 100%;
+}
+#parameterModal .fieldRow .required {
+	color: red;
+	font-weight: bold;
+}
 #parameterModal .fieldRow:first-of-type {
 	border: 0;
 	margin: 0;

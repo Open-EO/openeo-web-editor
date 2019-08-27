@@ -1,5 +1,6 @@
 import { OpenEO } from '@openeo/js-client';
 import { ProcessRegistry } from '@openeo/js-commons';
+import Utils from '../utils.js';
 
 const getDefaultState = () => {
 	return {
@@ -137,10 +138,30 @@ export default {
 			state.userInfo = info;
 		},
 		outputFormats(state, outputFormats) {
-			state.outputFormats = outputFormats;
+			// Make keys uppercase for simplicity
+			if (Utils.isObject(outputFormats)) {
+				var obj = {};
+				for(var key in outputFormats) {
+					obj[key.toUpperCase()] = outputFormats[key];
+				}
+				state.outputFormats = obj;
+			}
+			else {
+				state.outputFormats = outputFormats;
+			}
 		},
 		serviceTypes(state, serviceTypes) {
-			state.serviceTypes = serviceTypes;
+			// Make keys uppercase for simplicity
+			if (Utils.isObject(serviceTypes)) {
+				var obj = {};
+				for(var key in serviceTypes) {
+					obj[key.toUpperCase()] = serviceTypes[key];
+				}
+				state.serviceTypes = obj;
+			}
+			else {
+				state.serviceTypes = serviceTypes;
+			}
 		},
 		processes(state, data) {
 			var processes = [];

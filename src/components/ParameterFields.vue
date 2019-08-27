@@ -9,16 +9,18 @@
 				<i class="fas fa-info-circle"></i> {{ field.schemas[type].description() }}
 			</div>
 		</div>
-		<ParameterField ref="field" :editable="editable" :field="field" :schema="field.schemas[type]" :pass="pass" :processId="processId" />
+		<ParameterField ref="field" :uid="uid" :editable="editable" :field="field" :schema="field.schemas[type]" :pass="pass" :processId="processId" />
 	</div>
 </template>
 
 <script>
 import ParameterField from './ParameterField.vue';
+import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
 import { JsonSchemaValidator } from '@openeo/js-commons';
 
 export default {
 	name: 'ParameterFields',
+	mixins: [EventBusMixin],
 	components: {
 		ParameterField
 	},
@@ -29,7 +31,8 @@ export default {
 			default: true
 		},
 		processId: String,
-		pass: {}
+		pass: {},
+		uid: String
 	},
 	data() {
 		return {
@@ -56,6 +59,13 @@ export default {
 		}
 		else {
 			this.type = 0;
+		}
+	},
+	watch: {
+		type(newType, oldType) {
+			if (this.uid) {
+				this.emit('processParameterTypeChanged', this.uid, this.processId, this.field, newType, oldType);
+			}
 		}
 	},
 	methods: {

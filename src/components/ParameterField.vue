@@ -64,6 +64,8 @@
 			</draggable>
 			<button type="button" v-if="editable" @click="addField()"><i class="fas fa-plus"></i> Add</button>
 		</div>
+		<!-- Output format options -->
+		<OutputFormatOptionsEditor v-else-if="type === 'output-format-options'" ref="outputFormatOptionsEditor" :value="value" :format="this.context"></OutputFormatOptionsEditor>
 		<!-- Budget -->
 		<template v-else-if="type === 'budget'">
 			<input type="checkbox" v-model="hasBudget" value="1" />
@@ -91,20 +93,23 @@ import draggable from 'vuedraggable';
 import VueCtkDateTimePicker from 'vue-ctk-date-time-picker';
 import 'vue-ctk-date-time-picker/dist/vue-ctk-date-time-picker.css';
 
-import MapViewer from './MapViewer';
+import MapViewer from './MapViewer.vue';
+import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
 
 import { ProcessGraph } from '@openeo/js-commons';
 import Utils from '../utils.js';
 
 export default {
 	name: 'ParameterField',
+	mixins: [EventBusMixin],
 	components: {
 		draggable,
 		MapViewer,
-		// Asynchronously load the component to avoid circular references.
+		VueCtkDateTimePicker,
+		// Asynchronously load the following components to avoid circular references.
 		// See https://vuejs.org/v2/guide/components-edge-cases.html#Circular-References-Between-Components
-		VisualEditor: () => import('./VisualEditor.vue'),
-		VueCtkDateTimePicker
+		OutputFormatOptionsEditor: () => import('./OutputFormatOptionsEditor.vue'),
+		VisualEditor: () => import('./VisualEditor.vue')
 	},
 	props: {
 		field: Object,
@@ -114,6 +119,7 @@ export default {
 		},
 		schema: Object,
 		pass: {},
+		uid: String,
 		processId: String,
 		isItem: {
 			type: Boolean,
@@ -123,8 +129,11 @@ export default {
 	data() {
 		return {
 			value: null,
-			hasBudget: false
-		}
+			hasBudget: false,
+			isFullyMounted: false,
+			context: undefined,
+			mounted: false
+		};
 	},
 	computed: {
 		...Utils.mapState('server', ['collections', 'outputFormats', 'serviceTypes']),
@@ -133,7 +142,7 @@ export default {
 			return this.isItem ? this.schema.arrayOf() : this.schema.dataType();
 		},
 		useTextarea() {
-			return (this.type === 'geojson' || this.type === 'proj-definition' || this.type === 'output-format-options' || this.type === "service-type-parameters" || this.type === 'process-graph-variables' || this.type === 'commonmark');
+			return (this.type === 'geojson' || this.type === 'proj-definition' || this.type === "service-type-parameters" || this.type === 'process-graph-variables' || this.type === 'commonmark');
 		},
 		fieldName() {
 			return this.field.name + (Array.isArray(this.field.value) ? '[]' : '');
@@ -163,6 +172,11 @@ export default {
 	watch: {
 		schema() {
 			this.$nextTick(this.initView);
+		},
+		value(newVal, oldVal) {
+			if (this.mounted && this.uid) {
+				this.emit('processParameterValueChanged', this.uid, this.processId, this.field, this.type, this.getValue(), newVal, oldVal);
+			}
 		}
 	},
 	created() {
@@ -170,8 +184,26 @@ export default {
 	},
 	mounted() {
 		this.$nextTick(this.initView);
+		this.listen('processParameterValueChanged', this.processParameterValueChanged);
+		this.listen('processParameterTypeChanged', this.processParameterTypeChanged);
 	},
 	methods: {
+		processParameterValueChanged(uid, processId, field, type, value, newRawValue, oldRawValue) {
+			if (this.uid !== uid) {
+				return;
+			}
+
+			if (type === 'output-format' && this.type === 'output-format-options') {
+				this.context = value;
+			}
+		},
+		processParameterTypeChanged(uid, processId, field, newType, oldType) {
+			if (this.uid !== uid) {
+				return;
+			}
+
+			// Nothing to do yet
+		},
 		initView() {
 			if (this.type === 'bounding-box') {
 				if (Utils.isObject(this.value) && Object.keys(this.value).length >= 4) {
@@ -183,6 +215,8 @@ export default {
 				// selectedIndex doesn't fire a v-model change, so set the value manually.
 				this.value = this.$refs.selectFirst.value;
 			}
+			this.mounted = true;
+			this.emit('processParameterValueChanged', this.uid, this.processId, this.field, this.type, this.value, this.value, undefined);
 		},
 		initValue() {
 			var v;
@@ -246,6 +280,9 @@ export default {
 			if (this.isCallbackArgument || this.isResult) {
 				return this.value; // Pass through
 			}
+			else if (this.type === 'output-format-options') {
+				return this.$refs.outputFormatOptionsEditor.getValue();
+			}
 			else if (this.type === 'temporal-interval') {
 				return [this.value.start, this.value.end];
 			}
@@ -293,7 +330,7 @@ export default {
 					return null;
 				}
 			}
-			else if (this.type === 'any' || this.type === 'mixed') {
+			else if (typeof this.value === 'string' && this.value.length > 0 && (this.type === 'any' || this.type === 'mixed')) {
 				// Try to guess whether it is a number or not
 				var num = Number(this.value);
 				return Number.isNaN(num) ? this.value : num;
