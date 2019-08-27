@@ -4,7 +4,7 @@
 			<p v-if="editableFields.length === 0">No editable parameters available.</p>
 			<form v-else id="parameterModal" @submit.prevent="save">
 				<div class="fieldRow" v-for="(field, k) in editableFields" :key="k">
-					<label :class="{ highlight: field.name === selectFieldName }">
+					<label :class="{ fieldLabel: true, highlight: field.name === selectFieldName }">
 						{{ field.label }}<strong class="required" v-if="field.isRequired" title="required">*</strong>
 						<div v-if="field.description" class="description">
 							<Description :description="field.description" />
@@ -105,11 +105,11 @@ export default {
 	margin-top: 1em;
 	border-top: 1px dotted #ccc;
 }
-#parameterModal .fieldRow label {
+#parameterModal .fieldRow .fieldLabel {
 	min-width: 35%;
 	width: 35%;
 }
-#parameterModal .fieldRow label.highlight {
+#parameterModal .fieldRow .fieldLabel.highlight {
 	width: calc(35% - 5px);
     border-left: 5px solid red;
     padding-left: 5px;

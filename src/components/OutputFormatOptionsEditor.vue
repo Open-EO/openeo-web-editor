@@ -2,7 +2,7 @@
 	<div class="outputFormatOptionsEditor">
 		<template v-if="hasOptions">
 			<div class="fieldRow" v-for="(field, name) in parameters" :key="name">
-				<label>
+				<label class="fieldLabel">
 					{{ field.label }}<strong class="required" v-if="field.isRequired" title="required">*</strong>
 					<div v-if="field.description" class="description">
 						<Description :description="field.description" />
