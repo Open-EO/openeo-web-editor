@@ -43,8 +43,10 @@
 		<VueCtkDateTimePicker v-else-if="type === 'date'" v-model="value" :disabled="!editable" label="Select date" :only-date="true" format="YYYY-MM-DD" formatted="ll" :no-button="true" locale="en-gb"></VueCtkDateTimePicker>
 		<!-- Single time -->
 		<VueCtkDateTimePicker v-else-if="type === 'time'" v-model="value" :disabled="!editable" label="Select time" :only-time="true" format="HH:mm:ss[Z]" formatted="LT" :no-button="true" locale="en-gb"></VueCtkDateTimePicker>
-		<!--Bounding Box -->
+		<!-- Bounding Box -->
 		<MapViewer v-else-if="type === 'bounding-box'" ref="bboxMap" :id="fieldName" :showAreaSelector="true" :editable="editable" :center="[0,0]" :zoom="1" class="areaSelector"></MapViewer>
+		<!-- GeoJSON -->
+		<MapViewer v-else-if="type === 'geojson'" ref="geojson" :id="fieldName" :showGeoJson="value || true" :editable="editable" :center="[0,0]" :zoom="1" class="geoJsonEditor"></MapViewer>
 		<!-- Callback -->
 		<div v-else-if="type === 'callback'" class="border">
 			<VisualEditor ref="callbackBuilder" class="callbackEditor" id="inlinePgEditor" :editable="editable" :callbackArguments="schema.getCallbackParameters()" :value="value" :enableExecute="false" :enableLocalStorage="false" />
@@ -142,7 +144,7 @@ export default {
 			return this.isItem ? this.schema.arrayOf() : this.schema.dataType();
 		},
 		useTextarea() {
-			return (this.type === 'geojson' || this.type === 'proj-definition' || this.type === "service-type-parameters" || this.type === 'process-graph-variables' || this.type === 'commonmark');
+			return (this.type === 'proj-definition' || this.type === "service-type-parameters" || this.type === 'process-graph-variables' || this.type === 'commonmark');
 		},
 		fieldName() {
 			return this.field.name + (Array.isArray(this.field.value) ? '[]' : '');
@@ -298,6 +300,9 @@ export default {
 			else if (this.type === 'bounding-box') {
 				return this.$refs.bboxMap.areaSelect.getBounds();
 			}
+			else if (this.type === 'geojson') {
+				return this.$refs.geojson.getGeoJson();
+			}
 			else if (this.isArray) {
 				var values = [];
 				for(var i in this.value) {
@@ -397,7 +402,7 @@ export default {
 .mover {
 	padding: 3px 1em;
 }
-.areaSelector {
+.areaSelector, .geoJsonEditor {
 	height: 500px;
 	flex-grow: 1;
 }

@@ -8,12 +8,14 @@ import Utils from '../utils.js';
 
 import 'ol/ol.css';
 import { defaults as defaultControls, FullScreen, ScaleLine } from 'ol/control';
+import { isEmpty as extentIsEmpty } from 'ol/extent';
 import Feature from 'ol/Feature';
+import GeoJSON from 'ol/format/GeoJSON';
 import Map from 'ol/Map';
 import View from 'ol/View';
 import { Polygon, fromExtent as PolygonFromExtent } from 'ol/geom/Polygon';
 import { fromLonLat } from 'ol/proj';
-import Projection from 'ol/proj/Projection';
+import Snap from 'ol/interaction/Snap';
 import {Fill, Stroke, Style} from 'ol/style';
 import TileLayer from 'ol/layer/Tile';
 import TileJSON from 'ol/source/TileJSON';
@@ -22,10 +24,16 @@ import VectorSource from 'ol/source/Vector';
 import OSM from 'ol/source/OSM';
 import XYZ from 'ol/source/XYZ';
 
+import 'ol-ext/control/Bar.css';
+import Bar from 'ol-ext/control/Bar';
+import Button from 'ol-ext/control/Button';
+import 'ol-ext/control/EditBar.css';
+import EditBar from 'ol-ext/control/EditBar';
 import 'ol-ext/control/LayerSwitcher.css';
 import LayerSwitcher from 'ol-ext/control/LayerSwitcher';
 import 'ol-ext/control/Swipe.css';
 import Swipe from 'ol-ext/control/Swipe';
+import UndoRedo from 'ol-ext/interaction/UndoRedo';
 
 import Progress from './openlayers/progress';
 import AreaSelect from './openlayers/areaselect';
@@ -50,6 +58,10 @@ export default {
 			type: Boolean,
 			default: true
 		},
+		editable: {
+			type: Boolean,
+			default: true
+		},
 		showExtent: { // WGS84: west, south, east, north
 			type: Array,
 			default: () => null
@@ -58,22 +70,24 @@ export default {
 			// type: Boolean or Array with WGS84 coords: west, south, east, north
 			default: false
 		},
-		editable: {
-			type: Boolean,
-			default: true
+		showGeoJson: {
+			// type: Boolean (true for empty editor) or GeoJSON.
+			default: false
 		}
 	},
 	data() {
 		return {
 			map: null,
 			baseLayer: null,
+			osm: null,
 			progress: null,
 			userLayers: {},
 			swipe: {
 				control: null,
 				left: null,
 				right: null
-			}
+			},
+			geoJsonLayer: null
 		}
 	},
 	watch: {
@@ -97,8 +111,9 @@ export default {
 			}
 			this.progress = new Progress();
 			this.areaSelect = null;
+			this.osm = new OSM();
 			this.baseLayer = new TileLayer({
-				source: this.trackTileProgress(new OSM()),
+				source: this.trackTileProgress(this.osm),
 				baseLayer: true,
 				title: "OpenStreetMap"
 			});
@@ -141,12 +156,124 @@ export default {
 				}
 			}
 
+			if (Utils.isObject(this.showGeoJson) && !this.editable) {
+				this.geoJsonLayer = this.addGeoJson(this.showGeoJson);
+			}
+			else if (this.showGeoJson) {
+				this.geoJsonLayer = this.showGeoJsonEditor(this.showGeoJson);
+			}
+
 			this.listen('windowResized', this.updateMapSize);
 		},
 
 		updateMapSize() {
 			if (this.map) {
 				this.map.updateSize();
+			}
+		},
+
+		addGeoJson(geojson) {
+			var sourceOpts = {};
+			if (Utils.isObject(geojson)) {
+				sourceOpts.features = (new GeoJSON()).readFeatures(
+					geojson,
+					{
+						featureProjection: this.osm.getProjection()
+					}
+				);
+			}
+			var source = new VectorSource(sourceOpts);
+			var layer = new VectorLayer({
+				title: "GeoJSON",
+				source: source
+			});
+			this.map.addLayer(layer);
+			var extent = source.getExtent();
+			if (!extentIsEmpty(extent)) {
+				this.map.getView().fit(extent);
+			}
+			return layer;
+		},
+
+		showGeoJsonEditor(geojson) {
+			var layer = this.addGeoJson(geojson);
+
+			var mainbar = new Bar();
+			this.map.addControl(mainbar);
+
+			// Editbar
+			var editbar = new EditBar ({
+				source: layer.getSource(),
+				interactions: {
+					Info: false,
+					DrawHole: false,
+					Offset: false,
+					Split: false
+				}
+			});
+			mainbar.addControl(editbar);
+
+			// Undo redo interaction
+			var undoInteraction = new UndoRedo();
+			this.map.addInteraction(undoInteraction);
+			// Prevent selection of a deleted feature
+			undoInteraction.on('undo', e => {
+				if (e.action.type === 'addfeature') {
+					editbar.getInteraction('Select').getFeatures().clear();
+					editbar.getInteraction('Transform').select();
+				}
+			});
+
+			// Add buttons to the bar
+			var bar = new Bar({ 
+				group: true,
+				controls: [
+					new Button({
+						html: '<i class="fas fa-undo-alt"></i>',
+						title: 'Undo',
+						handleClick: () => undoInteraction.undo()
+					}),
+					new Button({
+						html: '<i class="fas fa-redo-alt"></i>',
+						title: 'Redo',
+						handleClick: () => undoInteraction.redo()
+					})
+				]
+			});
+			mainbar.addControl(bar);
+
+			// Add snap functionality
+			this.map.addInteraction(new Snap({ 
+				source: layer.getSource() 
+			}));
+
+			return layer;
+		},
+
+		getGeoJson() {
+			var geojson = new GeoJSON();
+			var olFeatures = this.geoJsonLayer.getSource().getFeatures();
+			var gjFeatures = [];
+			for(var i in olFeatures) {
+				gjFeatures.push(geojson.writeFeatureObject(
+					olFeatures[i],
+					{
+						dataProjection: 'EPSG:4326',
+						featureProjection: this.osm.getProjection()
+					}
+				));
+			}
+			if (gjFeatures.length === 0) {
+				return null;
+			}
+			else if (gjFeatures.length === 1) {
+				return gjFeatures[0];
+			}
+			else {
+				return {
+					type: "FeatureCollection",
+					features: gjFeatures
+				};
 			}
 		},
 
@@ -160,15 +287,6 @@ export default {
 						new Feature(PolygonFromExtent(extent))
 					],
 					wrapX: false
-				}),
-				style: new Style({
-					stroke: new Stroke({
-						color: 'rgba(51, 136, 255)',
-						width: 3
-					}),
-					fill: new Fill({
-						color: 'rgba(51, 136, 255, 0.2)'
-					})
 				})
 			}));
 			this.map.getView().fit(extent);
