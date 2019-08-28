@@ -1,5 +1,5 @@
 <template>
-	<div id="modal" v-if="shown" @mousedown="possiblyClose">
+	<div id="modal" v-if="shown" @mousedown="possiblyClose" :style="{'z-index': zIndex}">
 		<div class="modal-container" :style="{'min-width': minWidth, 'max-width': maxWidth}">
 			<header class="modal-header">
 				<h2>{{ title }}</h2>
@@ -42,7 +42,8 @@ const getDefaultState = () => {
 		list: null,
 		listActions: [],
 		shown: false,
-		onClose: null
+		onClose: null,
+		zIndex: 1000
 	};
 };
 
@@ -66,6 +67,7 @@ export default {
 		this.listen('showModal', this.showModal);
 	},
     computed: {
+		...Utils.mapState('editor', ['hightestModalZIndex']),
 		listCount() {
 			return Utils.size(this.listItems);
 		},
@@ -77,6 +79,8 @@ export default {
 		}
     },
 	methods: {
+		...Utils.mapMutations('editor', ['openModal', 'closeModal']),
+
 		escCloseListener(event) {
 			if (event.key == "Escape") { 
 				this.close();
@@ -113,6 +117,8 @@ export default {
 		_show(title, onClose) {
 			this.onClose = onClose;
 			this.title = title;
+			this.openModal();
+			this.zIndex = this.hightestModalZIndex;
 			window.addEventListener('keydown', this.escCloseListener);
 			this.shown = true;
 		},
@@ -126,6 +132,7 @@ export default {
 				return;
 			}
 			this.shown = false;
+			this.closeModal();
 			window.removeEventListener('keydown', this.escCloseListener);
 		},
 
@@ -154,7 +161,7 @@ export default {
 <style>
 #modal {
     position: fixed;
-    z-index: 9000; /* Snotify has 9999 and is intentionally above the modals */
+    z-index: 1000; /* Snotify has 9999 and is intentionally above the modals */
     left: 0;
     top: 0;
     width: 100%;

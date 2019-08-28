@@ -341,7 +341,7 @@ export default {
 	left: 0;
 	width: 100%;
 	height: 100%;
-	z-index: 8000;
+	z-index: 9990; /* Snotify has 9999 and is intentionally above the fullscreen */
 	display: flex;
 	flex-direction: column;
 }

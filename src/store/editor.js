@@ -8,7 +8,8 @@ export default {
 	state: {
 		storedServers: JSON.parse(localStorage.getItem(serverStorage) || "[]"),
 		storedScripts: JSON.parse(localStorage.getItem(scriptStorage) || "{}"),
-		scriptName: null
+		scriptName: null,
+		hightestModalZIndex: 1000
 	},
 	getters: {
 		getScriptByName: (state) => (name) => state.storedScripts[name]
@@ -17,6 +18,12 @@ export default {
 
 	},
 	mutations: {
+		openModal(state) {
+			state.hightestModalZIndex = state.hightestModalZIndex + 1;
+		},
+		closeModal(state) {
+			state.hightestModalZIndex = state.hightestModalZIndex - 1;
+		},
 		addServer(state, url) {
 			if (state.storedServers.indexOf(url) === -1) {
 				state.storedServers.push(url);

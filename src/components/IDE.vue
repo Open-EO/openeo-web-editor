@@ -289,7 +289,7 @@ export default {
 	top: 0;
 	display: flex;
 	justify-content: space-between;
-	z-index: 2000;
+	z-index: 100;
 }
 #ide main.page {
 	display: flex;
