@@ -45,11 +45,6 @@ export default {
 			processId: null
 		};
 	},
-	mounted() {
-		if (this.selectFieldName && this.$refs[this.selectFieldName]) {
-			this.$refs[this.selectFieldName].scrollIntoView();
-		}
-	},
 	methods: {
 		save() {
 			try {
@@ -74,6 +69,13 @@ export default {
 			this.processId = processId;
 			this.selectFieldName = selectFieldName;
 			this.$refs.__modal.show(title, closeCallback);
+
+			// ToDo: It's a bit hacky to have a fixed timeout set to allow the element to be available for scrolling => improve?!
+			setTimeout(() => {
+				if (this.selectFieldName && Array.isArray(this.$refs[this.selectFieldName]) && this.$refs[this.selectFieldName][0]) {
+					this.$refs[this.selectFieldName][0].$el.scrollIntoView();
+				}
+			}, 100);
 		}
 	}
 };
@@ -111,7 +113,7 @@ export default {
 }
 #parameterModal .fieldRow .fieldLabel.highlight {
 	width: calc(35% - 5px);
-    border-left: 5px solid red;
+    border-left: 5px solid #1665B6;
     padding-left: 5px;
 }
 #parameterModal .fieldRow .fieldEditorContainer {
