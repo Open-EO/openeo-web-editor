@@ -319,6 +319,9 @@ Block.prototype.getHtml = function()
  */
 Block.prototype.render = function()
 {
+    if (!this.div) {
+        return;
+    }
     this.lastScale = null;
     this.isHovered = false;
     this.div.innerHTML = this.getHtml();
@@ -478,7 +481,6 @@ Block.prototype.initListeners = function()
                         return;
                     }
                     this.blocks.setResultNode(this);
-                    this.blocks.history.save();
                 }
             });
         }
@@ -644,6 +646,7 @@ Block.prototype.export = function()
         type: this.type,
         name: this.name,
         values: values,
+        result: this.result,
         comment: this.getComment()
     };
 };

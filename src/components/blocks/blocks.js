@@ -270,6 +270,7 @@ Blocks.prototype.setResultNode = function(block, result = true) {
         return; // Nothing to change
     }
 
+    this.history.save();
     block.setResult(result);
     var foundNewResultNode = false;
     for(var i in this.blocks) {
@@ -350,10 +351,10 @@ Blocks.prototype.createBlock = function(name, type, x, y, values = {}, id = null
         block.result = true;
     }
     block.setValues(values);
-    this.addBlock(block);
     if (!block.isCallbackArgument()) {
         this.history.save();
     }
+    this.addBlock(block);
     return block;
 };
 
@@ -877,12 +878,10 @@ Blocks.prototype.importNodesFromProcessGraph = function(nodes, x = 0, y = 0) {
         }
 
         var block = this.addProcess(node.process_id, x, y, node.id);
-        if (block) {
-            block.setComment(node.description);
-            block.setValues(node.arguments);
-            block.render();
-        }
         block.result = node.isResultNode;
+        block.comment = node.description;
+        block.setValues(node.arguments);
+        block.render();
         node.blockId = block.id;
 
         this.importNodesFromProcessGraph(node.getNextNodes(), x + block.getWidth() + 20, y);
@@ -943,7 +942,8 @@ Blocks.prototype.import = function(scene)
                     var block = new Block(this, data.name, data.type, this.moduleTypes[data.type][data.name], data.id);
                     block.x = data.x;
                     block.y = data.y;
-                    block.setComment(data.comment);
+                    block.comment = data.comment;
+                    block.result = data.result;
                     block.setValues(data.values, true);
                     this.addBlock(block);
                 }
