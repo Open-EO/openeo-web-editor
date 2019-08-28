@@ -1,15 +1,14 @@
 <template>
-	<div class="fieldContainer" v-if="type !== null">
+	<div class="fieldContainer" v-if="selectedType !== null">
 		<div class="dataTypeChooser" v-if="field.schemas.length > 1">
-			Data type:
-			<select name="dataType" v-model="type" :disabled="!editable">
-				<option v-for="(schema, key) in field.schemas" :key="key" :value="key">{{ schema.title() }}</option>
+			<select name="dataType" v-model="selectedType" :disabled="!editable">
+				<option v-for="(schema, type) in field.schemas" :key="type" :value="type">{{ schema.title() }}</option>
 			</select>
-			<div v-if="field.schemas[type].description()" class="description">
-				<i class="fas fa-info-circle"></i> {{ field.schemas[type].description() }}
-			</div>
 		</div>
-		<ParameterField ref="field" :uid="uid" :editable="editable" :field="field" :schema="field.schemas[type]" :pass="pass" :processId="processId" />
+		<div v-if="field.schemas[selectedType].description()" class="description">
+			<i class="fas fa-info-circle"></i> {{ field.schemas[selectedType].description() }}
+		</div>
+		<ParameterField ref="field" :uid="uid" :editable="editable" :field="field" :schema="field.schemas[selectedType]" :pass="pass" :processId="processId" />
 	</div>
 </template>
 
@@ -36,29 +35,29 @@ export default {
 	},
 	data() {
 		return {
-			type: null
+			selectedType: null
 		};
 	},
 	created() {
 		if (this.field.schemas.length > 1) {
 			JsonSchemaValidator.getTypeForValue(this.field.schemas.map(s => s.schema), this.pass)
-				.then(type => {
-					if (typeof type === 'undefined') {
+				.then(evalType => {
+					if (typeof evalType === 'undefined') {
 						this.guessType();
 					}
-					else if (Array.isArray(type)) {
+					else if (Array.isArray(evalType)) {
 						Utils.info("Data type can't be detected, please select it yourself.");
-						console.warn("Parameter schema is ambiguous. Potential types: " + type.join(', ') + ". Value: " + JSON.stringify(this.pass));
-						this.type = type[0];
+						console.warn("Parameter schema is ambiguous. Potential types: " + evalType.join(', ') + ". Value: " + JSON.stringify(this.pass));
+						this.setSelectedType(evalType[0]);
 					}
 					else {
-						this.type = type;
+						this.setSelectedType(evalType);
 					}
 				})
 				.catch(error => this.guessType());
 		}
 		else {
-			this.type = 0;
+			this.setSelectedType(0);
 		}
 	},
 	watch: {
@@ -69,16 +68,19 @@ export default {
 		}
 	},
 	methods: {
+		setSelectedType(type) {
+			this.selectedType = String(type);
+		},
 		guessType() {
 			// Try to set null as default
 			for(var i in this.field.schemas) {
 				if (this.field.schemas[i].isNull()) {
-					this.type = i;
+					this.setSelectedType(i);
 					return;
 				}
 			}
 			// Otherwise set first type in list
-			this.type = 0;
+			this.setSelectedType(0);
 		},
 		getValue() {
 			return this.$refs.field.getValue();
@@ -90,9 +92,9 @@ export default {
 <style scoped>
 .description {
 	font-size: 0.9em;
-	margin-top: 0.5em;
+	margin-bottom: 10px;
 }
 .dataTypeChooser {
-	margin-bottom: 1em;
+	margin-bottom: 10px;
 }
 </style>

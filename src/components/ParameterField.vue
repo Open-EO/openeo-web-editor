@@ -5,14 +5,14 @@
 			<div class="fieldValue externalData fromNode">
 				<span>Output of <tt>#{{ value.from_node }}</tt></span>
 			</div>
-			<button type="button" v-if="isArray" @click="convertToArray()"><i class="fas fa-list"></i> Convert to Array</button>
+			<button type="button" v-if="isArrayType" @click="convertToArray()"><i class="fas fa-list"></i> Convert to Array</button>
 		</template>
 		<!-- Callback Argument -->
 		<template v-else-if="isCallbackArgument">
 			<div class="fieldValue externalData fromArgument">
 				<span>Value of callback argument <tt>{{ value.from_argument }}</tt></span>
 			</div>
-			<button type="button" v-if="isArray" @click="convertToArray()"><i class="fas fa-list"></i> Convert to array</button>
+			<button type="button" v-if="isArrayType" @click="convertToArray()"><i class="fas fa-list"></i> Convert to array</button>
 		</template>
 		<!-- Enum -->
 		<select class="fieldValue" v-else-if="schema.isEnum()" :name="fieldName" v-model="value" ref="selectFirst" :disabled="!editable">
@@ -36,25 +36,25 @@
 		</select>
 		<!-- Temporal Interval -->
 		<!-- ToDo: Support open date ranges, probably by using two separate date pickers, see also https://github.com/chronotruck/vue-ctk-date-time-picker/issues/121 -->
-		<VueCtkDateTimePicker v-else-if="type === 'temporal-interval'" v-model="value" :disabled="!editable" :range="true" label="Select start and end time" format="YYYY-MM-DD[T]HH:mm:ss[Z]" locale="en-gb"></VueCtkDateTimePicker>
+		<VueCtkDateTimePicker v-else-if="type === 'temporal-interval'" :key="type" v-model="value" :disabled="!editable" :range="true" label="Select start and end time" format="YYYY-MM-DD[T]HH:mm:ss[Z]" locale="en-gb"></VueCtkDateTimePicker>
 		<!-- Single date and time -->
-		<VueCtkDateTimePicker v-else-if="type === 'date-time'" v-model="value" :disabled="!editable" label="Select date and time" format="YYYY-MM-DD[T]HH:mm:ss[Z]" :no-button="true" locale="en-gb"></VueCtkDateTimePicker>
+		<VueCtkDateTimePicker v-else-if="type === 'date-time'" :key="type" v-model="value" :disabled="!editable" label="Select date and time" format="YYYY-MM-DD[T]HH:mm:ss[Z]" :no-button="true" locale="en-gb"></VueCtkDateTimePicker>
 		<!-- Single date -->
-		<VueCtkDateTimePicker v-else-if="type === 'date'" v-model="value" :disabled="!editable" label="Select date" :only-date="true" format="YYYY-MM-DD" formatted="ll" :no-button="true" locale="en-gb"></VueCtkDateTimePicker>
+		<VueCtkDateTimePicker v-else-if="type === 'date'" :key="type" v-model="value" :disabled="!editable" label="Select date" :only-date="true" format="YYYY-MM-DD" formatted="ll" :no-button="true" locale="en-gb"></VueCtkDateTimePicker>
 		<!-- Single time -->
-		<VueCtkDateTimePicker v-else-if="type === 'time'" v-model="value" :disabled="!editable" label="Select time" :only-time="true" format="HH:mm:ss[Z]" formatted="LT" :no-button="true" locale="en-gb"></VueCtkDateTimePicker>
+		<VueCtkDateTimePicker v-else-if="type === 'time'" :key="type" v-model="value" :disabled="!editable" label="Select time" :only-time="true" format="HH:mm:ss[Z]" formatted="LT" :no-button="true" locale="en-gb"></VueCtkDateTimePicker>
 		<!-- Bounding Box -->
-		<MapViewer v-else-if="type === 'bounding-box'" ref="bboxMap" :id="fieldName" :showAreaSelector="true" :editable="editable" :center="[0,0]" :zoom="1" class="areaSelector"></MapViewer>
+		<MapViewer v-else-if="type === 'bounding-box'" ref="bboxMap" :key="type" :id="fieldName + '_bbox'" :showAreaSelector="true" :editable="editable" :center="[0,0]" :zoom="1" class="areaSelector"></MapViewer>
 		<!-- GeoJSON -->
-		<MapViewer v-else-if="type === 'geojson'" ref="geojson" :id="fieldName" :showGeoJson="value || true" :editable="editable" :center="[0,0]" :zoom="1" class="geoJsonEditor"></MapViewer>
+		<MapViewer v-else-if="type === 'geojson'" ref="geojson" :key="type" :id="fieldName + '_geojson'" :showGeoJson="value || true" :editable="editable" :center="[0,0]" :zoom="1" class="geoJsonEditor"></MapViewer>
 		<!-- Callback -->
 		<div v-else-if="type === 'callback'" class="border">
 			<VisualEditor ref="callbackBuilder" class="callbackEditor" id="inlinePgEditor" :editable="editable" :callbackArguments="schema.getCallbackParameters()" :value="value" :enableExecute="false" :enableLocalStorage="false" />
 		</div>
 		<!-- Null -->
-		<template v-else-if="type === 'null'">The field will be set to&nbsp;<strong><tt>null</tt></strong>.</template>
+		<template v-else-if="type === 'null'"></template>
 		<!-- Arrays -->
-		<div v-else-if="isArray" class="arrayEditor">
+		<div v-else-if="isArrayType" class="arrayEditor">
 			<draggable v-model="value">
 				<transition-group name="arrayElements">
 					<div class="fieldValue arrayElement" v-for="(e, k) in value" :key="e.id">
@@ -71,7 +71,7 @@
 		<!-- Budget -->
 		<template v-else-if="type === 'budget'">
 			<input type="checkbox" v-model="hasBudget" value="1" />
-			<input type="number" min="0.00" step="0.01" :disabled="!hasBudget || !editable" :name="fieldName" v-model="value" />&nbsp;{{ capabilities.currency() }}
+			<input type="number" min="0.00" step="0.01" :disabled="!hasBudget || !editable" :name="fieldName" v-model.number="value" />&nbsp;{{ capabilities.currency() }}
 			<!-- ToDo: Set max value of the input to the maximum budget available -->
 		</template>
 		<!-- Multiline text / Textarea -->
@@ -79,9 +79,9 @@
 		<!-- Boolean -->
 		<input class="fieldValue" v-else-if="type === 'boolean'" :checked="!!value" v-model="value" type="checkbox" :name="fieldName" :disabled="!editable" />
 		<!-- Integer -->
-		<input class="fieldValue" v-else-if="type === 'integer'" v-model="value" type="number" :min="numericMin" :max="numericMax" :step="1" :name="fieldName" :disabled="!editable" />
+		<input class="fieldValue" v-else-if="type === 'integer'" v-model.number="value" type="number" :min="numericMin" :max="numericMax" :step="1" :name="fieldName" :disabled="!editable" />
 		<!-- Number -->
-		<input class="fieldValue" v-else-if="type === 'number'" v-model="value" type="number" :min="numericMin" :max="numericMax" :step="0.01" :name="fieldName" :disabled="!editable" />
+		<input class="fieldValue" v-else-if="type === 'number'" v-model.number="value" type="number" :min="numericMin" :max="numericMax" :step="0.01" :name="fieldName" :disabled="!editable" />
 		<!-- URL -->
 		<input class="fieldValue" v-else-if="type === 'url' || type === 'uri'" v-model="value" type="url" :name="fieldName" :disabled="!editable" />
 		<!-- String and all other -->
@@ -155,7 +155,7 @@ export default {
 		isCallbackArgument() {
 			return Utils.isObject(this.value) && this.value.from_argument;
 		},
-		isArray() {
+		isArrayType() {
 			return (this.type === 'array' || this.type === 'temporal-intervals');
 		},
 		numericMin() {
@@ -173,16 +173,17 @@ export default {
 	},
 	watch: {
 		schema() {
+			this.value = this.initValue(this.value);
 			this.$nextTick(this.initView);
 		},
 		value(newVal, oldVal) {
 			if (this.mounted && this.uid) {
-				this.emit('processParameterValueChanged', this.uid, this.processId, this.field, this.type, this.getValue(), newVal, oldVal);
+				this.emit('processParameterValueChanged', this.uid, this.processId, this.field, this.type, newVal, oldVal);
 			}
 		}
 	},
 	created() {
-		this.value = this.initValue();
+		this.value = this.initValue(this.pass);
 	},
 	mounted() {
 		this.$nextTick(this.initView);
@@ -190,7 +191,7 @@ export default {
 		this.listen('processParameterTypeChanged', this.processParameterTypeChanged);
 	},
 	methods: {
-		processParameterValueChanged(uid, processId, field, type, value, newRawValue, oldRawValue) {
+		processParameterValueChanged(uid, processId, field, type, value, oldValue) {
 			if (this.uid !== uid) {
 				return;
 			}
@@ -220,61 +221,55 @@ export default {
 			this.mounted = true;
 			this.emit('processParameterValueChanged', this.uid, this.processId, this.field, this.type, this.value, this.value, undefined);
 		},
-		initValue() {
-			var v;
-			if (Utils.isObject(this.$props.pass) && (this.$props.pass.from_argument || this.$props.pass.from_node)) {
-				v = this.$props.pass;
-			}
-			else if (this.type === 'temporal-interval') {
-				if (Array.isArray(this.$props.pass) && this.$props.pass.length >= 2) {
+		initValue(v) {
+			if (this.type === 'temporal-interval') {
+				if (Array.isArray(v) && v.length >= 2) {
 					v = {
-						start: this.$props.pass[0],
-						end: this.$props.pass[1]
+						start: v[0],
+						end: v[1]
 					};
 				}
-				else {
-					v = "";
-				}
-			}
-			else if (this.type === 'output-format' || this.type === 'service-type') {
-				v = typeof this.$props.pass === 'string' ? this.$props.pass.toUpperCase() : this.$props.pass;
-			}
-			else if (this.type === 'callback') {
-				if (Utils.isObject(this.$props.pass) && this.$props.pass.callback) {
-					v = this.$props.pass.callback;
-				}
-				else {
+				else if (!Utils.isObject(v) || !v.start || !v.end) {
 					v = null;
 				}
 			}
-			else if (this.type === 'billing-plan') {
+			else if (this.type === 'geojson') {
+				if (!Utils.isObject(v) || !v.type) {
+					v = null;
+				}
+			}
+			else if (this.type === 'output-format' || this.type === 'service-type') {
+				v = (typeof v === 'string' ? v.toUpperCase() : null);
+			}
+			else if (this.type === 'callback') {
+				if (Utils.isObject(v) && v.callback) {
+					v = v.callback;
+				}
+				else if (!(v instanceof ProcessGraph)) {
+					v = null;
+				}
+			}
+			else if (this.type === 'billing-plan' && !v) {
 				var defaultPlans = this.capabilities.listPlans().filter(plan => plan.default);
-				if (defaultPlans.length === 1) {
+				if (!v && defaultPlans.length === 1) {
 					v = defaultPlans[0].name;
 				}
 			}
 			else if (this.type === 'budget') {
-				v = this.$props.pass;
 				this.hasBudget = typeof v === 'number';
 			}
-			else if (this.isArray) {
-				v = this.initArray(this.$props.pass);
+			else if (this.isArrayType) {
+				v = this.initArray(v);
 			}
 			else if (this.useTextarea) {
-				if (typeof this.$props.pass === 'object') {
-					if (typeof this.$props.pass === 'object' && this.$props.pass !== null) {
-						v = JSON.stringify(this.$props.pass, null, 2);
+				if (typeof v === 'object') {
+					if (typeof this.pass === 'object' && this.pass !== null) {
+						v = JSON.stringify(v, null, 2);
 					}
 					else {
 						v = "";
 					}
 				}
-				else {
-					v = this.$props.pass;
-				}
-			}
-			else {
-				v = this.$props.pass;
 			}
 			return v;
 		},
@@ -303,7 +298,7 @@ export default {
 			else if (this.type === 'geojson') {
 				return this.$refs.geojson.getGeoJson();
 			}
-			else if (this.isArray) {
+			else if (this.isArrayType) {
 				var values = [];
 				for(var i in this.value) {
 					var fieldId = this.value[i].id;
@@ -312,8 +307,7 @@ export default {
 				return values;
 			}
 			else if (this.type === 'number' || this.type === 'budget') {
-				var num = Number.parseFloat(this.value);
-				return Number.isNaN(num) ? null : num;
+				return Number.isNaN(this.value) ? null : num;
 			}
 			else if (this.type === 'integer') {
 				var num = Number.parseInt(this.value);
@@ -324,7 +318,7 @@ export default {
 			}
 			else if (this.useTextarea) {
 				if (typeof this.value === 'string' && this.value.length > 0) {
-					if (typeof this.$props.pass === 'object' && this.$props.pass !== null) {
+					if (typeof this.pass === 'object' && this.pass !== null) {
 						return JSON.parse(this.value);
 					}
 					else {
@@ -348,10 +342,15 @@ export default {
 			var v = [];
 			if (Array.isArray(arr)) {
 				for(var i in arr) {
-					v.push({
-						id: "arrayElement" + i,
-						value: arr[i]
-					});
+					if (arr[i].id) {
+						v.push(arr[i]);
+					}
+					else {
+						v.push({
+							id: "arrayElement" + i,
+							value: arr[i]
+						});
+					}
 				}
 			}
 			return v;

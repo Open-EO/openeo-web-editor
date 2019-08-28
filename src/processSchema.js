@@ -130,11 +130,12 @@ class ProcessSubSchema {
 	}
 
 	title() {
-		var title = this.dataType();
 		if (this.schema.title) {
-			title += " - " + this.schema.title;
+			return this.schema.title;
 		}
-		return title;
+		else {
+			return this.dataType();
+		}
 	}
 
 	description() {
