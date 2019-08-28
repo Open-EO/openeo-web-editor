@@ -482,12 +482,13 @@ export default {
 }
 
 .blocks_js_editor .connector {
-	font-size:0.9em;
+	font-size: 0.9em;
 	margin: 0.2em 0;
-	background-repeat:no-repeat;
+	background-repeat: no-repeat;
 	cursor:pointer;
 	width: 100%;
 	overflow: hidden;
+	white-space: nowrap;
 	text-overflow: ellipsis;
 }
 
@@ -496,7 +497,7 @@ export default {
 }
 
 .blocks_js_editor .output {
-	text-align:right;
+	text-align: right;
 }
 
 .blocks_js_editor .circle {

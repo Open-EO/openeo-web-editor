@@ -267,7 +267,12 @@ export default {
 				return null;
 			}
 			else if (gjFeatures.length === 1) {
-				return gjFeatures[0];
+				if (!gjFeatures[0].properties && gjFeatures[0].geometry) {
+					return gjFeatures[0].geometry;
+				}
+				else {
+					return gjFeatures[0];
+				}
 			}
 			else {
 				return {

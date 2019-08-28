@@ -1,7 +1,7 @@
 import Field from './field.js';
 import EventBus from '@openeo/vue-components/eventbus.js';
 import VueUtils from '@openeo/vue-components/utils.js';
-import { ProcessGraph } from '@openeo/js-commons';
+import { JsonSchemaValidator, ProcessGraph } from '@openeo/js-commons';
 import Utils from '../../utils.js';
 
 /**
@@ -55,6 +55,8 @@ var Block = function(blocks, name, type, schema, id)
     this.fields = {};
     this._createOutputField(schema.returns);
     this._createInputFields(schema.parameters, schema.parameter_order);
+
+    this.jsonSchemaValidator = null;
 };
 
 Block.prototype._createOutputField = function(returns) {
@@ -106,7 +108,7 @@ Block.prototype.getHeight = function() {
 
 Block.prototype.getWidth = function() {
     if (this.hasInputs()) {
-        return this.blocks.compactMode ? 110 : 170;
+        return this.blocks.compactMode ? 110 : 200;
     }
     else {
         return this.blocks.compactMode ? 60 : 110;
@@ -189,6 +191,50 @@ Block.prototype.getComment = function() {
     return this.comment;
 };
 
+Block.prototype.formatCallback = function(pg) {
+    if (Utils.size(pg.getNodes()) === 1) {
+        return pg.getResultNode().process_id;
+    }
+    else {
+        return 'Callback';
+    }
+};
+
+Block.prototype.formatArray = function(value) {
+    var formatted = value.map(v => typeof v === 'string' ? v : JSON.stringify(v)).join(", ");
+    var html = VueUtils.htmlentities(formatted);
+    if (formatted.length <= 15) {
+        return html;
+    }
+    else {
+        return '<span title="' + html + '">List(' + value.length + ')</span>';
+    }
+};
+
+Block.prototype.formatObject = function(value) {
+    if (Object.keys(value).length === 0) {
+        return 'None';
+    }
+
+    if (typeof value.variable_id === 'string') {
+        return 'Variable';
+    }
+    else if (typeof value.west !== 'undefined' && typeof value.east !== 'undefined' && typeof value.south !== 'undefined' && typeof value.north !== 'undefined') {
+        return 'Bounding Box';
+    }
+
+    try {
+        if (this.jsonSchemaValidator === null) {
+            this.jsonSchemaValidator = new JsonSchemaValidator();
+        }
+        this.jsonSchemaValidator.validateGeoJson(value);
+        return value.type;
+    } catch (e) {}
+
+    // Fallback to default
+    return '<span title="' + VueUtils.htmlentities(JSON.stringify(value)) + '">Object</span>';
+};
+
 /**
  * Returns the render of the block
  */
@@ -243,22 +289,21 @@ Block.prototype.getHtml = function()
                     }
                     else {
                         if (Array.isArray(value)) {
-                            var title = VueUtils.htmlentities(value.map(v => typeof v === 'string' ? v : JSON.stringify(v)).join(", "));
-                            formattedValue = '<span title="' + title + '">List(' + value.length + ')</span>';
+                            formattedValue = this.formatArray(value);
                         }
                         else if (value.callback instanceof ProcessGraph) {
-                            formattedValue = 'Callback';
+                            formattedValue = this.formatCallback(value.callback);
                         }
                         else if (value.from_argument || value.from_node) {
                             formattedValue = '';
                         }
                         else {
-                            formattedValue = '<span title="' + VueUtils.htmlentities(JSON.stringify(value)) + '">Object</span>';
+                            formattedValue = this.formatObject(value);
                         }
                     }
                 }
-                else if (typeof value === 'string' && value.length > 10) {
-                    formattedValue = '<span title="' + VueUtils.htmlentities(value) + '">' + value.substr(0,10) + '...</span>';
+                else if (typeof value === 'string' && value.length > 15) {
+                    formattedValue = '<span title="' + VueUtils.htmlentities(value) + '">' + value.substr(0,15) + '…</span>';
                 }
                 else if (typeof value === 'boolean') {
                     formattedValue = value ? '✔️' : '❌';
