@@ -144,7 +144,7 @@ export default {
 			return this.isItem ? this.schema.arrayOf() : this.schema.dataType();
 		},
 		useTextarea() {
-			return (this.type === 'proj-definition' || this.type === "service-type-parameters" || this.type === 'process-graph-variables' || this.type === 'commonmark');
+			return (this.type === 'object' || this.type === 'proj-definition' || this.type === "service-type-parameters" || this.type === 'process-graph-variables' || this.type === 'commonmark');
 		},
 		fieldName() {
 			return this.field.name + (Array.isArray(this.field.value) ? '[]' : '');
@@ -318,7 +318,7 @@ export default {
 			}
 			else if (this.useTextarea) {
 				if (typeof this.value === 'string' && this.value.length > 0) {
-					if (typeof this.pass === 'object' && this.pass !== null) {
+					if (this.type === 'object' || (typeof this.pass === 'object' && this.pass !== null)) {
 						return JSON.parse(this.value);
 					}
 					else {
