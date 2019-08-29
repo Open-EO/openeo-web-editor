@@ -227,7 +227,7 @@ Block.prototype.formatObject = function(value) {
         if (this.jsonSchemaValidator === null) {
             this.jsonSchemaValidator = new JsonSchemaValidator();
         }
-        this.jsonSchemaValidator.validateGeoJson(value);
+        this.jsonSchemaValidator.validateGeoJsonSimple(value);
         return value.type;
     } catch (e) {}
 
@@ -287,19 +287,17 @@ Block.prototype.getHtml = function()
                     if (value === null) {
                         formattedValue = 'N/A';
                     }
+                    else if (Array.isArray(value)) {
+                        formattedValue = this.formatArray(value);
+                    }
+                    else if (value.callback instanceof ProcessGraph) {
+                        formattedValue = this.formatCallback(value.callback);
+                    }
+                    else if (value.from_argument || value.from_node) {
+                        formattedValue = '';
+                    }
                     else {
-                        if (Array.isArray(value)) {
-                            formattedValue = this.formatArray(value);
-                        }
-                        else if (value.callback instanceof ProcessGraph) {
-                            formattedValue = this.formatCallback(value.callback);
-                        }
-                        else if (value.from_argument || value.from_node) {
-                            formattedValue = '';
-                        }
-                        else {
-                            formattedValue = this.formatObject(value);
-                        }
+                        formattedValue = this.formatObject(value);
                     }
                 }
                 else if (typeof value === 'string' && value.length > 15) {
@@ -311,7 +309,7 @@ Block.prototype.getHtml = function()
                 else {
                     formattedValue = value.toString();
                 }
-                if (formattedValue.length > 0) {
+                if (typeof formattedValue === 'string' && formattedValue.length > 0) {
                     formattedValue = ': ' + formattedValue;
                 }
             }
