@@ -100,6 +100,16 @@ export default {
 			return true;
 		},
 
+		async authenticateOIDC(cx, {clientId, redirectUri}) {
+			if (cx.getters.supports('authenticateOIDC')) {
+				await cx.state.connection.authenticateOIDC(clientId, redirectUri, true);
+//				cx.commit('userId', cx.state.connection.getUserId());
+			}
+			else {
+				throw "Sorry, OpenID Connect authentication is not supported.";
+			}
+		},
+
 		async authenticateBasic(cx, {username, password}) {
 			if (cx.getters.supports('authenticateBasic')) {
 				await cx.state.connection.authenticateBasic(username, password);

@@ -1,6 +1,6 @@
 <template>
 	<div id="login">
-		<form @submit.prevent="submitForm">
+		<form @submit.prevent="submitBasicForm">
 			<header class="logo">
 				<img src="../assets/logo.png" alt="openEO" />
 				<h2>Web Editor <span class="version" @click="showWebEditorInfo">{{ version }}</span></h2>
@@ -8,23 +8,36 @@
 			<div v-if="message" class="message" v-html="message"></div>
 			<h3>Connect to server</h3>
 			<div class="row">
-				<label for="username">Server:</label>
+				<label for="username">URL:</label>
 				<div class="input">
 					<input id="serverUrl" v-model.lazy.trim="serverUrl" />
 					<button type="button" @click="showServerSelector" title="Select previously used server"><i class="fas fa-book"></i></button>
 				</div>
 			</div>
-			<div class="row">
-				<label for="username">Username:</label>
-				<input class="input" id="username" type="text" v-model="username"/>
-			</div>
-			<div class="row">
-				<label for="password">Password:</label>
-				<input class="input" id="password" type="password" v-model="password"/>
-			</div>
-			<div class="row">
-				<button type="submit" class="connectBtn" :class="{connecting: connecting}"><i class="fas fa-spinner fa-spin fa-lg"></i> Connect</button>
-			</div>
+			<Tabs id="credentials" :pills="true">
+				<Tab id="basic" name="Basic" :selected="true">
+					<div class="row">
+						<label for="username">Username:</label>
+						<input class="input" id="username" type="text" v-model="username"/>
+					</div>
+					<div class="row">
+						<label for="password">Password:</label>
+						<input class="input" id="password" type="password" v-model="password"/>
+					</div>
+					<div class="row">
+						<button type="submit" class="connectBtn" :class="{connecting: connecting}"><i class="fas fa-spinner fa-spin fa-lg"></i> Connect</button>
+					</div>
+				</Tab>
+				<Tab id="oidc" name="OpenID Connect">
+					<div class="row">
+						<label for="password">Client ID:</label>
+						<input class="input" id="clientId" type="text" v-model="clientId"/>
+					</div>
+					<div class="row">
+						<button type="button" @click="submitOidcForm" class="connectBtn" :class="{connecting: connecting}"><i class="fas fa-spinner fa-spin fa-lg"></i><i class="fab fa-openid"></i> Connect with OpenID Connect (experimental)</button>
+					</div>
+				</Tab>
+			</Tabs>
 		</form>
 	</div>
 </template>
@@ -34,11 +47,17 @@ import Package from '../../package.json';
 import Config from '../../config.js';
 import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
 import ConnectionMixin from './ConnectionMixin.vue';
+import Tabs from '@openeo/vue-components/components/Tabs.vue';
+import Tab from '@openeo/vue-components/components/Tab.vue';
 import Utils from '../utils.js';
 
 export default {
 	name: 'ConnectForm',
 	mixins: [ConnectionMixin, EventBusMixin],
+	components: {
+		Tabs,
+		Tab
+	},
 	computed: {
 		...Utils.mapState('server', ['connectionError', 'discoveryErrors']),
 		...Utils.mapState('editor', ['storedServers'])
@@ -48,6 +67,7 @@ export default {
 			serverUrl: Config.serverUrl,
 			username: '',
 			password: '',
+			clientId: '',
 			connecting: false,
 			version: Package.version,
 			message: Config.loginMessage
@@ -60,10 +80,16 @@ export default {
 		}
 	},
 	methods: {
-		...Utils.mapActions('server', ['connect', 'authenticateBasic', 'describeAccount']),
+		...Utils.mapActions('server', ['connect', 'authenticateBasic', 'authenticateOIDC', 'describeAccount']),
 		...Utils.mapMutations('editor', ['addServer', 'removeServer']),
 
-		async submitForm() {
+		async submitBasicForm() {
+			return await this.submitForm(this.username && this.password);
+		},
+		async submitOidcForm() {
+			return await this.submitForm(true);
+		},
+		async submitForm(awaitingAuth) {
 			if (typeof this.serverUrl !== 'string' || !Utils.isUrl(this.serverUrl)) {
 				Utils.error(this, 'Please specify a valid server.');
 				return;
@@ -73,7 +99,6 @@ export default {
 				return;
 			}
 
-			var awaitingAuth = (this.username || this.password);
 			this.connecting = true;
 			try {
 				if (await this.connect({url: this.serverUrl, requireAuthentication: awaitingAuth})) {
@@ -96,8 +121,11 @@ export default {
 
 			if (awaitingAuth) {
 				try {
-					if (!this.supports('authenticateBasic') && this.supports('authenticateOIDC')) {
-						Utils.error(this, 'Sorry, the authentication methods supported by the back-end are not supported by the Web Editor.');
+					if (this.supports('authenticateOIDC')) {
+						await this.authenticateOIDC({
+							clientId: this.clientId,
+							redirectUri: window.location
+						});
 					}
 					else if (this.supports('authenticateBasic')) {
 						await this.authenticateBasic({username: this.username, password: this.password});
@@ -107,7 +135,8 @@ export default {
 					else {
 						Utils.error(this, 'Sorry, the authentication methods is not supported by the Web Editor.');
 					}
-				} catch {
+				} catch(error) {
+					console.log(error);
 					Utils.error(this, 'Sorry, credentials are wrong.');
 				}
 			}
@@ -208,5 +237,8 @@ export default {
 }
 #login .connecting .fa-spinner {
 	visibility: visible;
+}
+#login .connecting .fa-openid {
+	display: none;
 }
 </style>
