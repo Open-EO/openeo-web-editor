@@ -114,7 +114,6 @@ export default {
 		async describeAccount(cx) {
 			if (cx.getters.supports('describeAccount') && cx.state.userId) {
 				var response = await cx.state.connection.describeAccount();
-				console.log(response);
 				cx.commit('userInfo', response);
 			}
 			else {

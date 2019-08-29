@@ -23,7 +23,7 @@
 				<a :href="link.href" target="_blank" :rel="link.rel">{{ link.title }}</a>
 			</div>
 			<div class="item">
-				<button class="navButton" type="button" @click.prevent="reset()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+				<button class="navButton" type="button" @click.prevent="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
 			</div>
 		</div>
 	</div>
@@ -99,7 +99,12 @@ export default {
 		}
 	},
 	methods: {
-		...Utils.mapMutations('server', ['reset']),
+		...Utils.mapMutations('server', {resetServer: 'reset'}),
+		...Utils.mapMutations('editor', {resetEditor: 'reset'}),
+		logout() {
+			this.resetServer();
+			this.resetEditor();
+		},
 		formatMegabyte(num) {
 			var gb = 1024*1024*1024;
 			if (num > gb) {

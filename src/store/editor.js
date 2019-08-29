@@ -3,14 +3,18 @@ import Vue from 'vue';
 const serverStorage = "serverUrls";
 const scriptStorage = "savedScripts";
 
-export default {
-	namespaced: true,
-	state: {
+const getDefaultState = () => {
+	return {
 		storedServers: JSON.parse(localStorage.getItem(serverStorage) || "[]"),
 		storedScripts: JSON.parse(localStorage.getItem(scriptStorage) || "{}"),
 		scriptName: null,
 		hightestModalZIndex: 1000
-	},
+	};
+};
+
+export default {
+	namespaced: true,
+	state: getDefaultState(),
 	getters: {
 		getScriptByName: (state) => (name) => state.storedScripts[name]
 	},
@@ -44,6 +48,9 @@ export default {
 		},
 		setScriptName(state, name) {
 			state.scriptName = name;
+		},
+		reset(state) {
+			Object.assign(state, getDefaultState());
 		}
 	}
 };
