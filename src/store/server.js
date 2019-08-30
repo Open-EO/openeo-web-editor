@@ -31,6 +31,7 @@ export default {
 			return amount + currency;
 		},
 		isConnected: (state) => state.connection !== null && (!state.requireAuthentication || state.userId !== null),
+		isAuthenticated: (state) => state.connection !== null && state.userId !== null,
 		processRegistry: (state) => {
 			var registry = new ProcessRegistry();
 			for (var i in state.processes) {

@@ -1,6 +1,7 @@
 <script>
 import DataTable from './DataTable.vue';
 import ConnectionMixin from './ConnectionMixin.vue';
+import Utils from '../utils.js';
 
 export default {
 	mixins: [ConnectionMixin],
@@ -13,15 +14,11 @@ export default {
 		};
 	},
 	computed: {
-		userId: {
-			get() {
-				return this.connection ? this.connection.getUserId() : null;
-			}
-		}
+		...Utils.mapGetters('server', ['isAuthenticated']),
 	},
 	watch: { 
-		userId(newVal, oldVal) {
-			if (newVal !== oldVal) {
+		isAuthenticated(authenticated, beforeAuthenticated) {
+			if (authenticated && !beforeAuthenticated) {
 				this.updateData();
 			}
 		}
@@ -34,17 +31,20 @@ export default {
 			// To be overwritten by implementations
 		},
 		updateTable(table, listFunc, createFunc) {
-			if (!this.$refs.table) {
+			if (!table) {
 				return;
 			}
-			else if (!this.supports('createJob') && !this.supports('listJobs')) {
-				this.$refs.table.setNoData('Sorry, this feature is not supported by the server.');
+			else if (!this.isAuthenticated) {
+				table.setNoData('Please authenticate to list stored data.');
 			}
-			else if (typeof this.userId !== 'string' && typeof this.userId !== 'number') {
-				this.$refs.table.setNoData('Please authenticate to use this feature.');
+			else if (!this.supports(listFunc)) {
+				table.setNoData('Sorry, listing stored data is not supported by the server.');
+			}
+			else if (!this.supports(createFunc)) {
+				table.setNoData('Sorry, this feature is not supported by the server.');
 			}
 			else {
-				this.$refs.table.retrieveData();
+				table.retrieveData();
 			}
 		},
 	}

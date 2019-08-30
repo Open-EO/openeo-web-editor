@@ -319,7 +319,7 @@ export default {
 				return values;
 			}
 			else if (this.type === 'number' || this.type === 'budget') {
-				return Number.isNaN(this.value) ? null : num;
+				return Number.isNaN(this.value) ? null : this.value;
 			}
 			else if (this.type === 'integer' || this.type === 'epsg-code') {
 				var num = Number.parseInt(this.value);
