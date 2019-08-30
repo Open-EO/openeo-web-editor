@@ -280,7 +280,7 @@ Block.prototype.getHtml = function()
         for (var k in fields) {
             var field = fields[k];
 
-            var formattedValue = '';
+            var formattedValue = null;
             if (field && field.isEditable() && !this.blocks.compactMode) {
                 var value = field.getValue();
                 if (typeof value === 'object') {
@@ -294,7 +294,7 @@ Block.prototype.getHtml = function()
                         formattedValue = this.formatCallback(value.callback);
                     }
                     else if (value.from_argument || value.from_node) {
-                        formattedValue = '';
+                        // Don't show anything
                     }
                     else {
                         formattedValue = this.formatObject(value);
@@ -306,12 +306,21 @@ Block.prototype.getHtml = function()
                 else if (typeof value === 'boolean') {
                     formattedValue = value ? '✔️' : '❌';
                 }
-                else {
+                else if (typeof value === 'number') {
                     formattedValue = value.toString();
                 }
-                if (typeof formattedValue === 'string' && formattedValue.length > 0) {
+            }
+
+            if (typeof formattedValue === 'string') {
+                if (formattedValue.length > 0) {
                     formattedValue = ': ' + formattedValue;
                 }
+                else {
+                    formattedValue = ': <em>Empty</em>';
+                }
+            }
+            else {
+                formattedValue = '';
             }
 
             var circleLeft = '<div class="circle"></div>', circleRight = '';
