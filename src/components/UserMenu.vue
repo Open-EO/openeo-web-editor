@@ -35,7 +35,7 @@ import Utils from '../utils.js';
 export default {
 	name: 'UserMenu',
 	computed: {
-		...Utils.mapState('server', ['userInfo', 'userId']),
+		...Utils.mapState('server', ['userInfo']),
 		...Utils.mapGetters('server', ['formatCurrency']),
 		links() {
 			var links = [];
@@ -78,11 +78,11 @@ export default {
 			}
 		},
 		userName() {
-			if (!this.userId) {
+			if (!this.userInfo.user_id) {
 				return 'Guest';
 			}
 			else {
-				return this.userId;
+				return this.userInfo.user_id;
 			}
 		},
 		storageUsed() {
@@ -99,10 +99,10 @@ export default {
 		}
 	},
 	methods: {
-		...Utils.mapMutations('server', {resetServer: 'reset'}),
+		...Utils.mapActions('server', {logoutServer: 'logout'}),
 		...Utils.mapMutations('editor', {resetEditor: 'reset'}),
-		logout() {
-			this.resetServer();
+		async logout() {
+			await this.logoutServer('popup');
 			this.resetEditor();
 		},
 		formatMegabyte(num) {
@@ -125,6 +125,11 @@ export default {
 }
 .name, .credits, .storage {
 	display: block;
+}
+.name {
+	max-width: 250px;
+    text-overflow: ellipsis;
+    overflow: hidden;
 }
 .credits, .storage {
 	margin-top: 3px;

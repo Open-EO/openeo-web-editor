@@ -5,8 +5,7 @@ import Utils from '../utils.js';
 const getDefaultState = () => {
 	return {
 		connection: null,
-		requireAuthentication: true,
-		userId: null,
+		discoveryCompleted: false,
 		userInfo: {},
 		connectionError: null,
 		discoveryErrors: [],
@@ -21,6 +20,13 @@ export default {
 	namespaced: true,
 	state: getDefaultState(),
 	getters: {
+		title: (state) => {
+			if (state.connection !== null && state.connection.capabilities() !== null) {
+				var title = state.connection.capabilities().title();
+				return title ? title : state.connection.getBaseUrl();
+			}
+			return null;
+		},
 		capabilities: (state) => state.connection !== null ? state.connection.capabilities() : null,
 		supports: (state) => (feature) => state.connection !== null && state.connection.capabilities() !== null && state.connection.capabilities().hasFeature(feature),
 		formatCurrency: (state) => (amount) => {
@@ -30,8 +36,9 @@ export default {
 			}
 			return amount + currency;
 		},
-		isConnected: (state) => state.connection !== null && (!state.requireAuthentication || state.userId !== null),
-		isAuthenticated: (state) => state.connection !== null && state.userId !== null,
+		isConnected: (state) => state.connection !== null && state.connection.capabilities() !== null,
+		isDiscovered: (state) => state.connection !== null && state.discoveryCompleted,
+		isAuthenticated: (state) => state.connection !== null && state.connection.accessToken !== null,
 		processRegistry: (state) => {
 			var registry = new ProcessRegistry();
 			for (var i in state.processes) {
@@ -43,37 +50,31 @@ export default {
 		supportsBillingPlans: (state) => state.connection !== null && state.connection.capabilities().currency() !== null && state.connection.capabilities().listPlans().length > 0
 	},
 	actions: {
-		async connect({commit}, {url, requireAuthentication}) {
-			commit('reset');
+		async connect(cx, {url}) {
+			cx.commit('reset');
 			try {
 				var connection = await OpenEO.connect(url);
-				commit('connection', connection);
+				cx.commit('connection', connection);
 			} catch (error) {
 				if(error.message == 'Network Error' || error.name == 'NetworkError') {
 					error = new Error("Server is not available.");
 				}
-				commit('setConnectionError', error);
+				cx.commit('setConnectionError', error);
 				return false;
 			}
 
+			return true;
+		},
+
+		async discover(cx) {
 			var promises = [];
-	
-			var capabilities = connection.capabilities();
-			// Request collections
-			if (capabilities.hasFeature('listCollections')) {
-				promises.push(connection.listCollections()
-					.then(response => commit('collections', response))
-					.catch(error => commit('addDiscoveryError', error)));
-			}
-			else {
-				commit('addDiscoveryError', new Error("Collections not supported by the back-end."));
-			}
+			var capabilities = cx.state.connection.capabilities();
 
 			// Request processes
 			if (capabilities.hasFeature('listProcesses') ) {
-				promises.push(connection.listProcesses()
-					.then(response => commit('processes', response))
-					.catch(error => commit('addDiscoveryError', error)));
+				promises.push(cx.state.connection.listProcesses()
+					.then(response => cx.commit('processes', response))
+					.catch(error => cx.commit('addDiscoveryError', error)));
 			}
 			else {
 				commit('addDiscoveryError', new Error("Processes not supported by the back-end."));
@@ -81,30 +82,44 @@ export default {
 
 			// Request supported output formats
 			if (capabilities.hasFeature('listFileTypes')) {
-				promises.push(connection.listFileTypes()
-					.then(response => commit('outputFormats', response))
-					.catch(error => commit('addDiscoveryError', error)));
+				promises.push(cx.state.connection.listFileTypes()
+					.then(response => cx.commit('outputFormats', response))
+					.catch(error => cx.commit('addDiscoveryError', error)));
 			}
 
 			// Request supported service types
 			if (capabilities.hasFeature('listServiceTypes')) {
-				promises.push(connection.listServiceTypes()
-					.then(response => commit('serviceTypes', response))
-					.catch(error => commit('addDiscoveryError', error)));
+				promises.push(cx.state.connection.listServiceTypes()
+					.then(response => cx.commit('serviceTypes', response))
+					.catch(error => cx.commit('addDiscoveryError', error)));
 			}
+
+			// Request user account information
+			var promise = cx.dispatch('describeAccount')
+				.catch(error => cx.commit('addDiscoveryError', error));
+			promises.push(promise);
 	
 			await Promise.all(promises);
 
-			// Do this at the end to make sure isConnected is only true once everything is loaded.
-			commit('requireAuthentication', requireAuthentication);
+			cx.commit('discoveryCompleted', true);
+		},
 
-			return true;
+		async authenticateOIDC(cx, {clientId, redirectUri, uiMethod}) {
+			if (cx.getters.supports('authenticateOIDC')) {
+				await cx.state.connection.authenticateOIDC({
+					clientId: clientId,
+					redirectUri, redirectUri,
+					uiMethod: uiMethod
+				});
+			}
+			else {
+				throw "Sorry, OpenID Connect authentication is not supported.";
+			}
 		},
 
 		async authenticateBasic(cx, {username, password}) {
 			if (cx.getters.supports('authenticateBasic')) {
 				await cx.state.connection.authenticateBasic(username, password);
-				cx.commit('userId', cx.state.connection.getUserId());
 			}
 			else {
 				throw "Sorry, Basic authentication is not supported.";
@@ -113,26 +128,33 @@ export default {
 
 		// Request user account info
 		async describeAccount(cx) {
-			if (cx.getters.supports('describeAccount') && cx.state.userId) {
+			if (cx.getters.supports('describeAccount') && cx.getters.isAuthenticated) {
 				var response = await cx.state.connection.describeAccount();
 				cx.commit('userInfo', response);
 			}
 			else {
 				cx.commit('userInfo', {
-					userId: cx.state.userId
+					user_id: cx.state.connection.getUserId()
 				});
 			}
-		}
+		},
+
+		async logout(cx, {uiMethod}) {
+			// Logout from OIDC
+			// ToDo: Remove the condition once we update to the JS client. logout is not yet supported in the released version of the JS client
+			if (typeof cx.state.connection.logout === 'function') {
+				await cx.state.connection.logout(uiMethod);
+			}
+			// Reset values
+			cx.commit('reset');
+		},
 	},
 	mutations: {
-		requireAuthentication(state, requireAuth = true) {
-			state.requireAuthentication = requireAuth;
+		discoveryCompleted(state) {
+			state.discoveryCompleted = true;
 		},
 		connection(state, connection) {
 			state.connection = connection;
-		},
-		userId(state, userId) {
-			state.userId = userId;
 		},
 		userInfo(state, info) {
 			state.userInfo = info;
