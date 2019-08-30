@@ -1,44 +1,75 @@
 <template>
 	<div id="login">
-		<form @submit.prevent="submitBasicForm">
+		<div class="inner">
 			<header class="logo">
 				<img src="../assets/logo.png" alt="openEO" />
 				<h2>Web Editor <span class="version" @click="showWebEditorInfo">{{ version }}</span></h2>
 			</header>
 			<div v-if="message" class="message" v-html="message"></div>
-			<h3>Connect to server</h3>
-			<div class="row">
-				<label for="username">URL:</label>
-				<div class="input">
-					<input id="serverUrl" v-model.lazy.trim="serverUrl" />
-					<button type="button" @click="showServerSelector" title="Select previously used server"><i class="fas fa-book"></i></button>
+			<form @submit.prevent="submitForm" v-if="!isConnected" class="connect">
+				<h3>Connect to server</h3>
+				<div class="row">
+					<label for="serverUrl">URL:</label>
+					<div class="input">
+						<input id="serverUrl" v-model.lazy.trim="serverUrl" :disabled="autoConnect" />
+						<button v-if="allowOtherServers" type="button" @click="showServerSelector" title="Select previously used server"><i class="fas fa-book"></i></button>
+					</div>
 				</div>
+				<div class="row">
+					<button type="submit" class="connectBtn" :class="{loading: loading}"><i class="fas fa-spinner fa-spin fa-lg"></i> Connect</button>
+				</div>
+			</form>
+			<div v-else-if="!isDiscovered" class="login">
+				<h3>Log in to {{ title }}</h3>
+				<Tabs id="credentials" :pills="true">
+					<Tab v-if="supportsOidc" id="oidc" name="OpenID Connect">
+						<form @submit.prevent="loginOidc">
+							<div class="row help">
+								<i class="fas fa-info-circle"></i>
+								<span>Common and most secure workflow to login at a provider, usually with username and password. You need to specify a <em>Client ID</em>, which will be provided to you by the provider. You need to allow the URL of this service as redirect URL for the authentication service.</span>
+							</div>
+							<div class="row">
+								<label for="password">Client ID:</label>
+								<input class="input" id="clientId" type="text" v-model="clientId" required="required" />
+							</div>
+							<div class="row">
+								<button type="submit" class="connectBtn" :class="{loading: loading}"><i class="fas fa-spinner fa-spin fa-lg"></i><i class="fab fa-openid"></i> Connect with OpenID Connect (experimental)</button>
+							</div>
+						</form>
+					</Tab>
+					<Tab v-if="supportsBasic" id="basic" name="Basic">
+						<form @submit.prevent="loginBasic">
+							<div class="row help">
+								<i class="fas fa-info-circle"></i>
+								<span>The <tt>Basic</tt> is mostly used for development and testing purposes. You can log in with username and password.</span>
+							</div>
+							<div class="row">
+								<label for="username">Username:</label>
+								<input class="input" id="username" type="text" v-model="username" required="required" />
+							</div>
+							<div class="row">
+								<label for="password">Password:</label>
+								<input class="input" id="password" type="password" v-model="password" required="required" />
+							</div>
+							<div class="row">
+								<button type="submit" class="connectBtn" :class="{loading: loading}"><i class="fas fa-spinner fa-spin fa-lg"></i> Log in</button>
+							</div>
+						</form>
+					</Tab>
+					<Tab id="noauth" name="No credentials">
+						<form @submit.prevent="loginNoAuth">
+							<div class="row help">
+								<i class="fas fa-info-circle"></i>
+								<span>Choose this if you don't have credentials for the service provider and just want to explore the service with its available data and processes. You may not be able to process any data.</span>
+							</div>
+							<div class="row">
+								<button type="submit" class="connectBtn" :class="{loading: loading}"><i class="fas fa-spinner fa-spin fa-lg"></i><i class="fas fa-user-slash"></i> Proceed without logging in</button>
+							</div>
+						</form>
+					</Tab>
+				</Tabs>
 			</div>
-			<Tabs id="credentials" :pills="true">
-				<Tab id="basic" name="Basic" :selected="true">
-					<div class="row">
-						<label for="username">Username:</label>
-						<input class="input" id="username" type="text" v-model="username"/>
-					</div>
-					<div class="row">
-						<label for="password">Password:</label>
-						<input class="input" id="password" type="password" v-model="password"/>
-					</div>
-					<div class="row">
-						<button type="submit" class="connectBtn" :class="{connecting: connecting}"><i class="fas fa-spinner fa-spin fa-lg"></i> Connect</button>
-					</div>
-				</Tab>
-				<Tab id="oidc" name="OpenID Connect">
-					<div class="row">
-						<label for="password">Client ID:</label>
-						<input class="input" id="clientId" type="text" v-model="clientId"/>
-					</div>
-					<div class="row">
-						<button type="button" @click="submitOidcForm" class="connectBtn" :class="{connecting: connecting}"><i class="fas fa-spinner fa-spin fa-lg"></i><i class="fab fa-openid"></i> Connect with OpenID Connect (experimental)</button>
-					</div>
-				</Tab>
-			</Tabs>
-		</form>
+		</div>
 	</div>
 </template>
 
@@ -50,6 +81,9 @@ import ConnectionMixin from './ConnectionMixin.vue';
 import Tabs from '@openeo/vue-components/components/Tabs.vue';
 import Tab from '@openeo/vue-components/components/Tab.vue';
 import Utils from '../utils.js';
+import { OpenEO } from '@openeo/js-client';
+
+const OIDC_UI_METHOD = 'popup';
 
 export default {
 	name: 'ConnectForm',
@@ -60,36 +94,78 @@ export default {
 	},
 	computed: {
 		...Utils.mapState('server', ['connectionError', 'discoveryErrors']),
-		...Utils.mapState('editor', ['storedServers'])
+		...Utils.mapGetters('server', ['isConnected', 'isDiscovered', 'isAuthenticated', 'title']),
+		...Utils.mapState('editor', ['storedServers']),
+		supportsOidc() {
+			// finishAuthenticateOIDC is not yet supported in the released version of the JS client
+			// ToDo: Remove second part of condition once we update to the JS client
+			return this.supports('authenticateOIDC') && typeof OpenEO.finishAuthenticateOIDC === 'function';
+		},
+		supportsBasic() {
+			return this.supports('authenticateBasic');
+		}
 	},
 	data() {
 		return {
 			serverUrl: Config.serverUrl,
+			allowOtherServers: !Config.serverUrl,
+			autoConnect: false,
 			username: '',
 			password: '',
 			clientId: '',
-			connecting: false,
+			loading: false,
 			version: Package.version,
 			message: Config.loginMessage
 		};
+	},
+	beforeCreate() {
+		// finishAuthenticateOIDC is not yet supported in the released version of the JS client
+		// ToDo: Remove if condition once we update to the JS client
+		if (typeof OpenEO.finishAuthenticateOIDC === 'function') {
+			OpenEO.finishAuthenticateOIDC(OIDC_UI_METHOD);
+		}
 	},
 	created() {
 		var serverFromQuery = Utils.param('server');
 		if (Utils.isUrl(serverFromQuery)) {
 			this.serverUrl = serverFromQuery;
 		}
+
+		if (this.serverUrl) {
+			this.autoConnect = true;
+		}
+	},
+	mounted() {
+		if (this.autoConnect) {
+			this.submitForm();
+		}
 	},
 	methods: {
-		...Utils.mapActions('server', ['connect', 'authenticateBasic', 'authenticateOIDC', 'describeAccount']),
+		...Utils.mapActions('server', ['connect', 'discover', 'authenticateBasic', 'authenticateOIDC']),
 		...Utils.mapMutations('editor', ['addServer', 'removeServer']),
 
-		async submitBasicForm() {
-			return await this.submitForm(this.username && this.password);
+		async submitForm() {
+			if (!this.isConnected) { // Request capabilities etc
+				this.initConnection();
+			}
+			else if (!this.isDiscovered) { // Do authentication and discovery
+				this.initDiscovery();
+			}
 		},
-		async submitOidcForm() {
-			return await this.submitForm(true);
+
+		async loginOidc() {
+			await this.initDiscovery('oidc');
 		},
-		async submitForm(awaitingAuth) {
+
+		async loginBasic() {
+			await this.initDiscovery('basic');
+		},
+
+		async loginNoAuth() {
+			await this.initDiscovery('noauth');
+		},
+
+		async initConnection() {
 			if (typeof this.serverUrl !== 'string' || !Utils.isUrl(this.serverUrl)) {
 				Utils.error(this, 'Please specify a valid server.');
 				return;
@@ -99,51 +175,60 @@ export default {
 				return;
 			}
 
-			this.connecting = true;
+			this.loading = true;
 			try {
-				if (await this.connect({url: this.serverUrl, requireAuthentication: awaitingAuth})) {
+				if (await this.connect({url: this.serverUrl})) {
 					this.addServer(this.serverUrl);
 				}
 				else {
-					this.connecting = false;
 					Utils.exception(this, this.connectionError);
-					return;
 				}
 			} catch (error) {
-				this.connecting = false;
 				Utils.exception(this, error);
-				return;
 			}
 
+			this.loading = false;
+			if (!this.isConnected && this.allowOtherServers) {
+				this.autoConnect = false;
+			}
+		},
+
+		async initDiscovery(type) {
+			this.loading = true;
+			try {
+				if (type === 'basic') {
+					await this.authenticateBasic({
+						username: this.username,
+						password: this.password
+					});
+				}
+				else if (type === 'oidc') {
+					await this.authenticateOIDC({
+						clientId: this.clientId,
+						redirectUri: window.location,
+						uiMethod: OIDC_UI_METHOD
+					});
+				}
+				else { // noauth
+					Utils.info(this, 'You are working as a guest. Your data will be publicly available!');
+				}
+			} catch(error) {
+				console.log(error);
+				Utils.error(this, 'Sorry, credentials are wrong.');
+				this.loading = false;
+				return;
+			}
+			
+			await this.discover();
 			for(var error of this.discoveryErrors) {
 				Utils.exception(this, error);
 			}
 
-			if (awaitingAuth) {
-				try {
-					if (this.supports('authenticateOIDC')) {
-						await this.authenticateOIDC({
-							clientId: this.clientId,
-							redirectUri: window.location
-						});
-					}
-					else if (this.supports('authenticateBasic')) {
-						await this.authenticateBasic({username: this.username, password: this.password});
-						await this.describeAccount();
-						Utils.ok(this, 'Login successful.');
-					}
-					else {
-						Utils.error(this, 'Sorry, the authentication methods is not supported by the Web Editor.');
-					}
-				} catch(error) {
-					console.log(error);
-					Utils.error(this, 'Sorry, credentials are wrong.');
-				}
+			this.loading = false;
+
+			if (this.isAuthenticated) {
+				Utils.ok(this, 'Login successful.');
 			}
-			else {
-				Utils.info(this, 'You are working as a guest. Your data will be publicly available!');
-			}
-			this.connecting = false;
 		},
 
 		showWebEditorInfo() {
@@ -189,7 +274,7 @@ export default {
 #login h3 {
 	margin: 0 0 0.75em 0;
 }
-#login form {
+#login .inner {
 	width: 500px;
 	background-color: #fff;
 	border: 1px solid #152558;
@@ -227,6 +312,23 @@ export default {
 	background-color: #fbeabc;
 	color: #795600;
 }
+#login .tabsHeader {
+	margin-bottom: 0.5em;
+}
+#login .help {
+	display: flex;
+	margin: 0.5em;
+}
+#login .help span {
+	font-size: 0.9em;
+	display: block;
+	flex-grow: 1;
+}
+#login .help .fa-info-circle {
+	display: block;
+	height: 100%;
+	margin-right: 0.5em;
+}
 #login .connectBtn {
 	width: 100%;
 	margin: 0.75em 0 0 0;
@@ -235,10 +337,13 @@ export default {
 #login .fa-spinner {
 	visibility: hidden;
 }
-#login .connecting .fa-spinner {
+#login .loading .fa-spinner {
 	visibility: visible;
 }
-#login .connecting .fa-openid {
+#login .loading .fa-openid {
+	display: none;
+}
+#login .loading .fa-user-slash {
 	display: none;
 }
 </style>

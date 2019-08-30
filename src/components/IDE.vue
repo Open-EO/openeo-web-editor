@@ -298,6 +298,7 @@ export default {
 	margin: 10px 1em;
 	display: inline-block;
 	align-content: flex-start;
+	overflow: hidden;
 }
 #ide .logo h2 {
 	color: white;

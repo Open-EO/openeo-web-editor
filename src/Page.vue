@@ -1,6 +1,6 @@
 <template>
 	<div id="container">
-		<ConnectForm v-if="!isConnected" />
+		<ConnectForm v-if="!isDiscovered" />
 		<IDE v-else />
 		<Modal ref="modal" maxWidth="60%" />
 		<vue-snotify />
@@ -47,7 +47,7 @@ export default {
 		this.listen('showWebEditorInfo', this.showWebEditorInfo);
 	},
 	computed: {
-		...Utils.mapGetters('server', ['isConnected'])
+		...Utils.mapGetters('server', ['isDiscovered'])
 	},
 	methods: {
 		showMessageModal(title, message) {

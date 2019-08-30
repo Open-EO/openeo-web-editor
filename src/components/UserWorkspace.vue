@@ -1,5 +1,5 @@
 <template>
-	<Tabs id="userContent" ref="tabs" v-show="isConnected">
+	<Tabs id="userContent" ref="tabs">
 		<Tab v-if="supportsJobs" id="jobs" name="Batch Jobs" icon="fa-tasks">
 			<JobPanel />
 		</Tab>
