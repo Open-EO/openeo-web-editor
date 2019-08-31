@@ -282,6 +282,9 @@ export default {
 	padding: 3em;
 	font-family: 'Ubuntu', sans-serif;
 }
+#login #credentials.tabs .tabsBody {
+	overflow: visible;
+}
 #login .row {
 	display: flex;
 	margin: 0.5em 0;
