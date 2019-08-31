@@ -2,7 +2,7 @@
 	<DataTable ref="table" :dataSource="listProcessGraphs" :columns="columns" id="ProcessGraphPanel">
 		<template slot="toolbar">
 			<button title="Add new process graph" @click="addGraphFromScript" v-show="supports('createProcessGraph')"><i class="fas fa-plus"></i> Add</button>
-			<button title="Refresh process graphs" @click="updateData()"><i class="fas fa-sync-alt"></i></button> <!-- ToDo: Should be done automatically later -->
+			<button title="Refresh process graphs" v-if="isListDataSupported" @click="updateData()"><i class="fas fa-sync-alt"></i></button> <!-- ToDo: Should be done automatically later -->
 		</template>
 		<template slot="actions" slot-scope="p">
 			<button title="Details" @click="graphInfo(p.row)" v-show="supports('describeProcessGraph')"><i class="fas fa-info"></i></button>		<button title="Show in Editor" @click="showInEditor(p.row)" v-show="supports('describeProcessGraph')"><i class="fas fa-code-branch"></i></button>
@@ -38,7 +38,9 @@ export default {
 					name: 'Actions',
 					filterable: false
 				}
-			}
+			},
+			listFunc: 'listProcessGraphs',
+			createFunc: 'createProcessGraph'
 		};
 	},
 	methods: {
@@ -46,7 +48,7 @@ export default {
 			return this.connection.listProcessGraphs();
 		},
 		updateData() {
-			this.updateTable(this.$refs.table, 'listProcessGraphs', 'createProcessGraph');
+			this.updateTable(this.$refs.table);
 		},
 		refreshProcessGraph(pg, callback = null) {
 			pg.describeProcessGraph()

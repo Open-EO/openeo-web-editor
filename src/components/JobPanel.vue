@@ -2,7 +2,7 @@
 	<DataTable ref="table" :dataSource="listJobs" :columns="columns" id="JobPanel" v-if="connection">
 		<template slot="toolbar">
 			<button title="Add new job" @click="createJobFromScript()" v-show="supports('createJob')"><i class="fas fa-plus"></i> Add</button>
-			<button title="Refresh jobs" @click="updateData()" v-show="supports('listJobs')"><i class="fas fa-sync-alt"></i></button> <!-- ToDo: Should be done automatically later -->
+			<button title="Refresh jobs" v-if="isListDataSupported" @click="updateData()" v-show="supports('listJobs')"><i class="fas fa-sync-alt"></i></button> <!-- ToDo: Should be done automatically later -->
 		</template>
 		<template slot="actions" slot-scope="p">
 			<button title="Details" @click="showJobInfo(p.row)" v-show="supports('describeJob')"><i class="fas fa-info"></i></button>
@@ -15,8 +15,6 @@
 			<button title="Cancel processing" @click="cancelJob(p.row)" v-show="supports('stopJob') && isJobActive(p.row)"><i class="fas fa-stop-circle"></i></button>
 			<button title="Download" @click="downloadResults(p.row)" v-show="supports('downloadResults') && hasResults(p.row)"><i class="fas fa-download"></i></button>
 			<button title="View results" @click="viewResults(p.row, true)" v-show="supports('downloadResults') && hasResults(p.row)"><i class="fas fa-eye"></i></button>
-		<!--<button title="Subscribe" @click="subscribeToJob(p.row)" v-show="supports('subscribe') && !jobSubscriptions.includes(p.row)"><i class="fas fa-bell"></i></button>
-			<button title="Unsubscribe" @click="unsubscribeFromJob(p.row)" v-show="supports('unsubscribe') && jobSubscriptions.includes(p.row)"><i class="fas fa-bell-slash"></i></button>-->
 		</template>
 	</DataTable>
 </template>
@@ -66,7 +64,9 @@ export default {
 				}
 			},
 			jobSubscriptions: [],
-			watchers: []
+			watchers: [],
+			listFunc: 'listJobs',
+			createFunc: 'createJob'
 		};
 	},
 	computed: {
@@ -80,7 +80,7 @@ export default {
 			return this.connection.listJobs();
 		},
 		updateData() {
-			this.updateTable(this.$refs.table, 'listJobs', 'createJob');
+			this.updateTable(this.$refs.table);
 		},
 		refreshJob(job, callback = null) {
 			var oldJob = Object.assign({}, job);
@@ -298,7 +298,7 @@ export default {
 				}
 			});
 		},
-		subscribeToJob(id) {  // TODO-CF: Upgrade when js-client supports it again
+		subscribeToJob(id) { // TODO: Update jobs, inform user etc.
 			var params = {job_id: id};
 			this.connection.subscribe(
 				'openeo.jobs.debug', params,
@@ -320,7 +320,7 @@ export default {
 			);
 			this.jobSubscriptions.push(id);
 		},
-		unsubscribeFromJob(id) {  // TODO-CF: Upgrade when js-client supports it again
+		unsubscribeFromJob(id) {
 			var params = {job_id: id};
 			this.connection.unsubscribe('openeo.jobs.debug', params);
 			this.connection.unsubscribe('openeo.jobs.output', params);

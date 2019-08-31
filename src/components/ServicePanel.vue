@@ -2,7 +2,7 @@
 	<DataTable ref="table" :dataSource="listServices" :columns="columns" id="ServicePanel">
 		<template slot="toolbar">
 			<button title="Add new service" @click="createServiceFromScript()" v-show="supports('createService')"><i class="fas fa-plus"></i> Add</button>
-			<button title="Refresh services" @click="updateData()"><i class="fas fa-sync-alt"></i></button> <!-- ToDo: Should be done automatically later -->
+			<button title="Refresh services" v-if="isListDataSupported" @click="updateData()"><i class="fas fa-sync-alt"></i></button> <!-- ToDo: Should be done automatically later -->
 		</template>
 		<template slot="enabled" slot-scope="p">
 			<span class="boolean">
@@ -69,7 +69,9 @@ export default {
 					name: 'Actions',
 					filterable: false
 				}
-			}
+			},
+			listFunc: 'listServices',
+			createFunc: 'createService'
 		};
 	},
 	methods: {
@@ -83,7 +85,7 @@ export default {
 			return this.connection.listServices();
 		},
 		updateData() {
-			this.updateTable(this.$refs.table, 'listServices', 'createService');
+			this.updateTable(this.$refs.table);
 		},
 		refreshService(service, callback = null) {
 			service.describeService()

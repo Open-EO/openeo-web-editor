@@ -7,9 +7,7 @@
 		<div class="percent"><div class="used" :class="{error: uploadErrored}" :style="'width: ' + this.uploadProgress + '%; opacity: ' + this.uploadFadeOut"></div></div>
 		<DataTable ref="table" :dataSource="listFiles" :columns="columns">
 			<template slot="toolbar">
-				<button title="Refresh files" @click="updateData()"><i class="fas fa-sync-alt"></i></button> <!-- ToDo: Should be done automatically later -->
-			<!--<button v-show="!subscribed" title="Subscribe to all changes to the file directory" @click="subscribeToFileChanges()"><i class="fas fa-bell"></i></button>
-				<button v-show="subscribed" title="Unsubscribe from all changes to the file directory" @click="unsubscribeFromFileChanges()"><i class="fas fa-bell-slash"></i></button> -->
+				<button title="Refresh files" v-if="isListDataSupported" @click="updateData()"><i class="fas fa-sync-alt"></i></button> <!-- ToDo: Should be done automatically later -->
 			</template>
 			<template slot="actions" slot-scope="p">
 				<button title="Download" @click="downloadFile(p.row)" v-show="supports('downloadFile')"><i class="fas fa-download"></i></button>
@@ -52,7 +50,9 @@ export default {
 			uploadProgressPerFile: [],
 			uploadErrored: false,
 			uploadFadeOut: 1,
-			showUploadDropHint: 0
+			showUploadDropHint: 0,
+			listFunc: 'listFiles',
+			createFunc: 'uploadFile'
 		};
 	},
 	watch: {
@@ -80,7 +80,7 @@ export default {
 			return this.connection.listFiles();
 		},
 		updateData() {
-			this.updateTable(this.$refs.table, 'listFiles', 'uploadFile');
+			this.updateTable(this.$refs.table);
 		},
 		uploadFiles(e) {
 			this.showUploadDropHint = 0;
@@ -152,7 +152,7 @@ export default {
 			this.connection.subscribe(
 				'openeo.files', {},
 				(data, info) => {
-					console.info("File change: " + JSON.stringify(data));
+					console.info("File change: " + JSON.stringify(data)); // ToDo: Update table
 				}
 			);
 			this.subscribed = true;

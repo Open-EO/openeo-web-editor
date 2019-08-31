@@ -10,11 +10,16 @@ export default {
 	},
 	data() {
 		return {
-			columns: {}
+			columns: {},
+			listFunc: null,
+			createFunc: null
 		};
 	},
 	computed: {
 		...Utils.mapGetters('server', ['isAuthenticated']),
+		isListDataSupported() {
+			return (this.isAuthenticated && this.supports(this.listFunc));
+		}
 	},
 	watch: { 
 		isAuthenticated(authenticated, beforeAuthenticated) {
@@ -30,17 +35,17 @@ export default {
 		updateData() {
 			// To be overwritten by implementations
 		},
-		updateTable(table, listFunc, createFunc) {
+		updateTable(table) {
 			if (!table) {
 				return;
 			}
 			else if (!this.isAuthenticated) {
 				table.setNoData('Please authenticate to list stored data.');
 			}
-			else if (!this.supports(listFunc)) {
+			else if (!this.supports(this.listFunc)) {
 				table.setNoData('Sorry, listing stored data is not supported by the server.');
 			}
-			else if (!this.supports(createFunc)) {
+			else if (!this.supports(this.createFunc)) {
 				table.setNoData('Sorry, this feature is not supported by the server.');
 			}
 			else {
