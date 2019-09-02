@@ -70,6 +70,16 @@ export default {
 			var promises = [];
 			var capabilities = cx.state.connection.capabilities();
 
+			// Request collections
+			if (capabilities.hasFeature('listCollections')) {
+				promises.push(cx.state.connection.listCollections()
+					.then(response => cx.commit('collections', response))
+					.catch(error => cx.commit('addDiscoveryError', error)));
+			}
+			else {
+				cx.commit('addDiscoveryError', new Error("Collections not supported by the back-end."));
+			}
+
 			// Request processes
 			if (capabilities.hasFeature('listProcesses') ) {
 				promises.push(cx.state.connection.listProcesses()
@@ -77,7 +87,7 @@ export default {
 					.catch(error => cx.commit('addDiscoveryError', error)));
 			}
 			else {
-				commit('addDiscoveryError', new Error("Processes not supported by the back-end."));
+				cx.commit('addDiscoveryError', new Error("Processes not supported by the back-end."));
 			}
 
 			// Request supported output formats
