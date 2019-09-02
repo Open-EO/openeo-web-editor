@@ -146,11 +146,8 @@ export default {
 		},
 
 		async logout(cx) {
-			// Logout from OIDC
-			// ToDo: Remove the condition once we update to the JS client. logout is not yet supported in the released version of the JS client
-			if (typeof cx.state.connection.logout === 'function') {
-				await cx.state.connection.logout();
-			}
+			// Logout (mostly from OIDC)
+			await cx.state.connection.logout();
 			// Reset values
 			cx.commit('reset');
 		},

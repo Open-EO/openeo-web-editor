@@ -37,7 +37,7 @@
     "build": "npm run build:epsg && vue-cli-service build --report"
   },
   "dependencies": {
-    "@openeo/js-client": "^0.4.1",
+    "@openeo/js-client": "^0.4.2",
     "@openeo/js-commons": "^0.4.7",
     "@openeo/vue-components": "^0.4.2",
     "ajv": "^6.10.0",

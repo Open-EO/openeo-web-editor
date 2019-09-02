@@ -95,9 +95,7 @@ export default {
 		...Utils.mapGetters('server', ['isConnected', 'isDiscovered', 'isAuthenticated', 'title']),
 		...Utils.mapState('editor', ['storedServers']),
 		supportsOidc() {
-			// signinCallbackOIDC is not yet supported in the released version of the JS client
-			// ToDo: Remove second part of condition once we update to the JS client
-			return this.supports('authenticateOIDC') && typeof OpenEO.signinCallbackOIDC === 'function';
+			return this.supports('authenticateOIDC');
 		},
 		supportsBasic() {
 			return this.supports('authenticateBasic');
@@ -117,11 +115,7 @@ export default {
 		};
 	},
 	created() {
-		// signinCallbackOIDC is not yet supported in the released version of the JS client
-		// ToDo: Remove if condition once we update to the JS client
-		if (typeof OpenEO.signinCallbackOIDC === 'function') {
-			OpenEO.signinCallbackOIDC('popup');
-		}
+		OpenEO.signinCallbackOIDC('popup');
 
 		var serverFromQuery = Utils.param('server');
 		if (Utils.isUrl(serverFromQuery)) {
