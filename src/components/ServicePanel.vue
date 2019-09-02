@@ -12,7 +12,7 @@
 			</span>
 		</template>
 		<template slot="actions" slot-scope="p">
-			<button title="Details" @click="serviceInfo(p.row)" v-show="supports('describeService')"><i class="fas fa-info"></i></button><button title="Show in Editorr" @click="showInEditor(p.row)" v-show="supports('describeService')"><i class="fas fa-code-branch"></i></button>
+			<button title="Details" @click="serviceInfo(p.row)" v-show="supports('describeService')"><i class="fas fa-info"></i></button><button title="Show in Editor" @click="showInEditor(p.row)" v-show="supports('describeService')"><i class="fas fa-code-branch"></i></button>
 			<button title="Edit metadata" @click="editMetadata(p.row)" v-show="supports('updateService')"><i class="fas fa-edit"></i></button>
 			<button title="Replace process graph" @click="replaceProcessGraph(p.row)" v-show="supports('updateService')"><i class="fas fa-retweet"></i></button>
 			<button title="Delete" @click="deleteService(p.row)" v-show="supports('deleteService')"><i class="fas fa-trash"></i></button>

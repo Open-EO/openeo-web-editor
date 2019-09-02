@@ -200,10 +200,10 @@ Block.prototype.formatCallback = function(pg) {
     }
 };
 
-Block.prototype.formatArray = function(value) {
+Block.prototype.formatArray = function(value, maxLength) {
     var formatted = value.map(v => typeof v === 'string' ? v : JSON.stringify(v)).join(", ");
     var html = VueUtils.htmlentities(formatted);
-    if (formatted.length <= 15) {
+    if (formatted.length <= maxLength) {
         return html;
     }
     else {
@@ -229,7 +229,9 @@ Block.prototype.formatObject = function(value) {
         }
         this.jsonSchemaValidator.validateGeoJsonSimple(value);
         return value.type;
-    } catch (e) {}
+    } catch (e) {
+        console.log(e);
+    }
 
     // Fallback to default
     return '<span title="' + VueUtils.htmlentities(JSON.stringify(value)) + '">Object</span>';
@@ -280,6 +282,7 @@ Block.prototype.getHtml = function()
         for (var k in fields) {
             var field = fields[k];
 
+            var maxLength = 25 - field.getLabel().length;
             var formattedValue = null;
             if (field && field.isEditable() && !this.blocks.compactMode) {
                 var value = field.getValue();
@@ -288,7 +291,7 @@ Block.prototype.getHtml = function()
                         formattedValue = 'N/A';
                     }
                     else if (Array.isArray(value)) {
-                        formattedValue = this.formatArray(value);
+                        formattedValue = this.formatArray(value, maxLength);
                     }
                     else if (value.callback instanceof ProcessGraph) {
                         formattedValue = this.formatCallback(value.callback);
@@ -300,8 +303,13 @@ Block.prototype.getHtml = function()
                         formattedValue = this.formatObject(value);
                     }
                 }
-                else if (typeof value === 'string' && value.length > 15) {
-                    formattedValue = '<span title="' + VueUtils.htmlentities(value) + '">' + value.substr(0,15) + '…</span>';
+                else if (typeof value === 'string') {
+                    if (value.length > maxLength) {
+                        formattedValue = '<span title="' + VueUtils.htmlentities(value) + '">' + value.substr(0, maxLength) + '…</span>';
+                    }
+                    else {
+                        formattedValue = value;
+                    }
                 }
                 else if (typeof value === 'boolean') {
                     formattedValue = value ? '✔️' : '❌';

@@ -9,7 +9,8 @@
 				<strong @click="toggle('collections')" :title="'Collections ('+collectionsCount+')'"><span class="toggle">▸</span> Collections</strong>
 				<div class="discovery-entity" v-for="(e, i) in collections" v-show="collectionsShow[i]" :key="e.id" draggable="true" @dragstart="onDrag($event, 'collection', e.id)">
 					<div class="discovery-info" @click="showCollectionInfo(e.id)">
-						<strong>{{ e.id }}</strong>
+						<strong :title="e.id">{{ e.id }}</strong>
+						<small v-if="e.title" :title="e.title">{{ e.title }}</small>
 					</div>
 					<button class="discovery-button" type="button" @click="insertCollection(e.id)" title="Insert"><i class="fas fa-plus"></i></button>
 				</div>
