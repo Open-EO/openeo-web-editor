@@ -114,13 +114,9 @@ export default {
 			cx.commit('discoveryCompleted', true);
 		},
 
-		async authenticateOIDC(cx, {clientId, redirectUri, uiMethod}) {
+		async authenticateOIDC(cx, options) {
 			if (cx.getters.supports('authenticateOIDC')) {
-				await cx.state.connection.authenticateOIDC({
-					clientId: clientId,
-					redirectUri, redirectUri,
-					uiMethod: uiMethod
-				});
+				await cx.state.connection.authenticateOIDC(options);
 			}
 			else {
 				throw "Sorry, OpenID Connect authentication is not supported.";
@@ -149,11 +145,11 @@ export default {
 			}
 		},
 
-		async logout(cx, {uiMethod}) {
+		async logout(cx) {
 			// Logout from OIDC
 			// ToDo: Remove the condition once we update to the JS client. logout is not yet supported in the released version of the JS client
 			if (typeof cx.state.connection.logout === 'function') {
-				await cx.state.connection.logout(uiMethod);
+				await cx.state.connection.logout();
 			}
 			// Reset values
 			cx.commit('reset');

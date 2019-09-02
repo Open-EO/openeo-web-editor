@@ -23,7 +23,7 @@
 				<a :href="link.href" target="_blank" :rel="link.rel">{{ link.title }}</a>
 			</div>
 			<div class="item">
-				<button class="navButton" type="button" @click.prevent="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+				<button class="navButton" type="button" @click.prevent="logout"><i class="fas fa-sign-out-alt"></i> Logout</button>
 			</div>
 		</div>
 	</div>
@@ -102,7 +102,7 @@ export default {
 		...Utils.mapActions('server', {logoutServer: 'logout'}),
 		...Utils.mapMutations('editor', {resetEditor: 'reset'}),
 		async logout() {
-			await this.logoutServer('popup');
+			await this.logoutServer();
 			this.resetEditor();
 		},
 		formatMegabyte(num) {

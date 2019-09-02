@@ -83,8 +83,6 @@ import Tab from '@openeo/vue-components/components/Tab.vue';
 import Utils from '../utils.js';
 import { OpenEO } from '@openeo/js-client';
 
-const OIDC_UI_METHOD = 'popup';
-
 export default {
 	name: 'ConnectForm',
 	mixins: [ConnectionMixin, EventBusMixin],
@@ -97,9 +95,9 @@ export default {
 		...Utils.mapGetters('server', ['isConnected', 'isDiscovered', 'isAuthenticated', 'title']),
 		...Utils.mapState('editor', ['storedServers']),
 		supportsOidc() {
-			// finishAuthenticateOIDC is not yet supported in the released version of the JS client
+			// signinCallbackOIDC is not yet supported in the released version of the JS client
 			// ToDo: Remove second part of condition once we update to the JS client
-			return this.supports('authenticateOIDC') && typeof OpenEO.finishAuthenticateOIDC === 'function';
+			return this.supports('authenticateOIDC') && typeof OpenEO.signinCallbackOIDC === 'function';
 		},
 		supportsBasic() {
 			return this.supports('authenticateBasic');
@@ -118,14 +116,13 @@ export default {
 			message: Config.loginMessage
 		};
 	},
-	beforeCreate() {
-		// finishAuthenticateOIDC is not yet supported in the released version of the JS client
-		// ToDo: Remove if condition once we update to the JS client
-		if (typeof OpenEO.finishAuthenticateOIDC === 'function') {
-			OpenEO.finishAuthenticateOIDC(OIDC_UI_METHOD);
-		}
-	},
 	created() {
+		// signinCallbackOIDC is not yet supported in the released version of the JS client
+		// ToDo: Remove if condition once we update to the JS client
+		if (typeof OpenEO.signinCallbackOIDC === 'function') {
+			OpenEO.signinCallbackOIDC('popup');
+		}
+
 		var serverFromQuery = Utils.param('server');
 		if (Utils.isUrl(serverFromQuery)) {
 			this.serverUrl = serverFromQuery;
@@ -204,9 +201,10 @@ export default {
 				}
 				else if (type === 'oidc') {
 					await this.authenticateOIDC({
-						clientId: this.clientId,
-						redirectUri: window.location,
-						uiMethod: OIDC_UI_METHOD
+						client_id: this.clientId,
+						redirect_uri: window.location,
+						uiMethod: 'popup',
+						automaticSilentRenew: true
 					});
 				}
 				else { // noauth
