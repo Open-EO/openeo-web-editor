@@ -73,6 +73,14 @@ export default {
 		return date.toISOString().replace('T', ' ').replace('Z', '').substring(0, 19); 
 	},
 
+	replaceParam(url, paramName, paramValue) {
+		var urlObj = new URL(url);
+		var query = new URLSearchParams(urlObj.search); 
+		query.set(paramName, paramValue);
+		urlObj.search = query.toString();
+		return urlObj.toString();
+	},
+
 	param(name) {
 		const urlParams = new URLSearchParams(window.location.search); 
 		return urlParams.get(name); 

@@ -106,6 +106,7 @@ export default {
 		},
 		renderMap() {
 			if (this.map !== null) {
+				this.map.updateSize();
 				this.map.render();
 				return;
 			}
@@ -371,12 +372,11 @@ export default {
 		},
 
 		removeLayerFromMap(id) {
-			if (!this.layers[id]) {
+			if (!this.userLayers[id]) {
 				return;
 			}
-			this.layer[id].un('change');
-			this.userLayers.removeLayer(this.layer[id]);
-			delete this.layer[id];
+			this.map.removeLayer(this.userLayers[id]);
+			delete this.userLayers[id];
 			this.toggleSwipeControl();
 		},
 
@@ -405,7 +405,12 @@ export default {
 				this.addLayerToMap(id, layer);
 			}
 			else {
-				this.userLayers[id].setUrl(url);
+				// Replace/add a query parameter with a unique ID so that OpenLayers doesn't load tiles from cache
+				var newUrl = Utils.replaceParam(url, '__editorSessionId', new Date().getTime());
+				// Make sure { and } are not url-encoded
+				newUrl = newUrl.replace(/%7B/g, '{').replace(/%7D/g, '}');
+				// Set new URL to reload tiles
+				this.userLayers[id].getSource().setUrl(newUrl);
 			}
 		}
 
