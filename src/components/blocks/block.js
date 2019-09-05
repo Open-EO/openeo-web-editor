@@ -192,7 +192,7 @@ Block.prototype.getComment = function() {
 };
 
 Block.prototype.formatCallback = function(pg) {
-    if (Utils.size(pg.getNodes()) === 1) {
+    if (Utils.size(pg.getNodes()) === 1) { // ToDo: Replace with getNodeCount(), available with js-commons v0.4.8
         return pg.getResultNode().process_id;
     }
     else {
