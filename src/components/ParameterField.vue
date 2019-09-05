@@ -136,7 +136,8 @@ export default {
 		return {
 			value: null,
 			hasBudget: false,
-			epsgCodes: []
+			epsgCodes: [],
+			context: null
 		};
 	},
 	computed: {
