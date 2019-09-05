@@ -260,14 +260,9 @@ export default {
 	min-width: 200px;
 	width: 30%;
 }
-.mainEditor {
-	min-height: 300px;
-	height: 50vh;
+.mainEditor, .userContent {
+	height: calc(50% - 1em);
 	flex-grow: 1;
-}
-.userContent {
-	flex-grow: 1;
-	height: 50%;
 }
 .separator {
 	border: 0;
