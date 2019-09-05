@@ -229,9 +229,7 @@ Block.prototype.formatObject = function(value) {
         }
         this.jsonSchemaValidator.validateGeoJsonSimple(value);
         return value.type;
-    } catch (e) {
-        console.log(e);
-    }
+    } catch (e) {}
 
     // Fallback to default
     return '<span title="' + VueUtils.htmlentities(JSON.stringify(value)) + '">Object</span>';
