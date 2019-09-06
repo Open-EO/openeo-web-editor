@@ -114,7 +114,6 @@ export default {
 			var process = event.dataTransfer.getData("application/openeo-process");
 			var collection = event.dataTransfer.getData("application/openeo-collection");
 			var pg = event.dataTransfer.getData("application/openeo-process-graph");
-			console.log(pg);
 			if (process) {
 				event.preventDefault();
 				this.insertProcess(process, event.pageX, event.pageY);

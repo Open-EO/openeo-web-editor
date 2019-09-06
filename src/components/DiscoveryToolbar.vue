@@ -119,21 +119,25 @@ export default {
 		...Utils.mapGetters('server', ['processRegistry'])
 	},
 	methods: {
+		async filterArrayAsync(arr, callback) {
+			const fail = Symbol();
+			return (await Promise.all(arr.map(async item => (await callback(item)) ? item : fail))).filter(i=>i!==fail);
+		},
 		async loadHubGraphs() {
 			try {
 				var res = await axios.get('https://hub.openeo.org/api/process_graphs');
 				if (!Array.isArray(res.data)) {
 					return;
 				}
-				this.hubGraphs = res.data.filter(meta => {
+				this.hubGraphs = await this.filterArrayAsync(res.data, async meta => {
 					try {
 						// ToDo: Parse JSON from Hub, this will likely change soon and can be removed.
 						if (!Utils.isObject(meta.process_graph)) {
 							meta.process_graph = JSON.parse(meta.process_graph);
 						}
 						var pgObj = new ProcessGraph(meta.process_graph, this.processRegistry);
-						pgObj.parse();
-						return true;
+						var errors = await pgObj.validate();
+						return errors.count() === 0;
 					} catch (e) {
 						return false;
 					}
