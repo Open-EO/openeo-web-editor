@@ -11,7 +11,7 @@
 			</button>
 		</EditorToolbar>
 		<div class="editorSplitter">
-			<DiscoveryToolbar v-if="showDiscoveryToolbar && editable" class="discoveryToolbar" :onAddCollection="insertCollection" :onAddProcess="insertProcess" />
+			<DiscoveryToolbar v-if="showDiscoveryToolbar && editable" class="discoveryToolbar" :onAddCollection="insertCollection" :onAddProcess="insertProcess" :onAddProcessGraph="insertProcessGraph" />
 			<div :id="id" class="graphBuilder" @drop="onDrop($event)" @dragover="allowDrop($event)"></div>
 		</div>
 		<SchemaModal ref="schemaModal" />
@@ -113,6 +113,8 @@ export default {
 		onDrop(event) {
 			var process = event.dataTransfer.getData("application/openeo-process");
 			var collection = event.dataTransfer.getData("application/openeo-collection");
+			var pg = event.dataTransfer.getData("application/openeo-process-graph");
+			console.log(pg);
 			if (process) {
 				event.preventDefault();
 				this.insertProcess(process, event.pageX, event.pageY);
@@ -120,6 +122,10 @@ export default {
 			else if (collection) {
 				event.preventDefault();
 				this.insertCollection(collection, event.pageX, event.pageY);
+			}
+			else if (pg) {
+				event.preventDefault();
+				this.insertProcessGraph(JSON.parse(pg));
 			}
 		},
 

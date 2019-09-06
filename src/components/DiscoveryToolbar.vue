@@ -28,6 +28,18 @@
 				</div>
 				<div class="noData" v-if="!processesCount">No processes available.</div>
 			</div>
+
+			<div :class="{ category: true, hubGraphs: true, expanded: hubGraphsExpanded }">
+				<strong @click="toggle('hubGraphs')" :title="'Process Graphs @ Hub ('+hubGraphsCount+')'"><span class="toggle">▸</span> Process Graphs @ Hub</strong>
+				<div class="discovery-entity" v-for="(e,i) in hubGraphs" v-show="hubGraphsShow[i]" :key="e.id" draggable="true" @dragstart="onDrag($event, 'process-graph', e.process_graph)">
+					<div class="discovery-info" @click="showProcessGraphInfo(e)">
+						<small v-if="e.title" :title="e.title">{{ e.title }}</small>
+						<small v-else>{{ e.id }}</small>
+					</div>
+					<button class="discovery-button" type="button" @click="insertProcessGraph(e.process_graph)" title="Insert"><i class="fas fa-plus"></i></button>
+				</div>
+				<div class="noData" v-if="!hubGraphsCount">No compatible process graphs available at the openEO Hub.</div>
+			</div>
 		</div>
 	</div>
 </template>
@@ -37,6 +49,7 @@ import Config from '../../config.js';
 import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
 import ConnectionMixin from './ConnectionMixin.vue';
 import Utils from '../utils.js';
+import { ProcessGraph } from '@openeo/js-commons';
 
 export default {
 	name: 'DiscoveryToolbar',
@@ -49,6 +62,10 @@ export default {
 		onAddProcess: {
 			type: Function,
 			required: true
+		},
+		onAddProcessGraph: {
+			type: Function,
+			required: true
 		}
 	},
 	data() {
@@ -56,16 +73,21 @@ export default {
 			searchTerm: '',
 			collectionsExpanded: false,
 			processesExpanded: false,
+			hubGraphsExpanded: false,
 			collectionsShow: [],
 			processesShow: [],
+			hubGraphs: [],
+			hubGraphsShow: [],
 			collectionsCount: 0,
 			processesCount: 0,
+			hubGraphsCount: 0,
 			timeout: null
 		};
 	},
 	created() {
 		this.filter('processes');
 		this.filter('collections');
+		this.loadHubGraphs();
 	},
 	watch: {
 		processes() {
@@ -88,14 +110,41 @@ export default {
 				this.timeout = null;
 				this.filter('processes');
 				this.filter('collections');
+				this.filter('hubGraphs');
 			}, 500);
 		}
 	},
 	computed: {
-		...Utils.mapState('server', ['processes', 'collections'])
+		...Utils.mapState('server', ['processes', 'collections']),
+		...Utils.mapGetters('server', ['processRegistry'])
 	},
 	methods: {
+		async loadHubGraphs() {
+			try {
+				var res = await axios.get('https://hub.openeo.org/api/process_graphs');
+				if (!Array.isArray(res.data)) {
+					return;
+				}
+				this.hubGraphs = res.data.filter(meta => {
+					try {
+						// ToDo: Parse JSON from Hub, this will likely change soon and can be removed.
+						if (!Utils.isObject(meta.process_graph)) {
+							meta.process_graph = JSON.parse(meta.process_graph);
+						}
+						var pgObj = new ProcessGraph(meta.process_graph, this.processRegistry);
+						pgObj.parse();
+						return true;
+					} catch (e) {
+						return false;
+					}
+				});
+				this.filter('hubGraphs');
+			} catch (e) {}
+		},
 		onDrag(event, type, data) {
+			if (Utils.isObject(data)) {
+				data = JSON.stringify(data);
+			}
 			event.dataTransfer.setData("application/openeo-" + type, data);
 			event.dataTransfer.setData("text/plain", data);
 		},
@@ -123,10 +172,13 @@ export default {
 			this.toggle(type, expand);
 		},
 		filterFn(e, term) {
-			if (e.id.toLowerCase().includes(term)) {
+			if (typeof e.summary === 'string' && e.summary.toLowerCase().includes(term)) {
 				return true;
 			}
-			else if (typeof e.summary === 'string' && e.summary.toLowerCase().includes(term)) {
+			if (typeof e.title === 'string' && e.title.toLowerCase().includes(term)) {
+				return true;
+			}
+			else if (e.id.toLowerCase().includes(term)) {
 				return true;
 			}
 			return false;
@@ -145,11 +197,17 @@ export default {
 				this.emit('showProcessInfo', id);
 			}
 		},
+		showProcessGraphInfo(pg) {
+			this.emit('showProcessGraphInfo', pg);
+		},
 		insertCollection(id) {
 			this.onAddCollection(id);
 		},
 		insertProcess(id) {
 			this.onAddProcess(id);
+		},
+		insertProcessGraph(pg) {
+			this.onAddProcessGraph(pg);
 		}
 	}
 }
@@ -254,6 +312,9 @@ export default {
 .discovery-entity small {
 	margin-top: 0.25em;
 	display: block;
+}
+.hubGraphs .discovery-info small {
+	margin-top: 0;
 }
 .discovery-button {
 	display: block;
