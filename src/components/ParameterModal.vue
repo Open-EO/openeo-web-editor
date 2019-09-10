@@ -12,6 +12,8 @@
 					</label>
 					<ParameterFields :uid="uid" :ref="field.name" :editable="editable" :field="field" :pass="field.getValue()" :processId="processId" />
 				</div>
+				<!-- We need a hidden submit button in the form tags to allow submiting the form via keyboard (enter key) -->
+				<button type="submit" style="display:none"></button>
 			</form>
 		</template>
 		<template v-if="typeof saveCallback === 'function'" #footer>
