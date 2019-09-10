@@ -2,8 +2,10 @@
 	<div id="modal" v-if="shown" @mousedown="possiblyClose" :style="{'z-index': zIndex}">
 		<div class="modal-container" :style="{'min-width': minWidth, 'max-width': maxWidth}">
 			<header class="modal-header">
-				<h2>{{ title }}</h2>
-				<span class="close" @click="close"><i class="fa fa-times" aria-hidden="true"></i></span>
+				<slot name="header">
+					<h2>{{ title }}</h2>
+					<span class="close" @click="close"><i class="fa fa-times" aria-hidden="true"></i></span>
+				</slot>
 			</header>
 			<main class="modal-content">
 				<slot name="main">
