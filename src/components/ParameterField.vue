@@ -313,9 +313,14 @@ export default {
 			}
 			else if (this.isArrayType) {
 				var values = [];
+				var itemType = this.schema.arrayOf();
 				for(var i in this.value) {
 					var fieldId = this.value[i].id;
-					values.push(this.$refs[fieldId][0].getValue());
+					var value = this.$refs[fieldId][0].getValue();
+					if (itemType === 'band-name' && (typeof value !== 'string' || value.length === 0)) {
+						continue; // Ignore invalid band names
+					}
+					values.push(value);
 				}
 				return values;
 			}
@@ -355,7 +360,7 @@ export default {
 			var v = [];
 			if (Array.isArray(arr)) {
 				for(var i in arr) {
-					if (arr[i].id) {
+					if (Utils.isObject(arr[i]) && arr[i].id) {
 						v.push(arr[i]);
 					}
 					else {
@@ -375,9 +380,22 @@ export default {
 			if (!Array.isArray(this.value)) {
 				this.value = [];
 			}
+
+			var def = null;
+			var itemType = this.schema.arrayOf();
+			if (itemType === 'string' || itemType === 'band-name') {
+				def = "";
+			}
+			else if (itemType === 'number' || itemType === 'integer') {
+				def = 0;
+			}
+			else if (itemType === 'array') {
+				def = [];
+			}
+
 			this.value.push({
 				id: this.value.length,
-				value: null
+				value: def
 			});
 			return false;
 		},
