@@ -65,6 +65,7 @@ export default {
 			},
 			jobSubscriptions: [],
 			watchers: [],
+			jobUpdater: null,
 			listFunc: 'listJobs',
 			createFunc: 'createJob'
 		};
@@ -73,7 +74,12 @@ export default {
 		...Utils.mapGetters('server', ['supportsBilling', 'supportsBillingPlans'])
 	},
 	mounted() {
-		window.setInterval(this.executeWatchers, 10000);
+		this.jobUpdater = setInterval(this.executeWatchers, 10000);
+	},
+	beforeDestroy() {
+		if (this.jobUpdater !== null) {
+			clearInterval(this.jobUpdater);
+		}
 	},
 	methods: {
 		listJobs() {
