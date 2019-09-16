@@ -17,5 +17,8 @@ export default {
 	// List of supported web map services (all lower-cased)
 	supportedMapServices: [
 		'xyz'
-	]
+	],
+
+	// Load process graphs from the openEO Hub?
+	loadHubProcessGraphs: true
 };

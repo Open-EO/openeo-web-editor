@@ -29,7 +29,7 @@
 				<div class="noData" v-if="!processesCount">No processes available.</div>
 			</div>
 
-			<div :class="{ category: true, hubGraphs: true, expanded: hubGraphsExpanded }">
+			<div v-if="loadHubProcessGraphs" :class="{ category: true, hubGraphs: true, expanded: hubGraphsExpanded }">
 				<strong @click="toggle('hubGraphs')" :title="'Process Graphs @ Hub ('+hubGraphsCount+')'"><span class="toggle">▸</span> Process Graphs @ Hub</strong>
 				<div class="discovery-entity" v-for="(e,i) in hubGraphs" v-show="hubGraphsShow[i]" :key="e.id" draggable="true" @dragstart="onDrag($event, 'process-graph', e.process_graph)">
 					<div class="discovery-info" @click="showProcessGraphInfo(e)">
@@ -70,6 +70,7 @@ export default {
 	},
 	data() {
 		return {
+			loadHubProcessGraphs: Config.loadHubProcessGraphs,
 			searchTerm: '',
 			collectionsExpanded: false,
 			processesExpanded: false,
@@ -124,6 +125,9 @@ export default {
 			return (await Promise.all(arr.map(async item => (await callback(item)) ? item : fail))).filter(i=>i!==fail);
 		},
 		async loadHubGraphs() {
+			if (!this.loadHubProcessGraphs) {
+				return;
+			}
 			try {
 				var res = await axios.get('https://hub.openeo.org/api/process_graphs');
 				if (!Array.isArray(res.data)) {
