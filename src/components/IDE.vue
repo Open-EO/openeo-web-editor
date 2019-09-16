@@ -13,7 +13,7 @@
 			</header>
 			<main class="page">
 				<div id="discovery" ref="discovery">
-					<DiscoveryToolbar class="toolbar" :onAddCollection="insertCollection" :onAddProcess="insertProcess" />
+					<DiscoveryToolbar class="toolbar" :onAddCollection="insertCollection" :onAddProcess="insertProcess" :onAddProcessGraph="insertProcessGraph" />
 				</div>
 				<hr class="separator" ref="separator0" @dblclick="centerSeparator($event, 0)" @mousedown="startMovingSeparator($event, 0)" />
 				<div id="workspace" ref="workspace">
@@ -361,6 +361,7 @@ export default {
 .tabContent .dataTable, .tabContent table {
 	width: 100%;
 	border-collapse: collapse;
+	font-size: 0.95em;
 }
 .tabContent table td,
 .tabContent table th {
