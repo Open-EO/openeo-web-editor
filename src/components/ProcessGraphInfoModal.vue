@@ -49,7 +49,7 @@ export default {
 				this.pg = new ProcessGraph(pg);
 			}
 			else {
-				this.pg = pg;
+				this.pg = (new ProcessGraph()).setAll(pg);
 			}
 			this.$refs.modal.show(this.displayTitle);
 		}
