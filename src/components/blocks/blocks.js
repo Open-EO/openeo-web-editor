@@ -837,8 +837,10 @@ Blocks.prototype.importProcessGraph = function(processGraph, registry) {
 
     // Import edges
     var nodes = pg.getNodes();
-    for(let i in nodes) {
-        var node = nodes[i];
+    // iterating directly through nodes causes error in Edge. Using keys instead
+    var keys = Object.keys(nodes);
+    keys.forEach(function(key) {
+        var node = nodes[key];
 
         var args = node.getArgumentNames();
         for(let i in args) {
@@ -867,7 +869,7 @@ Blocks.prototype.importProcessGraph = function(processGraph, registry) {
                     break;
             }
         }
-    }
+    }, this);
 },
 
 Blocks.prototype.importNodesFromProcessGraph = function(nodes, x = 0, y = 0) {
