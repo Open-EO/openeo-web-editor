@@ -14,7 +14,8 @@
 					</div>
 					<button class="discovery-button" type="button" @click="insertCollection(e.id)" title="Insert"><i class="fas fa-plus"></i></button>
 				</div>
-				<div class="noData" v-if="!collectionsCount">No collections available.</div>
+				<div class="noData" v-if="!collectionsCount && searchTerm === ''">No collections available.</div>
+				<div class="noData" v-else-if="!collectionsCount">No collections found.</div>
 			</div>
 
 			<div :class="{ category: true, processes: true, expanded: processesExpanded }">
@@ -26,7 +27,8 @@
 					</div>
 					<button class="discovery-button" type="button" @click="insertProcess(e.id)" title="Insert"><i class="fas fa-plus"></i></button>
 				</div>
-				<div class="noData" v-if="!processesCount">No processes available.</div>
+				<div class="noData" v-if="!processesCount && searchTerm === ''">No processes available.</div>
+				<div class="noData" v-else-if="!processesCount">No processes found.</div>
 			</div>
 
 			<div v-if="loadHubProcessGraphs" :class="{ category: true, hubGraphs: true, expanded: hubGraphsExpanded }">
@@ -38,7 +40,8 @@
 					</div>
 					<button class="discovery-button" type="button" @click="insertProcessGraph(e.process_graph)" title="Insert"><i class="fas fa-plus"></i></button>
 				</div>
-				<div class="noData" v-if="!hubGraphsCount">No compatible process graphs available at the openEO Hub.</div>
+				<div class="noData" v-if="!hubGraphsCount && searchTerm === ''">No compatible process graphs available at the openEO Hub.</div>
+				<div class="noData" v-else-if="!hubGraphsCount">No compatible process graphs found at the openEO Hub.</div>
 			</div>
 		</div>
 	</div>
