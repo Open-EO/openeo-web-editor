@@ -141,7 +141,7 @@ class Field extends ProcessSchema {
             else {
                 var errorMsg = "Can't determine which object property this input should be assigned to. Please specify manually in Process Graph mode.";
                 console.warn(errorMsg);
-                this.block.blocks.showError(errorMsg);
+                throw errorMsg;
                 // ToDo: It is not quite clear what to do when multiple refs are available.
             }
         }
