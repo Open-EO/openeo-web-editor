@@ -708,7 +708,6 @@ Blocks.prototype.addEdge = function(blockOut, fieldOut, blockIn, fieldIn, isData
     if (!this.areTypesCompatible(fieldIn, fieldOut)) {
         throw 'Types are not compatible';
     }
-
     // Check whether the data type allows multiple input edges
     if (fieldIn.getEdgeCount() > 0 && !fieldIn.allowsMultipleEdges()) {
         throw 'Parameter accepts only one input';
@@ -837,8 +836,8 @@ Blocks.prototype.importProcessGraph = function(processGraph, registry) {
 
     // Import edges
     var nodes = pg.getNodes();
-    for(let i in nodes) {
-        var node = nodes[i];
+    // iterating using for in loop causes error in edge
+    Object.values(nodes).forEach(node => {
 
         var args = node.getArgumentNames();
         for(let i in args) {
@@ -867,7 +866,7 @@ Blocks.prototype.importProcessGraph = function(processGraph, registry) {
                     break;
             }
         }
-    }
+    });
 },
 
 Blocks.prototype.importNodesFromProcessGraph = function(nodes, x = 0, y = 0) {
