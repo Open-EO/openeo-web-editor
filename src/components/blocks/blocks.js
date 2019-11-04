@@ -838,7 +838,6 @@ Blocks.prototype.importProcessGraph = function(processGraph, registry) {
     var nodes = pg.getNodes();
     // iterating using for in loop causes error in edge
     Object.values(nodes).forEach(node => {
-
         var args = node.getArgumentNames();
         for(let i in args) {
             var val = node.getRawArgumentValue(args[i]);
@@ -851,23 +850,29 @@ Blocks.prototype.importProcessGraph = function(processGraph, registry) {
                     break;
                 case 'object':
                 case 'array':
-                    // ToDo: This is only doing the first level and is not going deep into the structures
-                    for(let k in val) {
-                        if (!Field.isRef(val[k])) {
-                            continue;
-                        }
-                        else if (val[k].from_node) {
-                            this.addEdge(pg.getNode(val[k].from_node).blockId, "output", node.blockId, args[i], false);
-                        }
-                        else if (val[k].from_argument) {
-                            this.addEdge(this.getCallbackArgumentBlockByName(val[k].from_argument), "output", node.blockId, args[i], false);
-                        }
-                    }
+                    this.importEdgeDeep(val, pg, node, args, i);
                     break;
             }
         }
     });
-},
+};
+
+Blocks.prototype.importEdgeDeep = function(val, pg, node, args, i) {
+    for(let k in val) {
+        if(val[k] && typeof val[k] === "object"){
+            this.importEdgeDeep(val[k], pg, node, args, i);
+        }
+        else if (!Field.isRef(val)) {
+            continue;
+        }
+        else if (val.from_node) {
+            this.addEdge(pg.getNode(val.from_node).blockId, "output", node.blockId, args[i], false);
+        }
+        else if (val.from_argument) {
+            this.addEdge(this.getCallbackArgumentBlockByName(val.from_argument), "output", node.blockId, args[i], false);
+        }
+    }
+};
 
 Blocks.prototype.importNodesFromProcessGraph = function(nodes, x = 0, y = 0) {
     for(let i in nodes) {
@@ -879,7 +884,7 @@ Blocks.prototype.importNodesFromProcessGraph = function(nodes, x = 0, y = 0) {
         var block = this.addProcess(node.process_id, x, y, node.id);
         block.result = node.isResultNode;
         block.comment = node.description;
-        block.setValues(node.arguments);
+        block.setValues(node.arguments, false, true);
         block.render();
         node.blockId = block.id;
 
