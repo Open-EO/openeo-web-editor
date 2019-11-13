@@ -2,9 +2,9 @@
 	<div class="fieldContainer" v-if="selectedType !== null">
 		<div class="dataTypeChooser" v-if="allowedSchemas.length > 1">
 			<select name="dataType" v-model="selectedType" :disabled="!editable">
+				<option v-for="(ref, i) in nonActiveRefs.refs" :value="'refInput!' + JSON.stringify(ref)" :key="i + '_refs'">Output of {{ ref.from_node}}</option>
+				<option v-for="(ref, i) in nonActiveRefs.callbackRefs" :value="'refInput!' + JSON.stringify(ref)" :key="i + '_callbackRefs'">Value of callback argument {{ ref.from_argument}}</option>
 				<option v-for="(schema, type) in allowedSchemas" :key="type" :value="type">{{ schema.title() }}</option>
-				<option v-for="(ref, i) in nonActiveRefs.refs" :value="'refInput!' + JSON.stringify(ref)" :key="i+30">Output of {{ ref.from_node}}</option>
-				<option v-for="(ref, i) in nonActiveRefs.callbackRefs" :value="'refInput!' + JSON.stringify(ref)" :key="i+60">Value of callback argument {{ ref.from_argument}}</option>
 			</select>
 		</div>
 		<div v-if="typeof selectedType === 'String' && !selectedType.includes('refInput!') && allowedSchemas[selectedType].description()" class="description">
@@ -90,7 +90,14 @@ export default {
 			//TODO: optimize JsonSchemaValidator getTypeForValue to get less evalTypes
 			JsonSchemaValidator.getTypeForValue(SUPPORTED_TYPES.schemas.map(s => s.schema), this.pass)
 				.then((evalType) => {
-					this.setSelectedEvalType(evalType, false);
+					let isObjectType = evalType === '5' || (Array.isArray(evalType) && evalType.includes('5'));
+					let isOutput = this.pass.hasOwnProperty('from_node') || this.pass.hasOwnProperty('from_argument');
+					if(isObjectType && isOutput){
+						this.setSelectedOutputType();
+					}
+					else{
+						this.setSelectedEvalType(evalType, false);
+					}
 				}).catch(error => this.guessType());
 		}
 		else {
@@ -118,6 +125,10 @@ export default {
 		},
 		passToChild() {
 			if(typeof this.selectedType !== 'string' || !this.selectedType.includes('refInput!')){
+				//return empty object if user changed from ref input to another selected type
+				if(typeof this.pass === 'object' && this.pass != null && this.useAny && (this.pass.from_node || this.pass.from_argument)){
+					return {};
+				}
 				return this.pass;
 			}
 			else{
@@ -151,6 +162,11 @@ export default {
 			else {
 				this.setSelectedType(evalType);
 			}
+		},
+		setSelectedOutputType() {
+			let seletectedOutputRef = this.pass.from_node ? {'from_node' : this.pass.from_node} : {'from_argument': this.pass.from_argument};
+			let selectedOutputVal = 'refInput!' + JSON.stringify(seletectedOutputRef);
+			this.setSelectedType(selectedOutputVal);
 		},
 		setSelectedType(type) {
 			this.selectedType = String(type);

@@ -774,7 +774,9 @@ Block.prototype.save = function(serialize)
             if (newKey in boolFields) {
                 delete boolFields[newKey];
             }
-            this.getField(newKey).setValue(serialize[key]);
+            let field = this.getField(newKey);
+            field.setValue(serialize[key]);
+            field.dashNonActiveEdges();
         }
         else {
             for (var nonActiveKey in serialize.nonActiveValues) {
@@ -788,6 +790,7 @@ Block.prototype.save = function(serialize)
     }
 
     this.render();
+    this.blocks.redraw();
 };
 
 export default Block;

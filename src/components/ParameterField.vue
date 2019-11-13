@@ -58,11 +58,11 @@
 		<!-- Object -->
 		<div v-else-if="type === 'object'" class="arrayEditor">
 			<div v-if="(hasResult || hasCallbackArgument) && !isObjectItem">
-				<select @change="onChangeSelectedInput($event)" v-model="selectedInput">
+				<select @change="onChangeSelectedInput($event)" v-model.lazy="selectedInput">
 					<!--<option :value="'output'">Output of {{ value.from_node }}</option>-->
 					<option v-bind:value="{ref: 'parameter', key: 'parameter'}">Object</option>
 					<option v-for="(ref, i) in nonActiveValue.refs" v-bind:value="{ref: ref.from_node, key: 'from_node'}" :key="i">Output of {{ ref.from_node }}</option>
-					<option v-for="(ref, i) in nonActiveValue.callbackRefs" v-bind:value="{ref: ref.from_argument, key: 'from_argument'}" :key="i + 30">Value of callback argument {{ ref.from_argument }}</option>
+					<option v-for="(ref, i) in nonActiveValue.callbackRefs" v-bind:value="{ref: ref.from_argument, key: 'from_argument'}" :key="i + '_callbackRefs'">Value of callback argument {{ ref.from_argument }}</option>
 				</select>
 			</div>
 			<div class="objectElement" v-for="(propVal, propName) in value" :key="propName">
@@ -254,7 +254,6 @@ export default {
 			}
 			else{
 				newVal = this.nonActiveValue[typeRefDesignation].find(p => p[key] == inputTarget.ref);
-				this.$refs[key][0].value = newVal;
 			}
 			this.value = newVal;
 		},

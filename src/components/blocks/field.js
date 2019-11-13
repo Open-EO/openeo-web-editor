@@ -140,6 +140,9 @@ class Field extends ProcessSchema {
                 this.value = ref;
                 this.hasValue = true;
             }
+            else{
+                edge.setDashed(true, false);
+            }
             this.addRefToNonActiveValue(ref);
         }
         else {
@@ -250,6 +253,31 @@ class Field extends ProcessSchema {
         if(Field.isRef(value)){
             this.addRefToNonActiveValue(value);
         }
+    }
+
+    findInValue(target, value) {
+        var found = false;
+        for(let key in value){
+            if(value[key] && typeof value[key] === "object"){
+                found = this.findInValue(target, value[key]);
+                if(found)
+                    return found;
+            }
+            if(target[key] && value[key] === target[key]){
+                return true;
+            }
+        }
+        //false
+        return found;
+    }
+
+    dashNonActiveEdges() {
+        let edges = this.getEdges();
+        edges.forEach((edge) => {
+            let ref = this._getEdgeRef(edge);
+            let refInValue = this.findInValue(ref, this.value);
+            edge.setDashed(!refInValue, true);
+        });
     }
 
     getEdgeCount() {
