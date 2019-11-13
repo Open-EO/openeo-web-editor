@@ -395,8 +395,8 @@ export default {
 			else if(this.type === 'object'){
 				for (let key in this.value){
 					if(this.value.hasOwnProperty(key)){
-						//TODO: find proper way
-						let isResultVal = this.$refs[key].length == 1;
+						//check if output/callbackArg is selected in top selection box
+						let isResultVal = this.$refs[key].length == 1 && (this.$refs[key][0].value.from_node || this.$refs[key][0].value.from_argument);
 						let inputType = this.$refs[key][0].value.from_node ? "from_node" : "from_argument";
 						let newKey = isResultVal ? inputType : this.$refs[key][0].value;
 						let newValue = isResultVal ? this.$refs[key][0].value[inputType] : this.$refs[key][1].getValue();
