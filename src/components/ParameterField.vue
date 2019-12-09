@@ -5,7 +5,7 @@
 			<div class="fieldValue externalData fromNode">
 				<span>Output of <tt>#{{ value.from_node }}</tt></span>
 			</div>
-			<button type="button" v-if="isArrayType" @click="convertToArray()"><i class="fas fa-list"></i> Convert to Array</button>
+			<button type="button" v-if="isArrayType" @click="convertToArray()"><i class="fas fa-list"></i> Convert to array</button>
 		</template>
 		<!-- Callback Argument -->
 		<template v-else-if="isCallbackArgument">
@@ -59,7 +59,6 @@
 		<div v-else-if="type === 'object'" class="arrayEditor">
 			<div v-if="(hasResult || hasCallbackArgument) && !isObjectItem">
 				<select @change="onChangeSelectedInput($event)" v-model.lazy="selectedInput">
-					<!--<option :value="'output'">Output of {{ value.from_node }}</option>-->
 					<option v-bind:value="{ref: 'parameter', key: 'parameter'}">Object</option>
 					<option v-for="(ref, i) in nonActiveValue.refs" v-bind:value="{ref: ref.from_node, key: 'from_node'}" :key="i">Output of {{ ref.from_node }}</option>
 					<option v-for="(ref, i) in nonActiveValue.callbackRefs" v-bind:value="{ref: ref.from_argument, key: 'from_argument'}" :key="i + '_callbackRefs'">Value of callback argument {{ ref.from_argument }}</option>
@@ -74,7 +73,7 @@
 				</div>
 				<input v-if="propName !== 'from_node' && propName !== 'from_argument'" class= "fieldValue" :ref="propName" v-model="propName" type="text" :name="fieldName" :disabled="!editable"/>
 				<ParameterFields :ref="propName" v-if="propName !== 'from_node' && propName !== 'from_argument'" :editable="editable" :field="field" :useAny="true" :isObjectItem="true" :pass="propVal" :nonActiveValue="nonActiveValue" />
-				<button v-if="editable" class="arrayElementDelete" type="button" @click="removeFieldInObject(propName)"><i class="fas fa-trash"></i></button>
+				<button v-if="editable && ((!hasResult && !hasCallbackArgument) || isObjectItem)" class="arrayElementDelete" type="button" @click="removeFieldInObject(propName)"><i class="fas fa-trash"></i></button>
 			</div>
 			<button type="button" v-if="editable && (!hasResult && !hasCallbackArgument) || isObjectItem || selectedInput.ref === 'parameter'" @click="addFieldInObject('unnamed', 1)"><i class="fas fa-plus"></i> Add</button>
 		</div>
