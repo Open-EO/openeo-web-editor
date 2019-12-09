@@ -1,6 +1,6 @@
 {
   "name": "@openeo/web-editor",
-  "version": "0.4.0-rc.1",
+  "version": "0.4.0-rc.2",
   "apiVersions": [
     "0.4.0",
     "0.4.1",
@@ -19,6 +19,9 @@
     },
     {
       "name": "Christoph Friedrich"
+    },
+    {
+      "name": "Sofian Slimani"
     }
   ],
   "description": "An interactive and easy to use web-based editor for the OpenEO API.",
@@ -49,7 +52,7 @@
     "ol-ext": "^3.1.4",
     "regenerator-runtime": "^0.13.3",
     "vue": "^2.6.10",
-    "vue-ctk-date-time-picker": "^2.1.1",
+    "vue-ctk-date-time-picker": "^2.3.1",
     "vue-snotify": "^3.2.1",
     "vuedraggable": "^2.21.0",
     "vuex": "^3.1.1"
