@@ -19,7 +19,6 @@ var Edge = function(id, block1, field1, block2, field2, blocks)
     this.position1 = null;
     this.position2 = null;
     this.segment = null;
-    this.dashed = false;
 
     if (!block1.getField(field1.name) || !block2.getField(field2.name)) {
         throw "Can't create edge because the field doesn't exist";
@@ -68,15 +67,9 @@ Edge.prototype.draw = function(svg)
     );
 
     var lineWidth = this.defaultSize*this.blocks.scale;
-
-    if (this.selected) {
-        var strokeStyle = 'rgba(0, 200, 0, 1)';
-    } else {
-        var strokeStyle = 'rgba(255, 200, 0, 1)';
-    }
-    let lineOptions = this.dashed ? {'stroke': strokeStyle, 'stroke-width': lineWidth, 'stroke-dasharray': '4 2'} : {'stroke': strokeStyle, 'stroke-width': lineWidth};
-    svg.line(this.position1.x, this.position1.y, this.position2.x, this.position2.y, lineOptions);
+    svg.line(this.position1.x, this.position1.y, this.position2.x, this.position2.y, this.getLineStyle(lineWidth, this.selected, this.isDashed()));
     
+    // Drawing the arrow
     var xM = ((this.position1.x+this.position2.x)/2.0);
     var yM = ((this.position1.y+this.position2.y)/2.0);
     var norm = Math.sqrt(Math.pow(this.position1.x-this.position2.x,2)+Math.pow(this.position1.y-this.position2.y,2));
@@ -87,16 +80,19 @@ Edge.prototype.draw = function(svg)
     var cosB = Math.cos(-alpha);
     var sinB = Math.sin(-alpha);
 
-    // Drawing the arrow
     var xA = (this.position1.x-xM)*this.blocks.scale*10/(norm/2);
     var yA = (this.position1.y-yM)*this.blocks.scale*10/(norm/2);
-    var lineWidth = this.defaultSize*this.blocks.scale/3.0;
-    svg.line(xM, yM, xM+(xA*cos-yA*sin), yM+(yA*cos+xA*sin), {
-        'stroke': strokeStyle, 'stroke-width': lineWidth
-    });
-    svg.line(xM, yM, xM+(xA*cosB-yA*sinB), yM+(yA*cosB+xA*sinB), {
-        'stroke': strokeStyle, 'stroke-width': lineWidth
-    });
+    var arrowStyle = this.getLineStyle(lineWidth/3.0, this.selected);
+    svg.line(xM, yM, xM+(xA*cos-yA*sin), yM+(yA*cos+xA*sin), arrowStyle);
+    svg.line(xM, yM, xM+(xA*cosB-yA*sinB), yM+(yA*cosB+xA*sinB), arrowStyle);
+};
+
+Edge.prototype.getLineStyle = function(lineWidth, selected = false, dashed = false) {
+    return {
+        'stroke': selected ? 'rgba(0, 200, 0, 1)' : 'rgba(255, 200, 0, 1)',
+        'stroke-width': lineWidth,
+        'stroke-dasharray': dashed ? '4 2' : 'none'
+    }
 };
 
 /**
@@ -159,13 +155,10 @@ Edge.prototype.erase = function()
     this.block2.render();
 };
 
-Edge.prototype.setDashed = function(dashed, rerender)
+Edge.prototype.isDashed = function()
 {
-    this.dashed = dashed;
-    if(rerender){
-        this.block1.render();
-        this.block2.render();
-    }
+    var field = this.field1.isInput() ? this.field1 : this.field2;
+    return !field.isEdgeUsed(this);
 };
 
 /**

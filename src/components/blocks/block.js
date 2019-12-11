@@ -135,12 +135,12 @@ Block.prototype.getDefaultOutputLabel = function() {
 /**
  * Set the values
  */
-Block.prototype.setValues = function(values, json = false, addNonActiveIfRef = false)
+Block.prototype.setValues = function(values, json = false)
 {
     for (var fieldName in values) {
         var field = this.getField(fieldName);
         if (field !== null) {
-            field.setValue(json ? JSON.parse(values[fieldName]) : values[fieldName], addNonActiveIfRef);
+            field.setValue(json ? JSON.parse(values[fieldName]) : values[fieldName]);
         }
     }
 };
@@ -193,18 +193,54 @@ Block.prototype.getComment = function() {
 
 Block.prototype.formatCallback = function(pg) {
     if (Utils.size(pg.getNodes()) === 1) { // ToDo: Replace with getNodeCount(), available with js-commons v0.4.8
-        return pg.getResultNode().process_id;
+        return VueUtils.htmlentities(pg.getResultNode().process_id);
     }
     else {
         return 'Callback';
     }
 };
 
+Block.prototype.formatValue = function(value, maxLength) {
+    var formattedValue = null;
+    if (typeof value === 'object') {
+        if (value === null) {
+            formattedValue = 'N/A';
+        }
+        else if (Array.isArray(value)) {
+            formattedValue = this.formatArray(value, maxLength);
+        }
+        else {
+            formattedValue = this.formatObject(value);
+        }
+    }
+    else if (typeof value === 'string') {
+        if (value.length > maxLength) {
+            formattedValue = '<span title="' + VueUtils.htmlentities(value) + '">' + VueUtils.htmlentities(value.substr(0, maxLength)) + '…</span>';
+        }
+        else {
+            formattedValue = VueUtils.htmlentities(value);
+        }
+    }
+    else if (typeof value === 'boolean') {
+        formattedValue = value ? '✔️' : '❌';
+    }
+    else if (typeof value === 'number') {
+        formattedValue = value.toString();
+    }
+    else {
+        formattedValue = VueUtils.htmlentities(JSON.stringify(value));
+    }
+    return formattedValue;
+};
+
 Block.prototype.formatArray = function(value, maxLength) {
-    var formatted = value.map(v => typeof v === 'string' ? v : JSON.stringify(v)).join(", ");
-    var html = VueUtils.htmlentities(formatted);
-    if (formatted.length <= maxLength) {
-        return html;
+    var html = value.map(v => this.formatValue(v, maxLength)).join(", ");
+    var unformatted = html.replace(/<[^>]*>/g, ''); // Strip HTML tags
+    if (typeof VueUtils.htmlentities_decode === 'function') { // ToDo: htmlentities_decode is only available in a more recent version, remove condition once dependency has been updated.
+        formatted = VueUtils.htmlentities_decode(formatted);
+    }
+    if (unformatted.length > 0 && unformatted.length <= maxLength) {
+        return "[" + html + "]";
     }
     else {
         return '<span title="' + html + '">List(' + value.length + ')</span>';
@@ -215,9 +251,19 @@ Block.prototype.formatObject = function(value) {
     if (Object.keys(value).length === 0) {
         return 'None';
     }
-
-    if (typeof value.variable_id === 'string') {
-        return 'Variable';
+    else if (value.callback instanceof ProcessGraph) {
+        return this.formatCallback(value.callback);
+    }
+    else if (Field.isRef(value)) {
+        if (value.from_node) {
+            return "#" + VueUtils.htmlentities(value.from_node);
+        }
+        else {
+            return "&" + VueUtils.htmlentities(value.from_argument);
+        }
+    }
+    else if (typeof value.variable_id === 'string') {
+        return "$" + VueUtils.htmlentities(value.variable_id);
     }
     else if (typeof value.west !== 'undefined' && typeof value.east !== 'undefined' && typeof value.south !== 'undefined' && typeof value.north !== 'undefined') {
         return 'Bounding Box';
@@ -282,39 +328,9 @@ Block.prototype.getHtml = function()
 
             var maxLength = 25 - field.getLabel().length;
             var formattedValue = null;
-            if (field && field.isEditable() && !this.blocks.compactMode) {
-                var value = field.getValue();
-                if (typeof value === 'object') {
-                    if (value === null) {
-                        formattedValue = 'N/A';
-                    }
-                    else if (Array.isArray(value)) {
-                        formattedValue = this.formatArray(value, maxLength);
-                    }
-                    else if (value.callback instanceof ProcessGraph) {
-                        formattedValue = this.formatCallback(value.callback);
-                    }
-                    else if (value.from_argument || value.from_node) {
-                        // Don't show anything
-                    }
-                    else {
-                        formattedValue = this.formatObject(value);
-                    }
-                }
-                else if (typeof value === 'string') {
-                    if (value.length > maxLength) {
-                        formattedValue = '<span title="' + VueUtils.htmlentities(value) + '">' + value.substr(0, maxLength) + '…</span>';
-                    }
-                    else {
-                        formattedValue = value;
-                    }
-                }
-                else if (typeof value === 'boolean') {
-                    formattedValue = value ? '✔️' : '❌';
-                }
-                else if (typeof value === 'number') {
-                    formattedValue = value.toString();
-                }
+            var value = field.getValue();
+            if (field && field.isEditable() && !this.blocks.compactMode && !Field.isRef(value)) {
+                formattedValue = this.formatValue(value, maxLength, true);
             }
 
             if (typeof formattedValue === 'string') {
@@ -760,29 +776,21 @@ Block.prototype.save = function(serialize)
         }
     }
     for (var key in serialize) {
-        if(key !== "nonActiveValues"){
-            var newKey = key;
-            var isArray = false;
-            if (newKey.substr(newKey.length-2, 2) == '[]') {
-                newKey = newKey.substr(0, newKey.length-2);
-                isArray = true;
-            }
-            if (serialize[key] == null && isArray) {
-                serialize[key] = [];
-            }
+        var newKey = key;
+        var isArray = false;
+        if (newKey.substr(newKey.length-2, 2) == '[]') {
+            newKey = newKey.substr(0, newKey.length-2);
+            isArray = true;
+        }
+        if (serialize[key] == null && isArray) {
+            serialize[key] = [];
+        }
 
-            if (newKey in boolFields) {
-                delete boolFields[newKey];
-            }
-            let field = this.getField(newKey);
-            field.setValue(serialize[key]);
-            field.dashNonActiveEdges();
+        if (newKey in boolFields) {
+            delete boolFields[newKey];
         }
-        else {
-            for (var nonActiveKey in serialize.nonActiveValues) {
-                this.getField(nonActiveKey).setNonActiveValue(serialize.nonActiveValues[nonActiveKey]);
-            }
-        }
+        let field = this.getField(newKey);
+        field.setValue(serialize[key]);
     }
 
     for (var key in boolFields) {

@@ -1,6 +1,8 @@
 import { ProcessSchema } from '../../processSchema.js';
 import Utils from '../../utils.js';
 
+const MULTI_INPUT_TYPES = ['array', 'object', 'bounding-box', 'kernel', 'output-format-options', 'process-graph', 'process-graph-variables', 'temporal-interval', 'temporal-intervals'];
+
 class Field extends ProcessSchema {
 
     constructor(name, label, schema, description = '', isRequired = false, isOutput = false, isExperimental = false, isDeprecated = false) {
@@ -24,40 +26,39 @@ class Field extends ProcessSchema {
     
         // Value
         this.resetValue();
-        this.nonActiveValue = this.isObjectType() ?  {value: {}, refs:[], callbackRefs: []} : null;
     }
 
     resetValue() {
-        this.hasValue = false;
         if (this.hasDefaultValue()) {
-            this.value = this.defaultValue();
-            this.hasValue = true;
+            this.setValue(this.defaultValue());
             return;
         }
         
+        var value;
         if (this.nullable()) {
-            this.value = null;
+            value = null;
         }
         else {
             var dataType = this.dataType(true);
             switch(dataType) {
                 case 'array':
-                    this.value = [];
+                    value = [];
                     break;
                 case 'string':
-                    this.value = '';
+                    value = '';
                     break;
                 case 'integer':
                 case 'number':
-                    this.value = 0;
+                    value = 0;
                     break;
                 case 'boolean':
-                    this.value = false;
+                    value = false;
                     break;
                 default:
-                    this.value = null;
+                    value = null;
             }
         }
+        this.setValue(value, false);
     }
 
     setBlock(block) {
@@ -89,11 +90,8 @@ class Field extends ProcessSchema {
     }
 
     allowsMultipleEdges() {
-        //var nativeTypes = this.dataTypes(false, true);
-        var nativeTypes = this.dataTypes(false, false);
         // Is there any type that potentially allows multiple inputs?
-        // ToDo: This is not 100% precise as raster/vector cubes for example only allow one edge to get in.
-        return nativeTypes.filter(t => ['array', 'object'].includes(t)).length > 0;
+        return this.dataTypes().filter(t => MULTI_INPUT_TYPES.includes(t)).length > 0;
     }
 
     _getEdgeRef(edge) {
@@ -119,61 +117,57 @@ class Field extends ProcessSchema {
             return;
         }
         else if (!this.allowsMultipleEdges()) {
-            this.value = ref;
-            this.hasValue = true;
+            this.setValue(ref);
         }
         else if (this.isArrayType()) {
-            // ToDo: Ask the user whether he wants to add an element to the array or replace it?
             if (Field.isRef(this.value)) {
-                this.value = [this.value, ref];
+                this.setValue([this.value, ref]);
             }
             else if (Array.isArray(this.value) && this.value.length > 0) {
                 this.value.push(ref);
+                this.setValue(this.value);
             }
             else {
-                this.value = ref;
-                this.hasValue = true;
+                this.setValue(ref);
             }
         }
         else if (this.isObjectType()) {
-            if(!this.value || Object.keys(this.value).length == 0){
-                this.value = ref;
-                this.hasValue = true;
+            if (this.getEdgeCount() === 1 && (!this.value || Object.keys(this.value).length == 0)) {
+                this.setValue(ref);
             }
-            else{
-                edge.setDashed(true, false);
+            else {
+                this.resetValue();
             }
-            this.addRefToNonActiveValue(ref);
         }
         else {
             // ToDo: This is probably of data type mixed or any, how to handle?
-            this.value = ref;
-            this.hasValue = true;
+            this.setValue(ref);
         }
     }
 
     _removeValueForEdge(edge) {
+        // ToDo: Check whether this should only be executed for input fields
         var ref = this._getEdgeRef(edge);
-        if (this._isRefEqual(ref, this.value)) {
+        if (Field.isRefEqual(ref, this.value)) {
             this.resetValue();
         }
         else if (this.isArrayType() || this.isObjectType()) {
-            this.value = this._removeValueForEdgeDeep(this.value, ref);
+            this.setValue(this._removeValueForEdgeDeep(this.value, ref));
         }
     }
 
     _removeValueForEdgeDeep(value, ref) {
         if (Array.isArray(value)) {
             var i = value.length;
-            while(i--) {
+            while(--i >= 0) {
                 if (value[i] === null || typeof value[i] !== 'object') {
                     continue;
                 }
-                else if (this._isRefEqual(ref, value[i])) {
+                else if (Field.isRefEqual(ref, value[i])) {
                     value.splice(i, 1);
                 }
                 else {
-                    this._removeValueForEdgeDeep(value[i], ref);
+                    value[i] = this._removeValueForEdgeDeep(value[i], ref);
                 }
             }
 
@@ -183,11 +177,11 @@ class Field extends ProcessSchema {
                 if (!value.hasOwnProperty(key) || value[key] === null || typeof value[key] !== 'object') {
                     continue;
                 }
-                else if (this._isRefEqual(ref, value[key])) {
+                else if (Field.isRefEqual(ref, value[key])) {
                     delete value[key];
                 }
                 else {
-                    this._removeValueForEdgeDeep(value[key], ref);
+                    value[i] = this._removeValueForEdgeDeep(value[key], ref);
                 }
             }
         }
@@ -198,14 +192,14 @@ class Field extends ProcessSchema {
         return (Utils.isObject(obj) && (obj.from_argument || obj.from_node));
     }
 
-    _isRefEqual(a, b) {
-        if (!Utils.isObject(a) || !Utils.isObject(b)) {
+    static isRefEqual(ref1, ref2) {
+        if (!Field.isRef(ref1) || !Field.isRef(ref2)) {
             return false;
         }
-        else if (a.from_argument && a.from_argument === b.from_argument) {
+        else if (ref1.from_argument && ref1.from_argument === ref2.from_argument) {
             return true;
         }
-        else if (a.from_node && a.from_node == b.from_node) {
+        else if (ref1.from_node && ref1.from_node === ref2.from_node) {
             return true;
         }
         return false;
@@ -235,49 +229,65 @@ class Field extends ProcessSchema {
         return false;
     }
 
-    addRefToNonActiveValue(ref) {
-        if(ref.from_node && !this.nonActiveValue.refs.some(item => item.from_node === ref.from_node)){
-            this.nonActiveValue.refs.push(ref);
+    isEdgeUsed(edge) {
+        var ref = this._getEdgeRef(edge);
+        if (Field.isRefEqual(ref, this.value)) {
+            return true;
         }
-        else if(ref.from_argument && !this.nonActiveValue.callbackRefs.some(item => item.from_argument === ref.from_argument)){
-            this.nonActiveValue.callbackRefs.push(ref);
-        }
+        return this._findRefInValue(ref, this.value);
     }
 
-    addRefsToNonActiveValue(value){
-        for(let key in value){
-            if(value[key] && typeof value[key] === "object"){
-                this.addRefsToNonActiveValue(value[key]);
-            }
+    _findRefInValue(ref, value) {
+        if (!value || typeof value !== 'object') {
+            return false;
         }
-        if(Field.isRef(value)){
-            this.addRefToNonActiveValue(value);
+        else if (Field.isRefEqual(ref, value)) {
+            return true;
         }
-    }
-
-    findInValue(target, value) {
-        var found = false;
-        for(let key in value){
-            if(value[key] && typeof value[key] === "object"){
-                found = this.findInValue(target, value[key]);
-                if(found)
-                    return found;
-            }
-            if(target[key] && value[key] === target[key]){
+        for(let key in value) {
+            if (this._findRefInValue(ref, value[key])) {
                 return true;
             }
         }
-        //false
-        return found;
+        return false;
     }
 
-    dashNonActiveEdges() {
-        let edges = this.getEdges();
-        edges.forEach((edge) => {
-            let ref = this._getEdgeRef(edge);
-            let refInValue = this.findInValue(ref, this.value);
-            edge.setDashed(!refInValue, true);
-        });
+    getRefs() {
+        var obj = {
+            from_node: [],
+            from_argument: []
+        };
+        for(var i in this.edges) {
+            var ref = this._getEdgeRef(this.edges[i]);
+            if (ref.from_argument) {
+                obj.from_argument.push(ref.from_argument);
+            }
+            else if (ref.from_node) {
+                obj.from_node.push(ref.from_node);
+            }
+        }
+        return obj;
+    }
+
+    getRefsInValue() {
+        var obj = {
+            from_node: [],
+            from_argument: []
+        };
+        return this._getRefsInValue(obj, ref);
+    }
+
+    _getRefsInValue(obj, value) {
+        if (!value || typeof value !== 'object') {
+            return false;
+        }
+        for(let key in value) {
+            if (key === 'from_argument' || key === 'from_node') {
+                obj[key].push(value[key]);
+            }
+            this._getRefsInValue(obj, value[key]);
+        }
+        return obj;
     }
 
     getEdgeCount() {
@@ -296,24 +306,15 @@ class Field extends ProcessSchema {
         return this.label;
     }
 
-    getNonActiveValue() {
-        return this.nonActiveValue;
-    }
-
-    setNonActiveValue(value){
-        this.nonActiveValue = value;
-    }
-
-    setValue(value, addNonActiveIfRef = false) {
+    setValue(value, hasValue = true) {
         if (this.dataType(true) == 'boolean') {
             value = !!value;
         }
-        //TODO: proper way to decide when to add nonActiveValues
-        else if(this.isObjectType() && addNonActiveIfRef && !value.callback){
-            this.addRefsToNonActiveValue(value);
-        }
         this.value = value;
-        this.hasValue = true;
+        this.hasValue = hasValue;
+        if (this.block && this.block.blocks) {
+            this.block.blocks.redraw();
+        }
         return this; // Allow chaining
     }
 

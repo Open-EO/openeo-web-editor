@@ -56,26 +56,13 @@
 			<VisualEditor ref="callbackBuilder" class="callbackEditor" id="inlinePgEditor" :editable="editable" :callbackArguments="schema.getCallbackParameters()" :value="value" :enableExecute="false" :enableLocalStorage="false" />
 		</div>
 		<!-- Object -->
-		<div v-else-if="type === 'object'" class="arrayEditor">
-			<div v-if="(hasResult || hasCallbackArgument) && !isObjectItem">
-				<select @change="onChangeSelectedInput($event)" v-model.lazy="selectedInput">
-					<option v-bind:value="{ref: 'parameter', key: 'parameter'}">Object</option>
-					<option v-for="(ref, i) in nonActiveValue.refs" v-bind:value="{ref: ref.from_node, key: 'from_node'}" :key="i">Output of {{ ref.from_node }}</option>
-					<option v-for="(ref, i) in nonActiveValue.callbackRefs" v-bind:value="{ref: ref.from_argument, key: 'from_argument'}" :key="i + '_callbackRefs'">Value of callback argument {{ ref.from_argument }}</option>
-				</select>
-			</div>
+		<div v-else-if="type === 'object'" class="objectEditor">
 			<div class="objectElement" v-for="(propVal, propName) in value" :key="propName">
-				<div v-if="propName === 'from_node'">
-					<ParameterField :ref="propName" :editable="editable" :field="field" :isObjectItem="true" :schema="schema" :pass="{'from_node': propVal}" />
-				</div>
-				<div v-if="propName === 'from_argument'">
-					<ParameterField :ref="propName" :editable="editable" :field="field" :isObjectItem="true" :schema="schema" :pass="{'from_argument': propVal}" />
-				</div>
-				<input v-if="propName !== 'from_node' && propName !== 'from_argument'" class= "fieldValue" :ref="propName" v-model="propName" type="text" :name="fieldName" :disabled="!editable"/>
-				<ParameterFields :ref="propName" v-if="propName !== 'from_node' && propName !== 'from_argument'" :editable="editable" :field="field" :useAny="true" :isObjectItem="true" :pass="propVal" :nonActiveValue="nonActiveValue" />
-				<button v-if="editable && ((!hasResult && !hasCallbackArgument) || isObjectItem)" class="arrayElementDelete" type="button" @click="removeFieldInObject(propName)"><i class="fas fa-trash"></i></button>
+				<input class= "fieldValue" :ref="propName" :value="propName" type="text" :name="fieldName" :disabled="!editable"/>
+				<ParameterFields :ref="propName" :editable="editable" :field="field" :useAny="true" :isObjectItem="true" :pass="propVal" />
+				<button v-if="editable" class="arrayElementDelete" type="button" @click="removeFieldInObject(propName)"><i class="fas fa-trash"></i></button>
 			</div>
-			<button type="button" v-if="editable && (!hasResult && !hasCallbackArgument) || isObjectItem || selectedInput.ref === 'parameter'" @click="addFieldInObject('unnamed', 1)"><i class="fas fa-plus"></i> Add</button>
+			<button type="button" v-if="editable" @click="addFieldInObject('unnamed', 1)"><i class="fas fa-plus"></i> Add</button>
 		</div>
 		<!-- Null -->
 		<template v-else-if="type === 'null'"></template>
@@ -125,6 +112,7 @@ import MapViewer from './MapViewer.vue';
 import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
 
 import { ProcessGraph } from '@openeo/js-commons';
+import Field from './blocks/field.js';
 import Utils from '../utils.js';
 
 export default {
@@ -164,15 +152,20 @@ export default {
 			value: null,
 			hasBudget: false,
 			epsgCodes: [],
-			context: null,
-			selectedInput: null
+			context: null
 		};
 	},
 	computed: {
 		...Utils.mapState('server', ['collections', 'outputFormats', 'serviceTypes']),
 		...Utils.mapGetters('server', ['capabilities', 'processRegistry']),
 		type() {
-			return this.isItem ? this.schema.arrayOf() : this.schema.dataType();
+			if (this.isItem) {
+				return this.schema.arrayOf();
+			}
+			else if (this.schema.schema.isRef) {
+				return this.schema.schema.isRef;
+			}
+			return this.schema.dataType();
 		},
 		useTextarea() {
 			return (this.type === 'proj-definition' || this.type === "service-type-parameters" || this.type === 'process-graph-variables' || this.type === 'commonmark');
@@ -184,13 +177,13 @@ export default {
 			return Utils.isObject(this.value) && this.value.from_node && Object.keys(this.value).length == 1 && (this.type !== "object" || this.isObjectItem);
 		},
 		hasResult() {
-			return Utils.isObject(this.value) && (this.value.from_node || (this.nonActiveValue && this.nonActiveValue.refs.length > 0));
+			return Utils.isObject(this.value) && (this.value.from_node || this.refs.from_node.length > 0);
 		},
 		isCallbackArgument() {
-			return Utils.isObject(this.value) && this.value.from_argument && Object.keys(this.value).length == 1 && (this.type !== "object" || this.isObjectItem);;
+			return Utils.isObject(this.value) && this.value.from_argument && Object.keys(this.value).length == 1 && (this.type !== "object" || this.isObjectItem);
 		},
 		hasCallbackArgument() {
-			return Utils.isObject(this.value) && (this.value.from_argument || (this.nonActiveValue && this.nonActiveValue.callbackRefs.length > 0));
+			return Utils.isObject(this.value) && (this.value.from_argument || this.refs.from_argument.length > 0);
 		},
 		isArrayType() {
 			return (this.type === 'array' || this.type === 'temporal-intervals');
@@ -206,11 +199,26 @@ export default {
 				return this.schema.maximum;
 			}
 			return ""; // Empty seems to be the default for the input element
+		},
+		refs() {
+			return this.field.getRefs();
 		}
 	},
 	watch: {
 		pass() {
 			this.value = this.initValue(this.pass);
+		},
+		type(newType, oldType) {
+			var refTypes = ['from_argument', 'from_node'];
+			if (refTypes.includes(oldType) && newType === 'object') {
+				this.value = {};
+			}
+			else if (refTypes.includes(newType)) {
+				var s = this.schema.schema;
+				var value = {};
+				value[s.isRef] = s[s.isRef];
+				this.value = value;
+			}
 		},
 		schema() {
 			this.value = this.initValue(this.value);
@@ -224,9 +232,6 @@ export default {
 	},
 	created() {
 		this.value = this.initValue(this.pass);
-		if(this.type === "object"){
-			this.determineSelectedInput();
-		}
 	},
 	mounted() {
 		this.$nextTick(this.initView);
@@ -234,39 +239,6 @@ export default {
 		this.listen('processParameterTypeChanged', this.processParameterTypeChanged);
 	},
 	methods: {
-		onChangeSelectedInput(event) {
-			let inputTarget = this.selectedInput;
-			this.toggleValueActivity(inputTarget);
-		},
-		toggleValueActivity(inputTarget){
-			let newVal;
-			let key = inputTarget.key;
-			let typeRefDesignation = key === "from_argument" ? "callbackRefs" : "refs";
-
-			if(key === "parameter"){
-				this.value = this.nonActiveValue.value;
-				return;
-			}
-			else if (!this.value.from_node && !this.value.from_argument) {
-				this.nonActiveValue.value = this.value;
-				newVal = this.nonActiveValue[typeRefDesignation].find(p => p[key] == inputTarget.ref);
-			}
-			else{
-				newVal = this.nonActiveValue[typeRefDesignation].find(p => p[key] == inputTarget.ref);
-			}
-			this.value = newVal;
-		},
-		determineSelectedInput(){
-			if(this.value.from_node){
-				this.selectedInput = {ref: this.value.from_node, key: 'from_node'};
-			}
-			else if(this.value.from_argument){
-				this.selectedInput = {ref: this.value.from_argument, key: 'from_argument'};
-			}
-			else {
-				this.selectedInput = {ref: 'parameter', key: 'parameter'};
-			}
-		},
 		processParameterValueChanged(uid, processId, field, type, value, oldValue) {
 			if (this.uid !== uid) {
 				return;
@@ -340,8 +312,7 @@ export default {
 			else if (this.isArrayType) {
 				v = this.initArray(v);
 			}
-			else if(this.type === 'object'){
-				this.initNonActiveValue();
+			else if(this.type === 'object') {
 				if(v == null || Object.keys(v).length == 0)
 					return {};
 				else
@@ -451,12 +422,6 @@ export default {
 				return this.value;
 			}
 		},
-		getNonActiveValue(){
-			if(this.type === 'object')
-				return this.nonActiveValue;
-			else
-				return {};
-		},
 		initArray(arr) {
 			var v = [];
 			if (Array.isArray(arr)) {
@@ -473,9 +438,6 @@ export default {
 				}
 			}
 			return v;
-		},
-		initNonActiveValue(){
-			this.nonActiveValue = this.field.getNonActiveValue();
 		},
 		convertToArray() {
 			this.value = this.initArray([this.value]);
@@ -504,7 +466,7 @@ export default {
 			return false;
 		},
 		addFieldInObject(newPropName, number){
-			if(this.value[newPropName + number] === undefined){
+			if(typeof this.value[newPropName + number] === 'undefined'){
 				this.$set(this.value, newPropName + number, "");
 				return false;
 			}
@@ -531,7 +493,7 @@ export default {
 </style>
 
 <style scoped>
-.arrayEditor, .arrayEditor > div {
+.arrayEditor, .objectEditor, .arrayEditor > div, .objectEditor > div {
 	width: 100%;
 }
 .arrayElement {
@@ -548,8 +510,7 @@ export default {
 }
 .objectElement{
 	display: flex;
-	align-items:flex-start;
-	border-bottom: 1px solid black;
+	align-items: flex-start;
 	padding-bottom: 5px;
 	padding-top: 5px;
 }

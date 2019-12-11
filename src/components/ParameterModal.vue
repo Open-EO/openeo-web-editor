@@ -52,15 +52,11 @@ export default {
 			try {
 				if (typeof this.saveCallback === 'function') {
 					var data = {};
-					var nonActiveValues = {};
 					for(var i in this.$refs) {
 						if (Array.isArray(this.$refs[i]) && this.$refs[i].length > 0 && Utils.isObject(this.$refs[i][0]) && typeof this.$refs[i][0].getValue == 'function') {
 							data[i] = this.$refs[i][0].getValue();
-							nonActiveValues[i] = this.$refs[i][0].getNonActiveValue();
 						}
 					}
-					if(nonActiveValues)
-						data.nonActiveValues = nonActiveValues;
 					this.saveCallback(data);
 				}
 				this.$refs.__modal.close();
