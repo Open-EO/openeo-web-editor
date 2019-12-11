@@ -24,6 +24,7 @@ const SUPPORTED_TYPES = new ProcessSchema({
 		{type: 'string'},
 		{type: 'number'},
 		{type: 'integer'},
+		{type: 'boolean'},
 		{type: 'array'},
 		{type: 'object'},
 		{type: 'string', format: 'band-name'},
