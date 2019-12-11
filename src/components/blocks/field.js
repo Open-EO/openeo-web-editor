@@ -24,6 +24,7 @@ class Field extends ProcessSchema {
     
         // Value
         this.resetValue();
+        this.nonActiveValue = this.isObjectType() ?  {value: {}, refs:[], callbackRefs: []} : null;
     }
 
     resetValue() {
@@ -88,7 +89,8 @@ class Field extends ProcessSchema {
     }
 
     allowsMultipleEdges() {
-        var nativeTypes = this.dataTypes(false, true);
+        //var nativeTypes = this.dataTypes(false, true);
+        var nativeTypes = this.dataTypes(false, false);
         // Is there any type that potentially allows multiple inputs?
         // ToDo: This is not 100% precise as raster/vector cubes for example only allow one edge to get in.
         return nativeTypes.filter(t => ['array', 'object'].includes(t)).length > 0;
@@ -134,16 +136,14 @@ class Field extends ProcessSchema {
             }
         }
         else if (this.isObjectType()) {
-            if (!Field.isRef(this.value)) {
-                this.value = ref; // It is not clear whether the ref should be part of the object or replace it completely
+            if(!this.value || Object.keys(this.value).length == 0){
+                this.value = ref;
                 this.hasValue = true;
             }
-            else {
-                var errorMsg = "Can't determine which object property this input should be assigned to. Please specify manually in Process Graph mode.";
-                console.warn(errorMsg);
-                throw errorMsg;
-                // ToDo: It is not quite clear what to do when multiple refs are available.
+            else{
+                edge.setDashed(true, false);
             }
+            this.addRefToNonActiveValue(ref);
         }
         else {
             // ToDo: This is probably of data type mixed or any, how to handle?
@@ -235,6 +235,51 @@ class Field extends ProcessSchema {
         return false;
     }
 
+    addRefToNonActiveValue(ref) {
+        if(ref.from_node && !this.nonActiveValue.refs.some(item => item.from_node === ref.from_node)){
+            this.nonActiveValue.refs.push(ref);
+        }
+        else if(ref.from_argument && !this.nonActiveValue.callbackRefs.some(item => item.from_argument === ref.from_argument)){
+            this.nonActiveValue.callbackRefs.push(ref);
+        }
+    }
+
+    addRefsToNonActiveValue(value){
+        for(let key in value){
+            if(value[key] && typeof value[key] === "object"){
+                this.addRefsToNonActiveValue(value[key]);
+            }
+        }
+        if(Field.isRef(value)){
+            this.addRefToNonActiveValue(value);
+        }
+    }
+
+    findInValue(target, value) {
+        var found = false;
+        for(let key in value){
+            if(value[key] && typeof value[key] === "object"){
+                found = this.findInValue(target, value[key]);
+                if(found)
+                    return found;
+            }
+            if(target[key] && value[key] === target[key]){
+                return true;
+            }
+        }
+        //false
+        return found;
+    }
+
+    dashNonActiveEdges() {
+        let edges = this.getEdges();
+        edges.forEach((edge) => {
+            let ref = this._getEdgeRef(edge);
+            let refInValue = this.findInValue(ref, this.value);
+            edge.setDashed(!refInValue, true);
+        });
+    }
+
     getEdgeCount() {
         return this.edges.length;
     }
@@ -251,11 +296,22 @@ class Field extends ProcessSchema {
         return this.label;
     }
 
-    setValue(value) {
+    getNonActiveValue() {
+        return this.nonActiveValue;
+    }
+
+    setNonActiveValue(value){
+        this.nonActiveValue = value;
+    }
+
+    setValue(value, addNonActiveIfRef = false) {
         if (this.dataType(true) == 'boolean') {
             value = !!value;
         }
-
+        //TODO: proper way to decide when to add nonActiveValues
+        else if(this.isObjectType() && addNonActiveIfRef && !value.callback){
+            this.addRefsToNonActiveValue(value);
+        }
         this.value = value;
         this.hasValue = true;
         return this; // Allow chaining

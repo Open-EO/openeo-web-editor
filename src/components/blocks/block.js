@@ -135,12 +135,12 @@ Block.prototype.getDefaultOutputLabel = function() {
 /**
  * Set the values
  */
-Block.prototype.setValues = function(values, json = false)
+Block.prototype.setValues = function(values, json = false, addNonActiveIfRef = false)
 {
     for (var fieldName in values) {
         var field = this.getField(fieldName);
         if (field !== null) {
-            field.setValue(json ? JSON.parse(values[fieldName]) : values[fieldName]);
+            field.setValue(json ? JSON.parse(values[fieldName]) : values[fieldName], addNonActiveIfRef);
         }
     }
 };
@@ -759,22 +759,30 @@ Block.prototype.save = function(serialize)
             boolFields[entry] = this.fields[entry];
         }
     }
-
     for (var key in serialize) {
-        var newKey = key;
-        var isArray = false;
-        if (newKey.substr(newKey.length-2, 2) == '[]') {
-            newKey = newKey.substr(0, newKey.length-2);
-            isArray = true;
-        }
-        if (serialize[key] == null && isArray) {
-            serialize[key] = [];
-        }
+        if(key !== "nonActiveValues"){
+            var newKey = key;
+            var isArray = false;
+            if (newKey.substr(newKey.length-2, 2) == '[]') {
+                newKey = newKey.substr(0, newKey.length-2);
+                isArray = true;
+            }
+            if (serialize[key] == null && isArray) {
+                serialize[key] = [];
+            }
 
-        if (newKey in boolFields) {
-            delete boolFields[newKey];
+            if (newKey in boolFields) {
+                delete boolFields[newKey];
+            }
+            let field = this.getField(newKey);
+            field.setValue(serialize[key]);
+            field.dashNonActiveEdges();
         }
-        this.getField(newKey).setValue(serialize[key]);
+        else {
+            for (var nonActiveKey in serialize.nonActiveValues) {
+                this.getField(nonActiveKey).setNonActiveValue(serialize.nonActiveValues[nonActiveKey]);
+            }
+        }
     }
 
     for (var key in boolFields) {
@@ -782,6 +790,7 @@ Block.prototype.save = function(serialize)
     }
 
     this.render();
+    this.blocks.redraw();
 };
 
 export default Block;

@@ -19,6 +19,7 @@ var Edge = function(id, block1, field1, block2, field2, blocks)
     this.position1 = null;
     this.position2 = null;
     this.segment = null;
+    this.dashed = false;
 
     if (!block1.getField(field1.name) || !block2.getField(field2.name)) {
         throw "Can't create edge because the field doesn't exist";
@@ -73,9 +74,8 @@ Edge.prototype.draw = function(svg)
     } else {
         var strokeStyle = 'rgba(255, 200, 0, 1)';
     }
-    svg.line(this.position1.x, this.position1.y, this.position2.x, this.position2.y, {
-        'stroke': strokeStyle, 'stroke-width': lineWidth
-    });
+    let lineOptions = this.dashed ? {'stroke': strokeStyle, 'stroke-width': lineWidth, 'stroke-dasharray': '4 2'} : {'stroke': strokeStyle, 'stroke-width': lineWidth};
+    svg.line(this.position1.x, this.position1.y, this.position2.x, this.position2.y, lineOptions);
     
     var xM = ((this.position1.x+this.position2.x)/2.0);
     var yM = ((this.position1.y+this.position2.y)/2.0);
@@ -157,6 +157,15 @@ Edge.prototype.erase = function()
     this.field2.eraseEdge(this);
     this.block1.render();
     this.block2.render();
+};
+
+Edge.prototype.setDashed = function(dashed, rerender)
+{
+    this.dashed = dashed;
+    if(rerender){
+        this.block1.render();
+        this.block2.render();
+    }
 };
 
 /**

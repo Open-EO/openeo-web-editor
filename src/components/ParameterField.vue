@@ -5,7 +5,7 @@
 			<div class="fieldValue externalData fromNode">
 				<span>Output of <tt>#{{ value.from_node }}</tt></span>
 			</div>
-			<button type="button" v-if="isArrayType" @click="convertToArray()"><i class="fas fa-list"></i> Convert to Array</button>
+			<button type="button" v-if="isArrayType" @click="convertToArray()"><i class="fas fa-list"></i> Convert to array</button>
 		</template>
 		<!-- Callback Argument -->
 		<template v-else-if="isCallbackArgument">
@@ -54,6 +54,28 @@
 		<!-- Callback -->
 		<div v-else-if="type === 'callback'" class="border">
 			<VisualEditor ref="callbackBuilder" class="callbackEditor" id="inlinePgEditor" :editable="editable" :callbackArguments="schema.getCallbackParameters()" :value="value" :enableExecute="false" :enableLocalStorage="false" />
+		</div>
+		<!-- Object -->
+		<div v-else-if="type === 'object'" class="arrayEditor">
+			<div v-if="(hasResult || hasCallbackArgument) && !isObjectItem">
+				<select @change="onChangeSelectedInput($event)" v-model.lazy="selectedInput">
+					<option v-bind:value="{ref: 'parameter', key: 'parameter'}">Object</option>
+					<option v-for="(ref, i) in nonActiveValue.refs" v-bind:value="{ref: ref.from_node, key: 'from_node'}" :key="i">Output of {{ ref.from_node }}</option>
+					<option v-for="(ref, i) in nonActiveValue.callbackRefs" v-bind:value="{ref: ref.from_argument, key: 'from_argument'}" :key="i + '_callbackRefs'">Value of callback argument {{ ref.from_argument }}</option>
+				</select>
+			</div>
+			<div class="objectElement" v-for="(propVal, propName) in value" :key="propName">
+				<div v-if="propName === 'from_node'">
+					<ParameterField :ref="propName" :editable="editable" :field="field" :isObjectItem="true" :schema="schema" :pass="{'from_node': propVal}" />
+				</div>
+				<div v-if="propName === 'from_argument'">
+					<ParameterField :ref="propName" :editable="editable" :field="field" :isObjectItem="true" :schema="schema" :pass="{'from_argument': propVal}" />
+				</div>
+				<input v-if="propName !== 'from_node' && propName !== 'from_argument'" class= "fieldValue" :ref="propName" v-model="propName" type="text" :name="fieldName" :disabled="!editable"/>
+				<ParameterFields :ref="propName" v-if="propName !== 'from_node' && propName !== 'from_argument'" :editable="editable" :field="field" :useAny="true" :isObjectItem="true" :pass="propVal" :nonActiveValue="nonActiveValue" />
+				<button v-if="editable && ((!hasResult && !hasCallbackArgument) || isObjectItem)" class="arrayElementDelete" type="button" @click="removeFieldInObject(propName)"><i class="fas fa-trash"></i></button>
+			</div>
+			<button type="button" v-if="editable && (!hasResult && !hasCallbackArgument) || isObjectItem || selectedInput.ref === 'parameter'" @click="addFieldInObject('unnamed', 1)"><i class="fas fa-plus"></i> Add</button>
 		</div>
 		<!-- Null -->
 		<template v-else-if="type === 'null'"></template>
@@ -115,7 +137,8 @@ export default {
 		// Asynchronously load the following components to avoid circular references.
 		// See https://vuejs.org/v2/guide/components-edge-cases.html#Circular-References-Between-Components
 		OutputFormatOptionsEditor: () => import('./OutputFormatOptionsEditor.vue'),
-		VisualEditor: () => import('./VisualEditor.vue')
+		VisualEditor: () => import('./VisualEditor.vue'),
+		ParameterFields: () => import('./ParameterFields.vue')
 	},
 	props: {
 		field: Object,
@@ -130,6 +153,10 @@ export default {
 		isItem: {
 			type: Boolean,
 			default: false
+		},
+		isObjectItem: {
+			type: Boolean,
+			default: false
 		}
 	},
 	data() {
@@ -137,7 +164,8 @@ export default {
 			value: null,
 			hasBudget: false,
 			epsgCodes: [],
-			context: null
+			context: null,
+			selectedInput: null
 		};
 	},
 	computed: {
@@ -147,16 +175,22 @@ export default {
 			return this.isItem ? this.schema.arrayOf() : this.schema.dataType();
 		},
 		useTextarea() {
-			return (this.type === 'object' || this.type === 'proj-definition' || this.type === "service-type-parameters" || this.type === 'process-graph-variables' || this.type === 'commonmark');
+			return (this.type === 'proj-definition' || this.type === "service-type-parameters" || this.type === 'process-graph-variables' || this.type === 'commonmark');
 		},
 		fieldName() {
 			return this.field.name + (Array.isArray(this.field.value) ? '[]' : '');
 		},
 		isResult() {
-			return Utils.isObject(this.value) && this.value.from_node;
+			return Utils.isObject(this.value) && this.value.from_node && Object.keys(this.value).length == 1 && (this.type !== "object" || this.isObjectItem);
+		},
+		hasResult() {
+			return Utils.isObject(this.value) && (this.value.from_node || (this.nonActiveValue && this.nonActiveValue.refs.length > 0));
 		},
 		isCallbackArgument() {
-			return Utils.isObject(this.value) && this.value.from_argument;
+			return Utils.isObject(this.value) && this.value.from_argument && Object.keys(this.value).length == 1 && (this.type !== "object" || this.isObjectItem);;
+		},
+		hasCallbackArgument() {
+			return Utils.isObject(this.value) && (this.value.from_argument || (this.nonActiveValue && this.nonActiveValue.callbackRefs.length > 0));
 		},
 		isArrayType() {
 			return (this.type === 'array' || this.type === 'temporal-intervals');
@@ -175,6 +209,9 @@ export default {
 		}
 	},
 	watch: {
+		pass() {
+			this.value = this.initValue(this.pass);
+		},
 		schema() {
 			this.value = this.initValue(this.value);
 			this.$nextTick(this.initView);
@@ -187,6 +224,9 @@ export default {
 	},
 	created() {
 		this.value = this.initValue(this.pass);
+		if(this.type === "object"){
+			this.determineSelectedInput();
+		}
 	},
 	mounted() {
 		this.$nextTick(this.initView);
@@ -194,6 +234,39 @@ export default {
 		this.listen('processParameterTypeChanged', this.processParameterTypeChanged);
 	},
 	methods: {
+		onChangeSelectedInput(event) {
+			let inputTarget = this.selectedInput;
+			this.toggleValueActivity(inputTarget);
+		},
+		toggleValueActivity(inputTarget){
+			let newVal;
+			let key = inputTarget.key;
+			let typeRefDesignation = key === "from_argument" ? "callbackRefs" : "refs";
+
+			if(key === "parameter"){
+				this.value = this.nonActiveValue.value;
+				return;
+			}
+			else if (!this.value.from_node && !this.value.from_argument) {
+				this.nonActiveValue.value = this.value;
+				newVal = this.nonActiveValue[typeRefDesignation].find(p => p[key] == inputTarget.ref);
+			}
+			else{
+				newVal = this.nonActiveValue[typeRefDesignation].find(p => p[key] == inputTarget.ref);
+			}
+			this.value = newVal;
+		},
+		determineSelectedInput(){
+			if(this.value.from_node){
+				this.selectedInput = {ref: this.value.from_node, key: 'from_node'};
+			}
+			else if(this.value.from_argument){
+				this.selectedInput = {ref: this.value.from_argument, key: 'from_argument'};
+			}
+			else {
+				this.selectedInput = {ref: 'parameter', key: 'parameter'};
+			}
+		},
 		processParameterValueChanged(uid, processId, field, type, value, oldValue) {
 			if (this.uid !== uid) {
 				return;
@@ -267,6 +340,13 @@ export default {
 			else if (this.isArrayType) {
 				v = this.initArray(v);
 			}
+			else if(this.type === 'object'){
+				this.initNonActiveValue();
+				if(v == null || Object.keys(v).length == 0)
+					return {};
+				else
+					return v;
+			}
 			else if (this.useTextarea) {
 				if (typeof v === 'object') {
 					if (typeof this.pass === 'object' && this.pass !== null) {
@@ -310,6 +390,21 @@ export default {
 			}
 			else if (this.type === 'geojson') {
 				return this.$refs.geojson.getGeoJson();
+			}
+			else if(this.type === 'object'){
+				for (let key in this.value){
+					if(this.value.hasOwnProperty(key)){
+						//check if output/callbackArg is selected in top selection box
+						let isResultVal = this.$refs[key].length == 1 && (this.$refs[key][0].value.from_node || this.$refs[key][0].value.from_argument);
+						let inputType = this.$refs[key][0].value.from_node ? "from_node" : "from_argument";
+						let newKey = isResultVal ? inputType : this.$refs[key][0].value;
+						let newValue = isResultVal ? this.$refs[key][0].value[inputType] : this.$refs[key][1].getValue();
+						if(newKey !== key)
+							delete this.value[key];
+						this.value[newKey] = newValue;
+					}
+				}
+				return this.value;
 			}
 			else if (this.isArrayType) {
 				var values = [];
@@ -356,6 +451,12 @@ export default {
 				return this.value;
 			}
 		},
+		getNonActiveValue(){
+			if(this.type === 'object')
+				return this.nonActiveValue;
+			else
+				return {};
+		},
 		initArray(arr) {
 			var v = [];
 			if (Array.isArray(arr)) {
@@ -372,6 +473,9 @@ export default {
 				}
 			}
 			return v;
+		},
+		initNonActiveValue(){
+			this.nonActiveValue = this.field.getNonActiveValue();
 		},
 		convertToArray() {
 			this.value = this.initArray([this.value]);
@@ -398,6 +502,19 @@ export default {
 				value: def
 			});
 			return false;
+		},
+		addFieldInObject(newPropName, number){
+			if(this.value[newPropName + number] === undefined){
+				this.$set(this.value, newPropName + number, "");
+				return false;
+			}
+			else{
+				number++;
+				this.addFieldInObject(newPropName, number);
+			}
+		},
+		removeFieldInObject(propName){
+			this.$delete(this.value, propName);
 		},
 		removeField(k) {
 			this.value.splice(k, 1);
@@ -428,6 +545,13 @@ export default {
 .arrayElementDelete {
 	margin-left: 5px;
 	margin-right: 5px;
+}
+.objectElement{
+	display: flex;
+	align-items:flex-start;
+	border-bottom: 1px solid black;
+	padding-bottom: 5px;
+	padding-top: 5px;
 }
 .mover {
 	padding: 3px 1em;
