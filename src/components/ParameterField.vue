@@ -3,14 +3,14 @@
 		<!-- Result Node -->
 		<template v-if="isResult">
 			<div class="fieldValue externalData fromNode">
-				<span>Output of <tt>#{{ value.from_node }}</tt></span>
+				<span>Output of <tt>#{{ schema.schema.from_node }}</tt></span>
 			</div>
 			<button type="button" v-if="isArrayType" @click="convertToArray()"><i class="fas fa-list"></i> Convert to array</button>
 		</template>
 		<!-- Callback Argument -->
 		<template v-else-if="isCallbackArgument">
 			<div class="fieldValue externalData fromArgument">
-				<span>Value of callback argument <tt>{{ value.from_argument }}</tt></span>
+				<span>Value of callback argument <tt>{{ schema.schema.from_argument }}</tt></span>
 			</div>
 			<button type="button" v-if="isArrayType" @click="convertToArray()"><i class="fas fa-list"></i> Convert to array</button>
 		</template>
@@ -338,8 +338,11 @@ export default {
 			}
 		},
 		getValue() {
-			if (this.isCallbackArgument || this.isResult) {
-				return this.value; // Pass through
+			if (this.isCallbackArgument) {
+				return {from_argument: this.schema.schema.from_argument};
+			}
+			else if (this.isResult) {
+				return {from_node: this.schema.schema.from_node};
 			}
 			else if (this.type === 'output-format-options') {
 				return this.$refs.outputFormatOptionsEditor.getValue();

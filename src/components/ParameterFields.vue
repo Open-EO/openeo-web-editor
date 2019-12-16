@@ -5,7 +5,7 @@
 				<option v-for="(schema, type) in allowedSchemas" :key="type" :value="type">{{ schema.title() }}</option>
 			</select>
 		</div>
-		<div v-if="typeof selectedType === 'String' && allowedSchemas[selectedType].description()" class="description">
+		<div v-if="allowedSchemas[selectedType].description()" class="description">
 			<i class="fas fa-info-circle"></i> {{ allowedSchemas[selectedType].description() }}
 		</div>
 		<ParameterField ref="field" :uid="uid" :editable="editable" :field="field" :schema="selectedSchema" :pass="pass" :processId="processId" :isObjectItem="isObjectItem" />

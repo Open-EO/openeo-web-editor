@@ -132,10 +132,11 @@ class Field extends ProcessSchema {
             }
         }
         else if (this.isObjectType()) {
-            if (this.getEdgeCount() === 1 && (!this.value || Object.keys(this.value).length == 0)) {
+            var hasNoKeys = (this.value && typeof this.value === 'object' && Object.keys(this.value).length === 0);
+            if (this.getEdgeCount() === 1 && (!this.hasValue || hasNoKeys)) {
                 this.setValue(ref);
             }
-            else {
+            else if (hasNoKeys) {
                 this.resetValue();
             }
         }
