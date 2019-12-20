@@ -203,6 +203,7 @@ export default {
 					await this.authenticateOIDC({
 						client_id: this.clientId,
 						redirect_uri: window.location,
+						scope: 'openid email',
 						uiMethod: 'popup',
 						automaticSilentRenew: true
 					});
