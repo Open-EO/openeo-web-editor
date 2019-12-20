@@ -58,11 +58,11 @@
 		<!-- Object -->
 		<div v-else-if="type === 'object'" class="objectEditor">
 			<div class="objectElement" v-for="(propVal, propName) in value" :key="propName">
-				<input class= "fieldValue" :ref="propName" :value="propName" type="text" :name="fieldName" :disabled="!editable"/>
+				<input class= "fieldKey" :ref="propName" :value="propName" type="text" :name="fieldName" :disabled="!editable"/>
 				<ParameterFields :ref="propName" :editable="editable" :field="field" :useAny="true" :isObjectItem="true" :pass="propVal" />
 				<button v-if="editable" class="arrayElementDelete" type="button" @click="removeFieldInObject(propName)"><i class="fas fa-trash"></i></button>
 			</div>
-			<button type="button" v-if="editable" @click="addFieldInObject('unnamed', 1)"><i class="fas fa-plus"></i> Add</button>
+			<button type="button" class="addBtn" v-if="editable" @click="addFieldInObject('unnamed', 1)"><i class="fas fa-plus"></i> Add</button>
 		</div>
 		<!-- Null -->
 		<template v-else-if="type === 'null'"></template>
@@ -77,7 +77,7 @@
 					</div>
 				</transition-group>
 			</draggable>
-			<button type="button" v-if="editable" @click="addField()"><i class="fas fa-plus"></i> Add</button>
+			<button type="button" class="addBtn" v-if="editable" @click="addField()"><i class="fas fa-plus"></i> Add</button>
 		</div>
 		<!-- Output format options -->
 		<OutputFormatOptionsEditor v-else-if="type === 'output-format-options'" ref="outputFormatOptionsEditor" :value="value" :format="this.context"></OutputFormatOptionsEditor>
@@ -518,14 +518,16 @@ export default {
 	opacity: 0;
 }
 .arrayElementDelete {
-	margin-left: 5px;
-	margin-right: 5px;
+	margin-left: 1em;
+}
+.addBtn {
+	margin: 5px 0;
 }
 .objectElement {
 	display: flex;
 	align-items: flex-start;
-	padding-bottom: 5px;
-	padding-top: 5px;
+	padding: 5px 0;
+	border-bottom: 1px dotted #ccc;
 }
 .mover {
 	padding: 3px 1em;
