@@ -1,6 +1,6 @@
 <template>
 	<div id="container">
-		<ConnectForm v-if="!isDiscovered" />
+		<ConnectForm v-if="!isDiscovered" :skipLogin="skipLogin" />
 		<IDE v-else />
 		<Modal ref="modal" maxWidth="60%" />
 		<vue-snotify />
@@ -37,14 +37,25 @@ export default {
 	},
 	data() {
 		return {
-			pkg: Package
+			pkg: Package,
+			skipLogin: false
 		};
+	},
+	created() {
+		this.skipLogin = !!Utils.param('discover');
 	},
 	mounted() {
 		this.listen('showMessageModal', this.showMessageModal);
 		this.listen('showHtmlModal', this.showHtmlModal);
 		this.listen('showListModal', this.showListModal);
 		this.listen('showWebEditorInfo', this.showWebEditorInfo);
+	},
+	watch: {
+		isDiscovered(newVal) {
+			if (newVal) {
+				this.skipLogin = false;
+			}
+		}
 	},
 	computed: {
 		...Utils.mapGetters('server', ['isDiscovered'])

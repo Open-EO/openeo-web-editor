@@ -6,7 +6,7 @@
 				<h2>Web Editor <span class="version" @click="showWebEditorInfo">{{ version }}</span></h2>
 			</header>
 			<div v-if="message" class="message" v-html="message"></div>
-			<form @submit.prevent="submitForm" v-if="!isConnected" class="connect">
+			<form @submit.prevent="submitForm" v-if="!isConnected || skipLogin" class="connect">
 				<h3>Connect to server</h3>
 				<div class="row">
 					<label for="serverUrl">URL:</label>
@@ -19,7 +19,7 @@
 					<button type="submit" class="connectBtn" :class="{loading: loading}"><i class="fas fa-spinner fa-spin fa-lg"></i> Connect</button>
 				</div>
 			</form>
-			<div v-else-if="!isDiscovered" class="login">
+			<div v-else-if="!isDiscovered && !skipLogin" class="login">
 				<h3>Log in to {{ title }}</h3>
 				<Tabs id="credentials" :pills="true">
 					<Tab v-if="supportsOidc" id="oidc" name="OpenID Connect">
@@ -90,6 +90,12 @@ export default {
 		Tabs,
 		Tab
 	},
+	props: {
+		skipLogin: {
+			type: Boolean,
+			default: false
+		}
+	},
 	computed: {
 		...Utils.mapState('server', ['connectionError', 'discoveryErrors']),
 		...Utils.mapGetters('server', ['isConnected', 'isDiscovered', 'isAuthenticated', 'title']),
@@ -136,11 +142,8 @@ export default {
 		...Utils.mapMutations('editor', ['addServer', 'removeServer']),
 
 		async submitForm() {
-			if (!this.isConnected) { // Request capabilities etc
+			if (!this.isConnected) {
 				this.initConnection();
-			}
-			else if (!this.isDiscovered) { // Do authentication and discovery
-				this.initDiscovery();
 			}
 		},
 
@@ -170,6 +173,9 @@ export default {
 			try {
 				if (await this.connect({url: this.serverUrl})) {
 					this.addServer(this.serverUrl);
+					if (this.skipLogin) {
+						this.loginNoAuth();
+					}
 				}
 				else {
 					Utils.exception(this, this.connectionError);
