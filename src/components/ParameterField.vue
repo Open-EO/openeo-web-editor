@@ -68,7 +68,7 @@
 		<template v-else-if="type === 'null'"></template>
 		<!-- Arrays -->
 		<div v-else-if="isArrayType" class="arrayEditor">
-			<draggable v-model="value">
+			<draggable v-model="value" handle=".mover">
 				<transition-group name="arrayElements">
 					<div class="fieldValue arrayElement" v-for="(e, k) in value" :key="e.id">
 						<ParameterField :ref="e.id" :editable="editable" :field="field" :schema="schema" :pass="e.value" :isItem="true" />
@@ -501,7 +501,17 @@ export default {
 }
 .arrayElement {
 	transition: all 0.5s;
-	margin-bottom: 0.3em;
+	padding: 1px;
+	margin: 1px 0;
+	border: 1px solid transparent;
+}
+.arrayElement.sortable-chosen {
+	background: #eee;
+	border-color: #ccc;
+	border-radius: 3px;
+}
+.arrayElement.sortable-chosen .arrayElementDelete {
+	visibility: hidden;
 }
 
 .arrayElements-enter, .arrayElements-active {
@@ -511,7 +521,7 @@ export default {
 	margin-left: 5px;
 	margin-right: 5px;
 }
-.objectElement{
+.objectElement {
 	display: flex;
 	align-items: flex-start;
 	padding-bottom: 5px;
@@ -519,6 +529,7 @@ export default {
 }
 .mover {
 	padding: 3px 1em;
+	cursor: pointer;
 }
 .areaSelector, .geoJsonEditor {
 	height: 500px;
