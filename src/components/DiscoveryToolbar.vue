@@ -52,7 +52,8 @@ import Config from '../../config.js';
 import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
 import ConnectionMixin from './ConnectionMixin.vue';
 import Utils from '../utils.js';
-import { ProcessGraph } from '@openeo/js-commons';
+import { ProcessGraph as ProcessGraphParser } from '@openeo/js-commons';
+import { ProcessGraph } from '@openeo/js-client';
 
 export default {
 	name: 'DiscoveryToolbar',
@@ -142,7 +143,7 @@ export default {
 						if (!Utils.isObject(meta.process_graph)) {
 							meta.process_graph = JSON.parse(meta.process_graph);
 						}
-						var pgObj = new ProcessGraph(meta.process_graph, this.processRegistry);
+						var pgObj = new ProcessGraphParser(meta.process_graph, this.processRegistry);
 						var errors = await pgObj.validate();
 						return errors.count() === 0;
 					} catch (e) {
@@ -209,7 +210,7 @@ export default {
 			}
 		},
 		showProcessGraphInfo(pg) {
-			this.emit('showProcessGraphInfo', pg);
+			this.emit('showProcessGraphInfo', (new ProcessGraph()).setAll(pg));
 		},
 		insertCollection(id) {
 			this.onAddCollection(id);

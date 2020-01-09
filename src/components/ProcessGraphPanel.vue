@@ -99,7 +99,7 @@ export default {
 		},
 		graphInfo(pg) {
 			this.refreshProcessGraph(pg, updatedPg => {
-				this.emit('showProcessGraphInfo', updatedPg.getAll());
+				this.emit('showProcessGraphInfo', updatedPg);
 			});
 		},
 		editMetadata(oldPg) {

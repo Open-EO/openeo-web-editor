@@ -24,7 +24,6 @@ import Utils from '../utils';
 import Modal from './Modal.vue';
 import Description from '@openeo/vue-components/components/Description.vue';
 import Editor from './Editor.vue';
-import { ProcessGraph } from '@openeo/js-client';
 
 export default {
 	name: 'ProcessGraphInfoModal',
@@ -45,12 +44,7 @@ export default {
 	},
 	methods: {
 		show(pg) {
-			if (pg instanceof ProcessGraph) {
-				this.pg = new ProcessGraph(pg);
-			}
-			else {
-				this.pg = (new ProcessGraph()).setAll(pg);
-			}
+			this.pg = pg;
 			this.$refs.modal.show(this.displayTitle);
 		}
 	}
