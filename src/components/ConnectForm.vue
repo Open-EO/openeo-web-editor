@@ -6,7 +6,7 @@
 				<h2>Web Editor <span class="version" @click="showWebEditorInfo">{{ version }}</span></h2>
 			</header>
 			<div v-if="message" class="message" v-html="message"></div>
-			<form @submit.prevent="submitForm" v-if="!isConnected || skipLogin" class="connect">
+			<form @submit.prevent="submitForm" v-if="showConnectForm" class="connect">
 				<h3>Connect to server</h3>
 				<div class="row">
 					<label for="serverUrl">URL:</label>
@@ -19,7 +19,7 @@
 					<button type="submit" class="connectBtn" :class="{loading: loading}"><i class="fas fa-spinner fa-spin fa-lg"></i> Connect</button>
 				</div>
 			</form>
-			<div v-else-if="!isDiscovered && !skipLogin" class="login">
+			<div v-else-if="this.showLoginForm" class="login">
 				<h3>Log in to {{ title }}</h3>
 				<Tabs id="credentials" :pills="true">
 					<Tab v-if="supportsOidc" id="oidc" name="OpenID Connect">
@@ -57,7 +57,7 @@
 						</form>
 					</Tab>
 					<Tab id="noauth" name="No credentials">
-						<form @submit.prevent="loginNoAuth">
+						<form @submit.prevent="loginNoAuth(skipLogin)">
 							<div class="row help">
 								<i class="fas fa-info-circle"></i>
 								<span>Choose this if you don't have credentials for the service provider and just want to explore the service with its available data and processes. You may not be able to process any data.</span>
@@ -105,6 +105,24 @@ export default {
 		},
 		supportsBasic() {
 			return this.supports('authenticateBasic');
+		},
+		showConnectForm() {
+			return !this.isConnected || this.skipLogin;
+		},
+		showLoginForm() {
+			return !this.showConnectForm && !this.isDiscovered && !this.skipLogin;
+		}
+	},
+	watch: {
+		showConnectForm(newVal) {
+			if (newVal) {
+				this.emit('title', 'Connect to server');
+			}
+		},
+		showLoginForm(newVal) {
+			if (newVal) {
+				this.emit('title', 'Log in');
+			}
 		}
 	},
 	data() {
@@ -133,17 +151,40 @@ export default {
 		}
 	},
 	mounted() {
+		window.onpopstate = evt => this.historyNavigate(evt);
+		window.history.replaceState({reset: true, serverUrl: this.serverUrl}, "");
 		if (this.autoConnect) {
 			this.submitForm();
 		}
 	},
 	methods: {
 		...Utils.mapActions('server', ['connect', 'discover', 'authenticateBasic', 'authenticateOIDC']),
+		...Utils.mapMutations('server', ['reset']),
 		...Utils.mapMutations('editor', ['addServer', 'removeServer']),
+
+		historyNavigate(evt) {
+			if (!Utils.isObject(evt.state) || evt.state.reset) {
+				this.reset();
+				this.autoConnect = false;
+				this.loading = false;
+				this.password = '';
+			}
+			if (Utils.isObject(evt.state)) {
+				if (evt.state.serverUrl) {
+					this.serverUrl = evt.state.serverUrl;
+				}
+				if (evt.state.autoConnect) {
+					this.autoConnect = true;
+				}
+			}
+			if (this.autoConnect) {
+				this.initConnection(!!evt.state.skipLogin, true);
+			}
+		},
 
 		async submitForm() {
 			if (!this.isConnected) {
-				this.initConnection();
+				this.initConnection(this.skipLogin, false);
 			}
 		},
 
@@ -155,11 +196,11 @@ export default {
 			await this.initDiscovery('basic');
 		},
 
-		async loginNoAuth() {
-			await this.initDiscovery('noauth');
+		async loginNoAuth(skipLogin = false) {
+			await this.initDiscovery(skipLogin ? 'discover' : 'noauth');
 		},
 
-		async initConnection() {
+		async initConnection(skipLogin = false, programmatically = false) {
 			if (typeof this.serverUrl !== 'string' || !Utils.isUrl(this.serverUrl)) {
 				Utils.error(this, 'Please specify a valid server.');
 				return;
@@ -173,8 +214,11 @@ export default {
 			try {
 				if (await this.connect({url: this.serverUrl})) {
 					this.addServer(this.serverUrl);
-					if (this.skipLogin) {
-						this.loginNoAuth();
+					if (!programmatically) {
+						window.history.pushState({reset: true, serverUrl: this.serverUrl, autoConnect: true}, "", ".?server=" + this.serverUrl);
+					}
+					if (skipLogin) {
+						await this.loginNoAuth(skipLogin);
 					}
 				}
 				else {
@@ -208,8 +252,9 @@ export default {
 						automaticSilentRenew: true
 					});
 				}
-				else { // noauth
+				else { // noauth or discover
 					Utils.info(this, 'You are working as a guest. Your data will be publicly available!');
+					window.history.pushState({reset: true, serverUrl: this.serverUrl, autoConnect: true, skipLogin: true}, "", ".?server=" + this.serverUrl + "&discover=1");
 				}
 			} catch(error) {
 				console.log(error);
@@ -227,6 +272,7 @@ export default {
 
 			if (this.isAuthenticated) {
 				Utils.ok(this, 'Login successful.');
+				window.history.pushState({reset: true, serverUrl: this.serverUrl, autoConnect: true}, "", ".?server=" + this.serverUrl);
 			}
 		},
 

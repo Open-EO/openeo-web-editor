@@ -95,6 +95,7 @@ export default {
 		};
 	},
 	computed: {
+		...Utils.mapGetters('server', ['title']),
 		...Utils.mapState('server', ['collections', 'processes', 'outputFormats', 'serviceTypes']),
 	},
 	mounted() {
@@ -110,6 +111,7 @@ export default {
 		this.resizeListener = (event) => this.emit('windowResized', event);
 		window.addEventListener('resize', this.resizeListener);
 		this.userInfoUpdater = setInterval(this.describeAccount, 2*60*1000); // Refresh user data every 2 minutes
+		this.emit('title', this.title);
 	},
 	beforeDestroy() {
 		if (this.resizeListener !== null) {

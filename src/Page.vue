@@ -38,7 +38,8 @@ export default {
 	data() {
 		return {
 			pkg: Package,
-			skipLogin: false
+			skipLogin: false,
+			title: null
 		};
 	},
 	created() {
@@ -49,18 +50,29 @@ export default {
 		this.listen('showHtmlModal', this.showHtmlModal);
 		this.listen('showListModal', this.showListModal);
 		this.listen('showWebEditorInfo', this.showWebEditorInfo);
+		this.listen('title', this.setTitle);
 	},
 	watch: {
 		isDiscovered(newVal) {
 			if (newVal) {
 				this.skipLogin = false;
 			}
+		},
+		title(newTitle) {
+			document.title = newTitle;
 		}
 	},
 	computed: {
 		...Utils.mapGetters('server', ['isDiscovered'])
 	},
 	methods: {
+		setTitle(subtitle) {
+			var title = "openEO Web Editor";
+			if (subtitle) {
+				title += ": " + subtitle;
+			}
+			this.title = title;
+		},
 		showMessageModal(title, message) {
 			this.$refs.modal.showMessage(title, message);
 		},
