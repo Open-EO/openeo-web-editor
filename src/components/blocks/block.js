@@ -200,22 +200,23 @@ Block.prototype.formatCallback = function(pg) {
     }
 };
 
-Block.prototype.formatValue = function(value, maxLength) {
+Block.prototype.formatValue = function(value, maxLength, html = true) {
     var formattedValue = null;
     if (typeof value === 'object') {
         if (value === null) {
             formattedValue = 'N/A';
         }
         else if (Array.isArray(value)) {
-            formattedValue = this.formatArray(value, maxLength);
+            formattedValue = this.formatArray(value, maxLength, html);
         }
         else {
-            formattedValue = this.formatObject(value);
+            formattedValue = this.formatObject(value, html);
         }
     }
     else if (typeof value === 'string') {
         if (value.length > maxLength) {
-            formattedValue = '<span title="' + VueUtils.htmlentities(value) + '">' + VueUtils.htmlentities(value.substr(0, maxLength)) + '…</span>';
+            var text = VueUtils.htmlentities(value.substr(0, maxLength)) + '…';
+            formattedValue = html ? '<span title="' + VueUtils.htmlentities(value) + '">' + text + '…</span>' : text;
         }
         else {
             formattedValue = VueUtils.htmlentities(value);
@@ -233,21 +234,23 @@ Block.prototype.formatValue = function(value, maxLength) {
     return formattedValue;
 };
 
-Block.prototype.formatArray = function(value, maxLength) {
-    var html = value.map(v => this.formatValue(v, maxLength)).join(", ");
-    var unformatted = html.replace(/<[^>]*>/g, ''); // Strip HTML tags
-    if (typeof VueUtils.htmlentities_decode === 'function') { // ToDo: htmlentities_decode is only available in a more recent version, remove condition once dependency has been updated.
-        formatted = VueUtils.htmlentities_decode(formatted);
+Block.prototype.formatArray = function(value, maxLength, html = true) {
+    var formatted = value.map(v => this.formatValue(v, 25, false)).join(", ");
+    // ToDo: htmlentities_decode is only available in a more recent version, remove condition once dependency has been updated.
+    var unformatted = formatted;
+    if (typeof VueUtils.htmlentities_decode === 'function') {
+        unformatted = VueUtils.htmlentities_decode(formatted);
     }
     if (unformatted.length > 0 && unformatted.length <= maxLength) {
-        return "[" + html + "]";
+        return "[" + formatted + "]";
     }
     else {
-        return '<span title="' + html + '">List(' + value.length + ')</span>';
+        var text = 'List(' + value.length + ')';
+        return html ? '<span title="' + formatted + '">' + text + '</span>' : text;
     }
 };
 
-Block.prototype.formatObject = function(value) {
+Block.prototype.formatObject = function(value, html = true) {
     if (Object.keys(value).length === 0) {
         return 'None';
     }
@@ -278,7 +281,7 @@ Block.prototype.formatObject = function(value) {
     } catch (e) {}
 
     // Fallback to default
-    return '<span title="' + VueUtils.htmlentities(JSON.stringify(value)) + '">Object</span>';
+    return html ? '<span title="' + VueUtils.htmlentities(JSON.stringify(value)) + '">Object</span>' : 'Object';
 };
 
 /**
