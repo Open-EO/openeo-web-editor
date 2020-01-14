@@ -1,6 +1,7 @@
 <template>
 	<div class="visualEditor" ref="visualEditor">
 		<EditorToolbar :editable="editable" :onStore="getProcessGraph" :onInsert="insertProcessGraph" :onClear="clearProcessGraph" :enableClear="enableClear" :enableExecute="enableExecute" :enableLocalStorage="enableLocalStorage">
+			<button type="button" @click="showExpressionModal" v-if="!enableExecute && !enableLocalStorage" :title="'Insert expression'"><i class="fas fa-calculator"></i></button>
 			<button type="button" @click="blocks.deleteEvent()" v-show="editable && blocks.canDelete()" title="Delete selected elements"><i class="fas fa-trash"></i></button>
 			<button type="button" @click="blocks.undo()" v-show="editable && blocks.hasUndo()" title="Undo last change"><i class="fas fa-undo-alt"></i></button>
 			<button type="button" @click="blocks.toggleCompact()" :class="{compactActive: blocks.compactMode}" title="Compact Mode"><i class="fas fa-compress-arrows-alt"></i></button>
@@ -16,6 +17,7 @@
 		</div>
 		<SchemaModal ref="schemaModal" />
 		<ParameterModal ref="parameterModal" />
+		<ExpressionModal ref="expressionModal" />
 	</div>
 </template>
 
@@ -26,7 +28,9 @@ import EditorToolbar from './EditorToolbar.vue';
 import DiscoveryToolbar from './DiscoveryToolbar.vue';
 import ParameterModal from './ParameterModal.vue'; // Add a paremeter modal to each visual editor, otherwise we can't open a parameter modal over a parameter modal (e.g. edit the parameters of a callback)
 import SchemaModal from './SchemaModal.vue';
+import ExpressionModal from './ExpressionModal.vue';
 import { ProcessGraph } from '@openeo/js-commons';
+import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
 
 export default {
 	name: 'VisualEditor',
@@ -34,7 +38,8 @@ export default {
 		EditorToolbar,
 		DiscoveryToolbar,
 		ParameterModal,
-		SchemaModal
+		SchemaModal,
+		ExpressionModal
 	},
 	props: {
 		id: String,
@@ -167,6 +172,13 @@ export default {
 				return;
 			}
 			this.$refs.schemaModal.show(name, schema, "This is a callback argument. It is a value made available by the process executing this sub-processes for further use. The value will comply to the following data type(s):");
+		},
+
+		showExpressionModal() {
+			if (!this.$refs.expressionModal) {
+				return;
+			}
+			this.$refs.expressionModal.show();
 		},
 
 		openParameterEditor(blocks, block, editable, selectField) {
