@@ -7,7 +7,7 @@
 		</template>
 		<template #footer>
 			<div class="footer">
-				<button  @click="insertExpression">Insert</button>
+				<button type="button" @click="insertExpression">Insert</button>
 			</div>
 		</template>
 	</Modal>
@@ -24,6 +24,7 @@ export default {
 	},
 	data() {
 		return {
+			parser: null,
 			ExpressionInput: null
 		};
 	},
@@ -161,19 +162,6 @@ export default {
 			}
 
 		}
-		/*inOrderTraverse(tree) {
-			inOrderHelper(tree);
-		},
-		inOrderHelper(tree) {
-			if (tree.Binary !== null) {
-				inOrderHelper(tree.left);
-				console.log(tree.operator);
-				inOrderHelper(tree.right);
-			}
-			if (tree.identifier || tree.number){
-				this.add()
-			}
-		}*/
 	}
 }
 
