@@ -271,37 +271,36 @@ export default {
 		viewResults(job) {			
 			Utils.info(this, 'Data requested. Please wait...');
 
-			job.listResults().then(info => {
-				if(info.links.length == 0) {
+			job.getResultsAsItem().then(item => {
+				if(Utils.size(item.assets) == 0) {
 					Utils.error(this, "No results available.");
 					return;
 				}
 
-				this.emit('viewJobResults', info, job);
+				this.emit('viewJobResults', item, job);
 			});
 		},
 		downloadResults(job) {	
-			job.listResults().then(info => {
-				if(!Array.isArray(info.links) || info.links.length == 0) {
-					Utils.error(this, "No download available.");
+			job.getResultsAsItem().then(item => {
+				if(Utils.size(item.assets) == 0) {
+					Utils.error(this, "No results available.");
+					return;
 				}
-				else {
-					// This can be formatted much nicer and more useful...
-					var urls = info.links.map(v => v.href);
-					this.emit(
-						'showListModal', 
-						'Download results' + (info.title ? ' for: ' + info.title : ''),
-						urls,
-						[
-							{
-								callback: url => {
-									window.open(url, '_blank');
-									return false; // Don't close the modal by default to allow downloading multiple files
-								}
+				
+				// This can be formatted much nicer and more useful...
+				this.emit(
+					'showListModal', 
+					'Download results',
+					Object.values(item.assets).map(a => a.href),
+					[
+						{
+							callback: url => {
+								window.open(url, '_blank');
+								return false; // Don't close the modal by default to allow downloading multiple files
 							}
-						]
-					);
-				}
+						}
+					]
+				);
 			});
 		},
 		subscribeToJob(id) { // TODO: Update jobs, inform user etc.

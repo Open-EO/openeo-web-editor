@@ -26,7 +26,7 @@ import EditorToolbar from './EditorToolbar.vue';
 import DiscoveryToolbar from './DiscoveryToolbar.vue';
 import ParameterModal from './ParameterModal.vue'; // Add a paremeter modal to each visual editor, otherwise we can't open a parameter modal over a parameter modal (e.g. edit the parameters of a callback)
 import SchemaModal from './SchemaModal.vue';
-import { ProcessGraph } from '@openeo/js-commons';
+import { ProcessGraph } from '@openeo/js-processgraphs';
 
 export default {
 	name: 'VisualEditor',
@@ -212,17 +212,20 @@ export default {
 		},
 
 		getProcessGraph(success, failure, passNull = false) {
-			var processGraph = null;
+			var process = null;
 			try {
-				processGraph = this.makeProcessGraph();
+				process = this.makeProcessGraph();
 			} catch (error) {
 				failure('No valid model specified.', error);
 				return;
 			}
 
-			if (processGraph !== null) {
+			if (Utils.isObject(process)) {
+				if (!Utils.isObject(process.process_graph)) {
+					process = {process_graph: process};
+				}
 				try {
-					var pg = new ProcessGraph(processGraph, this.processRegistry);
+					var pg = new ProcessGraph(process, this.processRegistry);
 					pg.parse();
 				} catch(error) {
 					failure('Process graph invalid', error);
@@ -230,8 +233,8 @@ export default {
 				}
 			}
 
-			if (processGraph !== null || passNull) {
-				success(processGraph);
+			if (process !== null || passNull) {
+				success(process);
 			}
 			else {
 				failure('No model specified.');

@@ -4,7 +4,7 @@ import Edge from './edge.js';
 import SVG from './svg.js';
 import Field from './field.js';
 import Utils from '../../utils.js';
-import { JsonSchemaValidator, ProcessGraph } from '@openeo/js-commons';
+import { JsonSchemaValidator, ProcessGraph } from '@openeo/js-processgraphs';
 
 /**
  * Manage the blocks
@@ -818,16 +818,19 @@ Blocks.prototype.exportProcessGraph = function() {
     return nodes;
 };
 
-Blocks.prototype.importProcessGraph = function(processGraph, registry) {
+Blocks.prototype.importProcessGraph = function(process, registry) {
     // Parse process 
     var pg;
-    if (processGraph instanceof ProcessGraph) {
+    if (process instanceof ProcessGraph) {
         // Make a copy
-        pg = new ProcessGraph(processGraph.toJSON(), registry);
-        pg.setParent(processGraph.parentProcessId, processGraph.parentParameterName);
+        pg = new ProcessGraph(process.toJSON(), registry);
+        pg.setParent(process.parentProcessId, process.parentParameterName);
     }
     else {
-        pg = new ProcessGraph(processGraph, registry);
+        if (!Utils.isObject(process.process_graph)) {
+            process = {process_graph: process};
+        }
+        pg = new ProcessGraph(process, registry);
     }
     pg.parse();
 

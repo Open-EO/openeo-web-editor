@@ -1,10 +1,8 @@
 {
   "name": "@openeo/web-editor",
-  "version": "0.4.1-beta",
+  "version": "0.5.0-alpha.1",
   "apiVersions": [
-    "0.4.0",
-    "0.4.1",
-    "0.4.2"
+    "1.0.0-rc.2"
   ],
   "author": "openEO Consortium",
   "contributors": [
@@ -41,8 +39,8 @@
   },
   "dependencies": {
     "@openeo/js-client": "^0.4.3",
-    "@openeo/js-commons": "^0.4.7",
-    "@openeo/vue-components": "^0.4.3",
+    "@openeo/js-processgraphs": "1.0.0-alpha.3",
+    "@openeo/vue-components": "^1.0.0-beta.3",
     "ajv": "^6.10.0",
     "codemirror": "^5.47.0",
     "content-type": "^1.0.4",
@@ -51,7 +49,7 @@
     "ol": "^5.3.3",
     "ol-ext": "^3.1.4",
     "regenerator-runtime": "^0.13.3",
-    "vue": "^2.6.10",
+    "vue": "^2.6.0",
     "vue-ctk-date-time-picker": "^2.3.1",
     "vue-snotify": "^3.2.1",
     "vuedraggable": "^2.21.0",
@@ -61,11 +59,10 @@
     "@vue/cli-plugin-babel": "3.11.0",
     "@vue/cli-service": "3.11.0",
     "epsg-index": "^1.0.0",
-    "vue-template-compiler": "^2.6.10"
+    "vue-template-compiler": "^2.6.0"
   },
   "browserslist": [
     "> 1%",
-    "last 2 versions",
-    "not ie <= 8"
+    "not ie > 0"
   ]
 }

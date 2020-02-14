@@ -81,7 +81,7 @@ import ConnectionMixin from './ConnectionMixin.vue';
 import Tabs from '@openeo/vue-components/components/Tabs.vue';
 import Tab from '@openeo/vue-components/components/Tab.vue';
 import Utils from '../utils.js';
-import { OpenEO } from '@openeo/js-client';
+import { OpenEO, OidcProvider } from '@openeo/js-client';
 
 export default {
 	name: 'ConnectForm',
@@ -139,7 +139,7 @@ export default {
 		};
 	},
 	created() {
-		OpenEO.signinCallbackOIDC('popup');
+//		OidcProvider.signinCallbackOIDC('popup');
 
 		var serverFromQuery = Utils.param('server');
 		if (Utils.isUrl(serverFromQuery)) {

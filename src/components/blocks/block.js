@@ -1,7 +1,7 @@
 import Field from './field.js';
 import EventBus from '@openeo/vue-components/eventbus.js';
 import VueUtils from '@openeo/vue-components/utils.js';
-import { JsonSchemaValidator, ProcessGraph } from '@openeo/js-commons';
+import { JsonSchemaValidator, ProcessGraph } from '@openeo/js-processgraphs';
 import Utils from '../../utils.js';
 
 /**
@@ -192,7 +192,7 @@ Block.prototype.getComment = function() {
 };
 
 Block.prototype.formatCallback = function(pg) {
-    if (Utils.size(pg.getNodes()) === 1) { // ToDo: Replace with getNodeCount(), available with js-commons v0.4.8
+    if (pg.getNodeCount() === 1) {
         return VueUtils.htmlentities(pg.getResultNode().process_id);
     }
     else {

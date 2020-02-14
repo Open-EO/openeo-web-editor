@@ -31,6 +31,7 @@
 
 <script>
 import Utils from '../utils.js';
+import { Utils as VueUtils } from '@openeo/vue-components';
 
 export default {
 	name: 'UserMenu',
@@ -38,25 +39,7 @@ export default {
 		...Utils.mapState('server', ['userInfo']),
 		...Utils.mapGetters('server', ['formatCurrency']),
 		links() {
-			var links = [];
-			if (Array.isArray(this.userInfo.links)) {
-				for(var i in this.userInfo.links) {
-					var link = this.userInfo.links[i];
-					if (typeof link.rel === 'string' && link.rel.toLowerCase() === 'self') {
-						continue;
-					}
-					if (typeof link.title !== 'string' || link.title.length === 0) {
-						if (typeof link.rel === 'string' && link.rel.length > 1) {
-							link.title = link.rel.charAt(0).toUpperCase() + link.rel.slice(1);
-						}
-						else {
-							link.title = link.href.replace(/^https?:\/\/(www.)?/i, '').replace(/\/$/i, '');
-						}
-					}
-					links.push(link);
-				}
-			}
-			return links.sort((a, b) => a.title.localeCompare(b.title));
+			return VueUtils.friendlyLinks(this.userInfo.links);
 		},
 		hasBudget() {
 			return this.userInfo.budget === null || (typeof this.userInfo.budget === 'number' && this.userInfo.budget >= 0);

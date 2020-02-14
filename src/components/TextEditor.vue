@@ -8,7 +8,7 @@
 <script>
 import Utils from '../utils.js';
 import EditorToolbar from './EditorToolbar.vue';
-import { ProcessGraph } from '@openeo/js-commons';
+import { ProcessGraph } from '@openeo/js-processgraphs';
 
 import 'codemirror/lib/codemirror.css';
 import 'codemirror/mode/javascript/javascript.js';
@@ -90,19 +90,22 @@ export default {
 	
 		getProcessGraph(success, failure, passNull = false) {
 			var script = this.editor.getValue();
-			var processGraph = null;
+			var process = null;
 			if (script) {
 				try {
-					processGraph = JSON.parse(script);
+					process = JSON.parse(script);
 				} catch(error) {
 					failure('Process graph is invalid JSON', error);
 					return;
 				}
 			}
 
-			if (processGraph !== null) {
+			if (Utils.isObject(process)) {
+				if (!Utils.isObject(process.process_graph)) {
+					process = {process_graph: process};
+				}
 				try {
-					var pg = new ProcessGraph(processGraph, this.processRegistry);
+					var pg = new ProcessGraph(process, this.processRegistry);
 					pg.parse();
 				} catch(error) {
 					failure('Process graph invalid', error);
@@ -110,8 +113,8 @@ export default {
 				}
 			}
 
-			if (processGraph !== null || passNull) {
-				success(processGraph);
+			if (process !== null || passNull) {
+				success(process);
 			}
 			else {
 				failure('No process graph specified.');

@@ -17,7 +17,7 @@ import Utils from '../utils.js';
 import ParameterField from './ParameterField.vue';
 import Field from './blocks/field.js';
 import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
-import { JsonSchemaValidator } from '@openeo/js-commons';
+import { JsonSchemaValidator } from '@openeo/js-processgraphs';
 import { ProcessSchema, ProcessSubSchema } from '../processSchema.js';
 
 const SUPPORTED_TYPES = new ProcessSchema({

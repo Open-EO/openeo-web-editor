@@ -44,7 +44,7 @@ export default {
 			return (this.supports('listServices') || this.supports('createService'));
 		},
 		supportsProcessGraphs() {
-			return (this.supports('listProcessGraphs') || this.supports('createProcessGraph'));
+			return (this.supports('listUserProcesses') || this.supports('setUserProcess'));
 		},
 		supportsFiles() {
 			return (this.supports('listFiles') || this.supports('uploadFile'));

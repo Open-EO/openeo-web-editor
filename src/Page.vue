@@ -195,6 +195,9 @@ button {
 	padding: 0.25em 0 0.25em 0;
 	border-bottom: 1px dotted #ccc;
 }
+.vue-component h4 {
+	font-size: 1.2em;
+}
 .vue-component .tabular {
 	margin: 0.5em 0;
 }

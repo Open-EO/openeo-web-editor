@@ -2,15 +2,7 @@
 	<Modal ref="modal">
 		<template #main>
 			<div class="vue-component server-info">
-				<Capabilities :capabilities="capabilities" :url="url" />
-				<template v-if="services">
-					<h3>Supported secondary web service types</h3>
-					<SupportedServiceTypes :version="capabilities.version" :services="services" />
-				</template>
-				<template v-if="formats">
-					<h3>Supported output file formats</h3>
-					<SupportedFileFormats :version="capabilities.version" :formats="formats" />
-				</template>
+				<Capabilities :capabilities="capabilities" :url="url" :serviceTypes="services" :fileFormats="formats" />
 			</div>
 		</template>
 	</Modal>
@@ -19,16 +11,12 @@
 <script>
 import Modal from './Modal.vue';
 import Capabilities from '@openeo/vue-components/components/Capabilities.vue';
-import SupportedFileFormats from '@openeo/vue-components/components/SupportedFileFormats.vue';
-import SupportedServiceTypes from '@openeo/vue-components/components/SupportedServiceTypes.vue';
 
 export default {
 	name: 'ServerInfoModal',
 	components: {
 		Modal,
-		Capabilities,
-		SupportedFileFormats,
-		SupportedServiceTypes
+		Capabilities
 	},
 	data() {
 		return {
@@ -39,10 +27,10 @@ export default {
 		};
 	},
 	methods: {
-		show(connection, outputFormats, serviceTypes) {
+		show(connection, fileFormats, serviceTypes) {
 			this.url = connection.getBaseUrl();
 			this.capabilities = connection.capabilities().toPlainObject();
-			this.formats = outputFormats;
+			this.formats = fileFormats.toPlainObject();
 			this.services = serviceTypes;
 			this.$refs.modal.show(connection.capabilities().title() || 'Server information');
 		}

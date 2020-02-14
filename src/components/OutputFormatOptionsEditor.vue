@@ -45,13 +45,13 @@ export default {
 		};
 	},
 	computed: {
-		...Utils.mapState('server', ['outputFormats']),
+		...Utils.mapState('server', ['fileFormats']),
 		parameters() {
-			var format = this.format.toUpperCase();
 			var fields = {};
+			var outputFormat = this.fileFormats.getOutputType(this.format);
 			// Convert to Fields
-			for (var name in this.outputFormats[format].parameters) {
-				var p = this.outputFormats[format].parameters[name];
+			for (var name in outputFormat.parameters) {
+				var p = outputFormat.parameters[name];
 				var schema = {};
 				if (typeof p.type !== 'undefined') {
 					schema.type = [p.type, "null"];
@@ -82,8 +82,8 @@ export default {
 			if (typeof this.format !== 'string') {
 				return false;
 			}
-			var format = this.format.toUpperCase();
-			return Utils.isObject(this.outputFormats) && Utils.isObject(this.outputFormats[format]) && Utils.isObject(this.outputFormats[format].parameters) && Object.keys(this.outputFormats[format].parameters).length > 0;
+			var outputFormat = this.fileFormats.getOutputType(this.format);
+			return Utils.isObject(outputFormat) && Utils.isObject(outputFormat.parameters) && Object.keys(outputFormat.parameters).length > 0;
 		}
 	},
 	methods: {

@@ -1,5 +1,5 @@
 import { OpenEO } from '@openeo/js-client';
-import { ProcessRegistry } from '@openeo/js-commons';
+import { ProcessRegistry } from '@openeo/js-processgraphs';
 import Utils from '../utils.js';
 
 const getDefaultState = () => {
@@ -9,7 +9,7 @@ const getDefaultState = () => {
 		userInfo: {},
 		connectionError: null,
 		discoveryErrors: [],
-		outputFormats: {},
+		fileFormats: {},
 		serviceTypes: {},
 		processes: [],
 		collections: []
@@ -38,7 +38,7 @@ export default {
 		},
 		isConnected: (state) => state.connection !== null && state.connection.capabilities() !== null,
 		isDiscovered: (state) => state.connection !== null && state.discoveryCompleted,
-		isAuthenticated: (state) => state.connection !== null && state.connection.accessToken !== null,
+		isAuthenticated: (state) => state.connection !== null && state.connection.isLoggedIn(),
 		processRegistry: (state) => {
 			var registry = new ProcessRegistry();
 			for (var i in state.processes) {
@@ -93,7 +93,7 @@ export default {
 			// Request supported output formats
 			if (capabilities.hasFeature('listFileTypes')) {
 				promises.push(cx.state.connection.listFileTypes()
-					.then(response => cx.commit('outputFormats', response))
+					.then(response => cx.commit('fileFormats', response))
 					.catch(error => cx.commit('addDiscoveryError', error)));
 			}
 
@@ -140,7 +140,7 @@ export default {
 			}
 			else {
 				cx.commit('userInfo', {
-					user_id: cx.state.connection.getUserId()
+					user_id: 'Guest'
 				});
 			}
 		},
@@ -162,18 +162,8 @@ export default {
 		userInfo(state, info) {
 			state.userInfo = info;
 		},
-		outputFormats(state, outputFormats) {
-			// Make keys uppercase for simplicity
-			if (Utils.isObject(outputFormats)) {
-				var obj = {};
-				for(var key in outputFormats) {
-					obj[key.toUpperCase()] = outputFormats[key];
-				}
-				state.outputFormats = obj;
-			}
-			else {
-				state.outputFormats = outputFormats;
-			}
+		fileFormats(state, fileFormats) {
+			state.fileFormats = fileFormats;
 		},
 		serviceTypes(state, serviceTypes) {
 			// Make keys uppercase for simplicity

@@ -296,6 +296,8 @@ export default {
 				})
 			}));
 			this.map.getView().fit(extent);
+			// ToDo: The Collection component has some smart fitting behavior in setMapSize()
+			// Implement something similar here, too.
 		},
 
 		addAreaSelector(w, e, n, s) {

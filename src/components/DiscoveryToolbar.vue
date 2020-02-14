@@ -52,7 +52,7 @@ import Config from '../../config.js';
 import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
 import ConnectionMixin from './ConnectionMixin.vue';
 import Utils from '../utils.js';
-import { ProcessGraph as ProcessGraphParser } from '@openeo/js-commons';
+import { ProcessGraph as ProcessGraphParser } from '@openeo/js-processgraphs';
 import { ProcessGraph } from '@openeo/js-client';
 
 export default {

@@ -113,7 +113,7 @@ export default {
 			if (typeof file.name !== 'string') {
 				return;
 			}
-			var virtualFile = this.connection.openFile(file.name);
+			var virtualFile = this.connection.getFile(file.name);
 			virtualFile.uploadFile(file, percent => this.$set(this.uploadProgressPerFile, i, percent))
 				.then(uploadedFile => {
 					this.$refs.table.replaceData(uploadedFile);

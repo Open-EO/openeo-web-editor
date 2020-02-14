@@ -1,14 +1,14 @@
 <template>
-	<DataTable ref="table" :dataSource="listProcessGraphs" :columns="columns" id="ProcessGraphPanel">
+	<DataTable ref="table" :dataSource="listUserProcesses" :columns="columns" id="ProcessGraphPanel">
 		<template slot="toolbar">
-			<button title="Add new process graph" @click="addGraphFromScript" v-show="supports('createProcessGraph')"><i class="fas fa-plus"></i> Add</button>
+			<button title="Add new process graph" @click="addGraphFromScript" v-show="supports('setUserProcess')"><i class="fas fa-plus"></i> Add</button>
 			<button title="Refresh process graphs" v-if="isListDataSupported" @click="updateData()"><i class="fas fa-sync-alt"></i></button> <!-- ToDo: Should be done automatically later -->
 		</template>
 		<template slot="actions" slot-scope="p">
-			<button title="Details" @click="graphInfo(p.row)" v-show="supports('describeProcessGraph')"><i class="fas fa-info"></i></button>		<button title="Show in Editor" @click="showInEditor(p.row)" v-show="supports('describeProcessGraph')"><i class="fas fa-code-branch"></i></button>
-			<button title="Edit metadata" @click="editMetadata(p.row)" v-show="supports('updateProcessGraph')"><i class="fas fa-edit"></i></button>
-			<button title="Replace process graph" @click="replaceProcessGraph(p.row)" v-show="supports('updateProcessGraph')"><i class="fas fa-retweet"></i></button>
-			<button title="Delete" @click="deleteGraph(p.row)" v-show="supports('deleteProcessGraph')"><i class="fas fa-trash"></i></button>
+			<button title="Details" @click="graphInfo(p.row)" v-show="supports('describeUserProcess')"><i class="fas fa-info"></i></button>		<button title="Show in Editor" @click="showInEditor(p.row)" v-show="supports('describeUserProcess')"><i class="fas fa-code-branch"></i></button>
+			<button title="Edit metadata" @click="editMetadata(p.row)" v-show="supports('replaceUserProcess')"><i class="fas fa-edit"></i></button>
+			<button title="Replace process graph" @click="replaceProcessGraph(p.row)" v-show="supports('replaceUserProcess')"><i class="fas fa-retweet"></i></button>
+			<button title="Delete" @click="deleteGraph(p.row)" v-show="supports('deleteUserProcess')"><i class="fas fa-trash"></i></button>
 		</template>
 	</DataTable>
 </template>
@@ -39,24 +39,24 @@ export default {
 					filterable: false
 				}
 			},
-			listFunc: 'listProcessGraphs',
-			createFunc: 'createProcessGraph'
+			listFunc: 'listUserProcesses',
+			createFunc: 'setUserProcess'
 		};
 	},
 	methods: {
-		listProcessGraphs() {
-			return this.connection.listProcessGraphs();
+		listUserProcesses() {
+			return this.connection.listUserProcesses();
 		},
 		updateData() {
 			this.updateTable(this.$refs.table);
 		},
 		refreshProcessGraph(pg, callback = null) {
-			pg.describeProcessGraph()
+			pg.describeUserProcess()
 				.then(updatedPg => {
 					if (typeof callback === 'function') {
 						callback(updatedPg);
 					}
-					this.updateProcessGraphData(updatedPg);
+					this.replaceUserProcessData(updatedPg);
 				})
 				.catch(error => Utils.exception(this, error, 'Loading process graph failed'));
 		},
@@ -91,7 +91,7 @@ export default {
 		},
 		addGraph(script, data) {
 			data = this.normalizeToDefaultData(data);
-			this.connection.createProcessGraph(script, data.title, data.description)
+			this.connection.setUserProcess(script, data.title, data.description)
 				.then(data => {
 					this.$refs.table.addData(data);
 					Utils.ok(this, 'Process graph successfully stored!');
@@ -119,21 +119,21 @@ export default {
 		},
 		updateMetadata(pg, data) {
 			data = this.normalizeToDefaultData(data);
-			pg.updateProcessGraph(data)
+			pg.replaceUserProcess(data)
 				.then(updatePg => {
 					Utils.ok(this, "Process graph successfully updated.");
-					this.updateProcessGraphData(updatePg);
+					this.replaceUserProcessData(updatePg);
 				})
 				.catch(error => Utils.exception(this, error, "Updating process graph failed"));
 		},
 		deleteGraph(pg) {
-			pg.deleteProcessGraph()
+			pg.deleteUserProcess()
 				.then(() => {
 					this.$refs.table.removeData(pg.processGraphId);
 				})
 				.catch(error => Utils.exception(this, error, 'Deleting process graph failed'));
 		},
-		updateProcessGraphData(updatePg) {
+		replaceUserProcessData(updatePg) {
 			this.$refs.table.replaceData(updatePg);
 		}
 	}

@@ -95,8 +95,8 @@ export default {
 		};
 	},
 	computed: {
-		...Utils.mapGetters('server', ['title']),
-		...Utils.mapState('server', ['collections', 'processes', 'outputFormats', 'serviceTypes']),
+		...Utils.mapGetters('server', ['title', 'isAuthenticated']),
+		...Utils.mapState('server', ['collections', 'processes', 'fileFormats', 'serviceTypes']),
 	},
 	mounted() {
 		this.listen('showCollectionInfo', this.showCollectionInfo);
@@ -110,7 +110,9 @@ export default {
 
 		this.resizeListener = (event) => this.emit('windowResized', event);
 		window.addEventListener('resize', this.resizeListener);
-		this.userInfoUpdater = setInterval(this.describeAccount, 2*60*1000); // Refresh user data every 2 minutes
+		if (this.isAuthenticated) {
+			this.userInfoUpdater = setInterval(this.describeAccount, 2*60*1000); // Refresh user data every 2 minutes
+		}
 		this.emit('title', this.title);
 	},
 	beforeDestroy() {
@@ -212,7 +214,7 @@ export default {
 		},
 
 		showServerInfo() {
-			this.$refs.serverInfoModal.show(this.connection, this.outputFormats, this.serviceTypes);
+			this.$refs.serverInfoModal.show(this.connection, this.fileFormats, this.serviceTypes);
 		},
 
 		showWebEditorInfo() {

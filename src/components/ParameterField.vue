@@ -27,8 +27,12 @@
 			<option v-for="(name, code) in epsgCodes" :key="code" :value="code">{{ code }}: {{ name }}</option>
 		</select>
 		<!-- Output Format -->
+		<select class="fieldValue" v-else-if="type === 'input-format'" :name="fieldName" v-model="value" ref="selectFirst" :disabled="!editable">
+			<option v-for="(x, format) in fileFormats.getInputTypes()" :key="format" :value="format">{{ format }}</option>
+		</select>
+		<!-- Output Format -->
 		<select class="fieldValue" v-else-if="type === 'output-format'" :name="fieldName" v-model="value" ref="selectFirst" :disabled="!editable">
-			<option v-for="(x, format) in outputFormats" :key="format" :value="format.toUpperCase()">{{ format.toUpperCase() }}</option>
+			<option v-for="(x, format) in fileFormats.getOutputTypes()" :key="format" :value="format">{{ format }}</option>
 		</select>
 		<!-- Service Type -->
 		<select class="fieldValue" v-else-if="type === 'service-type'" :name="fieldName" v-model="value" ref="selectFirst" :disabled="!editable">
@@ -111,7 +115,7 @@ import 'vue-ctk-date-time-picker/dist/vue-ctk-date-time-picker.css';
 import MapViewer from './MapViewer.vue';
 import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
 
-import { ProcessGraph } from '@openeo/js-commons';
+import { ProcessGraph } from '@openeo/js-processgraphs';
 import Field from './blocks/field.js';
 import Utils from '../utils.js';
 
@@ -156,7 +160,7 @@ export default {
 		};
 	},
 	computed: {
-		...Utils.mapState('server', ['collections', 'outputFormats', 'serviceTypes']),
+		...Utils.mapState('server', ['collections', 'fileFormats', 'serviceTypes']),
 		...Utils.mapGetters('server', ['capabilities', 'processRegistry']),
 		type() {
 			if (this.isItem) {

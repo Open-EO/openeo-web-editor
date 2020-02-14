@@ -20,9 +20,8 @@
 				</div></div>
 				<div class="tabular" v-if="job.error"><label>Error(s):</label> <div class="value">
 					<div class="errorMessage">{{ job.error.message }}</div>
-					<div class="errorLinks" v-if="Array.isArray(job.error.links) && job.error.links.length > 0">
-						<strong>Further information:</strong><br />
-						<LinkList :links="job.error.links" />
+					<div class="errorLinks" v-if="Array.isArray(job.error.links)">
+						<LinkList :links="job.error.links" heading="Further information:" />
 					</div>
 					<div class="errorInternals">
 						Code: <code>{{job.error.code}}</code>
