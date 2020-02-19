@@ -108,6 +108,7 @@ export default {
             history: [],
             historyPointer: null,
 
+            process: this.value,
             // Metadata for blocks to show
             blocks: [],
             // Metadata for edges to show
@@ -172,6 +173,7 @@ export default {
         async value(value) {
             // Only import when user changes data (i.e. not a BlocksProcess exported from export())
             if (!(value instanceof BlocksProcess)) {
+                this.process = value;
                 await this.import(value, { propagate: false, undoOnError: false }); // don't propagate, otherwise results in an infinite loop
             }
         },
@@ -370,6 +372,7 @@ export default {
                 this.blocks = this.blocks.filter(b => b.type === 'parameter' && b.origin === 'prop');
                 this.nextBlockId = 1;
                 this.nextEdgeId = 1;
+                this.process = {};
             });
         },
 
@@ -501,7 +504,12 @@ export default {
             var size = this.estimateBlockSize(block);
             block.value.position = Utils.ensurePoint(block.value.position, () => this.getNewBlockDefaultPosition(size));
 
-            if (this.processBlocks.length === 0) {
+            // If there's already a result node, remove the flag here
+            if (block.value.result && this.blocks.filter(b => b.value.result === true).length) {
+                delete block.value.result;
+            }
+            // Make this the result node if there's no node yet
+            else if (this.processBlocks.length === 0) {
                 block.value.result = true;
             }
             
@@ -780,22 +788,8 @@ export default {
                 nodes[block.id] = copy;
             }
 
-            var pg = {
-            // ToDo: Add id, parameters, returns, etc. (see below)
-            //  id: null,
-            //  summary: null,
-            //  description: null,
-            //  categories: [],
-            //  experimental: false,
-            //  parameters: null,
-            //  returns: null,
-                process_graph: nodes,
-            //  exceptions: [],
-            //  examples: [],
-            //  links: []
-            }
             // ToDo: Currently, we just use the id, parameters etc from the original process
-            return new BlocksProcess(Object.assign({}, this.value, pg));
+            return new BlocksProcess(Object.assign({}, this.process, { process_graph: nodes }));
         },
 
         // Options may contain:
@@ -838,6 +832,7 @@ export default {
                 // clear screen...
                 if (options.clear !== false) {
                     await this.clear();
+                    this.process = process instanceof ProcessGraph ? process.toJSON() : process;
                 }
 
                 if (!Utils.isObject(process) || Utils.size(process.process_graph) === 0) {
@@ -856,7 +851,7 @@ export default {
                 }
                 this.processGraph.parse();
 
-                this.importPgParameters(this.processGraph.getParameters(), 'pg');
+                this.importPgParameters(this.processGraph.getParameters(), 'pg', options.clear !== false);
 
                 // Import nodes
                 this.importNodes(this.processGraph.getStartNodes());
@@ -870,13 +865,15 @@ export default {
             }, options);
         },
 
-        importPgParameters(params, origin) {
+        importPgParameters(params, origin, clear = true) {
             if (!Array.isArray(params)) {
                 return;
             }
 
             // Remove existing parameters from the given origin
-            this.blocks = this.blocks.filter(b => b.type !== 'parameter' || b.origin !== origin);
+            if (clear) {
+                this.blocks = this.blocks.filter(b => b.type !== 'parameter' || b.origin !== origin);
+            }
 
             let size = this.estimateBlockSize({}); // Estimate base size for an empty block
             for(var i in params) {
@@ -908,6 +905,10 @@ export default {
                 spec: param,
                 origin: origin
             }));
+        },
+
+        getPgParameters() {
+            return this.blocks.filter(b => b.type === 'parameter');
         },
 
         async importEdges(pg) {

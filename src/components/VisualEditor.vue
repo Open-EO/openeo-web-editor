@@ -8,7 +8,7 @@
 			</span>
 			<span class="sepr" v-if="editable">
 				<button type="button" @click="addParameter" title="Add Parameter"><i class="fas fa-parking"></i></button>
-        <button type="button" @click="showExpressionModal" :title="'Insert expression'"><i class="fas fa-calculator"></i></button>
+				<button type="button" v-if="supportsExpressionModal" @click="showExpressionModal" title="Insert formula"><i class="fas fa-calculator"></i></button>
 			</span>
 			<button type="button" @click="$refs.blocks.toggleCompact()" :class="{compactMode: compactMode}" title="Compact Mode"><i class="fas fa-compress-arrows-alt"></i></button>
 			<button type="button" @click="$refs.blocks.perfectScale()" title="Scale to perfect size"><i class="fas fa-arrows-alt"></i></button>
@@ -42,7 +42,7 @@
 		</div>
 		<SchemaModal ref="schemaModal" />
 		<ParameterModal ref="parameterModal" />
-		<ExpressionModal ref="expressionModal" />
+		<ExpressionModal v-if="supportsExpressionModal" ref="expressionModal" :operatorMapping="operatorMapping" @showSchema="showSchemaModal" @save="insertNodes" />
 	</div>
 </template>
 
@@ -53,8 +53,6 @@ import EditorToolbar from './EditorToolbar.vue';
 import DiscoveryToolbar from './DiscoveryToolbar.vue';
 import ParameterModal from './modals/ParameterModal.vue'; // Add a paremeter modal to each visual editor, otherwise we can't open a parameter modal over a parameter modal (e.g. edit the parameters of a callback)
 import SchemaModal from './modals/SchemaModal.vue';
-import ExpressionModal from './ExpressionModal.vue';
-import { ProcessGraph } from '@openeo/js-processgraphs';
 import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
 
 export default {
@@ -66,7 +64,8 @@ export default {
 		DiscoveryToolbar,
 		ParameterModal,
 		SchemaModal,
-		ExpressionModal
+		// Async loading for smaller starting bundle
+		ExpressionModal: () => import('./modals/ExpressionModal.vue')
 	},
 	props: {
 		id: String,
@@ -90,7 +89,19 @@ export default {
 	computed: {
 		...Utils.mapState(['collections']),
 		...Utils.mapGetters(['processRegistry']),
-		...Utils.mapGetters('userProcesses', {getProcessById: 'getAllById'})
+		...Utils.mapGetters('userProcesses', {getProcessById: 'getAllById'}),
+		supportsExpressionModal() {
+			if (!this.editable) {
+				return false;
+			}
+			for(let i in this.operatorMapping) {
+				let processId = this.operatorMapping[i];
+				if (!this.getProcessById(processId)) {
+					return false;
+				}
+			}
+			return true;
+		}
 	},
 	data() {
 		return {
@@ -98,7 +109,14 @@ export default {
 			canRedo: false,
 			compactMode: false,
 			hasSelection: false,
-			isFullScreen: false
+			isFullScreen: false,
+			operatorMapping: {
+				"-": "subtract",
+				"+": "add",
+				"/": "divide",
+				"*": "multiply",
+				"^": "power"
+			}
 		};
 	},
 	methods: {
@@ -183,10 +201,7 @@ export default {
 			this.$refs.schemaModal.show(name, schema, msg);
 		},
 		showExpressionModal() {
-			if (!this.$refs.expressionModal) {
-				return;
-			}
-			this.$refs.expressionModal.show();
+			this.$refs.expressionModal.show(this.value, this.$refs.blocks.getPgParameters());
 		},
 		openParameterEditor(parameters, values, title = "Edit", isEditable = true, selectParameterName = null, saveCallback = null, processId = null) {
 			this.$refs.parameterModal.show(title, parameters, values, isEditable, saveCallback, null, processId, selectParameterName);
@@ -236,6 +251,14 @@ export default {
 			} catch(error) {
 				Utils.exception(this, error);
 			}
+		},
+
+		async insertNodes(nodes) {
+			await this.$refs.blocks.import({
+				process_graph: nodes
+			}, {
+				clear: false
+			});
 		}
 
 	}

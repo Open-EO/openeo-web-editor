@@ -26,15 +26,12 @@
   THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/*jslint sloppy: true */
-/*global document:true,window:true */
-var TapDigit;
-TapDigit = TapDigit || {};
-
-TapDigit.Token = {
-    Operator: 'Operator',
-    Identifier: 'Identifier',
-    Number: 'Number'
+var TapDigit = {
+    Token: {
+        Operator: 'Operator',
+        Identifier: 'Identifier',
+        Number: 'Number'
+    }
 };
 
 TapDigit.Lexer = function () {
@@ -101,11 +98,11 @@ TapDigit.Lexer = function () {
     }
 
     function isIdentifierStart(ch) {
-        return (ch === '_') || isLetter(ch);
+        return (ch === '_') || (ch === '#') || (ch === '$') || isLetter(ch);
     }
 
     function isIdentifierPart(ch) {
-        return isIdentifierStart(ch) || isDecimalDigit(ch);
+        return (ch === '_') || isLetter(ch) || isDecimalDigit(ch);
     }
 
     function scanIdentifier() {
@@ -465,10 +462,4 @@ TapDigit.Parser = function () {
     };
 };
 
-let lexer = TapDigit.Lexer;
-let parser = TapDigit.Parser;
-export {
-    lexer,
-    parser
-};
-export {TapDigit as TapDigit};
+export default TapDigit;

@@ -1,5 +1,5 @@
 <template>
-	<div class="textEditor">
+	<div class="textEditor" :class="language">
 		<EditorToolbar :editable="editable" :onClear="clear">
 			<span class="sepr" v-if="editable">
 				<button type="button" @click="editor.undo()" :disabled="!canUndo" title="Revert last change"><i class="fas fa-undo-alt"></i></button>
@@ -24,8 +24,11 @@ import 'codemirror/lib/codemirror.css';
 
 import 'codemirror/mode/javascript/javascript.js';
 import 'codemirror/mode/markdown/markdown.js';
+import 'codemirror/mode/mathematica/mathematica.js';
 import 'codemirror/mode/python/python.js';
 import 'codemirror/mode/r/r.js';
+
+import 'codemirror/addon/display/placeholder.js';
 
 import 'codemirror/addon/edit/matchbrackets.js';
 import 'codemirror/addon/edit/closebrackets.js';
@@ -53,6 +56,10 @@ export default {
 		language: {
 			type: String,
 			default: null // json, r, python, markdown, processgraph or null
+		},
+		placeholder: {
+			type: String,
+			default: ""
 		}
 	},
 	computed: {
@@ -64,7 +71,8 @@ export default {
 				indentWithTabs: true,
 				matchBrackets: true,
 				autoCloseBrackets: true,
-				readOnly: !this.editable
+				readOnly: !this.editable,
+				placeholder: this.placeholder
 			};
 			switch(this.language) {
 				case 'r':
@@ -72,6 +80,9 @@ export default {
 					break;
 				case 'python':
 					options.mode = 'text/x-python';
+					break;
+				case 'math':
+					options.mode = 'text/x-mathematica'; // Use mathematica mode until we have something better for openEO
 					break;
 				case 'markdown':
 					options.mode = 'text/x-markdown';
@@ -154,6 +165,8 @@ export default {
 		commit() {
 			var value = this.editor.getValue();
 			switch(this.language) {
+				case 'math':
+					return this.emit(value.replace(/[\r\n\t]+/, ' ')); // Replace line breaks and tabs with simple spaces
 				case 'processgraph':
 					if (value) {
 						var process = JSON.parse(value);
@@ -241,5 +254,13 @@ export default {
 	flex-grow: 1;
 	height: 100%;
 	overflow: auto;
+}
+</style>
+<style>
+.textEditor.math .cm-operator {
+	margin: 0 0.2em;
+}
+.CodeMirror-placeholder {
+	opacity: 0.5;
 }
 </style>
