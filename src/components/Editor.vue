@@ -1,13 +1,13 @@
 <template>
-	<Tabs class="editor" ref="tabs" id="processGraphContent">
-		<Tab id="visual" name="Visual Model" icon="fa-code-branch" :selected="true" :allowShow="prepareProcessGraph" @show="transferProcessGraph">
+	<Tabs class="editor" ref="tabs" id="customProcessContent">
+		<Tab id="visual" name="Visual Model" icon="fa-code-branch" :selected="true" :allowShow="prepareProcess" @show="transferProcess">
 			<template #default="{ tab }">
-				<VisualEditor ref="graphBuilder" :active="tab.active" :editable="editable" :value="processGraph" :id="id + '_visual'" :enableClear="enableClear" :enableExecute="enableExecute" :enableLocalStorage="enableLocalStorage" :showDiscoveryToolbar="showDiscoveryToolbar" />
+				<VisualEditor ref="graphBuilder" :active="tab.active" :editable="editable" :value="process" :id="id + '_visual'" :enableClear="enableClear" :enableExecute="enableExecute" :enableLocalStorage="enableLocalStorage" :showDiscoveryToolbar="showDiscoveryToolbar" />
 			</template>
 		</Tab>
-		<Tab id="source" name="Process Graph" icon="fa-code" :allowShow="prepareProcessGraph" @show="transferProcessGraph">
+		<Tab id="source" name="Code" icon="fa-code" :allowShow="prepareProcess" @show="transferProcess">
 			<template #default="{ tab }">
-				<TextEditor ref="sourceEditor" :active="tab.active" :editable="editable" :value="processGraph" :id="id + '_text'" :enableClear="enableClear" :enableExecute="enableExecute" :enableLocalStorage="enableLocalStorage" />
+				<TextEditor ref="sourceEditor" :active="tab.active" :editable="editable" :value="process" :id="id + '_text'" :enableClear="enableClear" :enableExecute="enableExecute" :enableLocalStorage="enableLocalStorage" />
 			</template>
 		</Tab>
 	</Tabs>
@@ -36,7 +36,7 @@ export default {
 			type: Boolean,
 			default: true
 		},
-		processGraph: {
+		process: {
 			type: Object,
 			default: null
 		},
@@ -59,8 +59,8 @@ export default {
 	},
 	data() {
 		return {
-			lastPgToInsert: null,
-			pgToInsert: this.processGraph
+			lastProcessToInsert: null,
+			processToInsert: this.process
 		};
 	},
 	methods: {
@@ -80,7 +80,7 @@ export default {
 				return this.$refs.graphBuilder;
 			}
 		},
-		getProcessGraph(success, failure = null, passNull = false) {
+		getCustomProcess(success, failure = null, passNull = false) {
 			if (failure === null) {
 				failure = (message, exception = null) => {
 					if (exception !== null) {
@@ -91,7 +91,7 @@ export default {
 					}
 				};
 			}
-			this.activeEditor().getProcessGraph(success, failure, passNull);
+			this.activeEditor().getCustomProcess(success, failure, passNull);
 		},
 		insertProcess(id) {
 			this.activeEditor().insertProcess(id);
@@ -99,15 +99,15 @@ export default {
 		insertCollection(id) {
 			this.activeEditor().insertCollection(id);
 		},
-		insertProcessGraph(pg) {
-			this.activeEditor().insertProcessGraph(pg);
+		insertCustomProcess(pg) {
+			this.activeEditor().insertCustomProcess(pg);
 		},
-		prepareProcessGraph() {
+		prepareProcess() {
 			if (this.editable) {
 				return new Promise((resolve, reject) => {
-					this.getProcessGraph(
+					this.getCustomProcess(
 						pg => {
-							this.pgToInsert = pg;
+							this.processToInsert = pg;
 							resolve(true);
 						},
 						(message, exception) => {
@@ -124,20 +124,20 @@ export default {
 				});
 			}
 			else {
-				this.pgToInsert = this.processGraph;
+				this.processToInsert = this.process;
 				return true;
 			}
 		},
 
-		transferProcessGraph(tab) {
+		transferProcess(tab) {
 			this.activeEditor().onShow();
 			// Don't update process graph if it hasn't changed.
 			// use fast-stable-stringify as it's stable/deterministic. 
-			if (!this.editable || !this.lastPgToInsert || stringify(this.pgToInsert) !== this.lastPgToInsert) {
-				this.insertProcessGraph(this.pgToInsert);
-				this.lastPgToInsert = stringify(this.pgToInsert);
+			if (!this.editable || !this.lastProcessToInsert || stringify(this.processToInsert) !== this.lastProcessToInsert) {
+				this.insertCustomProcess(this.processToInsert);
+				this.lastProcessToInsert = stringify(this.processToInsert);
 			}
-			this.pgToInsert = null;
+			this.processToInsert = null;
 		}
 
 	}

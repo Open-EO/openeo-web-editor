@@ -7,10 +7,10 @@
 			</div>
 			<button type="button" v-if="isArrayType" @click="convertToArray()"><i class="fas fa-list"></i> Convert to array</button>
 		</template>
-		<!-- Callback Argument -->
-		<template v-else-if="isCallbackArgument">
+		<!-- Process Parameter -->
+		<template v-else-if="isPgParameter">
 			<div class="fieldValue externalData fromArgument">
-				<span>Value of callback argument <tt>{{ schema.schema.from_argument }}</tt></span>
+				<span>Value of process parameter <tt>{{ schema.schema.from_parameter }}</tt></span>
 			</div>
 			<button type="button" v-if="isArrayType" @click="convertToArray()"><i class="fas fa-list"></i> Convert to array</button>
 		</template>
@@ -55,9 +55,9 @@
 		<MapViewer v-else-if="type === 'bounding-box'" ref="bboxMap" :key="type" :id="fieldName + '_bbox'" :showAreaSelector="true" :editable="editable" :center="[0,0]" :zoom="1" class="areaSelector"></MapViewer>
 		<!-- GeoJSON -->
 		<MapViewer v-else-if="type === 'geojson'" ref="geojson" :key="type" :id="fieldName + '_geojson'" :showGeoJson="value || true" :editable="editable" :center="[0,0]" :zoom="1" class="geoJsonEditor"></MapViewer>
-		<!-- Callback -->
-		<div v-else-if="type === 'callback'" class="border">
-			<VisualEditor ref="callbackBuilder" class="callbackEditor" id="inlinePgEditor" :editable="editable" :callbackArguments="schema.getCallbackParameters()" :value="value" :enableExecute="false" :enableLocalStorage="false" />
+		<!-- Process Editor -->
+		<div v-else-if="type === 'process-graph'" class="border">
+			<VisualEditor ref="callbackBuilder" class="callbackEditor" id="inlinePgEditor" :editable="editable" :pgParameters="schema.getCallbackParameters()" :value="value" :enableExecute="false" :enableLocalStorage="false" />
 		</div>
 		<!-- Object -->
 		<div v-else-if="type === 'object'" class="objectEditor">
@@ -183,11 +183,11 @@ export default {
 		hasResult() {
 			return Utils.isObject(this.value) && (this.value.from_node || this.refs.from_node.length > 0);
 		},
-		isCallbackArgument() {
-			return Utils.isObject(this.value) && this.value.from_argument && Object.keys(this.value).length == 1 && (this.type !== "object" || this.isObjectItem);
+		isPgParameter() {
+			return Utils.isObject(this.value) && this.value.from_parameter && Object.keys(this.value).length == 1 && (this.type !== "object" || this.isObjectItem);
 		},
-		hasCallbackArgument() {
-			return Utils.isObject(this.value) && (this.value.from_argument || this.refs.from_argument.length > 0);
+		hasPgParameter() {
+			return Utils.isObject(this.value) && (this.value.from_parameter || this.refs.from_parameter.length > 0);
 		},
 		isArrayType() {
 			return (this.type === 'array' || this.type === 'temporal-intervals');
@@ -213,7 +213,7 @@ export default {
 			this.value = this.initValue(this.pass);
 		},
 		type(newType, oldType) {
-			var refTypes = ['from_argument', 'from_node'];
+			var refTypes = ['from_parameter', 'from_node'];
 			if (refTypes.includes(oldType) && newType === 'object') {
 				this.value = {};
 			}
@@ -296,11 +296,8 @@ export default {
 			else if (this.type === 'output-format' || this.type === 'service-type') {
 				v = (typeof v === 'string' ? v.toUpperCase() : null);
 			}
-			else if (this.type === 'callback') {
-				if (Utils.isObject(v) && v.callback) {
-					v = v.callback;
-				}
-				else if (!(v instanceof ProcessGraph)) {
+			else if (this.type === 'process-graph') {
+				if (!(v instanceof ProcessGraph)) {
 					v = null;
 				}
 			}
@@ -342,8 +339,8 @@ export default {
 			}
 		},
 		getValue() {
-			if (this.isCallbackArgument) {
-				return {from_argument: this.schema.schema.from_argument};
+			if (this.isPgParameter) {
+				return {from_parameter: this.schema.schema.from_parameter};
 			}
 			else if (this.isResult) {
 				return {from_node: this.schema.schema.from_node};
@@ -354,14 +351,12 @@ export default {
 			else if (this.type === 'temporal-interval') {
 				return [this.value.start, this.value.end];
 			}
-			else if (this.type === 'callback') {
-				var pg = this.$refs.callbackBuilder.makeProcessGraph();
+			else if (this.type === 'process-graph') {
+				var pg = this.$refs.callbackBuilder.makeCustomProcess();
 				var obj = new ProcessGraph(pg, this.processRegistry);
 				obj.setParent(this.processId, this.field.name);
 				obj.parse();
-				return {
-					callback: obj
-				};
+				return obj;
 			}
 			else if (this.type === 'bounding-box') {
 				return this.$refs.bboxMap.areaSelect.getBounds();
@@ -373,8 +368,8 @@ export default {
 				for (let key in this.value){
 					if(this.value.hasOwnProperty(key)){
 						//check if output/callbackArg is selected in top selection box
-						let isResultVal = this.$refs[key].length == 1 && (this.$refs[key][0].value.from_node || this.$refs[key][0].value.from_argument);
-						let inputType = this.$refs[key][0].value.from_node ? "from_node" : "from_argument";
+						let isResultVal = this.$refs[key].length == 1 && (this.$refs[key][0].value.from_node || this.$refs[key][0].value.from_parameter);
+						let inputType = this.$refs[key][0].value.from_node ? "from_node" : "from_parameter";
 						let newKey = isResultVal ? inputType : this.$refs[key][0].value;
 						let newValue = isResultVal ? this.$refs[key][0].value[inputType] : this.$refs[key][1].getValue();
 						if(newKey !== key)

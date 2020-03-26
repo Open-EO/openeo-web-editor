@@ -16,32 +16,6 @@ class ProcessSchema {
 		// ToDO: Cache data?
 	}
 
-	hasDefaultValue() {
-		if (typeof this.schema.default !== 'undefined') {
-			return true;
-		}
-		
-		for(var i in this.schemas) {
-			if (typeof this.schemas[i].default !== 'undefined') {
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	defaultValue() {
-		if (typeof this.schema.default !== 'undefined') {
-			return this.schema.default;
-		}
-		
-		for(var i in this.schemas) {
-			if (typeof this.schemas[i].default !== 'undefined') {
-				return this.schemas[i].default;
-			}
-		}
-	}
-
 	isEditable() {
 		return this.schemas.filter(s => s.isEditable() && !s.isNull()).length > 0;
 	}
@@ -112,7 +86,7 @@ class ProcessSubSchema {
 	dataType(native = false) {
 		var type = this.schema.type || "any";
 		if (!native) {
-			type = this.schema.format || type;
+			type = this.schema.subtype || type;
 		}
 		return type;
 	}

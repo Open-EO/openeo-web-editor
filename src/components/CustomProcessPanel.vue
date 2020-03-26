@@ -1,14 +1,15 @@
 <template>
-	<DataTable ref="table" :dataSource="listUserProcesses" :columns="columns" id="ProcessGraphPanel">
+	<DataTable ref="table" :dataSource="listUserProcesses" :columns="columns" id="CustomProcessPanel">
 		<template slot="toolbar">
-			<button title="Add new process graph" @click="addGraphFromScript" v-show="supports('setUserProcess')"><i class="fas fa-plus"></i> Add</button>
-			<button title="Refresh process graphs" v-if="isListDataSupported" @click="updateData()"><i class="fas fa-sync-alt"></i></button> <!-- ToDo: Should be done automatically later -->
+			<button title="Add new custom process" @click="addProcessFromScript" v-show="supports('setUserProcess')"><i class="fas fa-plus"></i> Add</button>
+			<button title="Refresh custom process" v-if="isListDataSupported" @click="updateData()"><i class="fas fa-sync-alt"></i></button> <!-- ToDo: Should be done automatically later -->
 		</template>
 		<template slot="actions" slot-scope="p">
 			<button title="Details" @click="graphInfo(p.row)" v-show="supports('describeUserProcess')"><i class="fas fa-info"></i></button>		<button title="Show in Editor" @click="showInEditor(p.row)" v-show="supports('describeUserProcess')"><i class="fas fa-code-branch"></i></button>
+			<!-- ToDo: Align with 1.0, move edit metadata to visual model editor -->
 			<button title="Edit metadata" @click="editMetadata(p.row)" v-show="supports('replaceUserProcess')"><i class="fas fa-edit"></i></button>
-			<button title="Replace process graph" @click="replaceProcessGraph(p.row)" v-show="supports('replaceUserProcess')"><i class="fas fa-retweet"></i></button>
-			<button title="Delete" @click="deleteGraph(p.row)" v-show="supports('deleteUserProcess')"><i class="fas fa-trash"></i></button>
+			<button title="Replace process" @click="replaceProcess(p.row)" v-show="supports('replaceUserProcess')"><i class="fas fa-retweet"></i></button>
+			<button title="Delete" @click="deleteProcess(p.row)" v-show="supports('deleteUserProcess')"><i class="fas fa-trash"></i></button>
 		</template>
 	</DataTable>
 </template>
@@ -20,12 +21,12 @@ import Utils from '../utils.js';
 import Field from './blocks/field';
 
 export default {
-	name: 'ProcessGraphPanel',
+	name: 'CustomProcessPanel',
 	mixins: [WorkPanelMixin, EventBusMixin],
 	data() {
 		return {
 			columns: {
-				processGraphId: {
+				id: {
 					name: 'ID',
 					primaryKey: true,
 					hide: true
@@ -50,34 +51,34 @@ export default {
 		updateData() {
 			this.updateTable(this.$refs.table);
 		},
-		refreshProcessGraph(pg, callback = null) {
-			pg.describeUserProcess()
-				.then(updatedPg => {
+		refreshCustomProcess(process, callback = null) {
+			process.describeUserProcess()
+				.then(updated => {
 					if (typeof callback === 'function') {
-						callback(updatedPg);
+						callback(updated);
 					}
-					this.replaceUserProcessData(updatedPg);
+					this.replaceUserProcessData(updated);
 				})
-				.catch(error => Utils.exception(this, error, 'Loading process graph failed'));
+				.catch(error => Utils.exception(this, error, 'Loading custom process failed'));
 		},
-		showInEditor(pg) {
-			this.refreshProcessGraph(pg, updatedPg => {
-				this.emit('insertProcessGraph', updatedPg.processGraph);
+		showInEditor(process) {
+			this.refreshCustomProcess(process, updated => {
+				this.emit('insertCustomProcess', updated.process);
 			});
 		},
 		getTitleField() {
 			return new Field('title', 'Title', {type: 'string'});
 		},
 		getDescriptionField() {
-			return new Field('description', 'Description', {type: 'string', format: 'commonmark'}, 'CommonMark (Markdown) is allowed.');
+			return new Field('description', 'Description', {type: 'string', format: 'commonmark'}, undefined, 'CommonMark (Markdown) is allowed.');
 		},
-		addGraphFromScript() {
-			this.emit('getProcessGraph', script => {
+		addProcessFromScript() {
+			this.emit('getCustomProcess', script => {
 				var fields = [
 					this.getTitleField(),
 					this.getDescriptionField()
 				];
-				this.emit('showDataForm', "Store a new process graph", fields, data => this.addGraph(script, data));
+				this.emit('showDataForm', "Store a new custom process", fields, data => this.addProcess(script, data));
 			});
 		},
 		normalizeToDefaultData(data) {
@@ -89,7 +90,7 @@ export default {
 			}
 			return data;
 		},
-		addGraph(script, data) {
+		addProcess(script, data) {
 			data = this.normalizeToDefaultData(data);
 			this.connection.setUserProcess(script, data.title, data.description)
 				.then(data => {
@@ -97,39 +98,39 @@ export default {
 					Utils.ok(this, 'Process graph successfully stored!');
 				}).catch(error => Utils.exception(this, error, 'Storing process graph failed.'));
 		},
-		graphInfo(pg) {
-			this.refreshProcessGraph(pg, updatedPg => {
-				this.emit('showProcessGraphInfo', updatedPg);
+		graphInfo(process) {
+			this.refreshCustomProcess(process, updated => {
+				this.emit('showCustomProcessInfo', updated);
 			});
 		},
 		editMetadata(oldPg) {
-			this.refreshProcessGraph(oldPg, pg => {
+			this.refreshCustomProcess(oldPg, process => {
 				var fields = [
-					this.getTitleField().setValue(pg.title),
-					this.getDescriptionField().setValue(pg.description)
+					this.getTitleField().setValue(process.title),
+					this.getDescriptionField().setValue(process.description)
 				];
-				this.emit('showDataForm', "Edit metadata for a process graph", fields, data => this.updateMetadata(pg, data));
+				this.emit('showDataForm', "Edit metadata for a process graph", fields, data => this.updateMetadata(process, data));
 			});
 		},
-		replaceProcessGraph(pg) {
-			this.emit('getProcessGraph', script => this.updateMetadata(pg, {processGraph: script}));
+		replaceProcess(process) {
+			this.emit('getCustomProcess', script => this.updateMetadata(process, {process: script}));
 		},
-		updateTitle(pg, newTitle) {
-			this.updateMetadata(pg, {title: newTitle});
+		updateTitle(process, newTitle) {
+			this.updateMetadata(process, {title: newTitle});
 		},
-		updateMetadata(pg, data) {
+		updateMetadata(process, data) {
 			data = this.normalizeToDefaultData(data);
-			pg.replaceUserProcess(data)
+			process.replaceUserProcess(data)
 				.then(updatePg => {
 					Utils.ok(this, "Process graph successfully updated.");
 					this.replaceUserProcessData(updatePg);
 				})
 				.catch(error => Utils.exception(this, error, "Updating process graph failed"));
 		},
-		deleteGraph(pg) {
-			pg.deleteUserProcess()
+		deleteProcess(process) {
+			process.deleteUserProcess()
 				.then(() => {
-					this.$refs.table.removeData(pg.processGraphId);
+					this.$refs.table.removeData(process.id);
 				})
 				.catch(error => Utils.exception(this, error, 'Deleting process graph failed'));
 		},

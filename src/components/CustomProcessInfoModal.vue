@@ -11,8 +11,8 @@
 			</section>
 
 			<section class="process-graph">
-				<div class="vue-component"><h3>Process Graph</h3></div>
-				<Editor :processGraph="pg.processGraph" :editable="false" :enableExecute="false" class="infoViewer" id="pgInfoViewer" />
+				<div class="vue-component"><h3>Process</h3></div>
+				<Editor :process="pg.process" :editable="false" :enableExecute="false" class="infoViewer" id="pgInfoViewer" />
 			</section>
 
 		</template>
@@ -26,7 +26,7 @@ import Description from '@openeo/vue-components/components/Description.vue';
 import Editor from './Editor.vue';
 
 export default {
-	name: 'ProcessGraphInfoModal',
+	name: 'CustomProcessInfoModal',
 	components: {
 		Description,
 		Editor,
@@ -34,17 +34,17 @@ export default {
 	},
 	computed: {
 		displayTitle() {
-			return "Process Graph: " + (this.pg.title || "#" + this.pg.id);
+			return "Custom Process: " + this.process.id;
 		}
 	},
 	data() {
 		return {
-			pg: {}
+			process: {}
 		};
 	},
 	methods: {
-		show(pg) {
-			this.pg = pg;
+		show(process) {
+			this.process = process;
 			this.$refs.modal.show(this.displayTitle);
 		}
 	}

@@ -71,7 +71,7 @@ export default {
 				if (typeof p.example !== 'undefined') {
 					schema.examples = [p.example];
 				}
-				fields[name] = new Field(name, name, schema, p.description, !!p.required);
+				fields[name] = new Field(name, name, schema, undefined, p.description, !!p.required);
 				if (Utils.isObject(this.value) && typeof this.value[name] !== 'undefined') {
 					fields[name].setValue(this.value[name]);
 				}

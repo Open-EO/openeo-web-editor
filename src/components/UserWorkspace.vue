@@ -6,8 +6,8 @@
 		<Tab v-if="supportsServices" id="services" name="Web Services" icon="fa-cloud">
 			<ServicePanel />
 		</Tab>
-		<Tab v-if="supportsProcessGraphs" id="storedProcessGraphs" name="Process Graphs" icon="fa-code-branch">
-			<ProcessGraphPanel />
+		<Tab v-if="supportsCustomProcesses" id="customProcesses" name="Custom Processes" icon="fa-code-branch">
+			<CustomProcessPanel />
 		</Tab>
 		<Tab v-if="supportsFiles" id="files" name="Files" icon="fa-file">
 			<FilePanel />
@@ -22,7 +22,7 @@ import Tab from '@openeo/vue-components/components/Tab.vue';
 import ConnectionMixin from './ConnectionMixin.vue';
 import FilePanel from './FilePanel.vue';
 import JobPanel from './JobPanel.vue';
-import ProcessGraphPanel from './ProcessGraphPanel.vue';
+import CustomProcessPanel from './CustomProcessPanel.vue';
 import ServicePanel from './ServicePanel.vue';
 
 export default {
@@ -31,7 +31,7 @@ export default {
 	components: {
 		FilePanel,
 		JobPanel,
-		ProcessGraphPanel,
+		CustomProcessPanel,
 		ServicePanel,
 		Tabs,
 		Tab
@@ -43,7 +43,7 @@ export default {
 		supportsServices() {
 			return (this.supports('listServices') || this.supports('createService'));
 		},
-		supportsProcessGraphs() {
+		supportsCustomProcesses() {
 			return (this.supports('listUserProcesses') || this.supports('setUserProcess'));
 		},
 		supportsFiles() {

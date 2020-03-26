@@ -31,18 +31,19 @@
 				<div class="noData" v-else-if="!processesCount">No processes found.</div>
 			</div>
 
-			<div v-if="loadHubProcessGraphs" :class="{ category: true, hubGraphs: true, expanded: hubGraphsExpanded }">
+<!-- ToDo: Reactivate once hub is updated -->
+<!--		<div v-if="loadHubProcesses" :class="{ category: true, hubGraphs: true, expanded: hubGraphsExpanded }">
 				<strong @click="toggle('hubGraphs')" :title="'Process Graphs @ Hub ('+hubGraphsCount+')'"><span class="toggle">▸</span> Process Graphs @ Hub</strong>
 				<div class="discovery-entity" v-for="(e,i) in hubGraphs" v-show="hubGraphsShow[i]" :key="e.id" draggable="true" @dragstart="onDrag($event, 'process-graph', e.process_graph)">
-					<div class="discovery-info" @click="showProcessGraphInfo(e)">
+					<div class="discovery-info" @click="showCustomProcessInfo(e)">
 						<small v-if="e.title" :title="e.title">{{ e.title }}</small>
 						<small v-else>{{ e.id }}</small>
 					</div>
-					<button class="discovery-button" type="button" @click="insertProcessGraph(e.process_graph)" title="Insert"><i class="fas fa-plus"></i></button>
+					<button class="discovery-button" type="button" @click="insertCustomProcess(e.process_graph)" title="Insert"><i class="fas fa-plus"></i></button>
 				</div>
 				<div class="noData" v-if="!hubGraphsCount && searchTerm === ''">No compatible process graphs available at the openEO Hub.</div>
 				<div class="noData" v-else-if="!hubGraphsCount">No compatible process graphs found at the openEO Hub.</div>
-			</div>
+			</div> -->
 		</div>
 	</div>
 </template>
@@ -67,32 +68,28 @@ export default {
 			type: Function,
 			required: true
 		},
-		onAddProcessGraph: {
+		onAddCustomProcess: {
 			type: Function,
 			required: true
 		}
 	},
 	data() {
 		return {
-			loadHubProcessGraphs: Config.loadHubProcessGraphs,
+			loadHubProcesses: Config.loadHubProcesses,
 			searchTerm: '',
 			collectionsExpanded: false,
 			processesExpanded: false,
-			hubGraphsExpanded: false,
 			collectionsShow: [],
 			processesShow: [],
-			hubGraphs: [],
-			hubGraphsShow: [],
 			collectionsCount: 0,
 			processesCount: 0,
-			hubGraphsCount: 0,
 			timeout: null
 		};
 	},
 	created() {
+		this.loadHubGraphs();
 		this.filter('processes');
 		this.filter('collections');
-		this.loadHubGraphs();
 	},
 	watch: {
 		processes() {
@@ -115,7 +112,6 @@ export default {
 				this.timeout = null;
 				this.filter('processes');
 				this.filter('collections');
-				this.filter('hubGraphs');
 			}, 500);
 		}
 	},
@@ -129,9 +125,12 @@ export default {
 			return (await Promise.all(arr.map(async item => (await callback(item)) ? item : fail))).filter(i=>i!==fail);
 		},
 		async loadHubGraphs() {
-			if (!this.loadHubProcessGraphs) {
+			if (!this.loadHubProcesses) {
 				return;
 			}
+			// ToDo: Reactivate once hub is updated
+			// Load hub processes and add to process list
+			/*
 			try {
 				var res = await axios.get('https://hub.openeo.org/api/process_graphs');
 				if (!Array.isArray(res.data)) {
@@ -152,6 +151,7 @@ export default {
 				});
 				this.filter('hubGraphs');
 			} catch (e) {}
+			*/
 		},
 		onDrag(event, type, data) {
 			if (Utils.isObject(data)) {
@@ -209,8 +209,8 @@ export default {
 				this.emit('showProcessInfo', id);
 			}
 		},
-		showProcessGraphInfo(pg) {
-			this.emit('showProcessGraphInfo', (new ProcessGraph()).setAll(pg));
+		showCustomProcessInfo(pg) {
+			this.emit('showCustomProcessInfo', (new ProcessGraph()).setAll(pg));
 		},
 		insertCollection(id) {
 			this.onAddCollection(id);
@@ -218,8 +218,8 @@ export default {
 		insertProcess(id) {
 			this.onAddProcess(id);
 		},
-		insertProcessGraph(pg) {
-			this.onAddProcessGraph(pg);
+		insertCustomProcess(pg) {
+			this.onAddCustomProcess(pg);
 		}
 	}
 }
@@ -324,9 +324,6 @@ export default {
 .discovery-entity small {
 	margin-top: 0.25em;
 	display: block;
-}
-.hubGraphs .discovery-info small {
-	margin-top: 0;
 }
 .discovery-button {
 	display: block;

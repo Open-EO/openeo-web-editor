@@ -1,6 +1,6 @@
 <template>
 	<div class="visualEditor" ref="visualEditor">
-		<EditorToolbar :editable="editable" :onStore="getProcessGraph" :onInsert="insertProcessGraph" :onClear="clearProcessGraph" :enableClear="enableClear" :enableExecute="enableExecute" :enableLocalStorage="enableLocalStorage">
+		<EditorToolbar :editable="editable" :onStore="getCustomProcess" :onInsert="insertCustomProcess" :onClear="clear" :enableClear="enableClear" :enableExecute="enableExecute" :enableLocalStorage="enableLocalStorage">
 			<button type="button" @click="blocks.deleteEvent()" v-show="editable && blocks.canDelete()" title="Delete selected elements"><i class="fas fa-trash"></i></button>
 			<button type="button" @click="blocks.undo()" v-show="editable && blocks.hasUndo()" title="Undo last change"><i class="fas fa-undo-alt"></i></button>
 			<button type="button" @click="blocks.toggleCompact()" :class="{compactActive: blocks.compactMode}" title="Compact Mode"><i class="fas fa-compress-arrows-alt"></i></button>
@@ -11,7 +11,7 @@
 			</button>
 		</EditorToolbar>
 		<div class="editorSplitter">
-			<DiscoveryToolbar v-if="showDiscoveryToolbar && editable" class="discoveryToolbar" :onAddCollection="insertCollection" :onAddProcess="insertProcess" :onAddProcessGraph="insertProcessGraph" />
+			<DiscoveryToolbar v-if="showDiscoveryToolbar && editable" class="discoveryToolbar" :onAddCollection="insertCollection" :onAddProcess="insertProcess" :onAddCustomProcess="insertCustomProcess" />
 			<div :id="id" class="graphBuilder" @drop="onDrop($event)" @dragover="allowDrop($event)"></div>
 		</div>
 		<SchemaModal ref="schemaModal" />
@@ -48,10 +48,11 @@ export default {
 		},
 		value: {
 			type: Object,
-			default: null
+			default: () => null
 		},
-		callbackArguments: {
-			type: Object
+		pgParameters: {
+			type: Array,
+			default: () => []
 		},
 		enableClear: {
 			type: Boolean,
@@ -124,7 +125,7 @@ export default {
 			}
 			else if (pg) {
 				event.preventDefault();
-				this.insertProcessGraph(JSON.parse(pg));
+				this.insertCustomProcess(JSON.parse(pg));
 			}
 		},
 
@@ -134,8 +135,8 @@ export default {
 
 				this.registerProcesses();
 				this.registerCollections();
-				this.makeCallbackArguments();
-				this.insertProcessGraph(this.value, false);
+				this.makePgParameters();
+				this.insertCustomProcess(this.value, false);
 			}
 		},
 
@@ -166,7 +167,7 @@ export default {
 			if (!this.$refs.schemaModal) {
 				return;
 			}
-			this.$refs.schemaModal.show(name, schema, "This is a callback argument. It is a value made available by the process executing this sub-processes for further use. The value will comply to the following data type(s):");
+			this.$refs.schemaModal.show(name, schema, "This is a parameter of a user-defined process. It is a value made available by the process executing this sub-processes for further use. The value will comply to the following data type(s):");
 		},
 
 		openParameterEditor(blocks, block, editable, selectField) {
@@ -187,9 +188,9 @@ export default {
 			);
 		},
 
-		clearProcessGraph() {
+		clear() {
 			this.blocks.clear();
-			this.makeCallbackArguments();
+			this.makePgParameters();
 		},
 
 		registerCollections() {
@@ -205,25 +206,22 @@ export default {
 				this.blocks.registerProcess(this.processes[i]);
 			}
 
-			this.blocks.unregisterCallbackArguments();
-			for(var name in this.callbackArguments) {
-				this.blocks.registerCallbackArgument(name, this.callbackArguments[name]);
+			this.blocks.unregisterPgParameters();
+			for(var param of this.pgParameters) {
+				this.blocks.registerPgParameter(param);
 			}
 		},
 
-		getProcessGraph(success, failure, passNull = false) {
+		getCustomProcess(success, failure, passNull = false) {
 			var process = null;
 			try {
-				process = this.makeProcessGraph();
+				process = this.makeCustomProcess();
 			} catch (error) {
 				failure('No valid model specified.', error);
 				return;
 			}
 
 			if (Utils.isObject(process)) {
-				if (!Utils.isObject(process.process_graph)) {
-					process = {process_graph: process};
-				}
 				try {
 					var pg = new ProcessGraph(process, this.processRegistry);
 					pg.parse();
@@ -241,7 +239,7 @@ export default {
 			}
 		},
 
-		makeModel(processGraph, addToHistory = true) {
+		makeModel(process, addToHistory = true) {
 			var success = true;
 			if (addToHistory) {
 				this.blocks.history.save(); // Store current state only once and then...
@@ -250,8 +248,8 @@ export default {
 			this.blocks.history.enable(false); // disable history for import so that not every import step is in the history...
 			try {
 				// import process graph and scale it "perfectly"! :-)
-				this.makeCallbackArguments();
-				this.blocks.importProcessGraph(processGraph, this.processRegistry);
+				this.makePgParameters();
+				this.blocks.importCustomProcess(process, this.processRegistry);
 				this.blocks.perfectScale();
 			} catch (error) {
 				// If an error occured: show it an restore the last working state from history.
@@ -264,20 +262,24 @@ export default {
 			return success;
 		},
 
-		makeProcessGraph() {
-			return this.blocks.exportProcessGraph();
+		makeCustomProcess() {
+			return this.blocks.exportCustomProcess();
 		},
 
-		makeCallbackArguments() {
-			var i = 0;
-			for(var name in this.callbackArguments) {
-				this.insertCallbackArgument(name, i++);
+		makePgParameters() {
+			for(var num in this.pgParameters) {
+				try {
+					let name = this.pgParameters[num].name;
+					this.blocks.addPgParameter(name, -150, num * 50);
+				} catch(error) {
+					Utils.exception(this, error);
+				}
 			}
 		},
 
-		insertProcessGraph(pg, addToHistory = true) {
+		insertCustomProcess(pg, addToHistory = true) {
 			if (!pg) {
-				this.clearProcessGraph();
+				this.clear();
 				return;
 			}
 
@@ -300,15 +302,7 @@ export default {
 			} catch(error) {
 				Utils.exception(this, error);
 			}
-		},
-
-		insertCallbackArgument(name, num) {
-			try {
-				this.blocks.addCallbackArgument(name, -150, num * 50);
-			} catch(error) {
-				Utils.exception(this, error);
-			}
-		},
+		}
 
 	}
 }

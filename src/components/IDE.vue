@@ -13,7 +13,7 @@
 			</header>
 			<main class="page">
 				<div id="discovery" ref="discovery">
-					<DiscoveryToolbar class="toolbar" :onAddCollection="insertCollection" :onAddProcess="insertProcess" :onAddProcessGraph="insertProcessGraph" />
+					<DiscoveryToolbar class="toolbar" :onAddCollection="insertCollection" :onAddProcess="insertProcess" :onAddCustomProcess="insertCustomProcess" />
 				</div>
 				<hr class="separator" ref="separator0" @dblclick="centerSeparator($event, 0)" @mousedown="startMovingSeparator($event, 0)" />
 				<div id="workspace" ref="workspace">
@@ -31,7 +31,7 @@
 		<ServerInfoModal ref="serverInfoModal" />
 		<ServiceInfoModal ref="serviceModal" />
 		<JobInfoModal ref="jobModal" />
-		<ProcessGraphInfoModal ref="pgModal" />
+		<CustomProcessInfoModal ref="customProcessModal" />
 		<ParameterModal ref="parameterModal" />
 	</div>
 </template>
@@ -49,7 +49,7 @@ import CollectionModal from './CollectionModal.vue';
 import ProcessModal from './ProcessModal.vue';
 import ServerInfoModal from './ServerInfoModal.vue';
 import JobInfoModal from './JobInfoModal.vue';
-import ProcessGraphInfoModal from './ProcessGraphInfoModal.vue';
+import CustomProcessInfoModal from './CustomProcessInfoModal.vue';
 import ServiceInfoModal from './ServiceInfoModal.vue';
 import ParameterModal from './ParameterModal.vue';
 import DiscoveryToolbar from './DiscoveryToolbar.vue';
@@ -67,7 +67,7 @@ export default {
 		ProcessModal,
 		ServerInfoModal,
 		JobInfoModal,
-		ProcessGraphInfoModal,
+		CustomProcessInfoModal,
 		ServiceInfoModal,
 		ParameterModal
 	},
@@ -102,11 +102,11 @@ export default {
 		this.listen('showCollectionInfo', this.showCollectionInfo);
 		this.listen('showProcessInfo', this.showProcessInfo);
 		this.listen('showJobInfo', this.showJobInfo);
-		this.listen('showProcessGraphInfo', this.showProcessGraphInfo);
+		this.listen('showCustomProcessInfo', this.showCustomProcessInfo);
 		this.listen('showServiceInfo', this.showServiceInfo);
 		this.listen('showDataForm', this.showDataForm);
-		this.listen('getProcessGraph', this.getProcessGraph);
-		this.listen('insertProcessGraph', this.insertProcessGraph);
+		this.listen('getCustomProcess', this.getCustomProcess);
+		this.listen('insertCustomProcess', this.insertCustomProcess);
 
 		this.resizeListener = (event) => this.emit('windowResized', event);
 		window.addEventListener('resize', this.resizeListener);
@@ -126,12 +126,12 @@ export default {
 	methods: {
 		...Utils.mapActions('server', ['describeAccount']),
 
-		getProcessGraph(success, failure = null, passNull = false) {
-			this.$refs.editor.getProcessGraph(success, failure, passNull);
+		getCustomProcess(success, failure = null, passNull = false) {
+			this.$refs.editor.getCustomProcess(success, failure, passNull);
 		},
 
-		insertProcessGraph(pg) {
-			this.$refs.editor.insertProcessGraph(pg);
+		insertCustomProcess(pg) {
+			this.$refs.editor.insertCustomProcess(pg);
 		},
 
 		insertCollection(id) {
@@ -209,8 +209,8 @@ export default {
 			this.$refs.jobModal.show(job);
 		},
 
-		showProcessGraphInfo(pg) {
-			this.$refs.pgModal.show(pg);
+		showCustomProcessInfo(pg) {
+			this.$refs.customProcessModal.show(pg);
 		},
 
 		showServerInfo() {

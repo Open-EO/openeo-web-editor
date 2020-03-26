@@ -5,11 +5,12 @@ const MULTI_INPUT_TYPES = ['array', 'object', 'bounding-box', 'kernel', 'output-
 
 class Field extends ProcessSchema {
 
-    constructor(name, label, schema, description = '', isRequired = false, isOutput = false, isExperimental = false, isDeprecated = false) {
+    constructor(name, label, schema, defaultValue = undefined, description = '', isRequired = false, isOutput = false, isExperimental = false, isDeprecated = false) {
         super(schema);
 
         this.block = null;
         this.description = description || '';
+        this.default = defaultValue;
         this.isRequired = isRequired || false;
         this.isDeprecated = isDeprecated || false;
         this.isExperimental = isExperimental || false;
@@ -29,8 +30,8 @@ class Field extends ProcessSchema {
     }
 
     resetValue() {
-        if (this.hasDefaultValue()) {
-            this.setValue(this.defaultValue());
+        if (typeof this.default !== 'undefined') {
+            this.setValue(this.default);
             return;
         }
         
@@ -66,7 +67,7 @@ class Field extends ProcessSchema {
     }
 
     isDefaultValue() {
-        return !this.hasValue || this.hasDefaultValue() && this.defaultValue() == this.getValue(); // Don't do ===, otherwise empty objects are not recognized as the same.
+        return !this.hasValue || typeof this.default !== 'undefined' && this.default == this.getValue(); // Don't do ===, otherwise empty objects are not recognized as the same.
     }
 
     isArrayType() {
@@ -99,9 +100,9 @@ class Field extends ProcessSchema {
         if (!otherBlock) {
             return null;
         }
-        else if (otherBlock.isCallbackArgument()) {
+        else if (otherBlock.isPgParameter()) {
             return {
-                from_argument: String(otherBlock.name)
+                from_parameter: String(otherBlock.name)
             };
         }
         else {
@@ -190,14 +191,14 @@ class Field extends ProcessSchema {
     }
 
     static isRef(obj) {
-        return (Utils.isObject(obj) && (obj.from_argument || obj.from_node));
+        return (Utils.isObject(obj) && (obj.from_parameter || obj.from_node));
     }
 
     static isRefEqual(ref1, ref2) {
         if (!Field.isRef(ref1) || !Field.isRef(ref2)) {
             return false;
         }
-        else if (ref1.from_argument && ref1.from_argument === ref2.from_argument) {
+        else if (ref1.from_parameter && ref1.from_parameter === ref2.from_parameter) {
             return true;
         }
         else if (ref1.from_node && ref1.from_node === ref2.from_node) {
@@ -256,12 +257,12 @@ class Field extends ProcessSchema {
     getRefs() {
         var obj = {
             from_node: [],
-            from_argument: []
+            from_parameter: []
         };
         for(var i in this.edges) {
             var ref = this._getEdgeRef(this.edges[i]);
-            if (ref.from_argument) {
-                obj.from_argument.push(ref.from_argument);
+            if (ref.from_parameter) {
+                obj.from_parameter.push(ref.from_parameter);
             }
             else if (ref.from_node) {
                 obj.from_node.push(ref.from_node);
@@ -273,7 +274,7 @@ class Field extends ProcessSchema {
     getRefsInValue() {
         var obj = {
             from_node: [],
-            from_argument: []
+            from_parameter: []
         };
         return this._getRefsInValue(obj, ref);
     }
@@ -283,7 +284,7 @@ class Field extends ProcessSchema {
             return false;
         }
         for(let key in value) {
-            if (key === 'from_argument' || key === 'from_node') {
+            if (key === 'from_parameter' || key === 'from_node') {
                 obj[key].push(value[key]);
             }
             this._getRefsInValue(obj, value[key]);

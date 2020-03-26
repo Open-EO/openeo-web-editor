@@ -54,7 +54,7 @@ var Block = function(blocks, name, type, schema, id)
     this.editables = [];
     this.fields = {};
     this._createOutputField(schema.returns);
-    this._createInputFields(schema.parameters, schema.parameter_order);
+    this._createInputFields(schema.parameters);
 
     this.jsonSchemaValidator = null;
 };
@@ -67,8 +67,9 @@ Block.prototype._createOutputField = function(returns) {
         "output",
         this.getDefaultOutputLabel(),
         returns.schema,
+        undefined,
         returns.description,
-        returns.required,
+        false,
         true
     );
     this.output.setBlock(this);
@@ -76,18 +77,12 @@ Block.prototype._createOutputField = function(returns) {
 
 };
 
-Block.prototype._createInputFields = function(parameters, parameter_order) {
-    if (!Utils.isObject(parameters)) {
+Block.prototype._createInputFields = function(parameters) {
+    if (!Array.isArray(parameters)) {
         return;
     }
-    var paramNames = Object.keys(parameters);
-    if (!Array.isArray(parameter_order) || parameter_order.length !== paramNames.length) {
-        parameter_order = paramNames;
-    }
-    for(var i in parameter_order) {
-        var name = parameter_order[i];
-        var p = parameters[name];
-        var field = new Field(name, name, p.schema, p.description, p.required, false, p.experimental, p.deprecated);
+    for(var p of parameters) {
+        var field = new Field(p.name, p.name, p.schema, p.default, p.description, !p.optional, false, p.experimental, p.deprecated);
         field.setBlock(this);
         this.inputs.push(field);
         if (field.isEditable()) {
@@ -124,8 +119,8 @@ Block.prototype.hasOutputEdges = function() {
 };
 
 Block.prototype.getDefaultOutputLabel = function() {
-    if (this.isCallbackArgument()) {
-        return "Callback Argument";
+    if (this.isPgParameter()) {
+        return "Process Parameter";
     }
     else {
         return "Output";
@@ -162,8 +157,8 @@ Block.prototype.isCollection = function() {
     return this.name === 'load_collection';
 };
 
-Block.prototype.isCallbackArgument = function() {
-    return this.type === 'callback-argument';
+Block.prototype.isPgParameter = function() {
+    return this.type === 'pg-parameter';
 };
 
 Block.prototype.getCollectionName = function() {
@@ -191,12 +186,12 @@ Block.prototype.getComment = function() {
     return this.comment;
 };
 
-Block.prototype.formatCallback = function(pg) {
+Block.prototype.formatProcess = function(pg) {
     if (pg.getNodeCount() === 1) {
         return VueUtils.htmlentities(pg.getResultNode().process_id);
     }
     else {
-        return 'Callback';
+        return 'Process';
     }
 };
 
@@ -254,19 +249,16 @@ Block.prototype.formatObject = function(value, html = true) {
     if (Object.keys(value).length === 0) {
         return 'None';
     }
-    else if (value.callback instanceof ProcessGraph) {
-        return this.formatCallback(value.callback);
+    else if (value instanceof ProcessGraph) {
+        return this.formatProcess(value);
     }
     else if (Field.isRef(value)) {
         if (value.from_node) {
             return "#" + VueUtils.htmlentities(value.from_node);
         }
         else {
-            return "&" + VueUtils.htmlentities(value.from_argument);
+            return "$" + VueUtils.htmlentities(value.from_parameter);
         }
-    }
-    else if (typeof value.variable_id === 'string') {
-        return "$" + VueUtils.htmlentities(value.variable_id);
     }
     else if (typeof value.west !== 'undefined' && typeof value.east !== 'undefined' && typeof value.south !== 'undefined' && typeof value.north !== 'undefined') {
         return 'Bounding Box';
@@ -298,7 +290,7 @@ Block.prototype.getHtml = function()
     // Getting the title
     var header = name;
     var title = name;
-    if (!this.isCallbackArgument()) {
+    if (!this.isPgParameter()) {
         header += ' <span class="blockId">#' + this.id + '</span>';
         title += ' #' + this.id;
     }
@@ -310,7 +302,7 @@ Block.prototype.getHtml = function()
             if (this.comment === null) {
                 html += '<span class="addComment" title="Add comment"><i class="fas fa-comment-medical"></i></span>'
             }
-            if (!this.isCallbackArgument()) {
+            if (!this.isPgParameter()) {
                 html += '<span class="delete" title="Remove (DEL)"><i class="fas fa-trash"></i></span>';
             }
         }
@@ -417,7 +409,7 @@ Block.prototype.create = function(parentDiv)
     if (this.isCollection()) {
         this.div.classList.add('block_collection');
     }
-    else if (this.isCallbackArgument()) {
+    else if (this.isPgParameter()) {
         this.div.classList.add('block_argument');
     }
     parentDiv.appendChild(this.div);
@@ -625,7 +617,7 @@ Block.prototype.initListeners = function()
     var infoEl = this.div.querySelector('.info');
     if (infoEl) {
         infoEl.addEventListener('click', evt => {
-            if (this.isCallbackArgument()) {
+            if (this.isPgParameter()) {
                 this.blocks.showSchema(this.name, this.meta.returns.schema);
             }
             else if(this.isCollection()) {
@@ -641,7 +633,7 @@ Block.prototype.initListeners = function()
 };
 
 Block.prototype.canChangeParameters = function() {
-    return (this.blocks.canShowParameters() && this.editables.length > 0 && !this.isCallbackArgument());
+    return (this.blocks.canShowParameters() && this.editables.length > 0 && !this.isPgParameter());
 };
 
 /**
@@ -728,9 +720,9 @@ Block.prototype.export = function()
     };
 };
 
-Block.prototype.exportProcessGraph = function()
+Block.prototype.exportCustomProcess = function()
 {
-    if (this.isCallbackArgument()) {
+    if (this.isPgParameter()) {
         return null;
     }
 

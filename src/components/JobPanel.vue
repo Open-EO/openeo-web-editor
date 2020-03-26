@@ -9,7 +9,7 @@
 			<button title="Show in Editor" @click="showInEditor(p.row)" v-show="supports('describeJob')"><i class="fas fa-code-branch"></i></button>
 			<button title="Estimate" @click="estimateJob(p.row)" v-show="supports('estimateJob')"><i class="fas fa-file-invoice-dollar"></i></button>
 			<button title="Edit metadata" @click="editMetadata(p.row)" v-show="supports('updateJob') && isJobInactive(p.row)"><i class="fas fa-edit"></i></button>
-			<button title="Replace process graph" @click="replaceProcessGraph(p.row)" v-show="supports('updateJob') && isJobInactive(p.row)"><i class="fas fa-retweet"></i></button>
+			<button title="Replace process" @click="replaceProcess(p.row)" v-show="supports('updateJob') && isJobInactive(p.row)"><i class="fas fa-retweet"></i></button>
 			<button title="Delete" @click="deleteJob(p.row)" v-show="supports('deleteJob')"><i class="fas fa-trash"></i></button>
 			<button title="Start processing" @click="queueJob(p.row)" v-show="supports('startJob') && isJobInactive(p.row)"><i class="fas fa-play-circle"></i></button>
 			<button title="Cancel processing" @click="cancelJob(p.row)" v-show="supports('stopJob') && isJobActive(p.row)"><i class="fas fa-stop-circle"></i></button>
@@ -101,7 +101,7 @@ export default {
 		},
 		showInEditor(job) {
 			this.refreshJob(job, updatedJob => {
-				this.emit('insertProcessGraph', updatedJob.processGraph);
+				this.emit('insertCustomProcess', updatedJob.process);
 			});
 		},
 		jobCreated(job) {
@@ -127,13 +127,13 @@ export default {
 			return new Field('title', 'Title', {type: 'string'});
 		},
 		getDescriptionField() {
-			return new Field('description', 'Description', {type: 'string', format: 'commonmark'}, 'CommonMark (Markdown) is allowed.');
+			return new Field('description', 'Description', {type: 'string', format: 'commonmark'}, undefined, 'CommonMark (Markdown) is allowed.');
 		},
 		getBillingPlanField() {
 			return new Field('plan', 'Billing plan', {type: 'string', format: 'billing-plan'});
 		},
 		getBudgetField() {
-			return new Field('budget', 'Budget', {type: 'number', format: 'budget', default: null});
+			return new Field('budget', 'Budget', {type: 'number', format: 'budget'}, null);
 		},
 		normalizeToDefaultData(data) {
 			if (typeof data.title !== 'undefined' && (typeof data.title !== 'string' || data.title.length === 0)) {
@@ -150,9 +150,9 @@ export default {
 			}
 			return data;
 		},
-		createJob(processGraph, data) {
+		createJob(process, data) {
 			data = this.normalizeToDefaultData(data);
-			this.connection.createJob(processGraph, data.title, data.description, data.plan, data.budget)
+			this.connection.createJob(process, data.title, data.description, data.plan, data.budget)
 				.then(job => {
 					this.jobCreated(job);
 				}).catch(error => {
@@ -160,7 +160,7 @@ export default {
 				});
 		},
 		createJobFromScript() {
-			this.emit('getProcessGraph', script => {
+			this.emit('getCustomProcess', script => {
 				var fields = [
 					this.getTitleField(),
 					this.getDescriptionField(),
@@ -224,9 +224,9 @@ export default {
 				})
 				.catch(error => Utils.exception(this, error, "Loading estimate failed"));
 		},
-		replaceProcessGraph(job) {
-			this.emit('getProcessGraph', script => {
-				this.updateJob(job, {processGraph: script});
+		replaceProcess(job) {
+			this.emit('getCustomProcess', script => {
+				this.updateJob(job, {process: script});
 			});
 		},
 		editMetadata(oldJob) {

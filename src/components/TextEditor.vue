@@ -1,6 +1,6 @@
 <template>
 	<div class="textEditor">
-		<EditorToolbar :editable="editable" :onStore="getProcessGraph" :onInsert="insertProcessGraph" :onClear="clearProcessGraph" :enableClear="enableClear" :enableExecute="enableExecute" :enableLocalStorage="enableLocalStorage" />
+		<EditorToolbar :editable="editable" :onStore="getCustomProcess" :onInsert="insertCustomProcess" :onClear="clear" :enableClear="enableClear" :enableExecute="enableExecute" :enableLocalStorage="enableLocalStorage" />
 		<div :id="id" class="sourceCodeEditor"></div>
 	</div>
 </template>
@@ -77,18 +77,18 @@ export default {
 			if (this.editor === null) {
 				this.editor = CodeMirror(document.getElementById(this.id), this.editorOptions);
 				this.editor.setSize(null, "100%");
-				this.insertProcessGraph(this.value);
+				this.insertCustomProcess(this.value);
 			}
 			else {
 				this.editor.refresh();
 			}
 		},
 
-		clearProcessGraph() {
+		clear() {
 			this.insertToEditor("", true);
 		},
 	
-		getProcessGraph(success, failure, passNull = false) {
+		getCustomProcess(success, failure, passNull = false) {
 			var script = this.editor.getValue();
 			var process = null;
 			if (script) {
@@ -101,9 +101,6 @@ export default {
 			}
 
 			if (Utils.isObject(process)) {
-				if (!Utils.isObject(process.process_graph)) {
-					process = {process_graph: process};
-				}
 				try {
 					var pg = new ProcessGraph(process, this.processRegistry);
 					pg.parse();
@@ -130,9 +127,9 @@ export default {
 			}
 		},
 
-		insertProcessGraph(pg) {
+		insertCustomProcess(pg) {
 			if (!pg) {
-				this.clearProcessGraph();
+				this.clear();
 			}
 			else {
 				this.insertToEditor(JSON.stringify(pg, null, 2), true);

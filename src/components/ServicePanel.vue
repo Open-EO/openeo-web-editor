@@ -14,7 +14,7 @@
 		<template slot="actions" slot-scope="p">
 			<button title="Details" @click="serviceInfo(p.row)" v-show="supports('describeService')"><i class="fas fa-info"></i></button><button title="Show in Editor" @click="showInEditor(p.row)" v-show="supports('describeService')"><i class="fas fa-code-branch"></i></button>
 			<button title="Edit metadata" @click="editMetadata(p.row)" v-show="supports('updateService')"><i class="fas fa-edit"></i></button>
-			<button title="Replace process graph" @click="replaceProcessGraph(p.row)" v-show="supports('updateService')"><i class="fas fa-retweet"></i></button>
+			<button title="Replace process" @click="replaceProcess(p.row)" v-show="supports('updateService')"><i class="fas fa-retweet"></i></button>
 			<button title="Delete" @click="deleteService(p.row)" v-show="supports('deleteService')"><i class="fas fa-trash"></i></button>
 			<button v-show="p.row.enabled && isMapServiceSupported(p.row.type)" title="View on map" @click="viewService(p.row)"><i class="fas fa-map"></i></button>
 		</template>
@@ -99,7 +99,7 @@ export default {
 		},
 		showInEditor(service) {
 			this.refreshService(service, updatedService => {
-				this.emit('insertProcessGraph', updatedService.processGraph);
+				this.emit('insertCustomProcess', updatedService.process);
 			});
 		},
 		serviceCreated(service) {
@@ -125,19 +125,19 @@ export default {
 			return new Field('title', 'Title', {type: 'string'});
 		},
 		getDescriptionField() {
-			return new Field('description', 'Description', {type: 'string', format: 'commonmark'}, 'CommonMark (Markdown) is allowed.');
+			return new Field('description', 'Description', {type: 'string', format: 'commonmark'}, undefined, 'CommonMark (Markdown) is allowed.');
 		},
 		getServiceTypeField() {
-			return new Field('type', 'Type', {type: 'string', format: 'service-type'}, '', true);
+			return new Field('type', 'Type', {type: 'string', format: 'service-type'}, undefined, '', true);
 		},
 		getBillingPlanField() {
 			return new Field('plan', 'Billing plan', {type: 'string', format: 'billing-plan'});
 		},
 		getBudgetField() {
-			return new Field('budget', 'Budget', {type: 'number', format: 'budget', default: null});
+			return new Field('budget', 'Budget', {type: 'number', format: 'budget'}, null);
 		},
 		getEnabledField() {
-			return new Field('enabled', 'Enabled', {type: 'boolean', default: true});
+			return new Field('enabled', 'Enabled', {type: 'boolean'}, true);
 		},
 		getParametersField() {
 			return new Field('parameters', 'Parameters', {type: 'object', format: 'service-type-parameters'});
@@ -173,7 +173,7 @@ export default {
 				});
 		},
 		createServiceFromScript() {
-			this.emit('getProcessGraph', script => {
+			this.emit('getCustomProcess', script => {
 				var fields = [
 					this.getServiceTypeField(),
 					this.getTitleField(),
@@ -204,14 +204,14 @@ export default {
 				this.emit('showServiceInfo', updatedService.getAll());
 			});
 		},
-		replaceProcessGraph(service) {
-			this.emit('getProcessGraph', script => {
-				service.updateService({processGraph: script})
+		replaceProcess(service) {
+			this.emit('getCustomProcess', script => {
+				service.updateService({process: script})
 					.then(updatedService => {
-						Utils.ok(this, "Service process graph successfully updated.");
+						Utils.ok(this, "Service process successfully updated.");
 						this.updateServiceData(updatedService);
 					})
-					.catch(error => Utils.exception(this, error, "Replacing process graph failed"));
+					.catch(error => Utils.exception(this, error, "Replacing process failed"));
 			});
 		},
 		updateTitle(service, newTitle) {

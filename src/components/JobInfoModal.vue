@@ -18,7 +18,8 @@
 						<span class="number" v-if="job.progress <= 50">{{ progress }}</span>
 					</div>
 				</div></div>
-				<div class="tabular" v-if="job.error"><label>Error(s):</label> <div class="value">
+				<!-- ToDo: Show logs -->
+				<!-- <div class="tabular" v-if="job.error"><label>Error(s):</label> <div class="value">
 					<div class="errorMessage">{{ job.error.message }}</div>
 					<div class="errorLinks" v-if="Array.isArray(job.error.links)">
 						<LinkList :links="job.error.links" heading="Further information:" />
@@ -27,7 +28,7 @@
 						Code: <code>{{job.error.code}}</code>
 						<span class="sepl" v-if="job.error.id">ID: <code>{{ job.error.id }}</code></span>
 					</div>
-				</div></div>
+				</div></div> -->
 			</section>
 
 			<section class="vue-component billing" v-if="job.plan || job.costs || job.budget">
@@ -43,8 +44,8 @@
 			</section>
 
 			<section class="process-graph">
-				<div class="vue-component"><h3>Process Graph</h3></div>
-				<Editor :processGraph="job.processGraph" :editable="false" :enableExecute="false" class="infoViewer" id="jobPgViewer" />
+				<div class="vue-component"><h3>Process</h3></div>
+				<Editor :process="job.process" :editable="false" :enableExecute="false" class="infoViewer" id="jobPgViewer" />
 			</section>
 
 		</template>

@@ -19,6 +19,6 @@ export default {
 		'xyz'
 	],
 
-	// Load process graphs from the openEO Hub?
-	loadHubProcessGraphs: true
+	// Load processes from the openEO Hub?
+	loadHubProcesses: true
 };

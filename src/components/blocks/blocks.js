@@ -327,9 +327,9 @@ Blocks.prototype.addProcess = function(name, x = null, y = null, id = null)
     return this.createBlock(name, 'process', x, y, {}, id);
 };
 
-Blocks.prototype.addCallbackArgument = function(name, x = null, y = null)
+Blocks.prototype.addPgParameter = function(name, x = null, y = null)
 {
-    return this.createBlock(name, 'callback-argument', x, y);
+    return this.createBlock(name, 'pg-parameter', x, y);
 };
 
 Blocks.prototype.createBlock = function(name, type, x, y, values = {}, id = null)
@@ -347,11 +347,11 @@ Blocks.prototype.createBlock = function(name, type, x, y, values = {}, id = null
     if (this.newBlockOffset < 150) {
         this.newBlockOffset += 10;
     }
-    if (this.getProcessBlockCount() === 0 && !block.isCallbackArgument()) {
+    if (this.getProcessBlockCount() === 0 && !block.isPgParameter()) {
         block.result = true;
     }
     block.setValues(values);
-    if (!block.isCallbackArgument()) {
+    if (!block.isPgParameter()) {
         this.history.save();
     }
     this.addBlock(block);
@@ -366,8 +366,8 @@ Blocks.prototype.unregisterProcesses = function() {
     this.moduleTypes['process'] = {};
 }
 
-Blocks.prototype.unregisterCallbackArguments = function() {
-    this.moduleTypes['callback-arguments'] = {};
+Blocks.prototype.unregisterPgParameters = function() {
+    this.moduleTypes['pg-parameters'] = [];
 }
 
 Blocks.prototype.registerCollectionDefaults = function(collection) {
@@ -389,15 +389,15 @@ Blocks.prototype.registerProcess = function(meta)
     this.register(meta, 'process', meta.id);
 };
 
-Blocks.prototype.registerCallbackArgument = function(name, meta)
+Blocks.prototype.registerPgParameter = function(param)
 {
-    var data = JSON.parse(JSON.stringify(meta));
-    data.returns = {
-        name: name,
-        attrs: "output",
-        schema: meta
+    // ToDo: Check 1.0 compat
+    var data = {
+        description: param.description,
+        parameters: [],
+        returns: Object.assign({}, param, {attrs: "output"})
     };
-    this.register(data, 'callback-argument', name);
+    this.register(data, 'pg-parameter', param.name);
 };
 
 Blocks.prototype.register = function(meta, type, name) {
@@ -558,10 +558,10 @@ Blocks.prototype.getBlockById = function(blockId)
     return null;
 };
 
-Blocks.prototype.getCallbackArgumentBlockByName = function(name)  {
+Blocks.prototype.getPgParameterBlockByName = function(name)  {
     for(var i in this.blocks) {
         var block = this.blocks[i];
-        if (block.isCallbackArgument() && block.name === name) {
+        if (block.isPgParameter() && block.name === name) {
             return block;
         }
     }
@@ -573,15 +573,15 @@ Blocks.prototype.getBlockCount = function() {
 };
 
 Blocks.prototype.getProcessBlockCount = function() {
-    return Utils.size(Object.values(this.blocks).filter(b => !b.isCallbackArgument()));
+    return Utils.size(Object.values(this.blocks).filter(b => !b.isPgParameter()));
 };
 
 Blocks.prototype.canDelete = function()
 {
-    // Don't allow deleting callback arguments
+    // Don't allow deleting PG parameters
     if (this.selectedBlock != null) {
         var block = this.getBlockById(this.selectedBlock);
-        if (block && block.isCallbackArgument()) {
+        if (block && block.isPgParameter()) {
             return false;
         }
     }
@@ -802,23 +802,38 @@ Blocks.prototype.export = function()
 };
 
 
-Blocks.prototype.exportProcessGraph = function() {
+Blocks.prototype.exportCustomProcess = function() {
     if (this.getProcessBlockCount() === 0) {
         return null;
-    }    
+    }
 
     var nodes = {};
     for(var blockId in this.blocks) {
-        let node = this.blocks[blockId].exportProcessGraph();
+        let node = this.blocks[blockId].exportCustomProcess();
         if (node !== null) {
             nodes[blockId] = node;
         }
     }
+
+    var pg = {
+        // ToDo: Add id, parameters, returns, etc.
+    //  id: null,
+    //  summary: null,
+    //  description: null,
+    //  categories: [],
+    //  experimental: false,
+    //  parameters: null,
+    //  returns: null,
+        process_graph: nodes,
+    //  exceptions: [],
+    //  examples: [],
+    //  links: []
+    };
     
-    return nodes;
+    return pg;
 };
 
-Blocks.prototype.importProcessGraph = function(process, registry) {
+Blocks.prototype.importCustomProcess = function(process, registry) {
     // Parse process 
     var pg;
     if (process instanceof ProcessGraph) {
@@ -827,15 +842,12 @@ Blocks.prototype.importProcessGraph = function(process, registry) {
         pg.setParent(process.parentProcessId, process.parentParameterName);
     }
     else {
-        if (!Utils.isObject(process.process_graph)) {
-            process = {process_graph: process};
-        }
         pg = new ProcessGraph(process, registry);
     }
     pg.parse();
 
     // Import nodes
-    this.importNodesFromProcessGraph(pg.getStartNodes());
+    this.importNodesFromCustomProcess(pg.getStartNodes());
 
     // Import edges
     var nodes = pg.getNodes();
@@ -848,8 +860,8 @@ Blocks.prototype.importProcessGraph = function(process, registry) {
                 case 'result':
                     this.addEdge(pg.getNode(val).blockId, "output", node.blockId, args[i], false);
                     break;
-                case 'callback-argument':
-                    this.addEdge(this.getCallbackArgumentBlockByName(val), "output", node.blockId, args[i], false);
+                case 'pg-parameter':
+                    this.addEdge(this.getPgParameterBlockByName(val), "output", node.blockId, args[i], false);
                     break;
                 case 'object':
                 case 'array':
@@ -871,13 +883,13 @@ Blocks.prototype.importEdgeDeep = function(val, pg, node, args, i) {
         else if (val.from_node) {
             this.addEdge(pg.getNode(val.from_node).blockId, "output", node.blockId, args[i], false);
         }
-        else if (val.from_argument) {
-            this.addEdge(this.getCallbackArgumentBlockByName(val.from_argument), "output", node.blockId, args[i], false);
+        else if (val.from_parameter) {
+            this.addEdge(this.getPgParameterBlockByName(val.from_parameter), "output", node.blockId, args[i], false);
         }
     }
 };
 
-Blocks.prototype.importNodesFromProcessGraph = function(nodes, x = 0, y = 0) {
+Blocks.prototype.importNodesFromCustomProcess = function(nodes, x = 0, y = 0) {
     for(let i in nodes) {
         var node = nodes[i];
         if (node.blockId) {
@@ -891,7 +903,7 @@ Blocks.prototype.importNodesFromProcessGraph = function(nodes, x = 0, y = 0) {
         block.render();
         node.blockId = block.id;
 
-        this.importNodesFromProcessGraph(node.getNextNodes(), x + block.getWidth() + 20, y);
+        this.importNodesFromCustomProcess(node.getNextNodes(), x + block.getWidth() + 20, y);
         y += block.getHeight() + 20;
     }
 };

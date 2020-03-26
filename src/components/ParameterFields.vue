@@ -29,22 +29,34 @@ const SUPPORTED_TYPES = new ProcessSchema({
 		{type: 'boolean'},
 		{type: 'array'},
 		{type: 'object'},
-		{type: 'string', format: 'band-name'},
-		{type: 'object', format: 'bounding-box'},
-		{type: 'object', format: 'callback'},
-		{type: 'string', format: 'collection-id'},
-		{type: 'string', format: 'date'},
-		{type: 'string', format: 'date-time'},
-		{type: 'integer', format: 'epsg-code'},
-		{type: 'object', format: 'geojson'},
-		{type: 'string', format: 'job-id'},
-	//	{type: 'array', format: 'kernel'},
-		{type: 'string', format: 'output-format'},
-		{type: 'string', format: 'process-graph-id'},
-		{type: 'string', format: 'proj-definition'},
-		{type: 'array', format: 'temporal-interval'},
-		{type: 'array', format: 'temporal-intervals'},
-		{type: 'string', format: 'time'}
+		{type: 'string', subtype: 'band-name'},
+		{type: 'object', subtype: 'bounding-box'},
+		{type: 'string', subtype: 'collection-id'},
+		{type: 'string', subtype: 'date', format: 'date'},
+		{type: 'string', subtype: 'date-time', format: 'date-time'},
+		{type: 'integer', subtype: 'epsg-code'},
+	//	{type: 'array', subtype: 'file-path'},
+	//	{type: 'array', subtype: 'file-paths'},
+		{type: 'object', subtype: 'geojson'},
+		{type: 'string', subtype: 'input-format'},
+	//	{type: 'object', subtype: 'input-format-options'},
+		{type: 'string', subtype: 'job-id'},
+	//	{type: 'array', subtype: 'kernel'},
+	//	{type: 'array', subtype: 'labeled-array'},
+		{type: 'string', subtype: 'output-format'},
+	//	{type: 'object', subtype: 'output-format-options'},
+		{type: 'object', subtype: 'process-graph'},
+		{type: 'string', subtype: 'proj-definition'},
+	//	{type: 'object', subtype: 'raster-cube'},
+		{type: 'array', subtype: 'temporal-interval'},
+		{type: 'array', subtype: 'temporal-intervals'},
+		{type: 'string', subtype: 'time', format: 'time'},
+	//	{type: 'string', subtype: 'udf-code'},
+	//	{type: 'string', subtype: 'udf-runtime'},
+	//	{type: 'string', subtype: 'udf-runtime-version'},
+	//	{type: 'string', subtype: 'uri', format: 'uri'},
+	//	{type: 'object', subtype: 'vextor-cube'},
+	//	{type: 'string', subtype: 'wkt2-definition'}
 	]
 });
 
@@ -74,12 +86,13 @@ export default {
 	},
 	data() {
 		return {
-			selectedType: null
+			selectedType: null,
+			jsonSchemaValidator: new JsonSchemaValidator()
 		};
 	},
 	created() {
 		if (this.allowedSchemas.length > 1) {
-			JsonSchemaValidator.getTypeForValue(this.allowedSchemas.map(s => s.schema), this.pass)
+			this.jsonSchemaValidator.getTypeForValue(this.allowedSchemas.map(s => s.schema), this.pass)
 				.then(evalType => {
 					if (typeof evalType === 'undefined') {
 						this.guessType();
@@ -123,14 +136,14 @@ export default {
 					},
 					additionalProperties: false
 				})),
-				this.refs.from_argument.map(a => new ProcessSubSchema({
+				this.refs.from_parameter.map(a => new ProcessSubSchema({
 					type: 'object',
-					isRef: 'from_argument',
-					from_argument: a,
-					title: 'Value of callback argument "' + a + '"',
-					required: ["from_argument"],
+					isRef: 'from_parameter',
+					from_parameter: a,
+					title: 'Value of process parameter "' + a + '"',
+					required: ["from_parameter"],
 					properties: {
-						from_argument: {
+						from_parameter: {
 							type: "string",
 							const: a
 						}
