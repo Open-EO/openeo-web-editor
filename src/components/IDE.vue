@@ -18,7 +18,7 @@
 				<hr class="separator" ref="separator0" @dblclick="centerSeparator($event, 0)" @mousedown="startMovingSeparator($event, 0)" />
 				<div id="workspace" ref="workspace">
 					<Editor ref="editor" class="mainEditor" id="main" :showDiscoveryToolbar="false" />
-					<UserWorkspace class="userContent" />
+					<UserWorkspace class="userContent" v-if="isAuthenticated" />
 				</div>
 				<hr class="separator" ref="separator1" @dblclick="centerSeparator($event, 1)" @mousedown="startMovingSeparator($event, 1)" />
 				<div id="viewer" ref="viewer">
@@ -262,7 +262,7 @@ export default {
 }
 #viewer {
 	min-width: 200px;
-	width: 30%;
+	width: 25%;
 }
 .mainEditor, .userContent {
 	height: calc(50% - 1em);

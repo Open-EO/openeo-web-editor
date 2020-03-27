@@ -8,7 +8,7 @@
 				<button v-if="enableLocalStorage && editable" type="button" @click="openScriptChooser" title="Load script from local storage"><i class="fas fa-folder-open"></i></button>
 				<button v-if="enableLocalStorage" type="button" @click="saveScript" title="Save script to local storage"><i class="fas fa-save"></i></button>
 			</span>
-			<button v-if="enableExecute && supports('computeResult')" type="button" @click="executeProcess" title="Run current process graph and view results" class="sepl"><i class="fas fa-play"></i></button>
+			<button v-if="enableExecute && isAuthenticated && supports('computeResult')" type="button" @click="executeProcess" title="Run current process graph and view results" class="sepl"><i class="fas fa-play"></i></button>
 		</div>
 	</div>
 </template>
@@ -53,7 +53,7 @@ export default {
 	computed: {
 		...Utils.mapState('server', ['connection']),
 		...Utils.mapState('editor', ['storedScripts', 'scriptName']),
-		...Utils.mapGetters('server', ['supports'])
+		...Utils.mapGetters('server', ['supports', 'isAuthenticated'])
 	},
 	methods: {
 		...Utils.mapMutations('editor', ['addScript', 'removeScript', 'setScriptName']),

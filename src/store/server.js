@@ -38,7 +38,7 @@ export default {
 		},
 		isConnected: (state) => state.connection !== null && state.connection.capabilities() !== null,
 		isDiscovered: (state) => state.connection !== null && state.discoveryCompleted,
-		isAuthenticated: (state) => state.connection !== null && state.connection.isLoggedIn(),
+		isAuthenticated: (state) => state.connection !== null && state.connection.isAuthenticated(),
 		processRegistry: (state) => {
 			var registry = new ProcessRegistry();
 			for (var i in state.processes) {
@@ -146,8 +146,13 @@ export default {
 		},
 
 		async logout(cx) {
-			// Logout (mostly from OIDC)
-			await cx.state.connection.logout();
+			if (cx.getters.isAuthenticated) {
+				// Logout (mostly for OIDC)
+				var authProvider = cx.state.connection.getAuthProvider();
+				if (authProvider !== null) {
+					await authProvider.logout();
+				}
+			}
 			// Reset values
 			cx.commit('reset');
 		},

@@ -16,16 +16,8 @@ export default {
 		};
 	},
 	computed: {
-		...Utils.mapGetters('server', ['isAuthenticated']),
 		isListDataSupported() {
-			return (this.isAuthenticated && this.supports(this.listFunc));
-		}
-	},
-	watch: { 
-		isAuthenticated(authenticated, beforeAuthenticated) {
-			if (authenticated && !beforeAuthenticated) {
-				this.updateData();
-			}
+			return this.supports(this.listFunc);
 		}
 	},
 	mounted() {
@@ -38,9 +30,6 @@ export default {
 		updateTable(table) {
 			if (!table) {
 				return;
-			}
-			else if (!this.isAuthenticated) {
-				table.setNoData('Please authenticate to list stored data.');
 			}
 			else if (!this.supports(this.listFunc)) {
 				table.setNoData('Sorry, listing stored data is not supported by the server.');
