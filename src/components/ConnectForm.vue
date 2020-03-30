@@ -5,6 +5,10 @@
 				<img src="../assets/logo.png" alt="openEO" />
 				<h2>Web Editor <span class="version" @click="showWebEditorInfo">{{ version }}</span></h2>
 			</header>
+			<div v-if="httpsUrl" class="message">
+				You are using an <strong>insecure</strong> HTTP connection, which is not encrypted. Please use HTTPS if possible.<br />
+				<a :href="httpsUrl">Click here to switch to a secured HTTPS connection.</a>
+			</div>
 			<div v-if="message" class="message" v-html="message"></div>
 			<form @submit.prevent="submitForm" v-if="showConnectForm" class="connect">
 				<h3>Connect to server</h3>
@@ -100,6 +104,15 @@ export default {
 		...Utils.mapState('server', ['connectionError', 'discoveryErrors']),
 		...Utils.mapGetters('server', ['isConnected', 'isDiscovered', 'isAuthenticated', 'title']),
 		...Utils.mapState('editor', ['storedServers']),
+		httpsUrl() {
+			if (Config.showHttpWarning && window.location.protocol === 'http:') {
+				return window.location.toString()
+					.replace(/^http:/i, 'https:')
+					.replace(/([\?&]server=http)(:|%3A)/, '$1s$2');
+			}
+			
+			return null;
+		},
 		supportsOidc() {
 			return this.supports('authenticateOIDC');
 		},
@@ -139,6 +152,7 @@ export default {
 		};
 	},
 	created() {
+		// ToDo: Enable OIDC
 //		OidcProvider.signinCallbackOIDC('popup');
 
 		var serverFromQuery = Utils.param('server');

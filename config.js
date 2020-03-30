@@ -19,6 +19,9 @@ export default {
 		'xyz'
 	],
 
+	// Show a warning if HTTP is used instead of HTTPS
+	showHttpWarning: true,
+
 	// Load processes from the openEO Hub?
 	loadHubProcesses: true
 };
