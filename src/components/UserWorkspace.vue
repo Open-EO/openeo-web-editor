@@ -1,15 +1,15 @@
 <template>
 	<Tabs id="userContent" ref="tabs">
-		<Tab v-if="supportsJobs" id="jobs" name="Batch Jobs" icon="fa-tasks">
+		<Tab v-if="showJobs" id="jobs" name="Batch Jobs" icon="fa-tasks" @show="onShow" @hide="onHide">
 			<JobPanel />
 		</Tab>
-		<Tab v-if="supportsServices" id="services" name="Web Services" icon="fa-cloud">
+		<Tab v-if="showServices" id="services" name="Web Services" icon="fa-cloud" @show="onShow" @hide="onHide">
 			<ServicePanel />
 		</Tab>
-		<Tab v-if="supportsCustomProcesses" id="customProcesses" name="Custom Processes" icon="fa-code-branch">
+		<Tab v-if="showCustomProcesses" id="customProcesses" name="Custom Processes" icon="fa-code-branch" @show="onShow" @hide="onHide">
 			<CustomProcessPanel />
 		</Tab>
-		<Tab v-if="supportsFiles" id="files" name="Files" icon="fa-file">
+		<Tab v-if="showFiles" id="files" name="Files" icon="fa-file" @show="onShow" @hide="onHide">
 			<FilePanel />
 		</Tab>
 	</Tabs>
@@ -37,17 +37,29 @@ export default {
 		Tab
 	},
 	computed: {
-		supportsJobs() {
+		showJobs() {
 			return (this.supports('listJobs') || this.supports('createJob'));
 		},
-		supportsServices() {
+		showServices() {
 			return (this.supports('listServices') || this.supports('createService'));
 		},
-		supportsCustomProcesses() {
+		showCustomProcesses() {
 			return (this.supports('listUserProcesses') || this.supports('setUserProcess'));
 		},
-		supportsFiles() {
+		showFiles() {
 			return (this.supports('listFiles') || this.supports('uploadFile'));
+		}
+	},
+	methods: {
+		onShow(tab) {
+			if (tab.$children.length && typeof tab.$children[0].onShow === 'function') {
+				tab.$children[0].onShow();
+			}
+		},
+		onHide(tab) {
+			if (tab.$children.length && typeof tab.$children[0].onHide === 'function') {
+				tab.$children[0].onHide();
+			}
 		}
 	}
 }

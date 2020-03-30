@@ -142,13 +142,17 @@ export default {
 			this.noDataMessage = "Sorry, an unknown error has occured.";
 		},
 		retrieveData() {
-			this.setNoData('Loading data...');
-			this.data = [];
+			var isUpdate = this.data.length > 0;
+			if (!isUpdate) {
+				this.setNoData('Loading data...');
+			}
 			if (typeof this.dataSource === 'function') {
 				this.dataSource()
 					.then(data => {
 						if (!Array.isArray(data)) {
-							this.setNoData('Invalid response from data source.');
+							if (!isUpdate) {
+								this.setNoData('Invalid response from data source.');
+							}
 						}
 						else if(data.length == 0) {
 							this.setNoData('');  // empty
@@ -158,7 +162,12 @@ export default {
 						}
 					})
 					.catch(error => {
-						this.setNoData(error);
+						if (!isUpdate) {
+							this.setNoData(error);
+						}
+						else {
+							console.log(error);
+						}
 					});
 			}
 			else if(Array.isArray(this.dataSource)) {

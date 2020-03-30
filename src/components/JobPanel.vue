@@ -2,7 +2,6 @@
 	<DataTable ref="table" :dataSource="listJobs" :columns="columns" id="JobPanel" v-if="connection">
 		<template slot="toolbar">
 			<button title="Add new job" @click="createJobFromScript()" v-show="supports('createJob')"><i class="fas fa-plus"></i> Add</button>
-			<button title="Refresh jobs" v-if="isListDataSupported" @click="updateData()" v-show="supports('listJobs')"><i class="fas fa-sync-alt"></i></button> <!-- ToDo: Should be done automatically later -->
 		</template>
 		<template slot="actions" slot-scope="p">
 			<button title="Details" @click="showJobInfo(p.row)" v-show="supports('describeJob')"><i class="fas fa-info"></i></button>

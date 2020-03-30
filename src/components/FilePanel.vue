@@ -6,9 +6,6 @@
 		</div>
 		<div class="percent"><div class="used" :class="{error: uploadErrored}" :style="'width: ' + this.uploadProgress + '%; opacity: ' + this.uploadFadeOut"></div></div>
 		<DataTable ref="table" :dataSource="listFiles" :columns="columns">
-			<template slot="toolbar">
-				<button title="Refresh files" v-if="isListDataSupported" @click="updateData()"><i class="fas fa-sync-alt"></i></button> <!-- ToDo: Should be done automatically later -->
-			</template>
 			<template slot="actions" slot-scope="p">
 				<button title="Download" @click="downloadFile(p.row)" v-show="supports('downloadFile')"><i class="fas fa-download"></i></button>
 				<button title="Delete" @click="deleteFile(p.row)" v-show="supports('deleteFile')"><i class="fas fa-trash"></i></button>

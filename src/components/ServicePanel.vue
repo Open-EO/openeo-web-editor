@@ -2,7 +2,6 @@
 	<DataTable ref="table" :dataSource="listServices" :columns="columns" id="ServicePanel">
 		<template slot="toolbar">
 			<button title="Add new service" @click="createServiceFromScript()" v-show="supports('createService')"><i class="fas fa-plus"></i> Add</button>
-			<button title="Refresh services" v-if="isListDataSupported" @click="updateData()"><i class="fas fa-sync-alt"></i></button> <!-- ToDo: Should be done automatically later -->
 		</template>
 		<template slot="enabled" slot-scope="p">
 			<span class="boolean">

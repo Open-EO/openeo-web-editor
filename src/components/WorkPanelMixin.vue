@@ -12,23 +12,44 @@ export default {
 		return {
 			columns: {},
 			listFunc: null,
-			createFunc: null
+			createFunc: null,
+			syncTimer: null,
+			lastSyncTime: null
 		};
-	},
-	computed: {
-		isListDataSupported() {
-			return this.supports(this.listFunc);
-		}
 	},
 	mounted() {
 		this.updateData();
 	},
+	beforeDestroy() {
+		this.stopSyncTimer();
+	},
 	methods: {
+		onShow() {
+			this.updateData();
+			this.startSyncTimer();
+		},
+		onHide() {
+			this.stopSyncTimer();
+		},
+		startSyncTimer() {
+			if (this.supports(this.listFunc)) {
+				this.syncTimer = setInterval(this.updateData, this.getSyncInterval()*1000);
+			}
+		},
+		stopSyncTimer() {
+			if (this.syncTimer !== null) {
+				clearInterval(this.syncTimer);
+			}
+		},
+		getSyncInterval() {
+			return 2*60; // Refresh data every two minutes
+		},
 		updateData() {
 			// To be overwritten by implementations
 		},
 		updateTable(table) {
-			if (!table) {
+			var nextSyncTime = Date.now() - this.getSyncInterval() * 1000;
+			if (!table || this.lastSyncTime > nextSyncTime) {
 				return;
 			}
 			else if (!this.supports(this.listFunc)) {
@@ -39,6 +60,7 @@ export default {
 			}
 			else {
 				table.retrieveData();
+				this.lastSyncTime = Date.now();
 			}
 		},
 	}

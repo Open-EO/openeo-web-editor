@@ -2,7 +2,6 @@
 	<DataTable ref="table" :dataSource="listUserProcesses" :columns="columns" id="CustomProcessPanel">
 		<template slot="toolbar">
 			<button title="Add new custom process" @click="addProcessFromScript" v-show="supports('setUserProcess')"><i class="fas fa-plus"></i> Add</button>
-			<button title="Refresh custom process" v-if="isListDataSupported" @click="updateData()"><i class="fas fa-sync-alt"></i></button> <!-- ToDo: Should be done automatically later -->
 		</template>
 		<template slot="actions" slot-scope="p">
 			<button title="Details" @click="graphInfo(p.row)" v-show="supports('describeUserProcess')"><i class="fas fa-info"></i></button>		<button title="Show in Editor" @click="showInEditor(p.row)" v-show="supports('describeUserProcess')"><i class="fas fa-code-branch"></i></button>
