@@ -1,5 +1,5 @@
 <template>
-	<Modal ref="modal" minWidth="80%">
+	<Modal ref="modal" minWidth="85%">
 		<template #main>
 			<section class="vue-component basedata">
 				<div class="tabular"><label>ID:</label> <code class="value">{{ job.id }}</code></div>
@@ -68,7 +68,7 @@ export default {
 		Modal
 	},
 	computed: {
-		...Utils.mapGetters('server', ['formatCurrency']),
+		...Utils.mapGetters(['formatCurrency']),
 		submitted() {
 			return Utils.formatDateTime(this.job.submitted);
 		},

@@ -49,7 +49,7 @@ export default {
 		}
 	},
 	computed: {
-		...Utils.mapState('server', ['connection'])
+		...Utils.mapState(['connection'])
 	},
 	methods: {
 		showWebService(service) {

@@ -21,7 +21,7 @@
 			<div :class="{ category: true, processes: true, expanded: processesExpanded }">
 				<strong @click="toggle('processes')" :title="'Processes ('+processesCount+')'"><span class="toggle">▸</span> Processes</strong>
 				<div class="discovery-entity" v-for="(e, i) in processes" v-show="processesShow[i]" :key="e.id" draggable="true" @dragstart="onDrag($event, 'process', e.id)">
-					<div class="discovery-info" @click="showProcessInfo(e.id)">
+					<div class="discovery-info" @click="showProcessInfoById(e.id)">
 						<strong :title="e.id">{{ e.id }}</strong>
 						<small v-if="e.summary" :title="e.summary">{{ e.summary }}</small>
 					</div>
@@ -30,20 +30,6 @@
 				<div class="noData" v-if="!processesCount && searchTerm === ''">No processes available.</div>
 				<div class="noData" v-else-if="!processesCount">No processes found.</div>
 			</div>
-
-<!-- ToDo: Reactivate once hub is updated -->
-<!--		<div v-if="loadHubProcesses" :class="{ category: true, hubGraphs: true, expanded: hubGraphsExpanded }">
-				<strong @click="toggle('hubGraphs')" :title="'Process Graphs @ Hub ('+hubGraphsCount+')'"><span class="toggle">▸</span> Process Graphs @ Hub</strong>
-				<div class="discovery-entity" v-for="(e,i) in hubGraphs" v-show="hubGraphsShow[i]" :key="e.id" draggable="true" @dragstart="onDrag($event, 'process-graph', e.process_graph)">
-					<div class="discovery-info" @click="showCustomProcessInfo(e)">
-						<small v-if="e.title" :title="e.title">{{ e.title }}</small>
-						<small v-else>{{ e.id }}</small>
-					</div>
-					<button class="discovery-button" type="button" @click="insertCustomProcess(e.process_graph)" title="Insert"><i class="fas fa-plus"></i></button>
-				</div>
-				<div class="noData" v-if="!hubGraphsCount && searchTerm === ''">No compatible process graphs available at the openEO Hub.</div>
-				<div class="noData" v-else-if="!hubGraphsCount">No compatible process graphs found at the openEO Hub.</div>
-			</div> -->
 		</div>
 	</div>
 </template>
@@ -75,7 +61,6 @@ export default {
 	},
 	data() {
 		return {
-			loadHubProcesses: Config.loadHubProcesses,
 			searchTerm: '',
 			collectionsExpanded: false,
 			processesExpanded: false,
@@ -87,19 +72,18 @@ export default {
 		};
 	},
 	created() {
-		this.loadHubGraphs();
 		this.filter('processes');
 		this.filter('collections');
 	},
 	watch: {
 		processes() {
-			if (typeof this.processes !== 'object') {
+			if (!Array.isArray(this.processes)) {
 				return;
 			}
 			this.filter('processes');
 		},
 		collections() {
-			if (typeof this.collections !== 'object') {
+			if (!Array.isArray(this.collections)) {
 				return;
 			}
 			this.filter('collections');
@@ -116,42 +100,16 @@ export default {
 		}
 	},
 	computed: {
-		...Utils.mapState('server', ['processes', 'collections']),
-		...Utils.mapGetters('server', ['processRegistry'])
+		...Utils.mapState(['predefinedProcesses', 'collections']),
+		...Utils.mapState('userProcesses', ['userProcesses']),
+		processes() {
+			return this.predefinedProcesses.concat(this.userProcesses.map(p => p.toJSON())).sort(Utils.sortById);
+		}
 	},
 	methods: {
 		async filterArrayAsync(arr, callback) {
 			const fail = Symbol();
 			return (await Promise.all(arr.map(async item => (await callback(item)) ? item : fail))).filter(i=>i!==fail);
-		},
-		async loadHubGraphs() {
-			if (!this.loadHubProcesses) {
-				return;
-			}
-			// ToDo: Reactivate once hub is updated
-			// Load hub processes and add to process list
-			/*
-			try {
-				var res = await axios.get('https://hub.openeo.org/api/process_graphs');
-				if (!Array.isArray(res.data)) {
-					return;
-				}
-				this.hubGraphs = await this.filterArrayAsync(res.data, async meta => {
-					try {
-						// ToDo: Parse JSON from Hub, this will likely change soon and can be removed.
-						if (!Utils.isObject(meta.process_graph)) {
-							meta.process_graph = JSON.parse(meta.process_graph);
-						}
-						var pgObj = new ProcessGraphParser(meta.process_graph, this.processRegistry);
-						var errors = await pgObj.validate();
-						return errors.count() === 0;
-					} catch (e) {
-						return false;
-					}
-				});
-				this.filter('hubGraphs');
-			} catch (e) {}
-			*/
 		},
 		onDrag(event, type, data) {
 			if (Utils.isObject(data)) {
@@ -184,13 +142,13 @@ export default {
 			this.toggle(type, expand);
 		},
 		filterFn(e, term) {
+			if (e.id.toLowerCase().includes(term)) {
+				return true;
+			}
 			if (typeof e.summary === 'string' && e.summary.toLowerCase().includes(term)) {
 				return true;
 			}
 			if (typeof e.title === 'string' && e.title.toLowerCase().includes(term)) {
-				return true;
-			}
-			else if (e.id.toLowerCase().includes(term)) {
 				return true;
 			}
 			return false;
@@ -204,13 +162,13 @@ export default {
 				this.emit('showCollectionInfo', id);
 			}
 		},
-		showProcessInfo(id) {
+		showProcessInfoById(id) {
 			if (this.supports('listProcesses')) {
-				this.emit('showProcessInfo', id);
+				this.emit('showProcessInfoById', id);
 			}
 		},
-		showCustomProcessInfo(pg) {
-			this.emit('showCustomProcessInfo', (new ProcessGraph()).setAll(pg));
+		showProcessInfo(process) {
+			this.emit('showProcessInfo', process);
 		},
 		insertCollection(id) {
 			this.onAddCollection(id);

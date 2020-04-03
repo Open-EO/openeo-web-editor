@@ -101,8 +101,8 @@ export default {
 		}
 	},
 	computed: {
-		...Utils.mapState('server', ['connectionError', 'discoveryErrors']),
-		...Utils.mapGetters('server', ['isConnected', 'isDiscovered', 'isAuthenticated', 'title']),
+		...Utils.mapState(['connectionError', 'discoveryErrors']),
+		...Utils.mapGetters(['isConnected', 'isDiscovered', 'isAuthenticated', 'title']),
 		...Utils.mapState('editor', ['storedServers']),
 		httpsUrl() {
 			if (Config.showHttpWarning && window.location.protocol === 'http:') {
@@ -172,13 +172,12 @@ export default {
 		}
 	},
 	methods: {
-		...Utils.mapActions('server', ['connect', 'discover', 'authenticateBasic', 'authenticateOIDC']),
-		...Utils.mapMutations('server', ['reset']),
+		...Utils.mapActions(['connect', 'discover', 'authenticateBasic', 'authenticateOIDC', 'logout']),
 		...Utils.mapMutations('editor', ['addServer', 'removeServer']),
 
 		historyNavigate(evt) {
 			if (!Utils.isObject(evt.state) || evt.state.reset) {
-				this.reset();
+				this.logout();
 				this.autoConnect = false;
 				this.loading = false;
 				this.password = '';

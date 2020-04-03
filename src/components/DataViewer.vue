@@ -25,7 +25,7 @@ export default {
 		ObjectTree
 	},
 	computed: {
-		...Utils.mapState('server', ['connection']),
+		...Utils.mapState(['connection']),
 		isError() {
 			return (this.content instanceof Error);
 		}

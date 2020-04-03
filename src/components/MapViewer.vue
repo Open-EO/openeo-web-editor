@@ -394,7 +394,7 @@ export default {
 		},
 
 		updateXYZLayer(service) {
-			var id = service.serviceId;
+			var id = service.id;
 			var url = service.url;
 			var title = (service.title ? service.title.substr(0,50) : id.toUpperCase().substr(0,6)) + " (XYZ)";
 			if (typeof this.userLayers[id] === 'undefined') {

@@ -1,15 +1,15 @@
 <template>
-	<DataTable ref="table" :dataSource="listJobs" :columns="columns" id="JobPanel" v-if="connection">
+	<DataTable ref="table" :data="data" :columns="columns" id="JobPanel">
 		<template slot="toolbar">
-			<button title="Add new job" @click="createJobFromScript()" v-show="supports('createJob')"><i class="fas fa-plus"></i> Add</button>
+			<button title="Add new job" @click="createJobFromScript()" v-show="supportsCreate"><i class="fas fa-plus"></i> Add</button>
 		</template>
 		<template slot="actions" slot-scope="p">
-			<button title="Details" @click="showJobInfo(p.row)" v-show="supports('describeJob')"><i class="fas fa-info"></i></button>
-			<button title="Show in Editor" @click="showInEditor(p.row)" v-show="supports('describeJob')"><i class="fas fa-code-branch"></i></button>
+			<button title="Details" @click="showJobInfo(p.row)" v-show="supportsRead"><i class="fas fa-info"></i></button>
+			<button title="Show in Editor" @click="showInEditor(p.row)" v-show="supportsRead"><i class="fas fa-code-branch"></i></button>
 			<button title="Estimate" @click="estimateJob(p.row)" v-show="supports('estimateJob')"><i class="fas fa-file-invoice-dollar"></i></button>
-			<button title="Edit metadata" @click="editMetadata(p.row)" v-show="supports('updateJob') && isJobInactive(p.row)"><i class="fas fa-edit"></i></button>
-			<button title="Replace process" @click="replaceProcess(p.row)" v-show="supports('updateJob') && isJobInactive(p.row)"><i class="fas fa-retweet"></i></button>
-			<button title="Delete" @click="deleteJob(p.row)" v-show="supports('deleteJob')"><i class="fas fa-trash"></i></button>
+			<button title="Edit metadata" @click="editMetadata(p.row)" v-show="supportsUpdate && isJobInactive(p.row)"><i class="fas fa-edit"></i></button>
+			<button title="Replace process" @click="replaceProcess(p.row)" v-show="supportsUpdate && isJobInactive(p.row)"><i class="fas fa-retweet"></i></button>
+			<button title="Delete" @click="deleteJob(p.row)" v-show="supportsDelete"><i class="fas fa-trash"></i></button>
 			<button title="Start processing" @click="queueJob(p.row)" v-show="supports('startJob') && isJobInactive(p.row)"><i class="fas fa-play-circle"></i></button>
 			<button title="Cancel processing" @click="cancelJob(p.row)" v-show="supports('stopJob') && isJobActive(p.row)"><i class="fas fa-stop-circle"></i></button>
 			<button title="Download" @click="downloadResults(p.row)" v-show="supports('downloadResults') && hasResults(p.row)"><i class="fas fa-download"></i></button>
@@ -20,17 +20,17 @@
 
 <script>
 import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
-import WorkPanelMixin from './WorkPanelMixin.vue';
+import WorkPanelMixin from './WorkPanelMixin';
 import Utils from '../utils.js';
 import Field from './blocks/field';
 
 export default {
 	name: 'JobPanel',
-	mixins: [WorkPanelMixin, EventBusMixin],
+	mixins: [WorkPanelMixin('jobs', 'batch job', 'batch jobs'), EventBusMixin],
 	data() {
 		return {
 			columns: {
-				jobId: {
+				id: {
 					name: 'ID',
 					primaryKey: true,
 					hide: true
@@ -38,8 +38,8 @@ export default {
 				title: {
 					name: 'Title',
 					computedValue: (row, value) => {
-						if (!value && row.jobId) {
-							return "Job #" + row.jobId.toUpperCase().substr(-6);
+						if (!value && row.id) {
+							return "Job #" + row.id.toUpperCase().substr(-6);
 						}
 						return value;
 					},
@@ -62,15 +62,28 @@ export default {
 					filterable: false
 				}
 			},
-			jobSubscriptions: [],
-			watchers: [],
-			jobUpdater: null,
-			listFunc: 'listJobs',
-			createFunc: 'createJob'
+			watchers: {},
+			jobUpdater: null
 		};
 	},
 	computed: {
-		...Utils.mapGetters('server', ['supportsBilling', 'supportsBillingPlans'])
+		...Utils.mapGetters(['supportsBilling', 'supportsBillingPlans'])
+	},
+	watchers: {
+		jobs(updated, old) {
+			// Update Watchers
+			let all = updated.concat(old);
+			this.watchers = {};
+			for(let job of all) {
+				switch(job.status.toLowerCase()) {
+					case 'running':
+					case 'queued':
+						this.watchers[job.id] = job;
+						break;
+				}
+			}
+
+		}
 	},
 	mounted() {
 		this.jobUpdater = setInterval(this.executeWatchers, 10000);
@@ -81,35 +94,12 @@ export default {
 		}
 	},
 	methods: {
-		listJobs() {
-			return this.connection.listJobs();
-		},
-		updateData() {
-			this.updateTable(this.$refs.table);
-		},
-		refreshJob(job, callback = null) {
-			var oldJob = Object.assign({}, job);
-			job.describeJob()
-				.then(updatedJob => {
-					if (typeof callback === 'function') {
-						callback(updatedJob, oldJob);
-					}
-					this.updateJobData(updatedJob);
-				})
-				.catch(error => Utils.exception(this, error, "Loading job failed"));
-		},
 		showInEditor(job) {
-			this.refreshJob(job, updatedJob => {
+			this.refreshElement(job, updatedJob => {
 				this.emit('insertCustomProcess', updatedJob.process);
 			});
 		},
 		jobCreated(job) {
-			if (!this.$refs.table) {
-				return;
-			}
-
-			this.$refs.table.addData(job);
-
 			var buttons = [];
 			if (this.supports('estimateJob')) {
 				buttons.push({text: 'Estimate', action: () => this.estimateJob(job)});
@@ -151,12 +141,9 @@ export default {
 		},
 		createJob(process, data) {
 			data = this.normalizeToDefaultData(data);
-			this.connection.createJob(process, data.title, data.description, data.plan, data.budget)
-				.then(job => {
-					this.jobCreated(job);
-				}).catch(error => {
-					Utils.exception(this, error, 'Sorry, could not create a batch job.');
-				});
+			this.create({parameters: [process, data.title, data.description, data.plan, data.budget]})
+				.then(job => this.jobCreated(job))
+				.catch(error => Utils.exception(this, error, 'Sorry, could not create a batch job.'));
 		},
 		createJobFromScript() {
 			this.emit('getCustomProcess', script => {
@@ -169,34 +156,13 @@ export default {
 				this.emit('showDataForm', "Create new batch job", fields, data => this.createJob(script, data));
 			});
 		},
-		updateJobData(updatedJob) {
-			this.$refs.table.replaceData(updatedJob);
-
-			// Watchers
-			var index = this.watchers.findIndex(j => j.jobId == updatedJob.jobId);
-			switch(updatedJob.status.toLowerCase()) {
-				case 'running':
-				case 'queued':
-					if (index === -1) {
-						this.watchers.push(updatedJob);
-					}
-					break;
-				default:
-					this.watchers.splice(index, 1);
-			}
-		},
 		deleteJob(job) {
-			job.deleteJob()
-				.then(() => {
-					this.$refs.table.removeData(job.jobId);
-				})
-				.catch(error => {
-					Utils.exception(this, error, 'Sorry, could not delete job.');
-				});
+			this.delete({data: job})
+				.catch(error => Utils.exception(this, error, 'Sorry, could not delete job.'));
 		},
 		executeWatchers() {
 			for(var i in this.watchers) {
-				this.refreshJob(this.watchers[i], (updated, old) => {
+				this.refreshElement(this.watchers[i], (updated, old) => {
 					if (old.status !== 'finished' && updated.status === 'finished') {
 						var buttons = [];
 						if (this.supports('downloadResults')) {
@@ -212,24 +178,18 @@ export default {
 			}
 		},
 		showJobInfo(job) {
-			this.refreshJob(job, updatedJob => {
-				this.emit('showJobInfo', updatedJob.getAll());
-			});
+			this.refreshElement(job, updatedJob => this.emit('showJobInfo', updatedJob.getAll()));
 		},
 		estimateJob(job) {
 			job.estimateJob()
-				.then(estimate => {
-					this.emit('showModal', 'Job Estimate', estimate);
-				})
+				.then(estimate => this.emit('showModal', 'Job Estimate', estimate))
 				.catch(error => Utils.exception(this, error, "Loading estimate failed"));
 		},
 		replaceProcess(job) {
-			this.emit('getCustomProcess', script => {
-				this.updateJob(job, {process: script});
-			});
+			this.emit('getCustomProcess', script => this.updateJob(job, {process: script}));
 		},
 		editMetadata(oldJob) {
-			this.refreshJob(oldJob, job => {
+			this.refreshElement(oldJob, job => {
 				var fields = [
 					this.getTitleField().setValue(job.title),
 					this.getDescriptionField().setValue(job.description),
@@ -242,29 +202,18 @@ export default {
 		updateTitle(job, newTitle) {
 			this.updateJob(job, {title: newTitle});
 		},
-		updateJob(job, data) {
-			data = this.normalizeToDefaultData(data);
-			job.updateJob(data)
-				.then(updatedJob => {
-					Utils.ok(this, "Job successfully updated.");
-					this.updateJobData(updatedJob);
-				})
+		updateJob(job, parameters) {
+			this.update({data: job, parameters: this.normalizeToDefaultData(parameters)})
 				.catch(error => Utils.exception(this, error, "Updating job failed"));;
 		},
 		queueJob(job) {
 			job.startJob()
-				.then(updatedJob => {
-					Utils.ok(this, "Job successfully queued.");
-					this.updateJobData(updatedJob);
-				})
+				.then(updatedJob => Utils.ok(this, "Job successfully queued."))
 				.catch(error => Utils.exception(this, error, "Queueing job failed"));
 		},
 		cancelJob(job) {
 			job.stopJob()
-				.then(updatedJob => {
-					Utils.ok(this, "Job successfully canceled.");
-					this.updateJobData(updatedJob);
-				})
+				.then(updatedJob => Utils.ok(this, "Job successfully canceled."))
 				.catch(error => Utils.exception(this, error, "Canceling job failed"));
 		},
 		viewResults(job) {			
@@ -301,35 +250,6 @@ export default {
 					]
 				);
 			});
-		},
-		subscribeToJob(id) { // TODO: Update jobs, inform user etc.
-			var params = {job_id: id};
-			this.connection.subscribe(
-				'openeo.jobs.debug', params,
-				(data, info) => {
-					console.info("Debugging information for job " + id + ": " + JSON.stringify(data));
-				}
-			);
-			this.connection.subscribe(
-				'openeo.jobs.output', params,
-				(data, info) => {
-					console.info("Output from job " + id + ": " + JSON.stringify(data));
-				}
-			);
-			this.connection.subscribe(
-				'openeo.jobs.status', params,
-				(data, info) => {
-					console.info("Status information for job " + id + ": " + JSON.stringify(data));
-				}
-			);
-			this.jobSubscriptions.push(id);
-		},
-		unsubscribeFromJob(id) {
-			var params = {job_id: id};
-			this.connection.unsubscribe('openeo.jobs.debug', params);
-			this.connection.unsubscribe('openeo.jobs.output', params);
-			this.connection.unsubscribe('openeo.jobs.status', params);
-			this.jobSubscriptions.splice(this.jobSubscriptions.indexOf(id), 1);
 		},
 		hasResults(job) {
 			return (typeof job.status !== 'string' || job.status.toLowerCase() == 'finished');

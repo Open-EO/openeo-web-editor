@@ -115,6 +115,10 @@ export default {
 		};
 	},
 
+	sortById(a, b) {
+		return a.id.localeCompare(b.id);
+	},
+
 	mapState,
 	mapGetters,
 	mapMutations,

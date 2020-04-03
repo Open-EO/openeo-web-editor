@@ -27,7 +27,7 @@ Showa information about the web editor in a modal.
 ### showCollectionInfo(id)
 Shows collection information in a modal.
 
-### showProcessInfo(id)
+### showProcessInfoById(id)
 Shows process information in a modal.
 
 ## Viewer & Web Services

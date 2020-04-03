@@ -63,7 +63,7 @@ export default {
 		}
 	},
 	computed: {
-		...Utils.mapGetters('server', ['isDiscovered'])
+		...Utils.mapGetters(['isDiscovered'])
 	},
 	methods: {
 		setTitle(subtitle) {

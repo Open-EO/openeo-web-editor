@@ -51,9 +51,9 @@ export default {
 		}
 	},
 	computed: {
-		...Utils.mapState('server', ['connection']),
+		...Utils.mapState(['connection']),
 		...Utils.mapState('editor', ['storedScripts', 'scriptName']),
-		...Utils.mapGetters('server', ['supports', 'isAuthenticated'])
+		...Utils.mapGetters(['supports', 'isAuthenticated'])
 	},
 	methods: {
 		...Utils.mapMutations('editor', ['addScript', 'removeScript', 'setScriptName']),

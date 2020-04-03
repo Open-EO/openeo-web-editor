@@ -1,5 +1,5 @@
 <template>
-	<Modal ref="modal" minWidth="80%">
+	<Modal ref="modal" minWidth="85%">
 		<template #main>
 			<section class="vue-component basedata">
 				<div class="tabular"><label>ID:</label> <code class="value">{{ service.id }}</code></div>
@@ -75,7 +75,7 @@ export default {
 		ObjectTree
 	},
 	computed: {
-		...Utils.mapGetters('server', ['formatCurrency']),
+		...Utils.mapGetters(['formatCurrency']),
 		hasAttributes() {
 			return Utils.size(this.service.attributes) > 0;
 		},

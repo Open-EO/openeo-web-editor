@@ -10,7 +10,7 @@
 				<button type="button" @click="clearFilter" :disabled="!hasFilter"><i class="fas fa-times-circle"></i></button>
 			</div>
 		</div>
-		<table v-if="data.length > 0 || typeof noDataMessage == 'undefined' || noDataMessage == ''">
+		<table v-if="data.length > 0">
 			<tr>
 				<th v-for="(col, id) in columns" v-show="!col.hide" :key="id" :class="id">{{ col.name }}</th>
 			</tr>
@@ -36,7 +36,7 @@
 				<td :colspan="columnCount">Sorry, no element matches your search criteria.</td>
 			</tr>
 		</table>
-		<div class="noDataMessage" v-if="data.length == 0">{{ noDataMessage }}</div>
+		<div class="noDataMessage" v-else>{{ noDataMessage }}</div>
 	</div>
 </template>
 
@@ -45,14 +45,17 @@ import Utils from '../utils.js';
 
 export default {
 	name: 'DataTable',
-	props: ['id', 'columns', 'dataSource'],
+	props: {
+		id: String,
+		columns: Object,
+		data: Array
+	},
 	data() {
 		return {
-			data: [],
 			view: [],
 			filterValue: null,
 			primaryKey: null,
-			noDataMessage: 'No data specified.',
+			noDataMessage: 'Sorry, no data available.',
 			editField: null
 		};
 	},
@@ -123,7 +126,6 @@ export default {
 			}
 		},
 		setNoData(error) {
-			this.data = [];
 			if (typeof error == 'string') {
 				this.noDataMessage = error;
 				return;
@@ -141,51 +143,7 @@ export default {
 			console.warn(error);
 			this.noDataMessage = "Sorry, an unknown error has occured.";
 		},
-		retrieveData() {
-			var isUpdate = this.data.length > 0;
-			if (!isUpdate) {
-				this.setNoData('Loading data...');
-			}
-			if (typeof this.dataSource === 'function') {
-				this.dataSource()
-					.then(data => {
-						if (!Array.isArray(data)) {
-							if (!isUpdate) {
-								this.setNoData('Invalid response from data source.');
-							}
-						}
-						else if(data.length == 0) {
-							this.setNoData('');  // empty
-						}
-						else {
-							this.setData(data);
-						}
-					})
-					.catch(error => {
-						if (!isUpdate) {
-							this.setNoData(error);
-						}
-						else {
-							console.log(error);
-						}
-					});
-			}
-			else if(Array.isArray(this.dataSource)) {
-				if(this.dataSource.length == 0) {
-					this.setNoData('');  // empty
-				} else {
-					this.setData(this.dataSource);
-				}
-			}
-			else {
-				this.setNoData('No valid data source specified.');
-			}
-		},
-		setData(data) {
-			this.noDataMessage = undefined;
-			this.data = data;
-		},
-		removeData(id) {
+/*		removeData(id) {
 			if (this.primaryKey === null) {
 				throw new Error('No primary key specified.');
 			}
@@ -214,7 +172,7 @@ export default {
 			else {
 				this.data.push(newData);
 			}
-		},
+		}, */
 		value(row, col, id) {
 			var data;
 			if (typeof row === 'object') {

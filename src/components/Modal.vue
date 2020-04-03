@@ -59,7 +59,7 @@ export default {
 		},
 		maxWidth: {
 			type: String,
-			default: "80%"
+			default: "85%"
 		}
 	},
 	data() {

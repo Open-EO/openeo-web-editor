@@ -36,8 +36,8 @@ import { Utils as VueUtils } from '@openeo/vue-components';
 export default {
 	name: 'UserMenu',
 	computed: {
-		...Utils.mapState('server', ['userInfo']),
-		...Utils.mapGetters('server', ['formatCurrency']),
+		...Utils.mapState(['userInfo']),
+		...Utils.mapGetters(['formatCurrency']),
 		links() {
 			return VueUtils.friendlyLinks(this.userInfo.links);
 		},
@@ -82,7 +82,7 @@ export default {
 		}
 	},
 	methods: {
-		...Utils.mapActions('server', {logoutServer: 'logout'}),
+		...Utils.mapActions({logoutServer: 'logout'}),
 		...Utils.mapMutations('editor', {resetEditor: 'reset'}),
 		async logout() {
 			await this.logoutServer();

@@ -29,8 +29,8 @@ export default {
 	methods: {
 		show(connection, fileFormats, serviceTypes) {
 			this.url = connection.getBaseUrl();
-			this.capabilities = connection.capabilities().toPlainObject();
-			this.formats = fileFormats.toPlainObject();
+			this.capabilities = connection.capabilities().toJSON();
+			this.formats = fileFormats.toJSON();
 			this.services = serviceTypes;
 			this.$refs.modal.show(connection.capabilities().title() || 'Server information');
 		}

@@ -72,8 +72,8 @@ export default {
 		}
 	},
 	computed: {
-		...Utils.mapState('server', ['processes', 'collections']),
-		...Utils.mapGetters('server', ['processRegistry'])
+		...Utils.mapState(['collections']),
+		...Utils.mapGetters(['processRegistry'])
 	},
 	data() {
 		return {
@@ -195,15 +195,15 @@ export default {
 
 		registerCollections() {
 			this.blocks.unregisterCollectionDefaults();
-			for(var i in this.collections) {
-				this.blocks.registerCollectionDefaults(this.collections[i]);
+			for(var collection of this.collections) {
+				this.blocks.registerCollectionDefaults(collection);
 			}
 		},
 
 		registerProcesses() {
 			this.blocks.unregisterProcesses();
-			for(var i in this.processes) {
-				this.blocks.registerProcess(this.processes[i]);
+			for(var process of this.processRegistry.toJSON()) {
+				this.blocks.registerProcess(process);
 			}
 
 			this.blocks.unregisterPgParameters();

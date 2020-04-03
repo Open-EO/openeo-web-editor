@@ -39,7 +39,7 @@
   },
   "dependencies": {
     "@openeo/js-client": "Open-EO/openeo-js-client#development",
-    "@openeo/js-processgraphs": "1.0.0-alpha.3",
+    "@openeo/js-processgraphs": "Open-EO/openeo-js-processgraphs#dev",
     "@openeo/vue-components": "Open-EO/openeo-vue-components#dev",
     "ajv": "^6.10.0",
     "codemirror": "^5.47.0",

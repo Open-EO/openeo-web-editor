@@ -624,7 +624,7 @@ Block.prototype.initListeners = function()
                 EventBus.$emit('showCollectionInfo', this.getCollectionName());
             }
             else {
-                EventBus.$emit('showProcessInfo', this.name);
+                EventBus.$emit('showProcessInfoById', this.name);
             }
             evt.preventDefault();
             evt.stopPropagation();

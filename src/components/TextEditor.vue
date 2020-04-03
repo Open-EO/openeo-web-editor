@@ -47,7 +47,7 @@ export default {
 		}
 	},
 	computed: {
-		...Utils.mapGetters('server', ['processRegistry'])
+		...Utils.mapGetters(['processRegistry'])
 	},
 	data() {
 		return {

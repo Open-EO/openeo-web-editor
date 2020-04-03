@@ -1,7 +1,7 @@
 <template>
-	<DataTable ref="table" :dataSource="listServices" :columns="columns" id="ServicePanel">
+	<DataTable ref="table" :data="data" :columns="columns" id="ServicePanel">
 		<template slot="toolbar">
-			<button title="Add new service" @click="createServiceFromScript()" v-show="supports('createService')"><i class="fas fa-plus"></i> Add</button>
+			<button title="Add new service" @click="createServiceFromScript()" v-show="supportsCreate"><i class="fas fa-plus"></i> Add</button>
 		</template>
 		<template slot="enabled" slot-scope="p">
 			<span class="boolean">
@@ -11,10 +11,10 @@
 			</span>
 		</template>
 		<template slot="actions" slot-scope="p">
-			<button title="Details" @click="serviceInfo(p.row)" v-show="supports('describeService')"><i class="fas fa-info"></i></button><button title="Show in Editor" @click="showInEditor(p.row)" v-show="supports('describeService')"><i class="fas fa-code-branch"></i></button>
-			<button title="Edit metadata" @click="editMetadata(p.row)" v-show="supports('updateService')"><i class="fas fa-edit"></i></button>
-			<button title="Replace process" @click="replaceProcess(p.row)" v-show="supports('updateService')"><i class="fas fa-retweet"></i></button>
-			<button title="Delete" @click="deleteService(p.row)" v-show="supports('deleteService')"><i class="fas fa-trash"></i></button>
+			<button title="Details" @click="serviceInfo(p.row)" v-show="supportsRead"><i class="fas fa-info"></i></button><button title="Show in Editor" @click="showInEditor(p.row)" v-show="supportsRead"><i class="fas fa-code-branch"></i></button>
+			<button title="Edit metadata" @click="editMetadata(p.row)" v-show="supportsUpdate"><i class="fas fa-edit"></i></button>
+			<button title="Replace process" @click="replaceProcess(p.row)" v-show="supportsUpdate"><i class="fas fa-retweet"></i></button>
+			<button title="Delete" @click="deleteService(p.row)" v-show="supportsDelete"><i class="fas fa-trash"></i></button>
 			<button v-show="p.row.enabled && isMapServiceSupported(p.row.type)" title="View on map" @click="viewService(p.row)"><i class="fas fa-map"></i></button>
 		</template>
 	</DataTable>
@@ -23,21 +23,21 @@
 <script>
 import Config from '../../config';
 import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
-import WorkPanelMixin from './WorkPanelMixin.vue';
+import WorkPanelMixin from './WorkPanelMixin';
 import Utils from '../utils';
 import Field from './blocks/field';
 
 export default {
 	name: 'ServicePanel',
-	mixins: [WorkPanelMixin, EventBusMixin],
+	mixins: [WorkPanelMixin('services', 'web service', 'web services'), EventBusMixin],
 	computed: {
-		...Utils.mapState('server', ['serviceTypes']),
-		...Utils.mapGetters('server', ['supportsBilling', 'supportsBillingPlans'])
+		...Utils.mapState(['serviceTypes']),
+		...Utils.mapGetters(['supportsBilling', 'supportsBillingPlans'])
 	},
 	data() {
 		return {
 			columns: {
-				serviceId: {
+				id: {
 					name: 'ID',
 					primaryKey: true,
 					hide: true
@@ -45,8 +45,8 @@ export default {
 				title: {
 					name: 'Title',
 					computedValue: (row, value) => {
-						if (!value && row.serviceId) {
-							return "Service #" + row.serviceId.toUpperCase().substr(0,6);
+						if (!value && row.id) {
+							return "Service #" + row.id.toUpperCase().substr(0,6);
 						}
 						return value;
 					},
@@ -68,9 +68,7 @@ export default {
 					name: 'Actions',
 					filterable: false
 				}
-			},
-			listFunc: 'listServices',
-			createFunc: 'createService'
+			}
 		};
 	},
 	methods: {
@@ -80,34 +78,12 @@ export default {
 			}
 			return Config.supportedMapServices.includes(mapType.toLowerCase());
 		},
-		listServices() {
-			return this.connection.listServices();
-		},
-		updateData() {
-			this.updateTable(this.$refs.table);
-		},
-		refreshService(service, callback = null) {
-			service.describeService()
-				.then(updatedService => {
-					if (typeof callback === 'function') {
-						callback(updatedService);
-					}
-					this.updateServiceData(updatedService);
-				})
-				.catch(error => Utils.exception(this, error, "Loading service failed"));
-		},
 		showInEditor(service) {
-			this.refreshService(service, updatedService => {
+			this.refreshElement(service, updatedService => {
 				this.emit('insertCustomProcess', updatedService.process);
 			});
 		},
 		serviceCreated(service) {
-			if (!this.$refs.table) {
-				return;
-			}
-
-			this.$refs.table.addData(service);
-
 			var buttons = [];
 			if (this.isMapServiceSupported(service.type)) {
 				buttons.push({text: 'View on map', action: () => this.viewService(service)});
@@ -138,8 +114,8 @@ export default {
 		getEnabledField() {
 			return new Field('enabled', 'Enabled', {type: 'boolean'}, true);
 		},
-		getParametersField() {
-			return new Field('parameters', 'Parameters', {type: 'object', format: 'service-type-parameters'});
+		getConfigField() {
+			return new Field('configuration', 'Service Configuration', {type: 'object', format: 'service-type-parameters'});
 		},
 		normalizeToDefaultData(data) {
 			if (typeof data.title !== 'undefined' && (typeof data.title !== 'string' || data.title.length === 0)) {
@@ -151,8 +127,8 @@ export default {
 			if (typeof data.enabled !== 'undefined' && typeof data.enabled !== 'boolean') {
 				data.enabled = true;
 			}
-			if (typeof data.parameters !== 'undefined' && !Utils.isObject(data.parameters)) {
-				data.parameters = {};
+			if (typeof data.configuration !== 'undefined' && !Utils.isObject(data.configuration)) {
+				data.configuration = {};
 			}
 			if (typeof data.plan !== 'undefined' && (typeof data.plan !== 'string' || data.plan.length === 0)) {
 				data.plan = null;
@@ -164,12 +140,9 @@ export default {
 		},
 		createService(script, data) {
 			data = this.normalizeToDefaultData(data);
-			this.connection.createService(script, data.type, data.title, data.description, data.enabled, data.parameters, data.plan, data.budget)
-				.then(service => {
-					this.serviceCreated(service);
-				}).catch(error => {
-					Utils.exception(this, error, 'Creating service failed');
-				});
+			this.create({parameters: [script, data.type, data.title, data.description, data.enabled, data.configuration, data.plan, data.budget]})
+				.then(service => this.serviceCreated(service))
+				.catch(error => Utils.exception(this, error, 'Creating service failed'));
 		},
 		createServiceFromScript() {
 			this.emit('getCustomProcess', script => {
@@ -180,38 +153,31 @@ export default {
 					this.getEnabledField(),
 					this.supportsBillingPlans ? this.getBillingPlanField() : null,
 					this.supportsBilling ? this.getBudgetField() : null,
-					this.getParametersField()
+					this.getConfigField()
 				];
 				this.emit('showDataForm', "Create new web service", fields, data => this.createService(script, data));
 			});
 		},
 		editMetadata(oldService) {
-			this.refreshService(oldService, service => {
+			this.refreshElement(oldService, service => {
 				var fields = [
 					this.getTitleField().setValue(service.title),
 					this.getDescriptionField().setValue(service.description),
 					this.getEnabledField().setValue(service.enabled),
 					this.supportsBillingPlans ? this.getBillingPlanField().setValue(service.plan) : null,
 					this.supportsBilling ? this.getBudgetField().setValue(service.budget) : null,
-					this.getParametersField().setValue(service.parameters)
+					this.getConfigField().setValue(service.configuration)
 				];
 				this.emit('showDataForm', "Edit web service", fields, data => this.updateService(service, data));
 			});
 		},
 		serviceInfo(service) {
-			this.refreshService(service, updatedService => {
+			this.refreshElement(service, updatedService => {
 				this.emit('showServiceInfo', updatedService.getAll());
 			});
 		},
 		replaceProcess(service) {
-			this.emit('getCustomProcess', script => {
-				service.updateService({process: script})
-					.then(updatedService => {
-						Utils.ok(this, "Service process successfully updated.");
-						this.updateServiceData(updatedService);
-					})
-					.catch(error => Utils.exception(this, error, "Replacing process failed"));
-			});
+			this.emit('getCustomProcess', script => this.updateService(service, {process: script}));
 		},
 		updateTitle(service, newTitle) {
 			this.updateService(service, {title: newTitle});
@@ -219,38 +185,25 @@ export default {
 		toggleEnabled(service) {
 			this.updateService(service, {enabled: !service.enabled});
 		},
-		updateService(service, data) {
-			data = this.normalizeToDefaultData(data);
-			service.updateService(data)
-				.then(updatedService => {
-					Utils.ok(this, "Service successfully updated web service.");
-					this.updateServiceData(updatedService);
-				})
+		updateService(service, parameters) {
+			this.update({data: service, parameters: this.normalizeToDefaultData(parameters)})
 				.catch(error => Utils.exception(this, error, "Updating service failed"));
 		},
 		deleteService(service) {
-			service.deleteService()
-				.then(() => {
-					this.$refs.table.removeData(service.serviceId);
-					this.emit('removeWebService', service.serviceId);
-				})
-				.catch(error => {
-					Utils.exception(this, error, 'Deleting service failed');
-				});
+			this.delete({data: service})
+				.then(() => this.emit('removeWebService', service.id))
+				.catch(error => Utils.exception(this, error, 'Sorry, could not delete service.'));
 		},
 		viewService(service) {
 			Utils.info(this, 'Requesting tiles from server. Please wait...');
 			this.emit('viewWebService', service);
-		},
-		updateServiceData(updatedService) {
-			this.$refs.table.replaceData(updatedService);
 		}
 	}
 }
 </script>
 
 <style>
-#ServicePanel .serviceId {
+#ServicePanel .id {
 	width: 35%;
 }
 #ServicePanel .type {

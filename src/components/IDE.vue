@@ -31,7 +31,6 @@
 		<ServerInfoModal ref="serverInfoModal" />
 		<ServiceInfoModal ref="serviceModal" />
 		<JobInfoModal ref="jobModal" />
-		<CustomProcessInfoModal ref="customProcessModal" />
 		<ParameterModal ref="parameterModal" />
 	</div>
 </template>
@@ -49,7 +48,6 @@ import CollectionModal from './CollectionModal.vue';
 import ProcessModal from './ProcessModal.vue';
 import ServerInfoModal from './ServerInfoModal.vue';
 import JobInfoModal from './JobInfoModal.vue';
-import CustomProcessInfoModal from './CustomProcessInfoModal.vue';
 import ServiceInfoModal from './ServiceInfoModal.vue';
 import ParameterModal from './ParameterModal.vue';
 import DiscoveryToolbar from './DiscoveryToolbar.vue';
@@ -67,7 +65,6 @@ export default {
 		ProcessModal,
 		ServerInfoModal,
 		JobInfoModal,
-		CustomProcessInfoModal,
 		ServiceInfoModal,
 		ParameterModal
 	},
@@ -95,14 +92,14 @@ export default {
 		};
 	},
 	computed: {
-		...Utils.mapGetters('server', ['title', 'isAuthenticated']),
-		...Utils.mapState('server', ['collections', 'processes', 'fileFormats', 'serviceTypes']),
+		...Utils.mapState(['collections', 'fileFormats', 'serviceTypes']),
+		...Utils.mapGetters(['title', 'isAuthenticated', 'processRegistry'])
 	},
 	mounted() {
 		this.listen('showCollectionInfo', this.showCollectionInfo);
-		this.listen('showProcessInfo', this.showProcessInfo);
+		this.listen('showProcessInfoById', this.showProcessInfoById);
 		this.listen('showJobInfo', this.showJobInfo);
-		this.listen('showCustomProcessInfo', this.showCustomProcessInfo);
+		this.listen('showProcessInfo', this.showProcessInfo);
 		this.listen('showServiceInfo', this.showServiceInfo);
 		this.listen('showDataForm', this.showDataForm);
 		this.listen('getCustomProcess', this.getCustomProcess);
@@ -124,7 +121,7 @@ export default {
 		}
 	},
 	methods: {
-		...Utils.mapActions('server', ['describeAccount']),
+		...Utils.mapActions(['describeAccount']),
 
 		getCustomProcess(success, failure = null, passNull = false) {
 			this.$refs.editor.getCustomProcess(success, failure, passNull);
@@ -196,9 +193,8 @@ export default {
 				.catch(error => Utils.error(this, "Sorry, can't load collection details."));
 		},
 
-		showProcessInfo(id) {
-			const info = this.processes.find(p => p.id == id);
-			this.$refs.processModal.show(info, this.apiVersion);
+		showProcessInfoById(id) {
+			this.$refs.processModal.show(this.processRegistry.get(id), this.apiVersion);
 		},
 
 		showServiceInfo(service) {
@@ -209,8 +205,8 @@ export default {
 			this.$refs.jobModal.show(job);
 		},
 
-		showCustomProcessInfo(pg) {
-			this.$refs.customProcessModal.show(pg);
+		showProcessInfo(process) {
+			this.$refs.processModal.show(process, this.apiVersion);
 		},
 
 		showServerInfo() {

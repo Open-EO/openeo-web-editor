@@ -160,8 +160,8 @@ export default {
 		};
 	},
 	computed: {
-		...Utils.mapState('server', ['collections', 'fileFormats', 'serviceTypes']),
-		...Utils.mapGetters('server', ['capabilities', 'processRegistry']),
+		...Utils.mapState(['collections', 'fileFormats', 'serviceTypes']),
+		...Utils.mapGetters(['capabilities', 'processRegistry']),
 		type() {
 			if (this.isItem) {
 				return this.schema.arrayOf();

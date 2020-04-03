@@ -45,7 +45,7 @@ export default {
 		};
 	},
 	computed: {
-		...Utils.mapState('server', ['fileFormats']),
+		...Utils.mapState(['fileFormats']),
 		parameters() {
 			var fields = {};
 			var outputFormat = this.fileFormats.getOutputType(this.format);
