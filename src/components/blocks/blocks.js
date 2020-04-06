@@ -705,8 +705,8 @@ Blocks.prototype.addEdge = function(blockOut, fieldOut, blockIn, fieldIn, isData
     }
 
     // Check type compatibility
-    if (!this.areTypesCompatible(fieldIn, fieldOut)) {
-        throw 'Types are not compatible';
+    if (!JsonSchemaValidator.isSchemaCompatible(fieldIn.jsonSchema(), fieldOut.jsonSchema(), false, true)) {
+        throw 'Incoming data type is not compatible for field "' + fieldIn.name + '" of block #' + blockIn.id;
     }
     // Check whether the data type allows multiple input edges
     if (fieldIn.getEdgeCount() > 0 && !fieldIn.allowsMultipleEdges()) {
@@ -753,10 +753,6 @@ Blocks.prototype.endLink = function(block, fieldName)
         this.showError(error);
     }
 };
-
-Blocks.prototype.areTypesCompatible = function(t1, t2) {
-    return JsonSchemaValidator.isSchemaCompatible(t1.schema, t2.schema, false, true);
-}
 
 Blocks.prototype.showError = function(message, title = null) {
     if (typeof this.errorHandler === 'function')  {

@@ -20,8 +20,7 @@ import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
 import { JsonSchemaValidator } from '@openeo/js-processgraphs';
 import { ProcessSchema, ProcessSubSchema } from '../processSchema.js';
 
-const SUPPORTED_TYPES = new ProcessSchema({
-	anyOf: [
+const SUPPORTED_TYPES = new ProcessSchema([
 		{type: 'null'},
 		{type: 'string'},
 		{type: 'number'},
@@ -55,10 +54,9 @@ const SUPPORTED_TYPES = new ProcessSchema({
 	//	{type: 'string', subtype: 'udf-runtime'},
 	//	{type: 'string', subtype: 'udf-runtime-version'},
 	//	{type: 'string', subtype: 'uri', format: 'uri'},
-	//	{type: 'object', subtype: 'vextor-cube'},
+	//	{type: 'object', subtype: 'vector-cube'},
 	//	{type: 'string', subtype: 'wkt2-definition'}
-	]
-});
+]);
 
 export default {
 	name: 'ParameterFields',

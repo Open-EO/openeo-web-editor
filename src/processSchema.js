@@ -1,19 +1,16 @@
+import { JsonSchemaValidator } from '@openeo/js-processgraphs';
+import { Utils as VueUtils } from '@openeo/vue-components';
+
 class ProcessSchema {
 	
 	constructor(schema) {
-		this.schema = schema;
-		// ToDo: schema.not and schema.allOf is not supported - see also _convertSchemaToArray in jsonschema.js of openeo-js-processgraphs.
-		if (schema.oneOf || schema.anyOf) {
-			this.schemas = (schema.oneOf || schema.anyOf).map(s => new ProcessSubSchema(s));
-		}
-		else if (Array.isArray(schema.type)) {
-			this.schemas = schema.type.map(t => new ProcessSubSchema(Object.assign({}, schema, {type: t})));
-		}
-		else {
-			this.schemas = [new ProcessSubSchema(schema)];
-		}
+		this.schemas = JsonSchemaValidator.convertSchemaToArray(schema).map(s => new ProcessSubSchema(s));
 
 		// ToDO: Cache data?
+	}
+
+	toJSON() {
+		return this.schemas.map(s => s.toJSON());
 	}
 
 	isEditable() {
@@ -67,6 +64,10 @@ class ProcessSubSchema {
 		}
 	}
 
+	toJSON() {
+		return this.schema;
+	}
+
 	isNull() {
 		return this.schema.type === 'null';
 	}
@@ -108,7 +109,7 @@ class ProcessSubSchema {
 			return this.schema.title;
 		}
 		else {
-			return this.dataType();
+			return VueUtils.prettifyString(this.dataType());
 		}
 	}
 

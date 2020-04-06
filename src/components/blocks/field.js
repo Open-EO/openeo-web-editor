@@ -29,6 +29,10 @@ class Field extends ProcessSchema {
         this.resetValue();
     }
 
+    jsonSchema() {
+        return super.toJSON();
+    }
+
     resetValue() {
         if (typeof this.default !== 'undefined') {
             this.setValue(this.default);
