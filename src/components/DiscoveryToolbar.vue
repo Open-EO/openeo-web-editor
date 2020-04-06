@@ -37,14 +37,13 @@
 <script>
 import Config from '../../config.js';
 import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
-import ConnectionMixin from './ConnectionMixin.vue';
 import Utils from '../utils.js';
 import { ProcessGraph as ProcessGraphParser } from '@openeo/js-processgraphs';
 import { ProcessGraph } from '@openeo/js-client';
 
 export default {
 	name: 'DiscoveryToolbar',
-	mixins: [ConnectionMixin, EventBusMixin],
+	mixins: [EventBusMixin],
 	props: {
 		onAddCollection: {
 			type: Function,
@@ -102,6 +101,7 @@ export default {
 	computed: {
 		...Utils.mapState(['predefinedProcesses', 'collections']),
 		...Utils.mapState('userProcesses', ['userProcesses']),
+		...Utils.mapGetters(['supports']),
 		processes() {
 			return this.predefinedProcesses.concat(this.userProcesses.map(p => p.toJSON())).sort(Utils.sortById);
 		}

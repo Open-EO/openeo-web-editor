@@ -88,7 +88,7 @@ export default ({namespace, listFn, createFn, updateFn, deleteFn, readFn, readFn
 		mutations: {
 			// ToDo: Use Vue.observable on all JS client objects?
 			data(state, data) {
-				state[namespace] = data;
+				state[namespace] = data.map(d => Vue.observable(d));
 				for(let key in data) {
 					Vue.set(state.index, data[key][primaryKey], key);
 				}
@@ -96,12 +96,13 @@ export default ({namespace, listFn, createFn, updateFn, deleteFn, readFn, readFn
 			upsert(state, data) {
 				let id = data[primaryKey];
 				let index = state.index[id];
+				let observableData = Vue.observable(data);
 				if (index >= 0) {
-					Vue.set(state[namespace], index, data);
+					Vue.set(state[namespace], index, observableData);
 				}
 				else {
 					Vue.set(state.index, id, state[namespace].length);
-					state[namespace].push(data);
+					state[namespace].push(observableData);
 				}
 			},
 			delete(state, data) {

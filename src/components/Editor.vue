@@ -17,7 +17,6 @@
 import Utils from '../utils.js';
 import Tabs from '@openeo/vue-components/components/Tabs.vue';
 import Tab from '@openeo/vue-components/components/Tab.vue';
-import ConnectionMixin from './ConnectionMixin.vue';
 import VisualEditor from './VisualEditor.vue';
 import TextEditor from './TextEditor.vue';
 import stringify from 'fast-stable-stringify';

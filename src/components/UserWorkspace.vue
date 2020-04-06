@@ -19,7 +19,6 @@
 import Utils from '../utils.js';
 import Tabs from '@openeo/vue-components/components/Tabs.vue';
 import Tab from '@openeo/vue-components/components/Tab.vue';
-import ConnectionMixin from './ConnectionMixin.vue';
 import FilePanel from './FilePanel.vue';
 import JobPanel from './JobPanel.vue';
 import CustomProcessPanel from './CustomProcessPanel.vue';
@@ -27,7 +26,6 @@ import ServicePanel from './ServicePanel.vue';
 
 export default {
 	name: 'UserWorkspace',
-	mixins: [ConnectionMixin],
 	components: {
 		FilePanel,
 		JobPanel,
@@ -37,6 +35,7 @@ export default {
 		Tab
 	},
 	computed: {
+		...Utils.mapGetters(['supports']),
 		showJobs() {
 			return (this.supports('listJobs') || this.supports('createJob'));
 		},

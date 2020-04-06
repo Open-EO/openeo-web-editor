@@ -88,10 +88,10 @@ export default {
 			if (this.isMapServiceSupported(service.type)) {
 				buttons.push({text: 'View on map', action: () => this.viewService(service)});
 			}
-			if (this.supports('describeService')) {
+			if (this.supportsRead) {
 				buttons.push({text: 'Details', action: () => this.serviceInfo(service)});
 			}
-			if (this.supports('deleteService')) {
+			if (this.supportsDelete) {
 				buttons.push({text: 'Delete', action: () => this.deleteService(service)});
 			}
 			Utils.confirm(this, 'Web Service created!', buttons);

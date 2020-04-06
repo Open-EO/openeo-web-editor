@@ -1,10 +1,8 @@
 import DataTable from './DataTable.vue';
-import ConnectionMixin from './ConnectionMixin.vue';
 import Utils from '../utils.js';
 
 export default (namespace, singular, plural) => {
 	return {
-		mixins: [ConnectionMixin],
 		components: {
 			DataTable
 		},
@@ -38,7 +36,7 @@ export default (namespace, singular, plural) => {
 				this.stopSyncTimer();
 			},
 			startSyncTimer() {
-				if (this.supports(this.listFunc)) {
+				if (this.supportsList) {
 					this.syncTimer = setInterval(this.updateData, this.getSyncInterval()*1000);
 				}
 			},

@@ -62,7 +62,7 @@ export default {
 	},
   	methods: {
 		allowDrop(ev) {
-			if(this.supports('uploadFile')) {
+			if(this.supportsCreate) {
 				ev.preventDefault();
 				ev.stopPropagation();
 			}
@@ -81,7 +81,7 @@ export default {
 			else if (e.target && e.target.files && e.target.files.length){
 				files = e.target.files;
 			}
-			if(!this.supports('uploadFile')) {
+			if(!this.supportsCreate) {
 				Utils.error(this, 'Uploading files is not supported.');
 				return;
 			}

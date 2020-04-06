@@ -24,9 +24,11 @@ import WorkPanelMixin from './WorkPanelMixin';
 import Utils from '../utils.js';
 import Field from './blocks/field';
 
+const WorkPanelMixinInstance = WorkPanelMixin('jobs', 'batch job', 'batch jobs');
+
 export default {
 	name: 'JobPanel',
-	mixins: [WorkPanelMixin('jobs', 'batch job', 'batch jobs'), EventBusMixin],
+	mixins: [WorkPanelMixinInstance, EventBusMixin],
 	data() {
 		return {
 			columns: {
@@ -37,12 +39,7 @@ export default {
 				},
 				title: {
 					name: 'Title',
-					computedValue: (row, value) => {
-						if (!value && row.id) {
-							return "Job #" + row.id.toUpperCase().substr(-6);
-						}
-						return value;
-					},
+					computedValue: this.getTitle,
 					edit: this.updateTitle
 				},
 				status: {
@@ -67,33 +64,43 @@ export default {
 		};
 	},
 	computed: {
-		...Utils.mapGetters(['supportsBilling', 'supportsBillingPlans'])
+		...Utils.mapGetters(['supports', 'supportsBilling', 'supportsBillingPlans'])
 	},
-	watchers: {
-		jobs(updated, old) {
-			// Update Watchers
-			let all = updated.concat(old);
-			this.watchers = {};
-			for(let job of all) {
-				switch(job.status.toLowerCase()) {
-					case 'running':
-					case 'queued':
-						this.watchers[job.id] = job;
-						break;
+	watch: {
+		data: {
+			handler: function(updatedJobs) {
+				// Update Watchers
+				this.watchers = {};
+				for(let job of updatedJobs) {
+					switch(job.status.toLowerCase()) {
+						case 'running':
+						case 'queued':
+							this.watchers[job.id] = job;
+							break;
+					}
 				}
-			}
-
-		}
-	},
-	mounted() {
-		this.jobUpdater = setInterval(this.executeWatchers, 10000);
-	},
-	beforeDestroy() {
-		if (this.jobUpdater !== null) {
-			clearInterval(this.jobUpdater);
+			},
+			deep: true
 		}
 	},
 	methods: {
+		...Utils.mapActions('jobs', ['queue', 'cancel']),
+		startSyncTimer() {
+			WorkPanelMixinInstance.methods.startSyncTimer.call(this);
+			this.jobUpdater = setInterval(this.executeWatchers, 10000);
+		},
+		stopSyncTimer() {
+			WorkPanelMixinInstance.methods.stopSyncTimer.call(this);
+			if (this.jobUpdater !== null) {
+				clearInterval(this.jobUpdater);
+			}
+		},
+		getTitle(job) {
+			if (!job.title && job.id) {
+				return "Job #" + job.id.toUpperCase().substr(-6);
+			}
+			return job.title;
+		},
 		showInEditor(job) {
 			this.refreshElement(job, updatedJob => {
 				this.emit('insertCustomProcess', updatedJob.process);
@@ -110,7 +117,7 @@ export default {
 			if (this.supports('deleteJob')) {
 				buttons.push({text: 'Delete', action: () => this.deleteJob(job)});
 			}
-			Utils.confirm(this, 'Job created!', buttons);
+			Utils.confirm(this, 'Job "' + this.getTitle(job) + '" created!', buttons);
 		},
 		getTitleField() {
 			return new Field('title', 'Title', {type: 'string'});
@@ -169,10 +176,10 @@ export default {
 							buttons.push({text: 'Download', action: () => this.downloadResults(updated)});
 							buttons.push({text: 'View', action: () => this.viewResults(updated)});
 						}
-						Utils.confirm(this, 'Job has finished!', buttons);
+						Utils.confirm(this, 'Job "' + this.getTitle(updated) + '" has finished!', buttons);
 					}
 					else if (old.status !== 'error' && updated.status === 'error') {
-						Utils.error(this, 'Job has stopped due to an error or timeout.');
+						Utils.error(this, 'Job "' + this.getTitle(updated) + '" has stopped due to an error or timeout.');
 					}
 				});
 			}
@@ -181,6 +188,7 @@ export default {
 			this.refreshElement(job, updatedJob => this.emit('showJobInfo', updatedJob.getAll()));
 		},
 		estimateJob(job) {
+			// Doesn't need to go through job store as it doesn't change job-related data
 			job.estimateJob()
 				.then(estimate => this.emit('showModal', 'Job Estimate', estimate))
 				.catch(error => Utils.exception(this, error, "Loading estimate failed"));
@@ -204,24 +212,25 @@ export default {
 		},
 		updateJob(job, parameters) {
 			this.update({data: job, parameters: this.normalizeToDefaultData(parameters)})
-				.catch(error => Utils.exception(this, error, "Updating job failed"));;
+				.catch(error => Utils.exception(this, error, 'Failed to update job "' + this.getTitle(job) + '"'));
 		},
 		queueJob(job) {
-			job.startJob()
-				.then(updatedJob => Utils.ok(this, "Job successfully queued."))
-				.catch(error => Utils.exception(this, error, "Queueing job failed"));
+			this.queue({data: job})
+				.then(updatedJob => Utils.ok(this, 'Job "' + this.getTitle(updatedJob) + '" successfully queued.'))
+				.catch(error => Utils.exception(this, error, 'Failed to queue job "' + this.getTitle(job) + '"'));
 		},
 		cancelJob(job) {
-			job.stopJob()
-				.then(updatedJob => Utils.ok(this, "Job successfully canceled."))
-				.catch(error => Utils.exception(this, error, "Canceling job failed"));
+			this.cancel({data: job})
+				.then(updatedJob => Utils.ok(this, 'Job "' + this.getTitle(updatedJob) + '" successfully canceled.'))
+				.catch(error => Utils.exception(this, error, 'Failed to cancel job "' + this.getTitle(job) + '"'));
 		},
 		viewResults(job) {			
 			Utils.info(this, 'Data requested. Please wait...');
 
+			// Doesn't need to go through job store as it doesn't change job-related data
 			job.getResultsAsItem().then(item => {
 				if(Utils.size(item.assets) == 0) {
-					Utils.error(this, "No results available.");
+					Utils.error(this, 'No results available for job "' + this.getTitle(job) + '".');
 					return;
 				}
 
@@ -229,9 +238,10 @@ export default {
 			});
 		},
 		downloadResults(job) {	
+			// Doesn't need to go through job store as it doesn't change job-related data
 			job.getResultsAsItem().then(item => {
 				if(Utils.size(item.assets) == 0) {
-					Utils.error(this, "No results available.");
+					Utils.error(this, 'No results available for job "' + this.getTitle(job) + '".');
 					return;
 				}
 				

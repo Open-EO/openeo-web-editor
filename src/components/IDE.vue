@@ -39,7 +39,6 @@
 import Package from '../../package.json';
 import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
 import Utils from '../utils.js';
-import ConnectionMixin from './ConnectionMixin.vue';
 import UserMenu from './UserMenu.vue';
 import UserWorkspace from './UserWorkspace.vue';
 import Viewer from './Viewer.vue';
@@ -54,7 +53,7 @@ import DiscoveryToolbar from './DiscoveryToolbar.vue';
 
 export default {
 	name: 'IDE',
-	mixins: [ConnectionMixin, EventBusMixin],
+	mixins: [EventBusMixin],
 	components: {
 		DiscoveryToolbar,
 		Editor,
@@ -92,8 +91,8 @@ export default {
 		};
 	},
 	computed: {
-		...Utils.mapState(['collections', 'fileFormats', 'serviceTypes']),
-		...Utils.mapGetters(['title', 'isAuthenticated', 'processRegistry'])
+		...Utils.mapState(['connection', 'collections', 'fileFormats', 'serviceTypes']),
+		...Utils.mapGetters(['title', 'isAuthenticated', 'processRegistry', 'apiVersion'])
 	},
 	mounted() {
 		this.listen('showCollectionInfo', this.showCollectionInfo);

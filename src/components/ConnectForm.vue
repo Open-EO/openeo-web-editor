@@ -81,7 +81,6 @@
 import Package from '../../package.json';
 import Config from '../../config.js';
 import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
-import ConnectionMixin from './ConnectionMixin.vue';
 import Tabs from '@openeo/vue-components/components/Tabs.vue';
 import Tab from '@openeo/vue-components/components/Tab.vue';
 import Utils from '../utils.js';
@@ -89,7 +88,7 @@ import { OpenEO, OidcProvider } from '@openeo/js-client';
 
 export default {
 	name: 'ConnectForm',
-	mixins: [ConnectionMixin, EventBusMixin],
+	mixins: [EventBusMixin],
 	components: {
 		Tabs,
 		Tab
@@ -102,7 +101,7 @@ export default {
 	},
 	computed: {
 		...Utils.mapState(['connectionError', 'discoveryErrors']),
-		...Utils.mapGetters(['isConnected', 'isDiscovered', 'isAuthenticated', 'title']),
+		...Utils.mapGetters(['isConnected', 'isDiscovered', 'isAuthenticated', 'title', 'supports']),
 		...Utils.mapState('editor', ['storedServers']),
 		httpsUrl() {
 			if (Config.showHttpWarning && window.location.protocol === 'http:') {
