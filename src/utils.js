@@ -119,6 +119,10 @@ export default {
 		return a.id.localeCompare(b.id);
 	},
 
+	getUniqueId() {
+		return Math.random().toString(36).substr(2, 9);
+	},
+
 	mapState,
 	mapGetters,
 	mapMutations,

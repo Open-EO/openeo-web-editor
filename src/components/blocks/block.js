@@ -158,7 +158,7 @@ Block.prototype.isCollection = function() {
 };
 
 Block.prototype.isPgParameter = function() {
-    return this.type === 'pg-parameter';
+    return this.type === 'parameter';
 };
 
 Block.prototype.getCollectionName = function() {

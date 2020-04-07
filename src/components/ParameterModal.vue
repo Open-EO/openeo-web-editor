@@ -39,7 +39,7 @@ export default {
 	},
 	data() {
 		return {
-			uid: '_' + Math.random().toString(36).substr(2, 9),
+			uid: '_' + Utils.getUniqueId(),
 			editableFields: [],
 			editable: true,
 			selectFieldName: null,

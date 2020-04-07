@@ -318,8 +318,9 @@ export default {
 
 .visualEditor .editorSplitter {
 	display: flex;
-	height: 100%;
 	flex-grow: 1;
+	height: 100%;
+	overflow: hidden;
 }
 
 .visualEditor .discoveryToolbar {

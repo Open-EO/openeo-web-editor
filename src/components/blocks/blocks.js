@@ -72,7 +72,7 @@ var Blocks = function(errorHandler = null, openParameterEditor = null, openSchem
     /**
      * Next block id
      */
-    this.id = 1;
+    this.nextId = 1;
 
     /**
      * Next edge id
@@ -329,7 +329,7 @@ Blocks.prototype.addProcess = function(name, x = null, y = null, id = null)
 
 Blocks.prototype.addPgParameter = function(name, x = null, y = null)
 {
-    return this.createBlock(name, 'pg-parameter', x, y);
+    return this.createBlock(name, 'parameter', x, y);
 };
 
 Blocks.prototype.createBlock = function(name, type, x, y, values = {}, id = null)
@@ -367,7 +367,7 @@ Blocks.prototype.unregisterProcesses = function() {
 }
 
 Blocks.prototype.unregisterPgParameters = function() {
-    this.moduleTypes['pg-parameters'] = [];
+    this.moduleTypes['parameters'] = [];
 }
 
 Blocks.prototype.registerCollectionDefaults = function(collection) {
@@ -397,7 +397,7 @@ Blocks.prototype.registerPgParameter = function(param)
         parameters: [],
         returns: Object.assign({}, param, {attrs: "output"})
     };
-    this.register(data, 'pg-parameter', param.name);
+    this.register(data, 'parameter', param.name);
 };
 
 Blocks.prototype.register = function(meta, type, name) {
@@ -856,7 +856,7 @@ Blocks.prototype.importCustomProcess = function(process, registry) {
                 case 'result':
                     this.addEdge(pg.getNode(val).blockId, "output", node.blockId, args[i], false);
                     break;
-                case 'pg-parameter':
+                case 'parameter':
                     this.addEdge(this.getPgParameterBlockByName(val), "output", node.blockId, args[i], false);
                     break;
                 case 'object':
@@ -905,15 +905,12 @@ Blocks.prototype.importNodesFromCustomProcess = function(nodes, x = 0, y = 0) {
 };
 
 Blocks.prototype.incrementId = function(id = null) {
-    if (id === null) {
-        id = this.id;
-        this.id++;
+    if (typeof id !== 'number' && (typeof id !== 'string' || id.length === 0)) {
+        id = this.nextId;
+        this.nextId++;
     }
     else if (!isNaN(parseInt(id))) {
-        this.id = Math.max(this.id, parseInt(id)+1);
-    }
-    else if (typeof id !== 'string' || id.length === 0) {
-        throw "Invalid node id specified";
+        this.nextId = Math.max(this.nextId, parseInt(id)+1);
     }
     return id;
 }
@@ -938,7 +935,7 @@ Blocks.prototype.import = function(scene)
     this.ready(() => {
         try {
             var errors = [];
-            this.id = 1;
+            this.nextId = 1;
             this.edgeId = 1;
 
             if (typeof scene != 'object' || (scene instanceof Array)) {
