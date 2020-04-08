@@ -39,7 +39,7 @@ export default {
 				},
 				title: {
 					name: 'Title',
-					computedValue: this.getTitle,
+					computedValue: row => Utils.getResourceTitle(row, "Job"),
 					edit: this.updateTitle
 				},
 				status: {
@@ -94,12 +94,6 @@ export default {
 			if (this.jobUpdater !== null) {
 				clearInterval(this.jobUpdater);
 			}
-		},
-		getTitle(job) {
-			if (!job.title && job.id) {
-				return "Job #" + job.id.toUpperCase().substr(-6);
-			}
-			return job.title;
 		},
 		showInEditor(job) {
 			this.refreshElement(job, updatedJob => {

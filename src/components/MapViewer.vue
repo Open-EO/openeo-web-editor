@@ -396,7 +396,7 @@ export default {
 		updateXYZLayer(service) {
 			var id = service.id;
 			var url = service.url;
-			var title = (service.title ? service.title.substr(0,50) : id.toUpperCase().substr(0,6)) + " (XYZ)";
+			var title = Utils.getResourceTitle(service, "Service") + " (XYZ)";
 			if (typeof this.userLayers[id] === 'undefined') {
 				var layer = new TileLayer({
 					source: this.trackTileProgress(new XYZ({

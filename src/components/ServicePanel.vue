@@ -44,12 +44,7 @@ export default {
 				},
 				title: {
 					name: 'Title',
-					computedValue: (row, value) => {
-						if (!value && row.id) {
-							return "Service #" + row.id.toUpperCase().substr(0,6);
-						}
-						return value;
-					},
+					computedValue: row => Utils.getResourceTitle(row, "Service"),
 					edit: this.updateTitle
 				},
 				type: {

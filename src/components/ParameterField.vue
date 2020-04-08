@@ -22,11 +22,15 @@
 		<select class="fieldValue" v-else-if="type === 'collection-id'" :name="fieldName" v-model="value" ref="selectFirst" :disabled="!editable">
 			<option v-for="c in collections" :key="c.id" :value="c.id">{{ c.id }}</option>
 		</select>
+		<!-- Job ID -->
+		<select class="fieldValue" v-else-if="type === 'job-id'" :name="fieldName" v-model="value" ref="selectFirst" :disabled="!editable">
+			<option v-for="j in jobs" :key="j.id" :value="j.id">{{ j | resourceTitle }}</option>
+		</select>
 		<!-- EPSG Codes -->
 		<select class="fieldValue" v-else-if="type === 'epsg-code'" :name="fieldName" v-model="value" :disabled="!editable">
 			<option v-for="(name, code) in epsgCodes" :key="code" :value="code">{{ code }}: {{ name }}</option>
 		</select>
-		<!-- Output Format -->
+		<!-- Input Format -->
 		<select class="fieldValue" v-else-if="type === 'input-format'" :name="fieldName" v-model="value" ref="selectFirst" :disabled="!editable">
 			<option v-for="(x, format) in fileFormats.getInputTypes()" :key="format" :value="format">{{ format }}</option>
 		</select>
@@ -162,6 +166,7 @@ export default {
 	computed: {
 		...Utils.mapState(['collections', 'fileFormats', 'serviceTypes']),
 		...Utils.mapGetters(['capabilities', 'processRegistry']),
+		...Utils.mapState('jobs', ['jobs']),
 		type() {
 			if (this.isItem) {
 				return this.schema.arrayOf();

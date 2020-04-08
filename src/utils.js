@@ -123,6 +123,14 @@ export default {
 		return Math.random().toString(36).substr(2, 9);
 	},
 
+	
+	getResourceTitle(obj) {
+		if (!obj.title && !obj.summary && obj.id) {
+			return "Job #" + obj.id.toUpperCase().substr(-6);
+		}
+		return obj.title || obj.summary;
+	},
+
 	mapState,
 	mapGetters,
 	mapMutations,
