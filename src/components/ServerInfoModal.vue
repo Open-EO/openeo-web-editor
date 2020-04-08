@@ -2,7 +2,7 @@
 	<Modal ref="modal">
 		<template #main>
 			<div class="vue-component server-info">
-				<Capabilities :capabilities="capabilities" :url="url" :serviceTypes="services" :fileFormats="formats" />
+				<Capabilities :capabilities="capabilities" :url="url" :serviceTypes="serviceTypes" :fileFormats="fileFormats" :udfRuntimes="udfRuntimes" />
 			</div>
 		</template>
 	</Modal>
@@ -11,6 +11,7 @@
 <script>
 import Modal from './Modal.vue';
 import Capabilities from '@openeo/vue-components/components/Capabilities.vue';
+import Utils from '../utils.js';
 
 export default {
 	name: 'ServerInfoModal',
@@ -18,21 +19,18 @@ export default {
 		Modal,
 		Capabilities
 	},
-	data() {
-		return {
-			url: null,
-			capabilities: null,
-			formats: null,
-			services: null
-		};
+	computed: {
+		...Utils.mapState(['connection', 'fileFormats', 'serviceTypes', 'udfRuntimes']),
+		capabilities() {
+			return this.connection.capabilities().toJSON();
+		},
+		url() {
+			return this.connection.getBaseUrl();
+		}
 	},
 	methods: {
-		show(connection, fileFormats, serviceTypes) {
-			this.url = connection.getBaseUrl();
-			this.capabilities = connection.capabilities().toJSON();
-			this.formats = fileFormats.toJSON();
-			this.services = serviceTypes;
-			this.$refs.modal.show(connection.capabilities().title() || 'Server information');
+		show() {
+			this.$refs.modal.show(this.connection.capabilities().title() || 'Server information');
 		}
 	}
 }

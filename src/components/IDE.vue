@@ -76,13 +76,13 @@ export default {
 					left: 'discovery',
 					right: 'workspace',
 					anchor: 'left',
-					width: "20%"
+					width: '20%'
 				},
 				{
 					left: 'workspace',
 					right: 'viewer',
 					anchor: 'right',
-					width: "30%"
+					width: '30%'
 				}
 			],
 			version: Package.version,
@@ -91,7 +91,7 @@ export default {
 		};
 	},
 	computed: {
-		...Utils.mapState(['connection', 'collections', 'fileFormats', 'serviceTypes']),
+		...Utils.mapState(['connection']),
 		...Utils.mapGetters(['title', 'isAuthenticated', 'processRegistry', 'apiVersion'])
 	},
 	mounted() {
@@ -189,7 +189,7 @@ export default {
 				.then(info => {
 					this.$refs.collectionModal.show(info, this.apiVersion);
 				})
-				.catch(error => Utils.error(this, "Sorry, can't load collection details."));
+				.catch(error => Utils.error(this, "Sorry, can't load collection details for " + id + "."));
 		},
 
 		showProcessInfoById(id) {
@@ -209,7 +209,7 @@ export default {
 		},
 
 		showServerInfo() {
-			this.$refs.serverInfoModal.show(this.connection, this.fileFormats, this.serviceTypes);
+			this.$refs.serverInfoModal.show();
 		},
 
 		showWebEditorInfo() {

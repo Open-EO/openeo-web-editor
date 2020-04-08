@@ -22,6 +22,7 @@ const getDefaultState = () => {
 		discoveryErrors: [],
 		fileFormats: {},
 		serviceTypes: {},
+		udfRuntimes: {},
 		predefinedProcesses: [],
 		collections: []
 	};
@@ -132,6 +133,13 @@ export default new Vuex.Store({
 					.catch(error => cx.commit('addDiscoveryError', error)));
 			}
 
+			// Request supported UDF runtimes
+			if (capabilities.hasFeature('listUdfRuntimes')) {
+				promises.push(cx.state.connection.listUdfRuntimes()
+					.then(response => cx.commit('udfRuntimes', response))
+					.catch(error => cx.commit('addDiscoveryError', error)));
+			}
+
 			// Request user account information
 			var promise = cx.dispatch('describeAccount')
 				.catch(error => cx.commit('addDiscoveryError', error));
@@ -186,6 +194,7 @@ export default new Vuex.Store({
 			cx.commit('jobs/reset');
 			cx.commit('files/reset');
 			cx.commit('services/reset');
+			cx.commit('userProcesses/reset');
 		}
 	},
 	mutations: {
@@ -213,6 +222,9 @@ export default new Vuex.Store({
 			else {
 				state.serviceTypes = serviceTypes;
 			}
+		},
+		udfRuntimes(state, udfRuntimes) {
+			state.udfRuntimes = udfRuntimes;
 		},
 		predefinedProcesses(state, data) {
 			state.predefinedProcesses = data.processes
