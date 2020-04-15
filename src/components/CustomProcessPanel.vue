@@ -83,7 +83,11 @@ export default {
 			});
 		},
 		normalize(process, data) {
-			return Object.assign({}, process, data);
+			return Object.assign(
+				{},
+				typeof process.toJSON === 'function' ? process.toJSON() : process,
+				data
+			);
 		},
 		addProcess(process) {
 			this.create({parameters: [process.id, process]})
