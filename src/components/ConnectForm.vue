@@ -103,8 +103,15 @@ export default {
 		...Utils.mapState(['connectionError', 'discoveryErrors']),
 		...Utils.mapGetters(['isConnected', 'isDiscovered', 'isAuthenticated', 'title', 'supports']),
 		...Utils.mapState('editor', ['storedServers']),
+		isLocal() {
+			return Boolean(
+				window.location.hostname === 'localhost' ||
+				window.location.hostname === '[::1]' ||
+				window.location.hostname.match(/^127(?:\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}$/)
+			);
+		},
 		httpsUrl() {
-			if (Config.showHttpWarning && window.location.protocol === 'http:') {
+			if (Config.showHttpWarning && !this.isLocal && window.location.protocol === 'http:') {
 				return window.location.toString()
 					.replace(/^http:/i, 'https:')
 					.replace(/([\?&]server=http)(:|%3A)/, '$1s$2');
