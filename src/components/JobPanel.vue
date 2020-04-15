@@ -117,13 +117,13 @@ export default {
 			return new Field('title', 'Title', {type: 'string'});
 		},
 		getDescriptionField() {
-			return new Field('description', 'Description', {type: 'string', format: 'commonmark'}, undefined, 'CommonMark (Markdown) is allowed.');
+			return new Field('description', 'Description', {type: 'string', subtype: 'commonmark'}, undefined, 'CommonMark (Markdown) is allowed.');
 		},
 		getBillingPlanField() {
-			return new Field('plan', 'Billing plan', {type: 'string', format: 'billing-plan'});
+			return new Field('plan', 'Billing plan', {type: 'string', subtype: 'billing-plan'});
 		},
 		getBudgetField() {
-			return new Field('budget', 'Budget', {type: 'number', format: 'budget'}, null);
+			return new Field('budget', 'Budget', {type: 'number', subtype: 'budget'}, null);
 		},
 		normalizeToDefaultData(data) {
 			if (typeof data.title !== 'undefined' && (typeof data.title !== 'string' || data.title.length === 0)) {

@@ -64,7 +64,7 @@
 			<VisualEditor ref="callbackBuilder" class="callbackEditor" id="inlinePgEditor" :editable="editable" :pgParameters="schema.getCallbackParameters()" :value="value" :enableExecute="false" :enableLocalStorage="false" />
 		</div>
 		<!-- Object -->
-		<div v-else-if="type === 'object'" class="objectEditor">
+		<div v-else-if="type === 'object' || type === 'service-config'" class="objectEditor">
 			<div class="objectElement" v-for="(propVal, propName) in value" :key="propName">
 				<input class= "fieldKey" :ref="propName" :value="propName" type="text" :name="fieldName" :disabled="!editable"/>
 				<ParameterFields :ref="propName" :editable="editable" :field="field" :useAny="true" :isObjectItem="true" :pass="propVal" />
@@ -177,7 +177,7 @@ export default {
 			return this.schema.dataType();
 		},
 		useTextarea() {
-			return (this.type === 'proj-definition' || this.type === "service-type-parameters" || this.type === 'process-graph-variables' || this.type === 'commonmark');
+			return (this.type === 'proj-definition' || this.type === 'commonmark');
 		},
 		fieldName() {
 			return this.field.name + (Array.isArray(this.field.value) ? '[]' : '');

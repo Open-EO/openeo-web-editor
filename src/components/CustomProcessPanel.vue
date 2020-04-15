@@ -54,15 +54,31 @@ export default {
 			return new Field('summary', 'Summary', {type: 'string'}, defaultValue);
 		},
 		getDescriptionField(defaultValue = undefined) {
-			return new Field('description', 'Description', {type: 'string', format: 'commonmark'}, defaultValue, 'CommonMark (Markdown) is allowed.');
+			return new Field('description', 'Description', {type: 'string', subtype: 'commonmark'}, defaultValue, 'CommonMark (Markdown) is allowed.');
 		},
+		getCategoriesField(defaultValue = undefined) {
+			return new Field('categories', 'Categories', {type: 'array', items: {type: 'string'}}, defaultValue);
+		},
+		getDeprecatedField(defaultValue = false) {
+			return new Field('deprecated', 'Deprecated', {type: 'boolean'}, defaultValue);
+		},
+		getExperimentalField(defaultValue = false) {
+			return new Field('experimental', 'Experimental', {type: 'boolean'}, defaultValue);
+		},
+		getFields(process) {
+			return [
+				this.getIdField(process.id),
+				this.getSummaryField(process.summary),
+				this.getDescriptionField(process.description),
+				this.getCategoriesField(process.categories),
+				this.getDeprecatedField(process.deprecated),
+				this.getExperimentalField(process.experimental)
+			];
+		},
+		// Add parameters, return value, exceptions, examples, links
 		addProcessFromScript() {
 			this.emit('getCustomProcess', process => {
-				var fields = [
-					this.getIdField(process.id),
-					this.getSummaryField(process.summary),
-					this.getDescriptionField(process.description)
-				];
+				let fields = this.getFields(process);
 				this.emit('showDataForm', "Store a new custom process", fields, data => this.addProcess(this.normalize(process, data)));
 			});
 		},
@@ -80,11 +96,7 @@ export default {
 		},
 		editMetadata(oldPg) {
 			this.refreshElement(oldPg, process => {
-				var fields = [
-					this.getIdField(process.id),
-					this.getSummaryField(process.summary),
-					this.getDescriptionField(process.description)
-				];
+				let fields = this.getFields(process);
 				this.emit('showDataForm', "Edit metadata for a process graph", fields, data => this.updateMetadata(process, data));
 			});
 		},

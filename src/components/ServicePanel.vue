@@ -95,22 +95,22 @@ export default {
 			return new Field('title', 'Title', {type: 'string'});
 		},
 		getDescriptionField() {
-			return new Field('description', 'Description', {type: 'string', format: 'commonmark'}, undefined, 'CommonMark (Markdown) is allowed.');
+			return new Field('description', 'Description', {type: 'string', subtype: 'commonmark'}, undefined, 'CommonMark (Markdown) is allowed.');
 		},
 		getServiceTypeField() {
-			return new Field('type', 'Type', {type: 'string', format: 'service-type'}, undefined, '', true);
+			return new Field('type', 'Type', {type: 'string', subtype: 'service-type'}, undefined, '', true);
 		},
 		getBillingPlanField() {
-			return new Field('plan', 'Billing plan', {type: 'string', format: 'billing-plan'});
+			return new Field('plan', 'Billing plan', {type: 'string', subtype: 'billing-plan'});
 		},
 		getBudgetField() {
-			return new Field('budget', 'Budget', {type: 'number', format: 'budget'}, null);
+			return new Field('budget', 'Budget', {type: 'number', subtype: 'budget'}, null);
 		},
 		getEnabledField() {
 			return new Field('enabled', 'Enabled', {type: 'boolean'}, true);
 		},
 		getConfigField() {
-			return new Field('configuration', 'Service Configuration', {type: 'object', format: 'service-type-parameters'});
+			return new Field('configuration', 'Service Configuration', {type: 'object', subtype: 'service-config'});
 		},
 		normalizeToDefaultData(data) {
 			if (typeof data.title !== 'undefined' && (typeof data.title !== 'string' || data.title.length === 0)) {
