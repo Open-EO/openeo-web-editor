@@ -72,6 +72,7 @@
 						</form>
 					</Tab>
 				</Tabs>
+				<div v-if="allowOtherServers" class="switch"><a @click="switchServer()">Switch server</a></div>
 			</div>
 		</div>
 	</div>
@@ -179,6 +180,7 @@ export default {
 	},
 	methods: {
 		...Utils.mapActions(['connect', 'discover', 'authenticateBasic', 'authenticateOIDC', 'logout']),
+		...Utils.mapMutations(['reset']),
 		...Utils.mapMutations('editor', ['addServer', 'removeServer']),
 
 		historyNavigate(evt) {
@@ -199,6 +201,12 @@ export default {
 			if (this.autoConnect) {
 				this.initConnection(!!evt.state.skipLogin, true);
 			}
+		},
+
+		switchServer() {
+			window.history.pushState({reset: true, serverUrl: this.serverUrl}, "", ".");
+			this.serverUrl = null;
+			this.reset();
 		},
 
 		async submitForm() {
@@ -337,6 +345,11 @@ export default {
 }
 #login h3 {
 	margin: 0 0 0.75em 0;
+}
+#login .switch {
+	font-size: 0.9em;
+	text-align: center;
+	margin-top: 0.5em;
 }
 #login .inner {
 	width: 500px;
