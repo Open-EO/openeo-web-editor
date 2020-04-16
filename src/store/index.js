@@ -228,6 +228,7 @@ export default new Vuex.Store({
 		},
 		predefinedProcesses(state, data) {
 			state.predefinedProcesses = data.processes
+				.map(p => Object.assign(p, {native: true}))
 				.filter(p => (typeof p.id === 'string'))
 				.sort(Utils.sortById);
 		},

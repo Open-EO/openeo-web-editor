@@ -4,7 +4,7 @@
 			<button title="Add new custom process" @click="addProcessFromScript" v-show="supportsCreate"><i class="fas fa-plus"></i> Add</button>
 		</template>
 		<template slot="actions" slot-scope="p">
-			<button title="Details" @click="graphInfo(p.row)" v-show="supportsRead"><i class="fas fa-info"></i></button>
+			<button title="Details" @click="processInfo(p.row)" v-show="supportsRead"><i class="fas fa-info"></i></button>
 			<button title="Show in Editor" @click="showInEditor(p.row)" v-show="supportsRead"><i class="fas fa-code-branch"></i></button>
 			<!-- ToDo: Align with 1.0, move edit metadata to visual model editor -->
 			<button title="Edit metadata" @click="editMetadata(p.row)" v-show="supportsUpdate"><i class="fas fa-edit"></i></button>
@@ -93,10 +93,8 @@ export default {
 			this.create({parameters: [process.id, process]})
 				.catch(error => Utils.exception(this, error, 'Storing custom process failed.'));
 		},
-		graphInfo(process) {
-			this.refreshElement(process, updated => {
-				this.emit('showProcessInfo', updated);
-			});
+		processInfo(process) {
+			this.emit('showProcessInfo', process);
 		},
 		editMetadata(oldPg) {
 			this.refreshElement(oldPg, process => {
@@ -105,7 +103,7 @@ export default {
 			});
 		},
 		replaceProcess(process) {
-			this.emit('getCustomProcess', script => this.updateMetadata(process, {process: script}));
+			this.emit('getCustomProcess', script => this.updateMetadata(process, script));
 		},
 		updateSummary(process, newTitle) {
 			this.updateMetadata(process, {title: newTitle});

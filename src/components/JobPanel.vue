@@ -111,7 +111,7 @@ export default {
 			if (this.supports('deleteJob')) {
 				buttons.push({text: 'Delete', action: () => this.deleteJob(job)});
 			}
-			Utils.confirm(this, 'Job "' + this.getTitle(job) + '" created!', buttons);
+			Utils.confirm(this, 'Job "' + Utils.getResourceTitle(job) + '" created!', buttons);
 		},
 		getTitleField() {
 			return new Field('title', 'Title', {type: 'string'});
@@ -170,10 +170,10 @@ export default {
 							buttons.push({text: 'Download', action: () => this.downloadResults(updated)});
 							buttons.push({text: 'View', action: () => this.viewResults(updated)});
 						}
-						Utils.confirm(this, 'Job "' + this.getTitle(updated) + '" has finished!', buttons);
+						Utils.confirm(this, 'Job "' + Utils.getResourceTitle(updated) + '" has finished!', buttons);
 					}
 					else if (old.status !== 'error' && updated.status === 'error') {
-						Utils.error(this, 'Job "' + this.getTitle(updated) + '" has stopped due to an error or timeout.');
+						Utils.error(this, 'Job "' + Utils.getResourceTitle(updated) + '" has stopped due to an error or timeout.');
 					}
 				});
 			}
@@ -206,17 +206,17 @@ export default {
 		},
 		updateJob(job, parameters) {
 			this.update({data: job, parameters: this.normalizeToDefaultData(parameters)})
-				.catch(error => Utils.exception(this, error, 'Failed to update job "' + this.getTitle(job) + '"'));
+				.catch(error => Utils.exception(this, error, 'Failed to update job "' + Utils.getResourceTitle(job) + '"'));
 		},
 		queueJob(job) {
 			this.queue({data: job})
 				.then(updatedJob => Utils.ok(this, 'Job "' + this.getTitle(updatedJob) + '" successfully queued.'))
-				.catch(error => Utils.exception(this, error, 'Failed to queue job "' + this.getTitle(job) + '"'));
+				.catch(error => Utils.exception(this, error, 'Failed to queue job "' + Utils.getResourceTitle(job) + '"'));
 		},
 		cancelJob(job) {
 			this.cancel({data: job})
 				.then(updatedJob => Utils.ok(this, 'Job "' + this.getTitle(updatedJob) + '" successfully canceled.'))
-				.catch(error => Utils.exception(this, error, 'Failed to cancel job "' + this.getTitle(job) + '"'));
+				.catch(error => Utils.exception(this, error, 'Failed to cancel job "' + Utils.getResourceTitle(job) + '"'));
 		},
 		viewResults(job) {			
 			Utils.info(this, 'Data requested. Please wait...');
@@ -224,7 +224,7 @@ export default {
 			// Doesn't need to go through job store as it doesn't change job-related data
 			job.getResultsAsItem().then(item => {
 				if(Utils.size(item.assets) == 0) {
-					Utils.error(this, 'No results available for job "' + this.getTitle(job) + '".');
+					Utils.error(this, 'No results available for job "' + Utils.getResourceTitle(job) + '".');
 					return;
 				}
 
@@ -235,7 +235,7 @@ export default {
 			// Doesn't need to go through job store as it doesn't change job-related data
 			job.getResultsAsItem().then(item => {
 				if(Utils.size(item.assets) == 0) {
-					Utils.error(this, 'No results available for job "' + this.getTitle(job) + '".');
+					Utils.error(this, 'No results available for job "' + Utils.getResourceTitle(job) + '".');
 					return;
 				}
 				

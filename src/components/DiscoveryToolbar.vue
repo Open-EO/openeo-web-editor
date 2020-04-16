@@ -21,7 +21,7 @@
 			<div :class="{ category: true, processes: true, expanded: processesExpanded }">
 				<strong @click="toggle('processes')" :title="'Processes ('+processesCount+')'"><span class="toggle">▸</span> Processes</strong>
 				<div class="discovery-entity" v-for="(e, i) in processes" v-show="processesShow[i]" :key="e.id" draggable="true" @dragstart="onDrag($event, 'process', e.id)">
-					<div class="discovery-info" @click="showProcessInfoById(e.id)">
+					<div class="discovery-info" @click="showProcessInfo(e)">
 						<strong :title="e.id">{{ e.id }}</strong>
 						<small v-if="e.summary" :title="e.summary">{{ e.summary }}</small>
 					</div>
@@ -38,7 +38,6 @@
 import Config from '../../config.js';
 import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
 import Utils from '../utils.js';
-import { ProcessGraph as ProcessGraphParser } from '@openeo/js-processgraphs';
 import { ProcessGraph } from '@openeo/js-client';
 
 export default {
@@ -103,7 +102,7 @@ export default {
 		...Utils.mapState('userProcesses', ['userProcesses']),
 		...Utils.mapGetters(['supports']),
 		processes() {
-			return this.predefinedProcesses.concat(this.userProcesses.map(p => p.toJSON())).sort(Utils.sortById);
+			return this.predefinedProcesses.concat(this.userProcesses).sort(Utils.sortById);
 		}
 	},
 	methods: {
@@ -160,11 +159,6 @@ export default {
 		showCollectionInfo(id) {
 			if (this.supports('listCollections')) {
 				this.emit('showCollectionInfo', id);
-			}
-		},
-		showProcessInfoById(id) {
-			if (this.supports('listProcesses')) {
-				this.emit('showProcessInfoById', id);
 			}
 		},
 		showProcessInfo(process) {

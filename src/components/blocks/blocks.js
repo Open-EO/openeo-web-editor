@@ -337,10 +337,19 @@ Blocks.prototype.createBlock = function(name, type, x, y, values = {}, id = null
     if (!(type in this.moduleTypes)) {
         throw "Invalid module type specified.";
     }
-    if (!(name in this.moduleTypes[type])) {
+
+    let schema;
+    if (Utils.isObject(name)) {
+        schema = name;
+        name = schema.id;
+    }
+    else if (name in this.moduleTypes[type]) {
+        schema = this.moduleTypes[type][name];
+    }
+    else {
         throw "'" + name + "' not available.";
     }
-    var block = new Block(this, name, type, this.moduleTypes[type][name], id);
+    var block = new Block(this, name, type, schema, id);
     var rect = Utils.domBoundingBox(this.div);
     block.x = x === null ? ((-this.center.x + rect.width/2)/this.scale - block.getWidth()/2 + this.newBlockOffset) : x;
     block.y = y === null ? ((-this.center.y + rect.height/2)/this.scale - block.getHeight()/2 + this.newBlockOffset) : y;
@@ -857,7 +866,10 @@ Blocks.prototype.importCustomProcess = function(process, registry) {
                     this.addEdge(pg.getNode(val).blockId, "output", node.blockId, args[i], false);
                     break;
                 case 'parameter':
-                    this.addEdge(this.getPgParameterBlockByName(val), "output", node.blockId, args[i], false);
+                    let paramBlock = this.getPgParameterBlockByName(val);
+                    if (paramBlock !== null) {
+                        this.addEdge(paramBlock, "output", node.blockId, args[i], false);
+                    }
                     break;
                 case 'object':
                 case 'array':
@@ -880,7 +892,10 @@ Blocks.prototype.importEdgeDeep = function(val, pg, node, args, i) {
             this.addEdge(pg.getNode(val.from_node).blockId, "output", node.blockId, args[i], false);
         }
         else if (val.from_parameter) {
-            this.addEdge(this.getPgParameterBlockByName(val.from_parameter), "output", node.blockId, args[i], false);
+            let paramBlock = this.getPgParameterBlockByName(val.from_parameter);
+            if (paramBlock !== null) {
+                this.addEdge(paramBlock, "output", node.blockId, args[i], false);
+            }
         }
     }
 };
@@ -950,6 +965,7 @@ Blocks.prototype.import = function(scene)
 
             for (var k in scene.blocks) {
                 var data = scene.blocks[k];
+                // ToDo: This doesn't properly import custom processes
                 if (data.type in this.moduleTypes && data.name in this.moduleTypes[data.type]) {
                     var block = new Block(this, data.name, data.type, this.moduleTypes[data.type][data.name], data.id);
                     block.x = data.x;

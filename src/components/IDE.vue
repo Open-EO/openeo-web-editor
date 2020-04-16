@@ -50,6 +50,7 @@ import JobInfoModal from './JobInfoModal.vue';
 import ServiceInfoModal from './ServiceInfoModal.vue';
 import ParameterModal from './ParameterModal.vue';
 import DiscoveryToolbar from './DiscoveryToolbar.vue';
+import { UserProcess } from '@openeo/js-client';
 
 export default {
 	name: 'IDE',
@@ -92,7 +93,8 @@ export default {
 	},
 	computed: {
 		...Utils.mapState(['connection']),
-		...Utils.mapGetters(['title', 'isAuthenticated', 'processRegistry', 'apiVersion'])
+		...Utils.mapGetters(['title', 'isAuthenticated', 'apiVersion']),
+		...Utils.mapGetters('userProcesses', {getProcessById: 'getAllById'})
 	},
 	mounted() {
 		this.listen('showCollectionInfo', this.showCollectionInfo);
@@ -121,6 +123,7 @@ export default {
 	},
 	methods: {
 		...Utils.mapActions(['describeAccount']),
+		...Utils.mapActions('userProcesses', {readUserProcess: 'read'}),
 
 		getCustomProcess(success, failure = null, passNull = false) {
 			this.$refs.editor.getCustomProcess(success, failure, passNull);
@@ -193,7 +196,26 @@ export default {
 		},
 
 		showProcessInfoById(id) {
-			this.$refs.processModal.show(this.processRegistry.get(id), this.apiVersion);
+			this._showProcessInfo(this.getProcessById(id));
+		},
+
+		showProcessInfo(process) {
+			this._showProcessInfo(process);
+		},
+
+		_showProcessInfo(process) {
+			if (!process.native) {
+				this.readUserProcess({data: process})
+					.then(updated => this._showProcessInfoModal(updated.toJSON()))
+					.catch(error => Utils.exception(this, error, "Sorry, couldn't fully load custom process."));
+			}
+			else {
+				this._showProcessInfoModal(process);
+			}
+		},
+
+		_showProcessInfoModal(process) {
+			this.$refs.processModal.show(process, this.apiVersion);
 		},
 
 		showServiceInfo(service) {
@@ -202,10 +224,6 @@ export default {
 
 		showJobInfo(job) {
 			this.$refs.jobModal.show(job);
-		},
-
-		showProcessInfo(process) {
-			this.$refs.processModal.show(process, this.apiVersion);
 		},
 
 		showServerInfo() {

@@ -3,14 +3,14 @@
 		<!-- Result Node -->
 		<template v-if="isResult">
 			<div class="fieldValue externalData fromNode">
-				<span>Output of <tt>#{{ schema.schema.from_node }}</tt></span>
+				<span>Output of <tt>#{{ value.from_node }}</tt></span>
 			</div>
 			<button type="button" v-if="isArrayType" @click="convertToArray()"><i class="fas fa-list"></i> Convert to array</button>
 		</template>
 		<!-- Process Parameter -->
 		<template v-else-if="isPgParameter">
 			<div class="fieldValue externalData fromArgument">
-				<span>Value of process parameter <tt>{{ schema.schema.from_parameter }}</tt></span>
+				<span>Value of process parameter <tt>${{ value.from_parameter }}</tt></span>
 			</div>
 			<button type="button" v-if="isArrayType" @click="convertToArray()"><i class="fas fa-list"></i> Convert to array</button>
 		</template>

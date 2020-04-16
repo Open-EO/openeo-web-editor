@@ -53,22 +53,20 @@ var Block = function(blocks, name, type, schema, id)
     this.inputs = [];
     this.editables = [];
     this.fields = {};
-    this._createOutputField(schema.returns);
-    this._createInputFields(schema.parameters);
+    this._createOutputField();
+    this._createInputFields();
 
     this.jsonSchemaValidator = null;
 };
 
-Block.prototype._createOutputField = function(returns) {
-    if (!Utils.isObject(returns)) {
-        return;
-    }
+Block.prototype._createOutputField = function() {
+    let returns = this.meta.returns || {};
     this.output = new Field(
         "output",
         this.getDefaultOutputLabel(),
-        returns.schema,
+        returns.schema || {},
         undefined,
-        returns.description,
+        returns.description || '',
         false,
         true
     );
@@ -77,9 +75,21 @@ Block.prototype._createOutputField = function(returns) {
 
 };
 
-Block.prototype._createInputFields = function(parameters) {
-    if (!Array.isArray(parameters)) {
-        return;
+Block.prototype._createInputFields = function() {
+    let parameters;
+    if (!Array.isArray(this.meta.parameters)) {
+        try {
+            // ToDo: Move this into the userProcesses store?
+            var pg = new ProcessGraph(this.meta);
+            pg.parse();
+            parameters = pg.getParameters();
+        } catch (error) {
+            console.log(error);
+            parameters = [];
+        }
+    }
+    else {
+        parameters = this.meta.parameters;
     }
     for(var p of parameters) {
         var field = new Field(p.name, p.name, p.schema, p.default, p.description, !p.optional, false, p.experimental, p.deprecated);
@@ -162,7 +172,13 @@ Block.prototype.isPgParameter = function() {
 };
 
 Block.prototype.getCollectionName = function() {
-    return this.getField('id').getValue();
+    let name = this.getField('id').getValue();
+    if (Utils.isObject(name)) {
+        return this.formatValue(name);
+    }
+    else {
+        return name;
+    }
 };
 
 Block.prototype.setComment = function(comment) {

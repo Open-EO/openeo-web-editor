@@ -73,7 +73,8 @@ export default {
 	},
 	computed: {
 		...Utils.mapState(['collections']),
-		...Utils.mapGetters(['processRegistry'])
+		...Utils.mapGetters(['processRegistry']),
+		...Utils.mapGetters('userProcesses', {getProcessById: 'getAllById'})
 	},
 	data() {
 		return {
@@ -107,25 +108,31 @@ export default {
 		}
 	},
 	methods: {
+		...Utils.mapActions('userProcesses', {readUserProcess: 'read'}),
+
 		allowDrop(ev) {
 			ev.preventDefault();
 		},
 
 		onDrop(event) {
-			var process = event.dataTransfer.getData("application/openeo-process");
+			var processId = event.dataTransfer.getData("application/openeo-process");
 			var collection = event.dataTransfer.getData("application/openeo-collection");
 			var pg = event.dataTransfer.getData("application/openeo-process-graph");
-			if (process) {
+			if (processId) {
 				event.preventDefault();
-				this.insertProcess(process, event.pageX, event.pageY);
+				let process = this.getProcessById(processId);
+				if (process != null && !process.native) {
+					this.readUserProcess({data: process})
+						.then(updated => this.insertProcess(updated.toJSON(), event.pageX, event.pageY))
+						.catch(error => Utils.exception(this, error, "Sorry, couldn't fully load custom process."));
+				}
+				else {
+					this.insertProcess(processId, event.pageX, event.pageY);
+				}
 			}
 			else if (collection) {
 				event.preventDefault();
 				this.insertCollection(collection, event.pageX, event.pageY);
-			}
-			else if (pg) {
-				event.preventDefault();
-				this.insertCustomProcess(JSON.parse(pg));
 			}
 		},
 

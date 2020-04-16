@@ -12,6 +12,18 @@ export default storeFactory({
 	readFnById: 'getUserProcess',
 	customizations: {
 		getters: {
+			getAllById: (state, getters, rootState) => (id) => {
+				let customProcess = getters.getById(id);
+				if (customProcess !== null) {
+					return customProcess;
+				}
+				for(let process of rootState.predefinedProcesses) {
+					if (process.id === id) {
+						return process;
+					}
+				}
+				return null;
+			},
 		},
 		actions: {
 		},
