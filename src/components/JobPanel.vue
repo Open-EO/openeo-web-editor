@@ -1,7 +1,8 @@
 <template>
 	<DataTable ref="table" :data="data" :columns="columns" id="JobPanel">
 		<template slot="toolbar">
-			<button title="Add new job" @click="createJobFromScript()" v-show="supportsCreate"><i class="fas fa-plus"></i> Add</button>
+			<button title="Add new job for batch processing" @click="createJobFromScript()" v-show="supportsCreate"><i class="fas fa-plus"></i> Create</button>
+			<button title="Run process and view results synchronously" @click="executeProcess" v-show="supports('computeResult')"><i class="fas fa-play"></i> Run now</button>
 		</template>
 		<template slot="actions" slot-scope="p">
 			<button title="Details" @click="showJobInfo(p.row)" v-show="supportsRead"><i class="fas fa-info"></i></button>
@@ -98,6 +99,12 @@ export default {
 		showInEditor(job) {
 			this.refreshElement(job, updatedJob => {
 				this.emit('insertCustomProcess', updatedJob.process);
+			});
+		},
+		executeProcess() {
+			this.emit('getCustomProcess', script => {
+				Utils.info(this, 'Data requested. Please wait...');
+				this.emit('viewSyncResult', script);
 			});
 		},
 		jobCreated(job) {

@@ -1,7 +1,7 @@
 <template>
 	<DataTable ref="table" :data="data" :columns="columns" id="ServicePanel">
 		<template slot="toolbar">
-			<button title="Add new service" @click="createServiceFromScript()" v-show="supportsCreate"><i class="fas fa-plus"></i> Add</button>
+			<button title="Add new service" @click="createServiceFromScript()" v-show="supportsCreate"><i class="fas fa-plus"></i> Create</button>
 		</template>
 		<template slot="enabled" slot-scope="p">
 			<span class="boolean">

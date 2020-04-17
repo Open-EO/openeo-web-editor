@@ -45,7 +45,7 @@
 
 			<section class="process-graph">
 				<div class="vue-component"><h3>Process</h3></div>
-				<Editor :process="job.process" :editable="false" :enableExecute="false" class="infoViewer" id="jobPgViewer" />
+				<Editor :process="job.process" :editable="false" class="infoViewer" id="jobPgViewer" />
 			</section>
 
 		</template>

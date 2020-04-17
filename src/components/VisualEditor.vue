@@ -1,6 +1,6 @@
 <template>
 	<div class="visualEditor" ref="visualEditor">
-		<EditorToolbar :editable="editable" :onStore="getCustomProcess" :onInsert="insertCustomProcess" :onClear="clear" :enableClear="enableClear" :enableExecute="enableExecute" :enableLocalStorage="enableLocalStorage">
+		<EditorToolbar :editable="editable" :onStore="getCustomProcess" :onInsert="insertCustomProcess" :onClear="clear" :enableClear="enableClear" :enableLocalStorage="enableLocalStorage">
 			<button type="button" @click="blocks.deleteEvent()" v-show="editable && blocks.canDelete()" title="Delete selected elements"><i class="fas fa-trash"></i></button>
 			<button type="button" @click="blocks.undo()" v-show="editable && blocks.hasUndo()" title="Undo last change"><i class="fas fa-undo-alt"></i></button>
 			<button type="button" @click="blocks.toggleCompact()" :class="{compactActive: blocks.compactMode}" title="Compact Mode"><i class="fas fa-compress-arrows-alt"></i></button>
@@ -59,10 +59,6 @@ export default {
 			default: true
 		},
 		enableLocalStorage: {
-			type: Boolean,
-			default: true
-		},
-		enableExecute: {
 			type: Boolean,
 			default: true
 		},

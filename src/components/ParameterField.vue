@@ -61,7 +61,7 @@
 		<MapViewer v-else-if="type === 'geojson'" ref="geojson" :key="type" :id="fieldName + '_geojson'" :showGeoJson="value || true" :editable="editable" :center="[0,0]" :zoom="1" class="geoJsonEditor"></MapViewer>
 		<!-- Process Editor -->
 		<div v-else-if="type === 'process-graph'" class="border">
-			<VisualEditor ref="callbackBuilder" class="callbackEditor" id="inlinePgEditor" :editable="editable" :pgParameters="schema.getCallbackParameters()" :value="value" :enableExecute="false" :enableLocalStorage="false" />
+			<VisualEditor ref="callbackBuilder" class="callbackEditor" id="inlinePgEditor" :editable="editable" :pgParameters="schema.getCallbackParameters()" :value="value" :enableLocalStorage="false" />
 		</div>
 		<!-- Object -->
 		<div v-else-if="type === 'object' || type === 'service-config'" class="objectEditor">
