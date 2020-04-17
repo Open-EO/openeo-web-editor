@@ -73,7 +73,7 @@
 			<button type="button" class="addBtn" v-if="editable" @click="addFieldInObject('unnamed', 1)"><i class="fas fa-plus"></i> Add</button>
 		</div>
 		<!-- Null -->
-		<template v-else-if="type === 'null'"></template>
+		<div class="description" v-else-if="type === 'null'"><i class="fas fa-info-circle"></i> The parameter is set to&nbsp;<strong><tt>null</tt></strong>, which is usually used as placeholder for no-data values or a default value.</div>
 		<!-- Arrays -->
 		<div v-else-if="isArrayType" class="arrayEditor">
 			<draggable v-model="value" handle=".mover">
