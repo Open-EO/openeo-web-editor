@@ -1,5 +1,5 @@
 <template>
-	<div id="container">
+	<div :class="{container: true, connectForm: !isDiscovered}">
 		<ConnectForm v-if="!isDiscovered" :skipLogin="skipLogin" />
 		<IDE v-else />
 		<Modal ref="modal" maxWidth="60%" />
@@ -92,9 +92,15 @@ export default {
 <style>
 @import url('https://fonts.googleapis.com/css?family=Ubuntu&display=swap');
 
-html, body, #container {
+html, body, .container {
 	height: 100%;
 	overflow: hidden;
+}
+.container.connectForm {
+	background-color: #1665B6;
+	align-items: center;
+	display: flex;
+	overflow: auto;
 }
 body, input, textarea, button, select {
 	font-family: 'Ubuntu', sans-serif;
@@ -205,11 +211,11 @@ button {
 	padding-left: 20px;
 }
 
-#container .snotifyToast__title {
+.container .snotifyToast__title {
 	font-size: 1em;
 	font-weight: bold;
 }
-#container .snotifyToast__body {
+.container .snotifyToast__body {
 	font-size: 0.9em;
 }
 
