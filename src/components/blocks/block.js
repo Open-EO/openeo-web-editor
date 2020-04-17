@@ -171,16 +171,6 @@ Block.prototype.isPgParameter = function() {
     return this.type === 'parameter';
 };
 
-Block.prototype.getCollectionName = function() {
-    let name = this.getField('id').getValue();
-    if (Utils.isObject(name)) {
-        return this.formatValue(name);
-    }
-    else {
-        return name;
-    }
-};
-
 Block.prototype.setComment = function(comment) {
     if (typeof comment === 'string') {
         this.comment = comment;
@@ -298,9 +288,14 @@ Block.prototype.formatObject = function(value, html = true) {
 Block.prototype.getHtml = function()
 {
     var name = this.name;
+    var hasInfo = true;
     if (this.isCollection()) {
-        // Show collection id as title
-        name = this.getCollectionName();
+        name = this.getField('id').getValue();
+        // If it's a parameter:
+        if (Utils.isObject(name)) {
+            name = this.formatValue(name);
+            hasInfo = false;
+        }
     }
 
     // Getting the title
@@ -322,7 +317,9 @@ Block.prototype.getHtml = function()
                 html += '<span class="delete" title="Remove (DEL)"><i class="fas fa-trash"></i></span>';
             }
         }
-        html += '<span class="info" title="Details"><i class="fas fa-info"></i></span>';
+        if (hasInfo) {
+            html += '<span class="info" title="Details"><i class="fas fa-info"></i></span>';
+        }
     }
     if (this.canChangeParameters()) {
         html += '<span class="settings" title="Change parameter values"><i class="fas fa-sliders-h"></i></span>';
@@ -637,7 +634,7 @@ Block.prototype.initListeners = function()
                 this.blocks.showSchema(this.name, this.meta.returns.schema);
             }
             else if(this.isCollection()) {
-                EventBus.$emit('showCollectionInfo', this.getCollectionName());
+                EventBus.$emit('showCollectionInfo', this.getField('id').getValue());
             }
             else {
                 EventBus.$emit('showProcessInfoById', this.name);

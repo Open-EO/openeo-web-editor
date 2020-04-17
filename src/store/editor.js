@@ -1,13 +1,11 @@
-import Vue from 'vue';
+import Utils from '../utils';
 
 const serverStorage = "serverUrls";
-const scriptStorage = "savedScripts";
 
 const getDefaultState = () => {
 	return {
 		storedServers: JSON.parse(localStorage.getItem(serverStorage) || "[]"),
-		storedScripts: JSON.parse(localStorage.getItem(scriptStorage) || "{}"),
-		scriptName: null,
+		activeScript: null,
 		hightestModalZIndex: 1000
 	};
 };
@@ -16,7 +14,7 @@ export default {
 	namespaced: true,
 	state: getDefaultState(),
 	getters: {
-		getScriptByName: (state) => (name) => state.storedScripts[name]
+		scriptTitle: (state) => state.activeScript !== null ? Utils.getResourceTitle(state.activeScript, true) : ''
 	},
 	actions: {
 
@@ -38,16 +36,8 @@ export default {
 			state.storedServers.splice(state.storedServers.indexOf(url), 1);
 			localStorage.setItem(serverStorage, JSON.stringify(state.storedServers));
 		},
-		addScript(state, { name, script }) {
-			state.storedScripts[name] = script;
-			localStorage.setItem(scriptStorage, JSON.stringify(state.storedScripts));
-		},
-		removeScript(state, name) {
-			Vue.delete(state.storedScripts, name);
-			localStorage.setItem(scriptStorage, JSON.stringify(state.storedScripts));
-		},
-		setScriptName(state, name) {
-			state.scriptName = name;
+		setScript(state, obj) {
+			state.activeScript = obj;
 		},
 		reset(state) {
 			Object.assign(state, getDefaultState());

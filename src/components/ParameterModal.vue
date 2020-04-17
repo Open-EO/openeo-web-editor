@@ -110,8 +110,8 @@ export default {
 	border-top: 1px dotted #ccc;
 }
 #parameterModal .fieldRow .fieldLabel {
-	min-width: 35%;
-	width: 35%;
+	min-width: 30%;
+	width: 30%;
 }
 #parameterModal .fieldRow .fieldLabel.highlight {
 	width: calc(35% - 5px);

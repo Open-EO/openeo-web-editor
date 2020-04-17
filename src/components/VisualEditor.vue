@@ -1,6 +1,6 @@
 <template>
 	<div class="visualEditor" ref="visualEditor">
-		<EditorToolbar :editable="editable" :onStore="getCustomProcess" :onInsert="insertCustomProcess" :onClear="clear" :enableClear="enableClear" :enableLocalStorage="enableLocalStorage">
+		<EditorToolbar :editable="editable" :onClear="clear" :isMainEditor="isMainEditor">
 			<button type="button" @click="blocks.deleteEvent()" v-show="editable && blocks.canDelete()" title="Delete selected elements"><i class="fas fa-trash"></i></button>
 			<button type="button" @click="blocks.undo()" v-show="editable && blocks.hasUndo()" title="Undo last change"><i class="fas fa-undo-alt"></i></button>
 			<button type="button" @click="blocks.toggleCompact()" :class="{compactActive: blocks.compactMode}" title="Compact Mode"><i class="fas fa-compress-arrows-alt"></i></button>
@@ -11,7 +11,7 @@
 			</button>
 		</EditorToolbar>
 		<div class="editorSplitter">
-			<DiscoveryToolbar v-if="showDiscoveryToolbar && editable" class="discoveryToolbar" :onAddCollection="insertCollection" :onAddProcess="insertProcess" :onAddCustomProcess="insertCustomProcess" />
+			<DiscoveryToolbar v-if="!isMainEditor && editable" class="discoveryToolbar" :onAddCollection="insertCollection" :onAddProcess="insertProcess" :onAddCustomProcess="insertCustomProcess" />
 			<div :id="id" class="graphBuilder" @drop="onDrop($event)" @dragover="allowDrop($event)"></div>
 		</div>
 		<SchemaModal ref="schemaModal" />
@@ -54,17 +54,9 @@ export default {
 			type: Array,
 			default: () => []
 		},
-		enableClear: {
+		isMainEditor: {
 			type: Boolean,
-			default: true
-		},
-		enableLocalStorage: {
-			type: Boolean,
-			default: true
-		},
-		showDiscoveryToolbar: {
-			type: Boolean,
-			default: true
+			default: false
 		}
 	},
 	computed: {

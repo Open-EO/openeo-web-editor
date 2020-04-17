@@ -2,12 +2,12 @@
 	<Tabs class="editor" ref="tabs" id="customProcessContent">
 		<Tab id="visual" name="Visual Model" icon="fa-code-branch" :selected="true" :allowShow="prepareProcess" @show="transferProcess">
 			<template #default="{ tab }">
-				<VisualEditor ref="graphBuilder" :active="tab.active" :editable="editable" :value="process" :id="id + '_visual'" :enableClear="enableClear" :enableExecute="enableExecute" :enableLocalStorage="enableLocalStorage" :showDiscoveryToolbar="showDiscoveryToolbar" />
+				<VisualEditor ref="graphBuilder" :active="tab.active" :editable="editable" :value="process" :id="id + '_visual'" :isMainEditor="isMainEditor" />
 			</template>
 		</Tab>
 		<Tab id="source" name="Code" icon="fa-code" :allowShow="prepareProcess" @show="transferProcess">
 			<template #default="{ tab }">
-				<TextEditor ref="sourceEditor" :active="tab.active" :editable="editable" :value="process" :id="id + '_text'" :enableClear="enableClear" :enableExecute="enableExecute" :enableLocalStorage="enableLocalStorage" />
+				<TextEditor ref="sourceEditor" :active="tab.active" :editable="editable" :value="process" :id="id + '_text'" :isMainEditor="isMainEditor" />
 			</template>
 		</Tab>
 	</Tabs>
@@ -39,21 +39,9 @@ export default {
 			type: Object,
 			default: null
 		},
-		enableClear: {
+		isMainEditor: {
 			type: Boolean,
-			default: true
-		},
-		enableLocalStorage: {
-			type: Boolean,
-			default: true
-		},
-		enableExecute: {
-			type: Boolean,
-			default: true
-		},
-		showDiscoveryToolbar: {
-			type: Boolean,
-			default: true
+			default: false
 		}
 	},
 	data() {

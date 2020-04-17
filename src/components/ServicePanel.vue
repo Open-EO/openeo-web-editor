@@ -11,9 +11,9 @@
 			</span>
 		</template>
 		<template slot="actions" slot-scope="p">
-			<button title="Details" @click="serviceInfo(p.row)" v-show="supportsRead"><i class="fas fa-info"></i></button><button title="Show in Editor" @click="showInEditor(p.row)" v-show="supportsRead"><i class="fas fa-code-branch"></i></button>
+			<button title="Details" @click="serviceInfo(p.row)" v-show="supportsRead"><i class="fas fa-info"></i></button>
 			<button title="Edit metadata" @click="editMetadata(p.row)" v-show="supportsUpdate"><i class="fas fa-edit"></i></button>
-			<button title="Replace process" @click="replaceProcess(p.row)" v-show="supportsUpdate"><i class="fas fa-retweet"></i></button>
+			<button title="Edit process" @click="showInEditor(p.row)" v-show="supportsRead"><i class="fas fa-code-branch"></i></button>
 			<button title="Delete" @click="deleteService(p.row)" v-show="supportsDelete"><i class="fas fa-trash"></i></button>
 			<button v-show="p.row.enabled && isMapServiceSupported(p.row.type)" title="View on map" @click="viewService(p.row)"><i class="fas fa-map"></i></button>
 		</template>
@@ -26,6 +26,7 @@ import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
 import WorkPanelMixin from './WorkPanelMixin';
 import Utils from '../utils';
 import Field from './blocks/field';
+import { Service } from '@openeo/js-client';
 
 export default {
 	name: 'ServicePanel',
@@ -44,7 +45,7 @@ export default {
 				},
 				title: {
 					name: 'Title',
-					computedValue: row => Utils.getResourceTitle(row, "Service"),
+					computedValue: row => Utils.getResourceTitle(row),
 					edit: this.updateTitle
 				},
 				type: {
@@ -66,6 +67,9 @@ export default {
 			}
 		};
 	},
+	mounted() {
+		this.listen('replaceProcess', this.replaceProcess);
+	},
 	methods: {
 		isMapServiceSupported(mapType) {
 			if (typeof mapType !== 'string') {
@@ -74,9 +78,7 @@ export default {
 			return Config.supportedMapServices.includes(mapType.toLowerCase());
 		},
 		showInEditor(service) {
-			this.refreshElement(service, updatedService => {
-				this.emit('insertCustomProcess', updatedService.process);
-			});
+			this.refreshElement(service, updatedService => this.emit('editProcess', updatedService));
 		},
 		serviceCreated(service) {
 			var buttons = [];
@@ -171,8 +173,10 @@ export default {
 				this.emit('showServiceInfo', updatedService.getAll());
 			});
 		},
-		replaceProcess(service) {
-			this.emit('getCustomProcess', script => this.updateService(service, {process: script}));
+		replaceProcess(service, process) {
+			if (service instanceof Service) {
+				this.updateService(service, {process: process});
+			}
 		},
 		updateTitle(service, newTitle) {
 			this.updateService(service, {title: newTitle});

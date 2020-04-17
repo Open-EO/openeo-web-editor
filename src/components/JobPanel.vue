@@ -6,10 +6,9 @@
 		</template>
 		<template slot="actions" slot-scope="p">
 			<button title="Details" @click="showJobInfo(p.row)" v-show="supportsRead"><i class="fas fa-info"></i></button>
-			<button title="Show in Editor" @click="showInEditor(p.row)" v-show="supportsRead"><i class="fas fa-code-branch"></i></button>
 			<button title="Estimate" @click="estimateJob(p.row)" v-show="supports('estimateJob')"><i class="fas fa-file-invoice-dollar"></i></button>
 			<button title="Edit metadata" @click="editMetadata(p.row)" v-show="supportsUpdate && isJobInactive(p.row)"><i class="fas fa-edit"></i></button>
-			<button title="Replace process" @click="replaceProcess(p.row)" v-show="supportsUpdate && isJobInactive(p.row)"><i class="fas fa-retweet"></i></button>
+			<button title="Edit process" @click="showInEditor(p.row)" v-show="supportsRead && isJobInactive(p.row)"><i class="fas fa-code-branch"></i></button>
 			<button title="Delete" @click="deleteJob(p.row)" v-show="supportsDelete"><i class="fas fa-trash"></i></button>
 			<button title="Start processing" @click="queueJob(p.row)" v-show="supports('startJob') && isJobInactive(p.row)"><i class="fas fa-play-circle"></i></button>
 			<button title="Cancel processing" @click="cancelJob(p.row)" v-show="supports('stopJob') && isJobActive(p.row)"><i class="fas fa-stop-circle"></i></button>
@@ -24,6 +23,7 @@ import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
 import WorkPanelMixin from './WorkPanelMixin';
 import Utils from '../utils.js';
 import Field from './blocks/field';
+import { Job } from '@openeo/js-client';
 
 const WorkPanelMixinInstance = WorkPanelMixin('jobs', 'batch job', 'batch jobs');
 
@@ -40,7 +40,7 @@ export default {
 				},
 				title: {
 					name: 'Title',
-					computedValue: row => Utils.getResourceTitle(row, "Job"),
+					computedValue: row => Utils.getResourceTitle(row),
 					edit: this.updateTitle
 				},
 				status: {
@@ -63,6 +63,9 @@ export default {
 			watchers: {},
 			jobUpdater: null
 		};
+	},
+	mounted() {
+		this.listen('replaceProcess', this.replaceProcess);
 	},
 	computed: {
 		...Utils.mapGetters(['supports', 'supportsBilling', 'supportsBillingPlans'])
@@ -97,9 +100,7 @@ export default {
 			}
 		},
 		showInEditor(job) {
-			this.refreshElement(job, updatedJob => {
-				this.emit('insertCustomProcess', updatedJob.process);
-			});
+			this.refreshElement(job, updatedJob => this.emit('editProcess', updatedJob));
 		},
 		executeProcess() {
 			this.emit('getCustomProcess', script => {
@@ -194,8 +195,15 @@ export default {
 				.then(estimate => this.emit('showModal', 'Job Estimate', estimate))
 				.catch(error => Utils.exception(this, error, "Loading estimate failed"));
 		},
-		replaceProcess(job) {
-			this.emit('getCustomProcess', script => this.updateJob(job, {process: script}));
+		replaceProcess(job, process) {
+			if (job instanceof Job) {
+				if (this.isJobActive()) {
+					Utils.error(this, "Can't change process while batch job is running.");
+				}
+				else {
+					this.updateJob(job, {process: process});
+				}
+			}
 		},
 		editMetadata(oldJob) {
 			this.refreshElement(oldJob, job => {

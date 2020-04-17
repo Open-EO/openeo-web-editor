@@ -1,6 +1,7 @@
 
 import Config from '../config';
 import { Utils as CommonUtils } from '@openeo/js-commons';
+import { Job, Service, UserProcess } from '@openeo/js-client';
 import { mapState, mapActions, mapMutations, mapGetters } from 'vuex';
 
 export default {
@@ -124,11 +125,29 @@ export default {
 	},
 
 	
-	getResourceTitle(obj) {
-		if (!obj.title && !obj.summary && obj.id) {
-			return "Job #" + obj.id.toUpperCase().substr(-6);
+	getResourceTitle(obj, showType = false) {
+		let title = '';
+		if (showType) {
+			if (obj instanceof Job) {
+				title += 'Job: ';
+			}
+			else if (obj instanceof Service) {
+				title = 'Service: ';
+			}
+			else if (obj instanceof UserProcess) {
+				title += 'Process: ';
+			}
 		}
-		return obj.title || obj.summary;
+		if (obj.title || obj.summary && obj.id) {
+			title += obj.title || obj.summary;
+		}
+		else if (obj.id) {
+			title += "#" + obj.id.toUpperCase().substr(-6);
+		}
+		else {
+			title += "Unnamed";
+		}
+		return title;
 	},
 
 	mapState,

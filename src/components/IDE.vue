@@ -17,7 +17,7 @@
 				</div>
 				<hr class="separator" ref="separator0" @dblclick="centerSeparator($event, 0)" @mousedown="startMovingSeparator($event, 0)" />
 				<div id="workspace" ref="workspace">
-					<Editor ref="editor" class="mainEditor" id="main" :showDiscoveryToolbar="false" />
+					<Editor ref="editor" class="mainEditor" id="main" :isMainEditor="true" />
 					<UserWorkspace class="userContent" v-if="isAuthenticated" />
 				</div>
 				<hr class="separator" ref="separator1" @dblclick="centerSeparator($event, 1)" @mousedown="startMovingSeparator($event, 1)" />
@@ -50,7 +50,7 @@ import JobInfoModal from './JobInfoModal.vue';
 import ServiceInfoModal from './ServiceInfoModal.vue';
 import ParameterModal from './ParameterModal.vue';
 import DiscoveryToolbar from './DiscoveryToolbar.vue';
-import { UserProcess } from '@openeo/js-client';
+import { Job, Service, UserProcess } from '@openeo/js-client';
 
 export default {
 	name: 'IDE',
@@ -104,7 +104,7 @@ export default {
 		this.listen('showServiceInfo', this.showServiceInfo);
 		this.listen('showDataForm', this.showDataForm);
 		this.listen('getCustomProcess', this.getCustomProcess);
-		this.listen('insertCustomProcess', this.insertCustomProcess);
+		this.listen('editProcess', this.editProcess);
 
 		this.resizeListener = (event) => this.emit('windowResized', event);
 		window.addEventListener('resize', this.resizeListener);
@@ -124,9 +124,26 @@ export default {
 	methods: {
 		...Utils.mapActions(['describeAccount']),
 		...Utils.mapActions('userProcesses', {readUserProcess: 'read'}),
+		...Utils.mapMutations('editor', ['setScript']),
 
 		getCustomProcess(success, failure = null, passNull = false) {
 			this.$refs.editor.getCustomProcess(success, failure, passNull);
+		},
+
+		editProcess(obj) {
+			this.setScript(obj);
+			if (obj instanceof Job || obj instanceof Service) {
+				this.insertCustomProcess(obj.process);
+			}
+			else if (obj instanceof UserProcess) {
+				this.insertCustomProcess(obj.toJSON());
+			}
+			else if (obj.process) {
+				this.insertCustomProcess(obj.process);
+			}
+			else {
+				this.insertCustomProcess(obj);
+			}
 		},
 
 		insertCustomProcess(pg) {

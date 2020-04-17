@@ -1,6 +1,6 @@
 <template>
 	<div class="textEditor">
-		<EditorToolbar :editable="editable" :onStore="getCustomProcess" :onInsert="insertCustomProcess" :onClear="clear" :enableClear="enableClear" :enableLocalStorage="enableLocalStorage" />
+		<EditorToolbar :editable="editable" :onClear="clear" :isMainEditor="isMainEditor" />
 		<div :id="id" class="sourceCodeEditor"></div>
 	</div>
 </template>
@@ -33,13 +33,9 @@ export default {
 			type: Object,
 			default: null
 		},
-		enableClear: {
+		isMainEditor: {
 			type: Boolean,
-			default: true
-		},
-		enableLocalStorage: {
-			type: Boolean,
-			default: true
+			default: false
 		}
 	},
 	computed: {

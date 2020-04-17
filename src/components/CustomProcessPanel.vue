@@ -5,10 +5,9 @@
 		</template>
 		<template slot="actions" slot-scope="p">
 			<button title="Details" @click="processInfo(p.row)" v-show="supportsRead"><i class="fas fa-info"></i></button>
-			<button title="Show in Editor" @click="showInEditor(p.row)" v-show="supportsRead"><i class="fas fa-code-branch"></i></button>
 			<!-- ToDo: Align with 1.0, move edit metadata to visual model editor -->
 			<button title="Edit metadata" @click="editMetadata(p.row)" v-show="supportsUpdate"><i class="fas fa-edit"></i></button>
-			<button title="Replace process" @click="replaceProcess(p.row)" v-show="supportsUpdate"><i class="fas fa-retweet"></i></button>
+			<button title="Edit process" @click="showInEditor(p.row)" v-show="supportsRead"><i class="fas fa-code-branch"></i></button>
 			<button title="Delete" @click="deleteProcess(p.row)" v-show="supportsDelete"><i class="fas fa-trash"></i></button>
 		</template>
 	</DataTable>
@@ -19,6 +18,7 @@ import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
 import WorkPanelMixin from './WorkPanelMixin';
 import Utils from '../utils.js';
 import Field from './blocks/field';
+import { UserProcess } from '@openeo/js-client';
 
 export default {
 	name: 'CustomProcessPanel',
@@ -41,11 +41,12 @@ export default {
 			}
 		};
 	},
+	mounted() {
+		this.listen('replaceProcess', this.replaceProcess);
+	},
 	methods: {
 		showInEditor(process) {
-			this.refreshElement(process, updatedProcess => {
-				this.emit('insertCustomProcess', updatedProcess.toJSON());
-			});
+			this.refreshElement(process, updatedProcess => this.emit('editProcess', updatedProcess));
 		},
 		getIdField(defaultValue = undefined) {
 			return new Field('id', 'Name', {type: 'string'}, defaultValue, '', true);
@@ -102,8 +103,10 @@ export default {
 				this.emit('showDataForm', "Edit metadata for a process graph", fields, data => this.updateMetadata(process, data));
 			});
 		},
-		replaceProcess(process) {
-			this.emit('getCustomProcess', script => this.updateMetadata(process, script));
+		replaceProcess(process, newProcess) {
+			if (process instanceof UserProcess) {
+				this.updateMetadata(process, newProcess)
+			}
 		},
 		updateSummary(process, newTitle) {
 			this.updateMetadata(process, {title: newTitle});

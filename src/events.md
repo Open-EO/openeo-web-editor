@@ -7,7 +7,7 @@ Passes the custom process currently in the editor to the $success callback. If $
 $success has one parameter: object process
 $failure has two parameters: string message, object $exception = null
 
-### insertCustomProcess(object $process)
+### editProcess(object $resource)
 Sends the current custom process and inserts it into the currently active editor.
 
 ## Modals
