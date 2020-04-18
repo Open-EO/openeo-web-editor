@@ -132,7 +132,7 @@ export default {
 		VueCtkDateTimePicker,
 		// Asynchronously load the following components to avoid circular references.
 		// See https://vuejs.org/v2/guide/components-edge-cases.html#Circular-References-Between-Components
-		OutputFormatOptionsEditor: () => import('./OutputFormatOptionsEditor.vue'),
+		OutputFormatOptionsEditor: () => import('./datatypes/OutputFormatOptionsEditor.vue'),
 		VisualEditor: () => import('./VisualEditor.vue'),
 		ParameterFields: () => import('./ParameterFields.vue')
 	},

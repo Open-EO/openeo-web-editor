@@ -13,7 +13,7 @@
 </template>
 
 <script>
-import MapViewer from './MapViewer';
+import MapViewer from '../MapViewer.vue';
 import Modal from './Modal.vue';
 import Collection from '@openeo/vue-components/components/Collection.vue';
 

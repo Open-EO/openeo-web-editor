@@ -53,11 +53,11 @@
 </template>
 
 <script>
-import Utils from '../utils';
+import Utils from '../../utils';
 import Modal from './Modal.vue';
 import Description from '@openeo/vue-components/components/Description.vue';
 import LinkList from '@openeo/vue-components/components/LinkList.vue';
-import Editor from './Editor.vue';
+import Editor from '../Editor.vue';
 
 export default {
 	name: 'JobInfoModal',

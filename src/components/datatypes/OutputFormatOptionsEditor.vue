@@ -18,9 +18,9 @@
 </template>
 
 <script>
-import ParameterFields from './ParameterFields.vue';
-import Utils from '../utils.js';
-import Field from './blocks/field';
+import ParameterFields from '../ParameterFields.vue';
+import Utils from '../../utils.js';
+import Field from '../blocks/field';
 import Description from '@openeo/vue-components/components/Description.vue';
 
 export default {

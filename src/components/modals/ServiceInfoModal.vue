@@ -60,11 +60,11 @@
 </template>
 
 <script>
-import Utils from '../utils';
+import Utils from '../../utils';
 import Modal from './Modal.vue';
 import Description from '@openeo/vue-components/components/Description.vue';
 import ObjectTree from '@openeo/vue-components/components/ObjectTree.vue';
-import Editor from './Editor.vue';
+import Editor from '../Editor.vue';
 
 export default {
 	name: 'ServiceInfoModal',

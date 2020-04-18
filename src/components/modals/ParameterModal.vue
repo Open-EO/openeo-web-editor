@@ -25,10 +25,10 @@
 </template>
 
 <script>
-import Utils from '../utils';
+import Utils from '../../utils';
 import Modal from './Modal.vue';
 import Description from '@openeo/vue-components/components/Description.vue';
-import ParameterFields from './ParameterFields.vue';
+import ParameterFields from '../ParameterFields.vue';
 
 export default {
 	name: 'ParameterModal',

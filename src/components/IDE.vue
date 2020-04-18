@@ -43,12 +43,12 @@ import UserMenu from './UserMenu.vue';
 import UserWorkspace from './UserWorkspace.vue';
 import Viewer from './Viewer.vue';
 import Editor from './Editor.vue';
-import CollectionModal from './CollectionModal.vue';
-import ProcessModal from './ProcessModal.vue';
-import ServerInfoModal from './ServerInfoModal.vue';
-import JobInfoModal from './JobInfoModal.vue';
-import ServiceInfoModal from './ServiceInfoModal.vue';
-import ParameterModal from './ParameterModal.vue';
+import CollectionModal from './modals/CollectionModal.vue';
+import ProcessModal from './modals/ProcessModal.vue';
+import ServerInfoModal from './modals/ServerInfoModal.vue';
+import JobInfoModal from './modals/JobInfoModal.vue';
+import ServiceInfoModal from './modals/ServiceInfoModal.vue';
+import ParameterModal from './modals/ParameterModal.vue';
 import DiscoveryToolbar from './DiscoveryToolbar.vue';
 import { Job, Service, UserProcess } from '@openeo/js-client';
 

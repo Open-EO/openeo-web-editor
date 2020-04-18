@@ -24,8 +24,8 @@ import Blocks from './blocks/blocks.js';
 import Utils from '../utils.js';
 import EditorToolbar from './EditorToolbar.vue';
 import DiscoveryToolbar from './DiscoveryToolbar.vue';
-import ParameterModal from './ParameterModal.vue'; // Add a paremeter modal to each visual editor, otherwise we can't open a parameter modal over a parameter modal (e.g. edit the parameters of a callback)
-import SchemaModal from './SchemaModal.vue';
+import ParameterModal from './modals/ParameterModal.vue'; // Add a paremeter modal to each visual editor, otherwise we can't open a parameter modal over a parameter modal (e.g. edit the parameters of a callback)
+import SchemaModal from './modals/SchemaModal.vue';
 import { ProcessGraph } from '@openeo/js-processgraphs';
 
 export default {

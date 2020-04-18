@@ -20,7 +20,7 @@ import Package from '../package.json';
 import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
 import Utils from './utils';
 import ConnectForm from './components/ConnectForm.vue';
-import Modal from './components/Modal.vue';
+import Modal from './components/modals/Modal.vue';
 import axios from 'axios';
 import Vue from 'vue';
 

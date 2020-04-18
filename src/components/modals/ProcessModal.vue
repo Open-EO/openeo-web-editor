@@ -16,7 +16,7 @@
 </template>
 
 <script>
-import Editor from './Editor.vue';
+import Editor from '../Editor.vue';
 import Modal from './Modal.vue';
 import Process from '@openeo/vue-components/components/Process.vue';
 import { UserProcess } from '@openeo/js-client';

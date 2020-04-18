@@ -11,7 +11,7 @@
 <script>
 import Modal from './Modal.vue';
 import Capabilities from '@openeo/vue-components/components/Capabilities.vue';
-import Utils from '../utils.js';
+import Utils from '../../utils.js';
 
 export default {
 	name: 'ServerInfoModal',
