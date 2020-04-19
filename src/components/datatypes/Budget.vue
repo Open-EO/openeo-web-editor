@@ -1,5 +1,5 @@
 <template>
-	<div class="budget">
+	<div class="datatypeEditor budget">
 		<input type="checkbox" v-model="hasBudget" :disabled="!editable" />
 		<input type="number" min="0.00" :max="max" step="0.01" :disabled="!hasBudget || !editable" v-model.number="amount" />&nbsp;{{ capabilities.currency() }}
 	</div>

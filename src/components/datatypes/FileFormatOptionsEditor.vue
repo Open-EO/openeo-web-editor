@@ -1,5 +1,5 @@
 <template>
-	<div class="fileFormatOptionsEditor">
+	<div class="datatypeEditor fileFormatOptionsEditor">
 		<template v-if="hasOptions">
 			<div class="fieldRow" v-for="(field, name) in parameters" :key="name">
 				<label class="fieldLabel">
@@ -38,7 +38,7 @@ export default {
 			type: Boolean,
 			default: true
 		},
-		dataType: {
+		type: {
 			type: String
 		}
 	},
@@ -50,7 +50,7 @@ export default {
 	computed: {
 		...Utils.mapState(['fileFormats']),
 		fileFormat() {
-			if (this.dataType === 'input-format-options') {
+			if (this.type === 'input-format-options') {
 				return this.fileFormats.getInputType(this.format);
 			}
 			else {

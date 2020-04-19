@@ -46,15 +46,8 @@
 		<select class="fieldValue" v-else-if="type === 'billing-plan'" :name="fieldName" v-model="value" ref="selectFirst" :disabled="!editable">
 			<option v-for="plan in capabilities.listPlans()" :key="plan.name" :value="plan.name">{{ plan.name }} ({{ plan.paid ? 'paid' : 'free' }})</option>
 		</select>
-		<!-- Temporal Interval -->
-		<!-- ToDo: Support open date ranges, probably by using two separate date pickers, see also https://github.com/chronotruck/vue-ctk-date-time-picker/issues/121 -->
-		<VueCtkDateTimePicker v-else-if="type === 'temporal-interval'" :key="type" v-model="value" :disabled="!editable" :range="true" label="Select start and end time" format="YYYY-MM-DD[T]HH:mm:ss[Z]" locale="en-gb"></VueCtkDateTimePicker>
-		<!-- Single date and time -->
-		<VueCtkDateTimePicker v-else-if="type === 'date-time'" :key="type" v-model="value" :disabled="!editable" label="Select date and time" format="YYYY-MM-DD[T]HH:mm:ss[Z]" :no-button="true" locale="en-gb"></VueCtkDateTimePicker>
-		<!-- Single date -->
-		<VueCtkDateTimePicker v-else-if="type === 'date'" :key="type" v-model="value" :disabled="!editable" label="Select date" :only-date="true" format="YYYY-MM-DD" formatted="ll" :no-button="true" locale="en-gb"></VueCtkDateTimePicker>
-		<!-- Single time -->
-		<VueCtkDateTimePicker v-else-if="type === 'time'" :key="type" v-model="value" :disabled="!editable" label="Select time" :only-time="true" format="HH:mm:ss[Z]" formatted="LT" :no-button="true" locale="en-gb"></VueCtkDateTimePicker>
+		<!-- Temporal -->
+		<TemporalPicker v-else-if="isTemporal" v-model="value" :type="type" :editable="editable"></TemporalPicker>
 		<!-- Bounding Box -->
 		<MapViewer v-else-if="type === 'bounding-box'" ref="bboxMap" :key="type" :id="fieldName + '_bbox'" :showAreaSelector="true" :editable="editable" :center="[0,0]" :zoom="1" class="areaSelector"></MapViewer>
 		<!-- GeoJSON -->
@@ -88,7 +81,7 @@
 			<button type="button" class="addBtn" v-if="editable" @click="addField()"><i class="fas fa-plus"></i> Add</button>
 		</div>
 		<!-- Output format options -->
-		<FileFormatOptionsEditor v-else-if="type === 'output-format-options' || type === 'input-format-options'" ref="fileFormatOptionsEditor" :dataType="type" :value="value" :format="this.context"></FileFormatOptionsEditor>
+		<FileFormatOptionsEditor v-else-if="type === 'output-format-options' || type === 'input-format-options'" ref="fileFormatOptionsEditor" :type="type" :value="value" :format="this.context"></FileFormatOptionsEditor>
 		<!-- Budget -->
 		<Budget v-else-if="type === 'budget'" v-model="value" :editable="editable" />
 		<!-- Multiline text / Textarea -->
@@ -109,11 +102,9 @@
 <script>
 import draggable from 'vuedraggable';
 
-import VueCtkDateTimePicker from 'vue-ctk-date-time-picker';
-import 'vue-ctk-date-time-picker/dist/vue-ctk-date-time-picker.css';
-
 import Budget from './datatypes/Budget.vue';
 import MapViewer from './MapViewer.vue';
+import TemporalPicker from './datatypes/TemporalPicker.vue';
 import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
 
 import { ProcessGraph } from '@openeo/js-processgraphs';
@@ -127,7 +118,7 @@ export default {
 		draggable,
 		Budget,
 		MapViewer,
-		VueCtkDateTimePicker,
+		TemporalPicker,
 		// Asynchronously load the following components to avoid circular references.
 		// See https://vuejs.org/v2/guide/components-edge-cases.html#Circular-References-Between-Components
 		FileFormatOptionsEditor: () => import('./datatypes/FileFormatOptionsEditor.vue'),
@@ -172,6 +163,9 @@ export default {
 				return this.schema.schema.isRef;
 			}
 			return this.schema.dataType();
+		},
+		isTemporal() {
+			return (this.type === 'date' || this.type === 'time' || this.type === 'date-time' || this.type === 'temporal-interval');
 		},
 		useTextarea() {
 			return (this.type === 'proj-definition' || this.type === 'commonmark');
@@ -279,18 +273,7 @@ export default {
 			this.emit('processParameterValueChanged', this.uid, this.processId, this.field, this.type, this.value, this.value, undefined);
 		},
 		initValue(v) {
-			if (this.type === 'temporal-interval') {
-				if (Array.isArray(v) && v.length >= 2) {
-					v = {
-						start: v[0],
-						end: v[1]
-					};
-				}
-				else if (!Utils.isObject(v) || !v.start || !v.end) {
-					v = null;
-				}
-			}
-			else if (this.type === 'geojson') {
+			if (this.type === 'geojson') {
 				if (!Utils.isObject(v) || !v.type) {
 					v = null;
 				}
@@ -346,9 +329,6 @@ export default {
 			}
 			else if (this.type === 'output-format-options' || this.type === 'input-format-options') {
 				return this.$refs.fileFormatOptionsEditor.getValue();
-			}
-			else if (this.type === 'temporal-interval') {
-				return [this.value.start, this.value.end];
 			}
 			else if (this.type === 'process-graph') {
 				var pg = this.$refs.callbackBuilder.makeCustomProcess();
@@ -486,12 +466,6 @@ export default {
 	}
 };
 </script>
-
-<style>
-.datepicker button {
-	margin: 0px;
-}
-</style>
 
 <style scoped>
 .arrayEditor, .objectEditor, .arrayEditor > div, .objectEditor > div {
