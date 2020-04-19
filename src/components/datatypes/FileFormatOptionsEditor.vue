@@ -1,5 +1,5 @@
 <template>
-	<div class="outputFormatOptionsEditor">
+	<div class="fileFormatOptionsEditor">
 		<template v-if="hasOptions">
 			<div class="fieldRow" v-for="(field, name) in parameters" :key="name">
 				<label class="fieldLabel">
@@ -12,7 +12,7 @@
 			</div>
 		</template>
 		<template v-else>
-			The selected output format has no further options.
+			The selected file format has no further options.
 		</template>
 	</div>
 </template>
@@ -24,7 +24,7 @@ import Field from '../blocks/field';
 import Description from '@openeo/vue-components/components/Description.vue';
 
 export default {
-	name: 'OutputFormatOptionsEditor',
+	name: 'FileFormatOptionsEditor',
 	components: {
 		Description,
 		ParameterFields
@@ -37,6 +37,9 @@ export default {
 		editable: {
 			type: Boolean,
 			default: true
+		},
+		dataType: {
+			type: String
 		}
 	},
 	data() {
@@ -46,12 +49,19 @@ export default {
 	},
 	computed: {
 		...Utils.mapState(['fileFormats']),
+		fileFormat() {
+			if (this.dataType === 'input-format-options') {
+				return this.fileFormats.getInputType(this.format);
+			}
+			else {
+				return this.fileFormats.getOutputType(this.format);
+			}
+		},
 		parameters() {
 			var fields = {};
-			var outputFormat = this.fileFormats.getOutputType(this.format);
 			// Convert to Fields
-			for (var name in outputFormat.parameters) {
-				var p = outputFormat.parameters[name];
+			for (var name in this.fileFormat.parameters) {
+				var p = this.fileFormat.parameters[name];
 				var schema = {};
 				if (typeof p.type !== 'undefined') {
 					schema.type = [p.type, "null"];
@@ -82,8 +92,7 @@ export default {
 			if (typeof this.format !== 'string') {
 				return false;
 			}
-			var outputFormat = this.fileFormats.getOutputType(this.format);
-			return Utils.isObject(outputFormat) && Utils.isObject(outputFormat.parameters) && Object.keys(outputFormat.parameters).length > 0;
+			return Utils.isObject(this.fileFormat) && Utils.isObject(this.fileFormat.parameters) && Object.keys(this.fileFormat.parameters).length > 0;
 		}
 	},
 	methods: {
@@ -104,7 +113,7 @@ export default {
 </script>
 
 <style scoped>
-.outputFormatOptionsEditor {
+.fileFormatOptionsEditor {
 	width: 100%;
 }
 </style>

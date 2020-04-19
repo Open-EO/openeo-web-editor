@@ -88,13 +88,9 @@
 			<button type="button" class="addBtn" v-if="editable" @click="addField()"><i class="fas fa-plus"></i> Add</button>
 		</div>
 		<!-- Output format options -->
-		<OutputFormatOptionsEditor v-else-if="type === 'output-format-options'" ref="outputFormatOptionsEditor" :value="value" :format="this.context"></OutputFormatOptionsEditor>
+		<FileFormatOptionsEditor v-else-if="type === 'output-format-options' || type === 'input-format-options'" ref="fileFormatOptionsEditor" :dataType="type" :value="value" :format="this.context"></FileFormatOptionsEditor>
 		<!-- Budget -->
-		<template v-else-if="type === 'budget'">
-			<input type="checkbox" v-model="hasBudget" value="1" />
-			<input type="number" min="0.00" step="0.01" :disabled="!hasBudget || !editable" :name="fieldName" v-model.number="value" />&nbsp;{{ capabilities.currency() }}
-			<!-- ToDo: Set max value of the input to the maximum budget available -->
-		</template>
+		<Budget v-else-if="type === 'budget'" v-model="value" :editable="editable" />
 		<!-- Multiline text / Textarea -->
 		<textarea class="fieldValue textarea" v-else-if="useTextarea" :name="fieldName" v-model="value" :disabled="!editable"></textarea>
 		<!-- Boolean -->
@@ -116,6 +112,7 @@ import draggable from 'vuedraggable';
 import VueCtkDateTimePicker from 'vue-ctk-date-time-picker';
 import 'vue-ctk-date-time-picker/dist/vue-ctk-date-time-picker.css';
 
+import Budget from './datatypes/Budget.vue';
 import MapViewer from './MapViewer.vue';
 import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
 
@@ -128,11 +125,12 @@ export default {
 	mixins: [EventBusMixin],
 	components: {
 		draggable,
+		Budget,
 		MapViewer,
 		VueCtkDateTimePicker,
 		// Asynchronously load the following components to avoid circular references.
 		// See https://vuejs.org/v2/guide/components-edge-cases.html#Circular-References-Between-Components
-		OutputFormatOptionsEditor: () => import('./datatypes/OutputFormatOptionsEditor.vue'),
+		FileFormatOptionsEditor: () => import('./datatypes/FileFormatOptionsEditor.vue'),
 		VisualEditor: () => import('./VisualEditor.vue'),
 		ParameterFields: () => import('./ParameterFields.vue')
 	},
@@ -158,7 +156,6 @@ export default {
 	data() {
 		return {
 			value: null,
-			hasBudget: false,
 			epsgCodes: [],
 			context: null
 		};
@@ -253,7 +250,7 @@ export default {
 				return;
 			}
 
-			if (type === 'output-format' && this.type === 'output-format-options') {
+			if ((type === 'output-format' && this.type === 'output-format-options') || (type === 'input-format' && this.type === 'input-format-options')) {
 				this.context = value;
 			}
 		},
@@ -312,9 +309,6 @@ export default {
 					v = defaultPlans[0].name;
 				}
 			}
-			else if (this.type === 'budget') {
-				this.hasBudget = typeof v === 'number';
-			}
 			else if (this.isArrayType) {
 				v = this.initArray(v);
 			}
@@ -350,8 +344,8 @@ export default {
 			else if (this.isResult) {
 				return {from_node: this.schema.schema.from_node};
 			}
-			else if (this.type === 'output-format-options') {
-				return this.$refs.outputFormatOptionsEditor.getValue();
+			else if (this.type === 'output-format-options' || this.type === 'input-format-options') {
+				return this.$refs.fileFormatOptionsEditor.getValue();
 			}
 			else if (this.type === 'temporal-interval') {
 				return [this.value.start, this.value.end];
@@ -397,7 +391,7 @@ export default {
 				}
 				return values;
 			}
-			else if (this.type === 'number' || this.type === 'budget') {
+			else if (this.type === 'number') {
 				return Number.isNaN(this.value) ? null : this.value;
 			}
 			else if (this.type === 'integer' || this.type === 'epsg-code') {
