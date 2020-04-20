@@ -14,40 +14,10 @@
 			</div>
 			<button type="button" v-if="isArrayType" @click="convertToArray()"><i class="fas fa-list"></i> Convert to array</button>
 		</template>
-		<!-- Enum -->
-		<select class="fieldValue" v-else-if="schema.isEnum()" :name="fieldName" v-model="value" ref="selectFirst" :disabled="!editable">
-			<option v-for="(choice, k) in schema.getEnumChoices()" :key="k" :value="choice">{{ choice }}</option>
-		</select>
-		<!-- Collection ID -->
-		<select class="fieldValue" v-else-if="type === 'collection-id'" :name="fieldName" v-model="value" ref="selectFirst" :disabled="!editable">
-			<option v-for="c in collections" :key="c.id" :value="c.id">{{ c.id }}</option>
-		</select>
-		<!-- Job ID -->
-		<select class="fieldValue" v-else-if="type === 'job-id'" :name="fieldName" v-model="value" ref="selectFirst" :disabled="!editable">
-			<option v-for="j in jobs" :key="j.id" :value="j.id">{{ j | resourceTitle }}</option>
-		</select>
-		<!-- EPSG Codes -->
-		<select class="fieldValue" v-else-if="type === 'epsg-code'" :name="fieldName" v-model="value" :disabled="!editable">
-			<option v-for="(name, code) in epsgCodes" :key="code" :value="code">{{ code }}: {{ name }}</option>
-		</select>
-		<!-- Input Format -->
-		<select class="fieldValue" v-else-if="type === 'input-format'" :name="fieldName" v-model="value" ref="selectFirst" :disabled="!editable">
-			<option v-for="(x, format) in fileFormats.getInputTypes()" :key="format" :value="format">{{ format }}</option>
-		</select>
-		<!-- Output Format -->
-		<select class="fieldValue" v-else-if="type === 'output-format'" :name="fieldName" v-model="value" ref="selectFirst" :disabled="!editable">
-			<option v-for="(x, format) in fileFormats.getOutputTypes()" :key="format" :value="format">{{ format }}</option>
-		</select>
-		<!-- Service Type -->
-		<select class="fieldValue" v-else-if="type === 'service-type'" :name="fieldName" v-model="value" ref="selectFirst" :disabled="!editable">
-			<option v-for="(x, type) in serviceTypes" :key="type" :value="type.toUpperCase()">{{ type.toUpperCase() }}</option>
-		</select>
-		<!-- Billing Plan -->
-		<select class="fieldValue" v-else-if="type === 'billing-plan'" :name="fieldName" v-model="value" ref="selectFirst" :disabled="!editable">
-			<option v-for="plan in capabilities.listPlans()" :key="plan.name" :value="plan.name">{{ plan.name }} ({{ plan.paid ? 'paid' : 'free' }})</option>
-		</select>
-		<!-- Temporal -->
-		<TemporalPicker v-else-if="isTemporal" v-model="value" :type="type" :editable="editable"></TemporalPicker>
+		<!-- Select Boxes (collection id, job id, epsg code, in/output format, service type, billing plan, enums) -->
+		<SelectBox v-else-if="isSelection" v-model="value" :key="type" :type="type" :editable="editable" :schema="schema"></SelectBox>
+		<!-- Temporal (date, time, date-time, temporal-interval) -->
+		<TemporalPicker v-else-if="isTemporal" v-model="value" :key="type" :type="type" :editable="editable"></TemporalPicker>
 		<!-- Bounding Box -->
 		<MapViewer v-else-if="type === 'bounding-box'" ref="bboxMap" :key="type" :id="fieldName + '_bbox'" :showAreaSelector="true" :editable="editable" :center="[0,0]" :zoom="1" class="areaSelector"></MapViewer>
 		<!-- GeoJSON -->
@@ -57,7 +27,7 @@
 			<VisualEditor ref="callbackBuilder" class="callbackEditor" id="inlinePgEditor" :editable="editable" :pgParameters="schema.getCallbackParameters()" :value="value" />
 		</div>
 		<!-- Object -->
-		<div v-else-if="type === 'object' || type === 'service-config'" class="objectEditor">
+		<div v-else-if="isObjectType" class="objectEditor">
 			<div class="objectElement" v-for="(propVal, propName) in value" :key="propName">
 				<input class= "fieldKey" :ref="propName" :value="propName" type="text" :name="fieldName" :disabled="!editable"/>
 				<ParameterFields :ref="propName" :editable="editable" :field="field" :useAny="true" :isObjectItem="true" :pass="propVal" />
@@ -101,13 +71,14 @@
 
 <script>
 import draggable from 'vuedraggable';
-
-import Budget from './datatypes/Budget.vue';
-import MapViewer from './MapViewer.vue';
-import TemporalPicker from './datatypes/TemporalPicker.vue';
+import { ProcessGraph } from '@openeo/js-processgraphs';
 import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
 
-import { ProcessGraph } from '@openeo/js-processgraphs';
+import Budget from './datatypes/Budget.vue';
+import SelectBox from './datatypes/SelectBox.vue';
+import TemporalPicker from './datatypes/TemporalPicker.vue';
+
+import MapViewer from './MapViewer.vue';
 import Field from './blocks/field.js';
 import Utils from '../utils.js';
 
@@ -118,6 +89,7 @@ export default {
 		draggable,
 		Budget,
 		MapViewer,
+		SelectBox,
 		TemporalPicker,
 		// Asynchronously load the following components to avoid circular references.
 		// See https://vuejs.org/v2/guide/components-edge-cases.html#Circular-References-Between-Components
@@ -147,14 +119,11 @@ export default {
 	data() {
 		return {
 			value: null,
-			epsgCodes: [],
 			context: null
 		};
 	},
 	computed: {
-		...Utils.mapState(['collections', 'fileFormats', 'serviceTypes']),
-		...Utils.mapGetters(['capabilities', 'processRegistry']),
-		...Utils.mapState('jobs', ['jobs']),
+		...Utils.mapGetters(['processRegistry']),
 		type() {
 			if (this.isItem) {
 				return this.schema.arrayOf();
@@ -170,6 +139,20 @@ export default {
 		useTextarea() {
 			return (this.type === 'proj-definition' || this.type === 'commonmark');
 		},
+		isSelection() {
+			switch(this.type) {
+				case 'collection-id':
+				case 'job-id':
+				case 'epsg-code':
+				case 'input-format':
+				case 'output-format':
+				case 'service-type':
+				case 'billing-plan':
+					return true;
+				default:
+					return this.schema.isEnum();
+			}
+		},
 		fieldName() {
 			return this.field.name + (Array.isArray(this.field.value) ? '[]' : '');
 		},
@@ -184,6 +167,9 @@ export default {
 		},
 		hasPgParameter() {
 			return Utils.isObject(this.value) && (this.value.from_parameter || this.refs.from_parameter.length > 0);
+		},
+		isObjectType() {
+			return this.checkObjectType(this.type);
 		},
 		isArrayType() {
 			return (this.type === 'array' || this.type === 'temporal-intervals');
@@ -210,7 +196,7 @@ export default {
 		},
 		type(newType, oldType) {
 			var refTypes = ['from_parameter', 'from_node'];
-			if (refTypes.includes(oldType) && newType === 'object') {
+			if (refTypes.includes(oldType) && this.checkObjectType(newType)) {
 				this.value = {};
 			}
 			else if (refTypes.includes(newType)) {
@@ -239,6 +225,9 @@ export default {
 		this.listen('processParameterTypeChanged', this.processParameterTypeChanged);
 	},
 	methods: {
+		checkObjectType(type) {
+			return (type === 'object' || type === 'service-config');
+		},
 		processParameterValueChanged(uid, processId, field, type, value, oldValue) {
 			if (this.uid !== uid) {
 				return;
@@ -261,14 +250,6 @@ export default {
 					this.$refs.bboxMap.areaSelect.setBounds(this.value);
 				}
 			}
-			else if (this.type === 'epsg-code') {
-				this.loadEpsgCodes();
-			}
-			if (this.$refs.selectFirst && this.$refs.selectFirst.selectedOptions.length === 0) {
-				this.$refs.selectFirst.selectedIndex = 0;
-				// selectedIndex doesn't fire a v-model change, so set the value manually.
-				this.value = this.$refs.selectFirst.value;
-			}
 			this.mounted = true;
 			this.emit('processParameterValueChanged', this.uid, this.processId, this.field, this.type, this.value, this.value, undefined);
 		},
@@ -278,28 +259,21 @@ export default {
 					v = null;
 				}
 			}
-			else if (this.type === 'output-format' || this.type === 'service-type') {
-				v = (typeof v === 'string' ? v.toUpperCase() : null);
-			}
 			else if (this.type === 'process-graph') {
 				if (!(v instanceof ProcessGraph)) {
 					v = null;
 				}
 			}
-			else if (this.type === 'billing-plan' && !v) {
-				var defaultPlans = this.capabilities.listPlans().filter(plan => plan.default);
-				if (!v && defaultPlans.length === 1) {
-					v = defaultPlans[0].name;
-				}
-			}
 			else if (this.isArrayType) {
 				v = this.initArray(v);
 			}
-			else if(this.type === 'object') {
-				if(v == null || Object.keys(v).length == 0)
+			else if(this.isObjectType) {
+				if(v == null || Object.keys(v).length == 0) {
 					return {};
-				else
+				}
+				else {
 					return v;
+				}
 			}
 			else if (this.useTextarea) {
 				if (typeof v === 'object') {
@@ -312,13 +286,6 @@ export default {
 				}
 			}
 			return v;
-		},
-		loadEpsgCodes() {
-			if (!this.epsgCodes.length) {
-				import('../assets/epsg.json').then(({default: json}) => {
-					this.epsgCodes = json;
-				});
-			}
 		},
 		getValue() {
 			if (this.isPgParameter) {
@@ -343,16 +310,23 @@ export default {
 			else if (this.type === 'geojson') {
 				return this.$refs.geojson.getGeoJson();
 			}
-			else if(this.type === 'object'){
-				for (let key in this.value){
-					if(this.value.hasOwnProperty(key)){
+			else if(this.isObjectType) {
+				for (let key in this.value) {
+					if(this.value.hasOwnProperty(key)) {
 						//check if output/callbackArg is selected in top selection box
 						let isResultVal = this.$refs[key].length == 1 && (this.$refs[key][0].value.from_node || this.$refs[key][0].value.from_parameter);
 						let inputType = this.$refs[key][0].value.from_node ? "from_node" : "from_parameter";
 						let newKey = isResultVal ? inputType : this.$refs[key][0].value;
-						let newValue = isResultVal ? this.$refs[key][0].value[inputType] : this.$refs[key][1].getValue();
-						if(newKey !== key)
+						let newValue;
+						if (isResultVal) {
+							newValue = this.$refs[key][0].value[inputType];
+						}
+						else {
+							newValue = this.$refs[key][1].getValue();
+						}
+						if(newKey !== key) {
 							delete this.value[key];
+						}
 						this.value[newKey] = newValue;
 					}
 				}
@@ -374,7 +348,7 @@ export default {
 			else if (this.type === 'number') {
 				return Number.isNaN(this.value) ? null : this.value;
 			}
-			else if (this.type === 'integer' || this.type === 'epsg-code') {
+			else if (this.type === 'integer') {
 				var num = Number.parseInt(this.value);
 				return Number.isNaN(num) ? null : num;
 			}
@@ -446,7 +420,10 @@ export default {
 			});
 			return false;
 		},
-		addFieldInObject(newPropName, number){
+		addFieldInObject(newPropName, number) {
+			if (!Utils.isObject(this.value)) {
+				this.value = {};
+			}
 			if(typeof this.value[newPropName + number] === 'undefined'){
 				this.$set(this.value, newPropName + number, "");
 				return false;

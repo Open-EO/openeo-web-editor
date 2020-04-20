@@ -6,7 +6,8 @@ const getDefaultState = () => {
 	return {
 		storedServers: JSON.parse(localStorage.getItem(serverStorage) || "[]"),
 		activeScript: null,
-		hightestModalZIndex: 1000
+		hightestModalZIndex: 1000,
+		epsgCodes: []
 	};
 };
 
@@ -17,7 +18,12 @@ export default {
 		scriptTitle: (state) => state.activeScript !== null ? Utils.getResourceTitle(state.activeScript, true) : ''
 	},
 	actions: {
-
+		async loadEpsgCodes(cx) {
+			if (cx.state.epsgCodes.length === 0) {
+				let res = await import('../assets/epsg.json');
+				cx.commit('epsgCodes', res.default);
+			}
+		},
 	},
 	mutations: {
 		openModal(state) {
@@ -38,6 +44,9 @@ export default {
 		},
 		setScript(state, obj) {
 			state.activeScript = obj;
+		},
+		epsgCodes(state, epsgCodes) {
+			state.epsgCodes = epsgCodes;
 		},
 		reset(state) {
 			Object.assign(state, getDefaultState());
