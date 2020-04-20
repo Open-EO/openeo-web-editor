@@ -32,26 +32,26 @@
 				<Editor :process="service.process" :editable="false" class="infoViewer" id="servicePgViewer" />
 			</section>
 
-			<section class="vue-component parameters" v-if="hasParameters">
-				<h3>Parameters</h3>
+			<section class="vue-component parameters" v-if="hasConfig">
+				<h3>Configuration</h3>
 
-				<div class="tabular" v-for="(value, key) in service.parameters" :key="key">
+				<div class="tabular" v-for="(value, key) in service.configuration" :key="key">
 					<label>{{ key }}:</label>
 					<div class="value">
-						<ObjectTree v-if="typeof formattedValue === 'object'" :data="value" />
-						<template v-else>{{ formattedValue }}</template>
+						<ObjectTree v-if="typeof value === 'object'" :data="value" />
+						<template v-else>{{ value }}</template>
 					</div>
 				</div>
 			</section>
 
 			<section class="vue-component attributes" v-if="hasAttributes">
-				<h3>Attributes</h3>
+				<h3>Properties</h3>
 
 				<div class="tabular" v-for="(value, key) in service.attributes" :key="key">
 					<label>{{ key }}:</label>
 					<div class="value">
-						<ObjectTree v-if="typeof formattedValue === 'object'" :data="value" />
-						<template v-else>{{ formattedValue }}</template>
+						<ObjectTree v-if="typeof value === 'object'" :data="value" />
+						<template v-else>{{ value }}</template>
 					</div>
 				</div>
 			</section>
@@ -79,8 +79,8 @@ export default {
 		hasAttributes() {
 			return Utils.size(this.service.attributes) > 0;
 		},
-		hasParameters() {
-			return Utils.size(this.service.parameters) > 0;
+		hasConfig() {
+			return Utils.size(this.service.configuration) > 0;
 		},
 		submitted() {
 			return Utils.formatDateTime(this.service.submitted);
