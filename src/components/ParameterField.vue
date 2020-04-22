@@ -143,6 +143,8 @@ export default {
 			switch(this.type) {
 				case 'collection-id':
 				case 'job-id':
+				case 'file-path':
+				case 'file-paths':
 				case 'epsg-code':
 				case 'input-format':
 				case 'output-format':
@@ -193,6 +195,7 @@ export default {
 	watch: {
 		pass() {
 			this.value = this.initValue(this.pass);
+			this.$nextTick(this.initView);
 		},
 		type(newType, oldType) {
 			var refTypes = ['from_parameter', 'from_node'];
@@ -205,10 +208,6 @@ export default {
 				value[s.isRef] = s[s.isRef];
 				this.value = value;
 			}
-		},
-		schema() {
-			this.value = this.initValue(this.value);
-			this.$nextTick(this.initView);
 		},
 		value(newVal, oldVal) {
 			if (this.mounted && this.uid) {

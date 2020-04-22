@@ -121,11 +121,38 @@ export default {
 		return VueUtils.compareStringCaseInsensitive(a.id, b.id);
 	},
 
+	// Based on https://github.com/hughsk/path-sort
+	sortByPath(a, b) {
+		a = a.split('/');
+		b = b.split('/');
+		var l = Math.max(a.length, b.length);
+		for (var i = 0; i < l; i += 1) {
+			if (!(i in a)) {
+				return -1;
+			}
+			else if (!(i in b)) {
+				return 1;
+			}
+			else if (a[i].toUpperCase() > b[i].toUpperCase()) {
+				return 1;
+			}
+			else if (a[i].toUpperCase() < b[i].toUpperCase()) {
+				return -1;
+			}
+		}
+		if (a.length < b.length) {
+			return -1;
+		}
+		else if (a.length > b.length) {
+			return 1;
+		}
+		return 0;
+	},
+
 	getUniqueId() {
 		return Math.random().toString(36).substr(2, 9);
 	},
 
-	
 	getResourceTitle(obj, showType = false) {
 		let title = '';
 		if (showType) {

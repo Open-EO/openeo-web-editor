@@ -1,14 +1,14 @@
 <template>
 	<div class="fieldContainer" v-if="selectedType !== null">
 		<div class="dataTypeChooser" v-if="allowedSchemas.length > 1">
-			<select name="dataType" v-model="selectedType" :disabled="!editable">
+			<select name="dataType" v-model="selectedType" @input="onTypeChange" :disabled="!editable">
 				<option v-for="(schema, type) in allowedSchemas" :key="type" :value="type">{{ schema.title() }}</option>
 			</select>
 		</div>
 		<div v-if="allowedSchemas[selectedType].description()" class="description">
 			<i class="fas fa-info-circle"></i> {{ allowedSchemas[selectedType].description() }}
 		</div>
-		<ParameterField ref="field" :uid="uid" :editable="editable" :field="field" :schema="selectedSchema" :pass="pass" :processId="processId" :isObjectItem="isObjectItem" />
+		<ParameterField ref="field" :uid="uid" :editable="editable" :field="field" :schema="selectedSchema" :pass="value" :processId="processId" :isObjectItem="isObjectItem" />
 	</div>
 </template>
 
@@ -43,10 +43,10 @@ const SUPPORTED_TYPES = new ProcessSchema([
 		{type: 'string', subtype: 'job-id', title: 'Batch Job'},
 	//	{type: 'array', subtype: 'kernel', title: 'Kernel'},
 		{type: 'object', subtype: 'process-graph', title: 'Custom Process'},
-	//	{type: 'string', subtype: 'uri', format: 'uri', title: 'URI / URL'},
+		{type: 'string', subtype: 'uri', format: 'uri', title: 'URI / URL'},
 
-	//	{type: 'array', subtype: 'file-path', title: 'File path'},
-	//	{type: 'array', subtype: 'file-paths', title: 'File paths (multiple)'},
+		{type: 'array', subtype: 'file-path', title: 'File path'},
+		{type: 'array', subtype: 'file-paths', title: 'File paths (multiple)'},
 
 	//	{type: 'string', subtype: 'udf-code', title: 'UDF Source Code'},
 	//	{type: 'string', subtype: 'udf-runtime', title: 'UDF Runtime'},
@@ -91,6 +91,7 @@ export default {
 	},
 	data() {
 		return {
+			value: this.pass,
 			selectedType: null,
 			jsonSchemaValidator: new JsonSchemaValidator()
 		};
@@ -179,6 +180,10 @@ export default {
 		}
 	},
 	methods: {
+		// ToDo: To be removed (with select-listener above) once v-model is fully implemented
+		onTypeChange() {
+			this.value = this.getValue();
+		},
 		setSelectedType(type) {
 			this.selectedType = String(type);
 		},

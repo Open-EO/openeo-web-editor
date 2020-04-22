@@ -1,10 +1,11 @@
 <template>
-	<MultiSelect v-model="selected" :key="type" ref="htmlElement" label="label" track-by="id" :options="selectOptions" :allowEmpty="false" :preselectFirst="true" :disabled="!editable" deselectLabel=""></MultiSelect>
+	<MultiSelect v-model="selected" :key="type" ref="htmlElement" label="label" track-by="id" :multiple="multiple" :options="selectOptions" :allowEmpty="false" :preselectFirst="preselect" :disabled="!editable" :deselectLabel="deselectLabel"></MultiSelect>
 </template>
 
 <script>
 import MultiSelect from 'vue-multiselect'
 import Utils from '../../utils';
+import { Utils as VueUtils } from '@openeo/vue-components';
 
 export default {
 	name: 'SelectBox',
@@ -39,6 +40,10 @@ export default {
 				case 'job-id':
 					state = this.$store.state.jobs.jobs;
 					break;
+				case 'file-path':
+				case 'file-paths':
+					state = this.$store.state.files.files;
+					break;
 				case 'epsg-code':
 					state = this.$store.state.editor.epsgCodes;
 					break;
@@ -68,6 +73,12 @@ export default {
 						id: j.id,
 						label: Utils.getResourceTitle(j)
 					})).sort(this.sortByLabel);
+				case 'file-path':
+				case 'file-paths':
+					return state.map(f => ({
+						id: f.path,
+						label: f.path
+					})).sort((a, b) => Utils.sortByPath(a.id, b.id));
 				case 'epsg-code':
 					for(let key in state) {
 						data.push({
@@ -108,6 +119,20 @@ export default {
 						return this.options;
 					}
 			}
+		},
+		deselectLabel() {
+			return this.multiple ? 'Press enter to remove' : '';
+		},
+		multiple() {
+			return (this.type === 'file-paths');
+		},
+		preselect() {
+			if (this.multiple) {
+				return (!Array.isArray(this.selected) || this.selected.length === 0);
+			}
+			else {
+				return (this.selected === null);
+			}
 		}
 	},
 	data() {
@@ -115,7 +140,7 @@ export default {
 			selected: null
 		};
 	},
-	mounted() {
+	created() {
 		this.loadData();
 	},
 	watch: {
@@ -124,15 +149,23 @@ export default {
 		},
 		selected(newValue) {
 			let value;
-			switch(this.type) {
-				case 'epsg-code':
-					var num = Number.parseInt(newValue.id);
-					value = Number.isNaN(num) ? null : num;
-					break;
-				default:
-					value = newValue.id;
+			if (this.multiple) {
+				if (!Array.isArray(newValue)) {
+					newValue = [newValue];
+				}
+				value = newValue.map(v => v.id);
 			}
-      		this.$emit('input', value);
+			else {
+				switch(this.type) {
+					case 'epsg-code':
+						var num = Number.parseInt(newValue.id);
+						value = Number.isNaN(num) ? null : num;
+						break;
+					default:
+						value = newValue.id;
+				}
+			}
+			this.$emit('input', value);
 		}
 	},
 	methods: {
@@ -141,7 +174,9 @@ export default {
 			if (this.type === 'epsg-code') {
 				await this.loadEpsgCodes();
 				this.setSelected();
-				this.preselectFirst();
+				if (this.preselect) {
+					this.preselectFirst();
+				}
 			}
 			else {
 				this.setSelected();
@@ -159,7 +194,10 @@ export default {
 		},
 		setSelected() {
 			let value = this.value;
-			if (typeof value === 'string') {
+			if (this.multiple && Array.isArray(value)) {
+				this.selected = this.selectOptions.filter(o => value.includes(o.id));
+			}
+			else if (typeof value === 'string') {
 				switch(this.type) {
 					case 'input-format':
 					case 'output-format':
@@ -167,14 +205,14 @@ export default {
 						value = value.toUpperCase();
 						break;
 				}
-			}
-			let selectedOptions = this.selectOptions.filter(o => o.id === value);
-			if (selectedOptions.length > 0) {
-				this.selected = selectedOptions[0];
+				let selectedOptions = this.selectOptions.filter(o => o.id === value);
+				if (selectedOptions.length > 0) {
+					this.selected = selectedOptions[0];
+				}
 			}
 		},
 		sortByLabel(a,b) {
-			return a.label.localeCompare(b.label);
+			return VueUtils.compareStringCaseInsensitive(a.label, b.label);
 		}
 	}
 }
