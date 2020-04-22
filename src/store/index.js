@@ -104,7 +104,7 @@ export default new Vuex.Store({
 			}
 
 			// Request processes
-			if (capabilities.hasFeature('listProcesses') ) {
+			if (capabilities.hasFeature('listProcesses')) {
 				promises.push(cx.state.connection.listProcesses()
 					.then(response => cx.commit('predefinedProcesses', response))
 					.catch(error => cx.commit('addDiscoveryError', error)));
@@ -114,7 +114,7 @@ export default new Vuex.Store({
 			}
 
 			// Request custom processes
-			if (capabilities.hasFeature('listUserProcesses') ) {
+			if (capabilities.hasFeature('listUserProcesses') && cx.state.connection.isAuthenticated()) {
 				promises.push(cx.dispatch('userProcesses/list')
 					.catch(error => cx.commit('addDiscoveryError', error)));
 			}

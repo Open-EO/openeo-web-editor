@@ -1,6 +1,7 @@
 
 import Config from '../config';
 import { Utils as CommonUtils } from '@openeo/js-commons';
+import { Utils as VueUtils } from '@openeo/vue-components';
 import { Job, Service, UserProcess } from '@openeo/js-client';
 import { mapState, mapActions, mapMutations, mapGetters } from 'vuex';
 
@@ -117,7 +118,7 @@ export default {
 	},
 
 	sortById(a, b) {
-		return a.id.localeCompare(b.id);
+		return VueUtils.compareStringCaseInsensitive(a.id, b.id);
 	},
 
 	getUniqueId() {
