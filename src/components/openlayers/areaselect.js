@@ -1,8 +1,10 @@
 import { Control } from 'ol/control.js';
 import { fromLonLat, toLonLat } from 'ol/proj';
+import Utils from '../../utils.js';
 
 export default class AreaSelect {
 
+	// ToDo: Support CRS for bbox objects, currently assumes WGS84 always
 	constructor(map, editable = true, width = null, height = null) {
         this.map = map;
         var size = this.map.getSize();
@@ -10,12 +12,17 @@ export default class AreaSelect {
         this.height = height || (size[1] > 0 ? size[1] * 0.7 : 200);
         this.moving = false;
         this.editable = editable;
+        this.interactionListener = null;
 		this.createElements();
 		this.addControls();
 		this.render();
-	}
+    }
     
-    getBounds() {
+    setInteractionListener(listener) {
+        this.interactionListener = listener;
+    }
+    
+    getBounds(asArray = false) {
         var size = this.map.getSize();
         var topRight = [0,0];
         var bottomLeft = [0,0];
@@ -25,16 +32,27 @@ export default class AreaSelect {
         bottomLeft[1] = size[1] - topRight[1];
         
         var sw = toLonLat(this.map.getCoordinateFromPixel(bottomLeft));
-		var ne = toLonLat(this.map.getCoordinateFromPixel(topRight));
-		return {
-			west: sw[0],
-			south: sw[1],
-			east: ne[0],
-			north: ne[1]
-        };
+        var ne = toLonLat(this.map.getCoordinateFromPixel(topRight));
+        if (asArray) {
+            return sw.concat(ne);
+        }
+        else {
+            return {
+                west: sw[0],
+                south: sw[1],
+                east: ne[0],
+                north: ne[1]
+            };
+        }
 	}
     
     setBounds(bounds) {
+        if (!bounds) {
+            return;
+        }
+        else if (Array.isArray(bounds)) {
+            bounds = Utils.extentToBBox(bounds);
+        }
         var ws = fromLonLat([bounds.west, bounds.south]);
         var en = fromLonLat([bounds.east, bounds.north]);
         var fitOptions = {
@@ -114,6 +132,9 @@ export default class AreaSelect {
             mapElem.removeEventListener("mousemove", onMouseMove);
             htmlElem.removeEventListener("mouseup", onMouseUp);
 			this.moving = false;
+            if (typeof this.interactionListener === 'function') {
+                this.interactionListener();
+            }
 		};
 
         handle.addEventListener("mousedown", (event) => {

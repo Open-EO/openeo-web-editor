@@ -19,9 +19,9 @@
 		<!-- Temporal (date, time, date-time, temporal-interval) -->
 		<TemporalPicker v-else-if="isTemporal" v-model="value" :key="type" :type="type" :editable="editable"></TemporalPicker>
 		<!-- Bounding Box -->
-		<MapViewer v-else-if="type === 'bounding-box'" ref="bboxMap" :key="type" :id="fieldName + '_bbox'" :showAreaSelector="true" :editable="editable" :center="[0,0]" :zoom="1" class="areaSelector"></MapViewer>
+		<MapAreaSelect v-else-if="type === 'bounding-box'" v-model="value" :key="type" :id="fieldName + '_bbox'" :editable="editable" class="areaSelector"></MapAreaSelect>
 		<!-- GeoJSON -->
-		<MapViewer v-else-if="type === 'geojson'" ref="geojson" :key="type" :id="fieldName + '_geojson'" :showGeoJson="value || true" :editable="editable" :center="[0,0]" :zoom="1" class="geoJsonEditor"></MapViewer>
+		<MapGeoJsonEditor v-else-if="type === 'geojson'" v-model="value" :key="type" :id="fieldName + '_geojson'" :editable="editable" class="geoJsonEditor"></MapGeoJsonEditor>
 		<!-- Process Editor -->
 		<div v-else-if="type === 'process-graph'" class="border">
 			<VisualEditor ref="callbackBuilder" class="callbackEditor" id="inlinePgEditor" :editable="editable" :pgParameters="schema.getCallbackParameters()" :value="value" />
@@ -77,8 +77,9 @@ import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
 import Budget from './datatypes/Budget.vue';
 import SelectBox from './datatypes/SelectBox.vue';
 import TemporalPicker from './datatypes/TemporalPicker.vue';
+import MapAreaSelect from './datatypes/MapAreaSelect.vue';
+import MapGeoJsonEditor from './datatypes/MapGeoJsonEditor.vue';
 
-import MapViewer from './MapViewer.vue';
 import Field from './blocks/field.js';
 import Utils from '../utils.js';
 
@@ -88,7 +89,8 @@ export default {
 	components: {
 		draggable,
 		Budget,
-		MapViewer,
+		MapAreaSelect,
+		MapGeoJsonEditor,
 		SelectBox,
 		TemporalPicker,
 		// Asynchronously load the following components to avoid circular references.
@@ -244,21 +246,11 @@ export default {
 			// Nothing to do yet
 		},
 		initView() {
-			if (this.type === 'bounding-box') {
-				if (Utils.isObject(this.value) && Object.keys(this.value).length >= 4) {
-					this.$refs.bboxMap.areaSelect.setBounds(this.value);
-				}
-			}
 			this.mounted = true;
 			this.emit('processParameterValueChanged', this.uid, this.processId, this.field, this.type, this.value, this.value, undefined);
 		},
 		initValue(v) {
-			if (this.type === 'geojson') {
-				if (!Utils.isObject(v) || !v.type) {
-					v = null;
-				}
-			}
-			else if (this.type === 'process-graph') {
+			if (this.type === 'process-graph') {
 				if (!(v instanceof ProcessGraph)) {
 					v = null;
 				}
@@ -302,12 +294,6 @@ export default {
 				obj.setParent(this.processId, this.field.name);
 				obj.parse();
 				return obj;
-			}
-			else if (this.type === 'bounding-box') {
-				return this.$refs.bboxMap.areaSelect.getBounds();
-			}
-			else if (this.type === 'geojson') {
-				return this.$refs.geojson.getGeoJson();
 			}
 			else if(this.isObjectType) {
 				for (let key in this.value) {

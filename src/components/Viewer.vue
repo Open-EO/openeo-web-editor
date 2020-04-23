@@ -3,7 +3,7 @@
 		<template #default="{ tabs }">
 			<Tab id="mapView" name="Map" icon="fa-map" :selected="true">
 				<template #default="{ tab }">
-					<MapViewer id="mapCanvas" ref="mapViewer" :show="tab.active" />
+					<MapViewer id="mapCanvas" ref="mapViewer" :show="tab.active" :center="[50.1725, 9.15]" :zoom="6" />
 				</template>
 			</Tab>
 		</template>

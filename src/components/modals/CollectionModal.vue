@@ -4,7 +4,7 @@
 			<div class="docgen">
 				<Collection :collectionData="collection" :version="version">
 					<template slot="collection-spatial-extent">
-						<MapViewer id="collectionMap" :show="showMap" :showExtent="bbox"></MapViewer>
+						<MapViewer id="collectionMap" :show="showMap" :extent="bbox"></MapViewer>
 					</template>
 				</Collection>
 			</div>

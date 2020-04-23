@@ -117,6 +117,49 @@ export default {
 		};
 	},
 
+	// A very rough GeoJSON validation if no GeoJSON schema is available.
+	validateGeoJsonSimple(data) {
+		if (!this.isObject(data)) {
+			return false;
+		}
+		else if (typeof data.type !== 'string') {
+			return false;
+		}
+
+		switch(data.type) {
+			case "Point":
+			case "MultiPoint":
+			case "LineString":
+			case "MultiLineString":
+			case "Polygon":
+			case "MultiPolygon":
+				if (!Array.isArray(data.coordinates)) {
+					return false;
+				}
+				return true;
+			case "GeometryCollection":
+				if (!Array.isArray(data.geometries)) {
+					return false;
+				}
+				return true;
+			case "Feature":
+				if (data.geometry !== null && !Utils.isObject(data.geometry)) {
+					return false;
+				}
+				if (data.properties !== null && !Utils.isObject(data.properties)) {
+					return false;
+				}
+				return true;
+			case "FeatureCollection":
+				if (!Array.isArray(data.features)) {
+					return false;
+				}
+				return true;
+			default:
+				return false;
+		}
+	},
+
 	sortById(a, b) {
 		return VueUtils.compareStringCaseInsensitive(a.id, b.id);
 	},

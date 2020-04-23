@@ -1,7 +1,7 @@
 import Field from './field.js';
 import EventBus from '@openeo/vue-components/eventbus.js';
 import VueUtils from '@openeo/vue-components/utils.js';
-import { JsonSchemaValidator, ProcessGraph } from '@openeo/js-processgraphs';
+import { ProcessGraph } from '@openeo/js-processgraphs';
 import Utils from '../../utils.js';
 
 /**
@@ -55,8 +55,6 @@ var Block = function(blocks, name, type, schema, id)
     this.fields = {};
     this._createOutputField();
     this._createInputFields();
-
-    this.jsonSchemaValidator = null;
 };
 
 Block.prototype._createOutputField = function() {
@@ -269,14 +267,9 @@ Block.prototype.formatObject = function(value, html = true) {
     else if (typeof value.west !== 'undefined' && typeof value.east !== 'undefined' && typeof value.south !== 'undefined' && typeof value.north !== 'undefined') {
         return 'Bounding Box';
     }
-
-    try {
-        if (this.jsonSchemaValidator === null) {
-            this.jsonSchemaValidator = new JsonSchemaValidator();
-        }
-        this.jsonSchemaValidator.validateGeoJsonSimple(value);
+    else if (Utils.validateGeoJsonSimple(value)) {
         return value.type;
-    } catch (e) {}
+    }
 
     // Fallback to default
     return html ? '<span title="' + VueUtils.htmlentities(JSON.stringify(value)) + '">Object</span>' : 'Object';
