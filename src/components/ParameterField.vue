@@ -197,7 +197,7 @@ export default {
 	watch: {
 		pass() {
 			this.value = this.initValue(this.pass);
-			this.$nextTick(this.initView);
+			this.initView();
 		},
 		type(newType, oldType) {
 			var refTypes = ['from_parameter', 'from_node'];
@@ -221,7 +221,7 @@ export default {
 		this.value = this.initValue(this.pass);
 	},
 	mounted() {
-		this.$nextTick(this.initView);
+		this.initView();
 		this.listen('processParameterValueChanged', this.processParameterValueChanged);
 		this.listen('processParameterTypeChanged', this.processParameterTypeChanged);
 	},
@@ -246,8 +246,10 @@ export default {
 			// Nothing to do yet
 		},
 		initView() {
-			this.mounted = true;
-			this.emit('processParameterValueChanged', this.uid, this.processId, this.field, this.type, this.value, this.value, undefined);
+			this.$nextTick(() => {
+				this.mounted = true;
+				this.emit('processParameterValueChanged', this.uid, this.processId, this.field, this.type, this.value, this.value, undefined);
+			});
 		},
 		initValue(v) {
 			if (this.type === 'process-graph') {
