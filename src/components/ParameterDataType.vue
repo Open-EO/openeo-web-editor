@@ -30,7 +30,7 @@
 		<div v-else-if="isObjectType" class="objectEditor">
 			<div class="objectElement" v-for="(propVal, propName) in value" :key="propName">
 				<input class= "fieldKey" :ref="propName" :value="propName" type="text" :name="fieldName" :disabled="!editable"/>
-				<ParameterFields :ref="propName" :editable="editable" :field="field" :useAny="true" :isObjectItem="true" :pass="propVal" />
+				<ParameterDataTypes :ref="propName" :editable="editable" :spec="field" :useAny="true" :isObjectItem="true" :pass="propVal" />
 				<button v-if="editable" class="arrayElementDelete" type="button" @click="removeFieldInObject(propName)"><i class="fas fa-trash"></i></button>
 			</div>
 			<button type="button" class="addBtn" v-if="editable" @click="addFieldInObject('unnamed', 1)"><i class="fas fa-plus"></i> Add</button>
@@ -42,7 +42,7 @@
 			<draggable v-model="value" handle=".mover">
 				<transition-group name="arrayElements">
 					<div class="fieldValue arrayElement" v-for="(e, k) in value" :key="e.id">
-						<ParameterField :ref="e.id" :editable="editable" :field="field" :schema="schema" :pass="e.value" :isItem="true" />
+						<ParameterDataType :ref="e.id" :editable="editable" :field="field" :schema="schema" :pass="e.value" :isItem="true" />
 						<button v-if="editable" class="arrayElementDelete" type="button" @click="removeField(k)"><i class="fas fa-trash"></i></button>
 						<div class="mover" v-if="editable"><i class="fas fa-arrows-alt"></i></div>
 					</div>
@@ -80,11 +80,10 @@ import TemporalPicker from './datatypes/TemporalPicker.vue';
 import MapAreaSelect from './datatypes/MapAreaSelect.vue';
 import MapGeoJsonEditor from './datatypes/MapGeoJsonEditor.vue';
 
-import Field from './blocks/field.js';
 import Utils from '../utils.js';
 
 export default {
-	name: 'ParameterField',
+	name: 'ParameterDataType',
 	mixins: [EventBusMixin],
 	components: {
 		draggable,
@@ -97,10 +96,10 @@ export default {
 		// See https://vuejs.org/v2/guide/components-edge-cases.html#Circular-References-Between-Components
 		FileFormatOptionsEditor: () => import('./datatypes/FileFormatOptionsEditor.vue'),
 		VisualEditor: () => import('./VisualEditor.vue'),
-		ParameterFields: () => import('./ParameterFields.vue')
+		ParameterDataTypes: () => import('./ParameterDataTypes.vue')
 	},
 	props: {
-		field: Object,
+		parameter: Object,
 		editable: {
 			type: Boolean,
 			default: true
@@ -130,9 +129,10 @@ export default {
 			if (this.isItem) {
 				return this.schema.arrayOf();
 			}
-			else if (this.schema.schema.isRef) {
-				return this.schema.schema.isRef;
-			}
+// ToDo
+/*			else if (this.schema.isRef) {
+				return this.schema.isRef;
+			} */
 			return this.schema.dataType();
 		},
 		isTemporal() {
@@ -158,7 +158,7 @@ export default {
 			}
 		},
 		fieldName() {
-			return this.field.name + (Array.isArray(this.field.value) ? '[]' : '');
+			return this.parameter.name + (Array.isArray(this.parameter.value) ? '[]' : '');
 		},
 		isResult() {
 			return Utils.isObject(this.value) && this.value.from_node && Object.keys(this.value).length == 1 && (this.type !== "object" || this.isObjectItem);
@@ -191,7 +191,7 @@ export default {
 			return ""; // Empty seems to be the default for the input element
 		},
 		refs() {
-			return this.field.getRefs();
+			return this.parameter.getRefs();
 		}
 	},
 	watch: {
@@ -204,16 +204,17 @@ export default {
 			if (refTypes.includes(oldType) && this.checkObjectType(newType)) {
 				this.value = {};
 			}
-			else if (refTypes.includes(newType)) {
-				var s = this.schema.schema;
+// ToDo
+/*			else if (refTypes.includes(newType)) {
+				var s = this.schema.schema
 				var value = {};
 				value[s.isRef] = s[s.isRef];
 				this.value = value;
-			}
+			} */
 		},
 		value(newVal, oldVal) {
 			if (this.mounted && this.uid) {
-				this.emit('processParameterValueChanged', this.uid, this.processId, this.field, this.type, newVal, oldVal);
+				this.emit('processParameterValueChanged', this.uid, this.processId, this.parameter, this.type, newVal, oldVal);
 			}
 		}
 	},
@@ -248,7 +249,7 @@ export default {
 		initView() {
 			this.$nextTick(() => {
 				this.mounted = true;
-				this.emit('processParameterValueChanged', this.uid, this.processId, this.field, this.type, this.value, this.value, undefined);
+				this.emit('processParameterValueChanged', this.uid, this.processId, this.parameter, this.type, this.value, this.value, undefined);
 			});
 		},
 		initValue(v) {
@@ -293,7 +294,7 @@ export default {
 			else if (this.type === 'process-graph') {
 				var pg = this.$refs.callbackBuilder.makeCustomProcess();
 				var obj = new ProcessGraph(pg, this.processRegistry);
-				obj.setParent(this.processId, this.field.name);
+				obj.setParent(this.processId, this.parameter.name);
 				obj.parse();
 				return obj;
 			}

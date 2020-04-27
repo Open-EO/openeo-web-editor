@@ -97,8 +97,8 @@ export default {
 		...Utils.mapGetters('userProcesses', {getProcessById: 'getAllById'})
 	},
 	mounted() {
-		this.listen('showCollectionInfo', this.showCollectionInfo);
-		this.listen('showProcessInfoById', this.showProcessInfoById);
+		this.listen('blocks.showCollection', this.showCollectionInfo);
+		this.listen('blocks.showProcess', this.showProcessInfoById);
 		this.listen('showJobInfo', this.showJobInfo);
 		this.listen('showProcessInfo', this.showProcessInfo);
 		this.listen('showServiceInfo', this.showServiceInfo);
@@ -206,9 +206,7 @@ export default {
 
 		showCollectionInfo(id) {
 			this.connection.describeCollection(id)
-				.then(info => {
-					this.$refs.collectionModal.show(info, this.apiVersion);
-				})
+				.then(info => this.$refs.collectionModal.show(info, this.apiVersion))
 				.catch(error => Utils.error(this, "Sorry, can't load collection details for " + id + "."));
 		},
 

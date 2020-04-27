@@ -4,9 +4,7 @@ import { Utils as VueUtils } from '@openeo/vue-components';
 class ProcessSchema {
 	
 	constructor(schema) {
-		this.schemas = JsonSchemaValidator.convertSchemaToArray(schema).map(s => new ProcessSubSchema(s));
-
-		// ToDO: Cache data?
+		this.schemas = JsonSchemaValidator.convertSchemaToArray(schema).map(s => new ProcessDataType(s));
 	}
 
 	toJSON() {
@@ -20,6 +18,10 @@ class ProcessSchema {
 	is(type) {
 		var types = this.dataTypes();
 		return (types.length === 1 && types[0] === type);
+	}
+
+	nativeDataType() {
+		return this.dataType(true);
 	}
 
 	dataType(native = false) {
@@ -36,6 +38,14 @@ class ProcessSchema {
 		}
 	}
 
+	isArrayType() {
+		return this.nativeDataType() === 'array';
+	}
+
+	isObjectType() {
+		return this.nativeDataType() === 'object';
+	}
+
 	dataTypes(includeNull = false, native = false) {
 		var types = this.schemas.map(s => s.dataType(native));
 		types = types.filter((v, i, a) => a.indexOf(v) === i); // Return each type only once
@@ -49,9 +59,24 @@ class ProcessSchema {
 		return this.schemas.filter(s => s.isNull()).length > 0;
 	}
 
+	allowsMultipleInputs() {
+		// Is there any type that potentially allows multiple inputs?
+		return this.dataTypes().filter(t => MULTI_INPUT_TYPES.includes(t)).length > 0;
+	}
+
 }
 
-class ProcessSubSchema {
+class ProcessParameter extends ProcessSchema {
+
+	constructor(parameter) {
+		super(parameter.schema || {});
+
+		Object.assign(this, parameter);
+	}
+
+}
+
+class ProcessDataType {
 	
 	constructor(schema) {
 		this.schema = schema;
@@ -120,6 +145,7 @@ class ProcessSubSchema {
 }
 
 export {
+	ProcessDataType,
 	ProcessSchema,
-	ProcessSubSchema
+	ProcessParameter
 };

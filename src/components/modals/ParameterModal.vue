@@ -3,14 +3,14 @@
 		<template #main>
 			<p v-if="editableFields.length === 0">No editable parameters available.</p>
 			<form v-else id="parameterModal" @submit.prevent="save">
-				<div class="fieldRow" v-for="(field, k) in editableFields" :key="k">
-					<label :class="{ fieldLabel: true, highlight: field.name === selectFieldName }">
-						{{ field.label }}<strong class="required" v-if="field.isRequired" title="required">*</strong>
-						<div v-if="field.description" class="description">
-							<Description :description="field.description" />
+				<div class="fieldRow" v-for="(param, k) in editableFields" :key="k">
+					<label :class="{ fieldLabel: true, highlight: param.name === selectFieldName }">
+						{{ displayLabel(param) }}<strong class="required" v-if="!param.optional" title="required">*</strong>
+						<div v-if="param.description" class="description">
+							<Description :description="param.description" />
 						</div>
 					</label>
-					<ParameterFields :uid="uid" :ref="field.name" :editable="editable" :field="field" :pass="field.getValue()" :processId="processId" />
+					<ParameterDataTypes :uid="uid" :ref="param.name" :editable="editable" :spec="param" :pass="param.value" :processId="processId" />
 				</div>
 				<!-- We need a hidden submit button in the form tags to allow submiting the form via keyboard (enter key) -->
 				<button type="submit" style="display:none"></button>
@@ -28,14 +28,15 @@
 import Utils from '../../utils';
 import Modal from './Modal.vue';
 import Description from '@openeo/vue-components/components/Description.vue';
-import ParameterFields from '../ParameterFields.vue';
+import ParameterDataTypes from '../ParameterDataTypes.vue';
+import { Utils as VueUtils } from '@openeo/vue-components';
 
 export default {
 	name: 'ParameterModal',
 	components: {
 		Modal,
 		Description,
-		ParameterFields
+		ParameterDataTypes
 	},
 	data() {
 		return {
@@ -48,6 +49,14 @@ export default {
 		};
 	},
 	methods: {
+		displayLabel(param) {
+			if (typeof param.label === 'string' && param.label.length > 0) {
+                return param.label;
+            }
+            else {
+                return VueUtils.prettifyString(param.name);
+            }
+		},
 		save() {
 			try {
 				if (typeof this.saveCallback === 'function') {

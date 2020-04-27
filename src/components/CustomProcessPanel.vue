@@ -17,7 +17,6 @@
 import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
 import WorkPanelMixin from './WorkPanelMixin';
 import Utils from '../utils.js';
-import Field from './blocks/field';
 import { UserProcess } from '@openeo/js-client';
 
 export default {
@@ -49,22 +48,54 @@ export default {
 			this.refreshElement(process, updatedProcess => this.emit('editProcess', updatedProcess));
 		},
 		getIdField(defaultValue = undefined) {
-			return new Field('id', 'Name', {type: 'string'}, defaultValue, '', true);
+			return {
+				name: 'id',
+				label: 'Name',
+				schema: {type: 'string'},
+				default: defaultValue,
+				optional: false
+			};
 		},
 		getSummaryField(defaultValue = undefined) {
-			return new Field('summary', 'Summary', {type: 'string'}, defaultValue);
+			return {
+				name: 'summary',
+				label: 'Summary',
+				schema: {type: 'string'},
+				default: defaultValue
+			};
 		},
 		getDescriptionField(defaultValue = undefined) {
-			return new Field('description', 'Description', {type: 'string', subtype: 'commonmark'}, defaultValue, 'CommonMark (Markdown) is allowed.');
+			return {
+				name: 'description',
+				label: 'Description',
+				schema: {type: 'string', subtype: 'commonmark'},
+				default: defaultValue,
+				description: 'CommonMark (Markdown) is allowed.'
+			};
 		},
 		getCategoriesField(defaultValue = undefined) {
-			return new Field('categories', 'Categories', {type: 'array', items: {type: 'string'}}, defaultValue);
+			return {
+				name: 'categories',
+				label: 'Categories',
+				schema: {type: 'array', items: {type: 'string'}},
+				default: defaultValue
+			};
 		},
 		getDeprecatedField(defaultValue = false) {
-			return new Field('deprecated', 'Deprecated', {type: 'boolean'}, defaultValue);
+			return {
+				name: 'deprecated',
+				label: 'Deprecated',
+				schema: {type: 'boolean'},
+				default: defaultValue
+			};
 		},
 		getExperimentalField(defaultValue = false) {
-			return new Field('experimental', 'Experimental', {type: 'boolean'}, defaultValue);
+			return {
+				name: 'experimental',
+				label: 'Experimental',
+				schema: {type: 'boolean'},
+				default: defaultValue
+			};
 		},
 		getFields(process) {
 			return [

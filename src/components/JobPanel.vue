@@ -22,7 +22,6 @@
 import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
 import WorkPanelMixin from './WorkPanelMixin';
 import Utils from '../utils.js';
-import Field from './blocks/field';
 import { Job } from '@openeo/js-client';
 
 const WorkPanelMixinInstance = WorkPanelMixin('jobs', 'batch job', 'batch jobs');
@@ -121,17 +120,41 @@ export default {
 			}
 			Utils.confirm(this, 'Job "' + Utils.getResourceTitle(job) + '" created!', buttons);
 		},
-		getTitleField() {
-			return new Field('title', 'Title', {type: 'string'});
+		getTitleField(value = null) {
+			return {
+				name: 'title',
+				label: 'Title',
+				schema: {type: 'string'},
+				default: null,
+				value: value
+			};
 		},
-		getDescriptionField() {
-			return new Field('description', 'Description', {type: 'string', subtype: 'commonmark'}, undefined, 'CommonMark (Markdown) is allowed.');
+		getDescriptionField(value = null) {
+			return {
+				name: 'description',
+				label: 'Description',
+				schema: {type: 'string', subtype: 'commonmark'},
+				default: null,
+				value: value,
+				description: 'CommonMark (Markdown) is allowed.'
+			};
 		},
-		getBillingPlanField() {
-			return new Field('plan', 'Billing plan', {type: 'string', subtype: 'billing-plan'});
+		getBillingPlanField(value = undefined) {
+			return {
+				name: 'plan',
+				label: 'Billing plan',
+				schema: {type: 'string', subtype: 'billing-plan'},
+				value: value
+			};
 		},
-		getBudgetField() {
-			return new Field('budget', 'Budget', {type: 'number', subtype: 'budget'}, null);
+		getBudgetField(value = null) {
+			return {
+				name: 'budget',
+				label: 'Budget',
+				schema: {type: 'number', subtype: 'budget'},
+				default: null,
+				value: value
+			};
 		},
 		normalizeToDefaultData(data) {
 			if (typeof data.title !== 'undefined' && (typeof data.title !== 'string' || data.title.length === 0)) {
@@ -208,10 +231,10 @@ export default {
 		editMetadata(oldJob) {
 			this.refreshElement(oldJob, job => {
 				var fields = [
-					this.getTitleField().setValue(job.title),
-					this.getDescriptionField().setValue(job.description),
-					this.supportsBillingPlans ? this.getBillingPlanField().setValue(job.plan) : null,
-					this.supportsBilling ? this.getBudgetField().setValue(job.budget) : null
+					this.getTitleField(job.title),
+					this.getDescriptionField(job.description),
+					this.supportsBillingPlans ? this.getBillingPlanField(job.plan) : null,
+					this.supportsBilling ? this.getBudgetField(job.budget) : null
 				];
 				this.emit('showDataForm', "Edit batch job", fields, data => this.updateJob(job, data));
 			});

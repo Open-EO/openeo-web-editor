@@ -25,7 +25,6 @@ import Config from '../../config';
 import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
 import WorkPanelMixin from './WorkPanelMixin';
 import Utils from '../utils';
-import Field from './blocks/field';
 import { Service } from '@openeo/js-client';
 
 export default {
@@ -93,26 +92,67 @@ export default {
 			}
 			Utils.confirm(this, 'Web Service created!', buttons);
 		},
-		getTitleField() {
-			return new Field('title', 'Title', {type: 'string'});
+		getTitleField(value = null) {
+			return {
+				name: 'title',
+				label: 'Title',
+				schema: {type: 'string'},
+				default: null,
+				value: value
+			};
 		},
-		getDescriptionField() {
-			return new Field('description', 'Description', {type: 'string', subtype: 'commonmark'}, undefined, 'CommonMark (Markdown) is allowed.');
+		getDescriptionField(value = null) {
+			return {
+				name: 'description',
+				label: 'Description',
+				schema: {type: 'string', subtype: 'commonmark'},
+				default: null,
+				value: value,
+				description: 'CommonMark (Markdown) is allowed.'
+			};
 		},
-		getServiceTypeField() {
-			return new Field('type', 'Type', {type: 'string', subtype: 'service-type'}, undefined, '', true);
+		getServiceTypeField(value = undefined) {
+			return {
+				name: 'type',
+				label: 'Type',
+				schema: {type: 'string', subtype: 'service-type'},
+				value: value,
+				optional: false
+			};
 		},
-		getBillingPlanField() {
-			return new Field('plan', 'Billing plan', {type: 'string', subtype: 'billing-plan'});
+		getBillingPlanField(value = undefined) {
+			return {
+				name: 'plan',
+				label: 'Billing plan',
+				schema: {type: 'string', subtype: 'billing-plan'},
+				value: value
+			};
 		},
-		getBudgetField() {
-			return new Field('budget', 'Budget', {type: 'number', subtype: 'budget'}, null);
+		getBudgetField(value = null) {
+			return {
+				name: 'budget',
+				label: 'Budget',
+				schema: {type: 'number', subtype: 'budget'},
+				default: null,
+				value: value
+			};
 		},
-		getEnabledField() {
-			return new Field('enabled', 'Enabled', {type: 'boolean'}, true);
+		getEnabledField(value = true) {
+			return {
+				name: 'enabled',
+				label: 'Enabled',
+				schema: {type: 'boolean'},
+				default: true,
+				value: value
+			};
 		},
-		getConfigField() {
-			return new Field('configuration', 'Service Configuration', {type: 'object', subtype: 'service-config'});
+		getConfigField(value = undefined) {
+			return {
+				name: 'configuration',
+				label: 'Service Configuration',
+				schema: {type: 'object', subtype: 'service-config'},
+				value: value
+			};
 		},
 		normalizeToDefaultData(data) {
 			if (typeof data.title !== 'undefined' && (typeof data.title !== 'string' || data.title.length === 0)) {
@@ -158,12 +198,12 @@ export default {
 		editMetadata(oldService) {
 			this.refreshElement(oldService, service => {
 				var fields = [
-					this.getTitleField().setValue(service.title),
-					this.getDescriptionField().setValue(service.description),
-					this.getEnabledField().setValue(service.enabled),
-					this.supportsBillingPlans ? this.getBillingPlanField().setValue(service.plan) : null,
-					this.supportsBilling ? this.getBudgetField().setValue(service.budget) : null,
-					this.getConfigField().setValue(service.configuration)
+					this.getTitleField(service.title),
+					this.getDescriptionField(service.description),
+					this.getEnabledField(service.enabled),
+					this.supportsBillingPlans ? this.getBillingPlanField(service.plan) : null,
+					this.supportsBilling ? this.getBudgetField(service.budget) : null,
+					this.getConfigField(service.configuration)
 				];
 				this.emit('showDataForm', "Edit web service", fields, data => this.updateService(service, data));
 			});

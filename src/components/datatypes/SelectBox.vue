@@ -103,7 +103,7 @@ export default {
 						label: p.name + (p.paid ? ' (paid)' : ' (free)')
 					}));
 				default:
-					if (this.schema.isEnum()) {
+					if (this.schemas.isEnum()) {
 						return this.schema.getEnumChoices().map(val => ({
 							id: val,
 							label: val

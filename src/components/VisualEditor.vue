@@ -1,10 +1,10 @@
 <template>
 	<div class="visualEditor" ref="visualEditor">
 		<EditorToolbar :editable="editable" :onClear="clear" :isMainEditor="isMainEditor">
-			<button type="button" @click="blocks.deleteEvent()" v-show="editable && blocks.canDelete()" title="Delete selected elements"><i class="fas fa-trash"></i></button>
-			<button type="button" @click="blocks.undo()" v-show="editable && blocks.hasUndo()" title="Undo last change"><i class="fas fa-undo-alt"></i></button>
-			<button type="button" @click="blocks.toggleCompact()" :class="{compactActive: blocks.compactMode}" title="Compact Mode"><i class="fas fa-compress-arrows-alt"></i></button>
-			<button type="button" @click="perfectScale()" title="Scale to perfect size"><i class="fas fa-arrows-alt"></i></button>
+<!--			<button type="button" @click="$refs.blocks.deleteEvent()" v-show="editable && blocks.canDelete()" title="Delete selected elements"><i class="fas fa-trash"></i></button>
+			<button type="button" @click="$refs.blocks.undo()" v-show="editable && blocks.hasUndo()" title="Undo last change"><i class="fas fa-undo-alt"></i></button> -->
+			<button type="button" @click="$refs.blocks.toggleCompact()" :class="{compactMode: compactMode}" title="Compact Mode"><i class="fas fa-compress-arrows-alt"></i></button>
+			<button type="button" @click="$refs.blocks.perfectScale()" title="Scale to perfect size"><i class="fas fa-arrows-alt"></i></button>
 			<button type="button" @click="toggleFullScreen()" :title="isFullScreen ? 'Close fullscreen' : 'Show fullscreen'">
 				<span v-show="isFullScreen"><i class="fas fa-compress"></i></span>
 				<span v-show="!isFullScreen"><i class="fas fa-expand"></i></span>
@@ -12,7 +12,18 @@
 		</EditorToolbar>
 		<div class="editorSplitter">
 			<DiscoveryToolbar v-if="!isMainEditor && editable" class="discoveryToolbar" :onAddCollection="insertCollection" :onAddProcess="insertProcess" :onAddCustomProcess="insertCustomProcess" />
-			<div :id="id" class="graphBuilder" @drop="onDrop($event)" @dragover="allowDrop($event)"></div>
+			<div class="graphBuilder" @drop="onDrop($event)" @dragover="allowDrop($event)">
+				<Blocks
+					ref="blocks"
+					:readOnly="false"
+					:id="id"
+					:processes="processRegistry"
+					:collections="collections"
+					:pgParameters="pgParameters"
+					:supportedEvents="['error', 'showProcess', 'showCollection', 'showSchema', 'showParameterEditor']"
+					v-model="pg"
+					/>
+			</div>
 		</div>
 		<SchemaModal ref="schemaModal" />
 		<ParameterModal ref="parameterModal" />
@@ -20,17 +31,20 @@
 </template>
 
 <script>
-import Blocks from './blocks/blocks.js';
+import Blocks from './blocks/Blocks.vue';
 import Utils from '../utils.js';
 import EditorToolbar from './EditorToolbar.vue';
 import DiscoveryToolbar from './DiscoveryToolbar.vue';
 import ParameterModal from './modals/ParameterModal.vue'; // Add a paremeter modal to each visual editor, otherwise we can't open a parameter modal over a parameter modal (e.g. edit the parameters of a callback)
 import SchemaModal from './modals/SchemaModal.vue';
 import { ProcessGraph } from '@openeo/js-processgraphs';
+import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
 
 export default {
 	name: 'VisualEditor',
+	mixins: [EventBusMixin],
 	components: {
+		Blocks,
 		EditorToolbar,
 		DiscoveryToolbar,
 		ParameterModal,
@@ -66,29 +80,21 @@ export default {
 	},
 	data() {
 		return {
-			blocks: null,
+			compactMode: false,
+			pg: require('../../../openeo-js-processgraphs/tests/assets/evi.json'), // ToDo: REMOVE
 			isFullScreen: false
 		};
 	},
-	beforeMount() {
-		this.blocks = new Blocks(
-			this.errorHandler,
-			(blocks, fields, editable, field) => this.openParameterEditor(blocks, fields, editable, field),
-			(name, schema) => this.showSchemaModal(name, schema)
-		);
-	},
 	mounted() {
+		this.listen('blocks.error', (message, title = null) => Utils.exception(this, message, title));
+		this.listen('blocks.showSchema', this.showSchemaModal);
+		this.listen('blocks.showParameterEditor', this.openParameterEditor);
+		this.listen('blocks.compactMode', compact => this.compactMode = compact)
 		if (this.active) {
 			this.onShow();
 		}
 	},
 	watch: {
-		processes() {
-			this.registerProcesses();
-		},
-		collections() {
-			this.registerCollections();
-		},
 		active(newVal) {
 			if (newVal) {
 				this.onShow();
@@ -125,19 +131,7 @@ export default {
 		},
 
 		onShow() {
-			if (!this.blocks.isReady) {
-				this.blocks.run("#" + this.id, this.editable);
-
-				this.registerProcesses();
-				this.registerCollections();
-				this.makePgParameters();
-				this.insertCustomProcess(this.value, false);
-			}
-		},
-
-		perfectScale() {
-			this.blocks.perfectScale();
-			this.$forceUpdate();
+			this.insertCustomProcess(this.value, false);
 		},
 
 		toggleFullScreen() {
@@ -145,17 +139,13 @@ export default {
 			if (!this.isFullScreen) {
 				this.isFullScreen = true;
 				element.classList.add('fullscreen');
-				this.perfectScale();
+				this.$refs.blocks.perfectScale();
 			}
 			else {
 				this.isFullScreen = false;
 				element.classList.remove('fullscreen');
-				this.perfectScale();
+				this.$refs.blocks.perfectScale();
 			}
-		},
-
-		errorHandler(message, title = null) {
-			Utils.exception(this, message, title);
 		},
 
 		showSchemaModal(name, schema) {
@@ -184,26 +174,8 @@ export default {
 		},
 
 		clear() {
-			this.blocks.clear();
-			this.makePgParameters();
-		},
-
-		registerCollections() {
-			this.blocks.unregisterCollectionDefaults();
-			for(var collection of this.collections) {
-				this.blocks.registerCollectionDefaults(collection);
-			}
-		},
-
-		registerProcesses() {
-			this.blocks.unregisterProcesses();
-			for(var process of this.processRegistry.toJSON()) {
-				this.blocks.registerProcess(process);
-			}
-
-			this.blocks.unregisterPgParameters();
-			for(var param of this.pgParameters) {
-				this.blocks.registerPgParameter(param);
+			if (this.$refs.blocks) {
+				this.$refs.blocks.clear();
 			}
 		},
 
@@ -235,56 +207,48 @@ export default {
 		},
 
 		makeModel(process, addToHistory = true) {
-			var success = true;
-			if (addToHistory) {
-				this.blocks.history.save(); // Store current state only once and then...
-			}
-			this.blocks.clear(); // clear screen...
-			this.blocks.history.enable(false); // disable history for import so that not every import step is in the history...
-			try {
-				// import process graph and scale it "perfectly"! :-)
-				this.makePgParameters();
-				this.blocks.importCustomProcess(process, this.processRegistry);
-				this.blocks.perfectScale();
-			} catch (error) {
-				// If an error occured: show it an restore the last working state from history.
-				Utils.exception(this, error, "Process graph invalid");
-				this.blocks.history.restoreLast();
-				success = false;
-			}
-			// Finally, enable history again.
-			this.blocks.history.enable(true);
-			return success;
+			return this.$refs.blocks.import(process, this.processRegistry);
 		},
 
 		makeCustomProcess() {
-			return this.blocks.exportCustomProcess();
-		},
-
-		makePgParameters() {
-			for(var num in this.pgParameters) {
-				try {
-					let name = this.pgParameters[num].name;
-					this.blocks.addPgParameter(name, -150, num * 50);
-				} catch(error) {
-					Utils.exception(this, error);
-				}
-			}
+			return this.$refs.blocks.export();
 		},
 
 		insertCustomProcess(pg, addToHistory = true) {
 			if (!pg) {
-				this.clear();
+//				this.clear(); // ToDo: Check
 				return;
 			}
 
 			this.makeModel(pg, addToHistory);
 		},
 
-		insertCollection(name, x = null, y = null) {
+		getCollectionDefaults(id) {
+			var collection = this.collections.filter(c => c.id === name);
+			if (collection.length === 0) {
+				return {};
+			}
+			var temporal_extent = null;
+			var spatial_extent = null;
+			if (collection) {
+				try {
+					spatial_extent = Utils.extentToBBox(collection[0].extent.spatial);
+				} catch (error) {
+					console.log(error); // Catch invalid responses from back-ends
+				}
+				try {
+					temporal_extent = collection[0].extent.temporal;
+				} catch (error) {
+					console.log(error); // Catch invalid responses from back-ends
+				}
+			}
+			return {id, spatial_extent, temporal_extent};
+		},
+
+		insertCollection(collectionId, x = null, y = null) {
 			try {
-				var pos = this.blocks.getPositionForPageXY(x, y);
-				this.blocks.addCollection(name, pos.x, pos.y);
+				var pos = this.$refs.blocks.getPositionForPageXY(x, y);
+				this.$refs.blocks.addCollection(collectionId, pos.x, pos.y, this.getCollectionDefaults(collectionId));
 			} catch(error) {
 				Utils.exception(this, error);
 			}
@@ -292,8 +256,8 @@ export default {
 
 		insertProcess(name, x = null, y = null) {
 			try {
-				var pos = this.blocks.getPositionForPageXY(x, y);
-				this.blocks.addProcess(name, pos.x, pos.y);
+				var pos = this.$refs.blocks.getPositionForPageXY(x, y);
+				this.$refs.blocks.addProcess(name, pos.x, pos.y);
 			} catch(error) {
 				Utils.exception(this, error);
 			}
@@ -348,7 +312,7 @@ export default {
 	height: 100%;
 }
 
-.compactActive {
+.compactMode {
 	color: green;
 }
 
@@ -373,167 +337,5 @@ export default {
 	z-index: 3;
 	width: 100%;
 	height: 100%;
-}
-
-.blocks_js_editor .block {
-	position:absolute;
-	border:2px solid #ccc;
-	margin-left:0px;
-	margin-top:0px;
-	background-color:#fafafa;
-	opacity:0.8;
-	font-size:14px;
-	-moz-user-select:none;
-	-khtml-user-select:none;
-	-webkit-user-select:none;
-	-o-user-select:none;
-}
-
-.blocks_js_editor .block .description {
-	display:none;
-	width:200px;
-	padding:3px;
-	border:1px solid #083776;
-	border-radius:5px;
-	color:#001531;
-	background-color:#91bcf6;
-	margin-top:15px;
-	position:absolute;
-	font-weight:normal;
-}
-
-.blocks_js_editor .blockTitle {
-	display: flex;
-	padding: 0.3em 0.1em;
-	font-weight:bold;
-	background-color:#ddd;
-	margin-bottom: 0.1em;
-	cursor: move;
-	font-size: 0.9em;
-}
-
-.blocks_js_editor .titleText {
-	flex-grow: 1;
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-}
-
-.blocks_js_editor .blockTitle .blockId {
-	opacity:0.4;
-	margin-left: 2px;
-}
-
-.blocks_js_editor .block .blockicon
-{
-	white-space: nowrap;
-	text-align: center;
-}
-
-
-.blocks_js_editor .block .blockicon i
-{
-	min-width: 1.4em;
-	cursor: pointer;
-	opacity: 0.5;
-	margin-left: 0.1em;
-}
-
-.blocks_js_editor .block .blockicon i:hover {
-	opacity:1.0;
-}
-
-.blocks_js_editor .block_collection {
-	border:2px solid #6B8DAF;
-}
-
-.blocks_js_editor .block_collection .blockTitle {
-	background-color:#A3B7CC;
-}
-
-.blocks_js_editor .hide_collection_id {
-	display: none;
-}
-
-.blocks_js_editor .block_argument {
-	border:2px solid #B28C6B;
-}
-
-.blocks_js_editor .block_argument .blockTitle {
-	background-color:#CCB7A3;
-}
-
-.blocks_js_editor .block_selected {
-	border:2px solid #0a0 !important; /* important  is used to override the styles for block_collection and block_argument above */
-}
-
-.blocks_js_editor .block_selected .blockTitle {
-	background-color:#0c0 !important;
-}
-
-.blocks_js_editor .inout {
-	display: flex;
-}
-
-.blocks_js_editor .inputs {
-	flex-grow: 1;
-}
-
-.blocks_js_editor .connector {
-	font-size: 0.9em;
-	margin: 0.2em 0;
-	background-repeat: no-repeat;
-	cursor:pointer;
-	width: 100%;
-	overflow: hidden;
-	white-space: nowrap;
-	text-overflow: ellipsis;
-}
-
-.blocks_js_editor .connector.noValue {
-	color: red;
-}
-
-.blocks_js_editor .output {
-	text-align: right;
-}
-
-.blocks_js_editor .circle {
-	width: 0.8em;
-	height: 0.8em;
-	margin: 0 0.2em;
-	border: 1px solid #888;
-	background-color: transparent;
-	display: inline-block;
-}
-
-.blocks_js_editor .circle.io_active {
-	background-color: #FFC800;
-}
-
-.blocks_js_editor .circle.io_selected {
-	background-color: #00C800 !important;
-}
-
-.blocks_js_editor .circle.result {
-	background-color: #888 !important;
-}
-
-.blocks_js_editor .editComment {
-	padding: 0.3em 0.2em;
-	box-sizing: border-box;
-	font-size: 0.9em;
-	line-height: 1em;
-	overflow: auto;
-	border: 0;
-	border-top: 1px dotted #ccc;
-	background-color: transparent;
-	width: 100%;
-	max-width: 100%;
-	height: 3.7em;
-	resize: none;
-}
-.blocks_js_editor .editComment:focus {
-	outline: 0;
 }
 </style>

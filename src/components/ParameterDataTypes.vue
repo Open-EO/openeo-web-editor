@@ -5,22 +5,21 @@
 				<option v-for="(schema, type) in allowedSchemas" :key="type" :value="type">{{ schema.title() }}</option>
 			</select>
 		</div>
-		<div v-if="allowedSchemas[selectedType].description()" class="description">
-			<i class="fas fa-info-circle"></i> {{ allowedSchemas[selectedType].description() }}
+		<div v-if="selectedSchema.description()" class="description">
+			<i class="fas fa-info-circle"></i> {{ selectedSchema.description() }}
 		</div>
-		<ParameterField ref="field" :uid="uid" :editable="editable" :field="field" :schema="selectedSchema" :pass="value" :processId="processId" :isObjectItem="isObjectItem" />
+		<ParameterDataType ref="editor" :uid="uid" :editable="editable" :parameter="parameter" :schema="selectedSchema" :pass="value" :processId="processId" :isObjectItem="isObjectItem" />
 	</div>
 </template>
 
 <script>
 import Utils from '../utils.js';
-import ParameterField from './ParameterField.vue';
-import Field from './blocks/field.js';
+import ParameterDataType from './ParameterDataType.vue';
 import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
 import { JsonSchemaValidator } from '@openeo/js-processgraphs';
-import { ProcessSchema, ProcessSubSchema } from '../processSchema.js';
+import { ProcessParameter, ProcessDataType } from './blocks/processSchema.js';
 
-const SUPPORTED_TYPES = new ProcessSchema([
+const SUPPORTED_TYPES = [
 		{type: 'null'},
 		{type: 'string'},
 		{type: 'number'},
@@ -63,16 +62,16 @@ const SUPPORTED_TYPES = new ProcessSchema([
 
 	//	{type: 'object', subtype: 'raster-cube'},
 	//	{type: 'object', subtype: 'vector-cube'},
-]);
+];
 
 export default {
-	name: 'ParameterFields',
+	name: 'ParameterDataTypes',
 	mixins: [EventBusMixin],
 	components: {
-		ParameterField
+		ParameterDataType
 	},
 	props: {
-		field: Object,
+		spec: Object,
 		editable: {
 			type: Boolean,
 			default: true
@@ -104,7 +103,7 @@ export default {
 						this.guessType();
 					}
 					else if (Array.isArray(evalType)) {
-						if (!Field.isRef(this.pass)) {
+						if (!Utils.isRef(this.pass)) {
 							if (!this.isObjectItem) {
 								Utils.info(this, "Data type can't be detected, please select it yourself.");
 							}
@@ -126,9 +125,12 @@ export default {
 		}
 	},
 	computed: {
+		parameter() {
+			return new ProcessParameter(this.spec);
+		},
 		allowedSchemas() {
 			var schemas = [].concat(
-				this.refs.from_node.map(n => new ProcessSubSchema({
+				this.refs.from_node.map(n => new ProcessDataType({
 					type: 'object',
 					isRef: 'from_node',
 					from_node: n,
@@ -142,7 +144,7 @@ export default {
 					},
 					additionalProperties: false
 				})),
-				this.refs.from_parameter.map(a => new ProcessSubSchema({
+				this.refs.from_parameter.map(a => new ProcessDataType({
 					type: 'object',
 					isRef: 'from_parameter',
 					from_parameter: a,
@@ -157,25 +159,33 @@ export default {
 					additionalProperties: false
 				})),
 			);
-			var type = this.field.dataType();
+			var type = this.parameter.dataType();
 			if (type === 'any' || this.useAny) {
-				return schemas.concat(SUPPORTED_TYPES.schemas);
+				return schemas.concat(this.supportedTypes);
 			}
 			else {
-				return schemas.concat(this.field.schemas);
+				return schemas.concat(this.parameter.schemas);
 			}
+		},
+		supportedTypes() {
+			return SUPPORTED_TYPES.map(s => new ProcessDataType(s));
 		},
 		selectedSchema() {
 			return this.allowedSchemas[this.selectedType];
 		},
 		refs() {
-			return this.field.getRefs();
+			// ToDo
+			return {
+                from_node: [],
+                from_parameter: []
+            };
+			// return this.parameter.getRefs();
 		}
 	},
 	watch: {
 		type(newType, oldType) {
 			if (this.uid) {
-				this.emit('processParameterTypeChanged', this.uid, this.processId, this.field, newType, oldType);
+				this.emit('processParameterTypeChanged', this.uid, this.processId, this.parameter, newType, oldType);
 			}
 		}
 	},
@@ -189,8 +199,8 @@ export default {
 		},
 		guessType() {
 			// Try to set null as default
-			for(var i in this.field.schemas) {
-				if (this.field.schemas[i].isNull()) {
+			for(var i in this.schemas) {
+				if (this.schemas[i].isNull()) {
 					this.setSelectedType(i);
 					return;
 				}
@@ -199,7 +209,7 @@ export default {
 			this.setSelectedType(0);
 		},
 		getValue() {
-			return this.$refs.field.getValue();
+			return this.$refs.editor.getValue();
 		}
 	}
 };

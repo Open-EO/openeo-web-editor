@@ -158,7 +158,7 @@ export default {
 		},
 		showCollectionInfo(id) {
 			if (this.supports('listCollections')) {
-				this.emit('showCollectionInfo', id);
+				this.emit('blocks.showCollection', id);
 			}
 		},
 		showProcessInfo(process) {
