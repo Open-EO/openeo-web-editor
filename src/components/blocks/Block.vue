@@ -20,10 +20,10 @@
         </div>
         <div class="inout">
             <div class="inputs">
-                <BlockParameter v-for="(param, i) in parameters" :key="i" :parent="templateThis" :value="args[param.name]" v-bind="param" />
+                <BlockParameter v-for="(param, i) in parameters" :key="i" ref="parameters" :state="state" :value="args[param.name]" v-bind="param" />
             </div>
             <div class="outputs">
-                <BlockParameter :parent="templateThis" :label="outputLabel" v-bind="output" />
+                <BlockParameter ref="output" :state="state" :label="outputLabel" v-bind="output" />
             </div>
         </div>
         <textarea ref="commentField" v-if="hasComment" v-model="comment" class="editComment" placeholder="Type comment here..."
@@ -32,7 +32,6 @@
 </template>
 
 <script>
-import BlocksState from './state.js';
 import BlockParameter from './BlockParameter.vue';
 import VueUtils from '@openeo/vue-components/utils.js';
 import { ProcessGraph } from '@openeo/js-processgraphs';
@@ -41,16 +40,22 @@ import { ProcessParameter } from './processSchema';
 import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
 import Vue from 'vue';
 
+/*
+Events:
+
+Emits locally:
+- moved(x, y) - The block has been moved
+*/
+
+const defaultFontSize = 10;
+
 export default {
     name: 'Block',
-	mixins: [EventBusMixin],
-	components: {
+    mixins: [EventBusMixin],
+    components: {
         BlockParameter
-	},
+    },
     props: {
-        parent: {
-            type: Object
-        },
         id: {
             type: String,
             required: true
@@ -67,39 +72,65 @@ export default {
             type: Object,
             default: () => ({})
         },
-        position: {
-            type: Array,
-            default: () => [0,0]
+        state: {
+            type: Object,
+            required: true
         }
     },
     data() {
-        return Object.assign({
-            data: Vue.observable(this.value),
-
-            // Appareance values
-            defaultFont: 10,
+        return {
+            data: {},
 
             // History saved before move
             historySaved: false,
 
-            selected: false,
-
             // Is the user dragging ?
-            drag: null,
-
-            // Position
-            x: this.position[0],
-            y: this.position[1]
-        }, BlocksState);
+            drag: null
+        };
+    },
+    watch: {
+        value: {
+            immediate: true,
+            handler(value) {
+                this.data = Vue.observable(value);
+            }
+        }
     },
     computed: {
-        templateThis() {
-            return this;
+        // Manage the node object (arguments, description, result, x, y, selected)
+        x: {
+            set(value) {
+                this.$set(this.data, 'x', value);
+                this.$emit('input', this.getValue());
+                this.$emit('moved', this.x, this.y);
+            },
+            get() {
+                return this.data.x || 0;
+            }
         },
-        // Manage the node object (arguments, description, result)
+        y: {
+            set(value) {
+                this.$set(this.data, 'y', value);
+                this.$emit('input', this.getValue());
+                this.$emit('moved', this.x, this.y);
+            },
+            get() {
+                return this.data.y || 0;
+            }
+        },
+        selected: {
+            set(value) {
+                this.$set(this.data, 'selected', value);
+                this.$emit('input', this.getValue());
+            },
+            get() {
+                return this.data.selected || false;
+            }
+        },
         args: {
             set(value) {
-                Vue.set(this.data, 'arguments', value);
+                this.$set(this.data, 'arguments', value);
+                this.$emit('input', this.getValue());
             },
             get() {
                 return Utils.isObject(this.data.arguments) ? this.data.arguments : {};
@@ -107,10 +138,20 @@ export default {
         },
         comment: {
             set(value) {
-                Vue.set(this.data, 'description', value);
+                this.$set(this.data, 'description', value);
+                this.$emit('input', this.getValue());
             },
             get() {
                 return this.data.description;
+            }
+        },
+        result: {
+            set(value) {
+                this.$set(this.data, 'result', value);
+                this.$emit('input', this.getValue());
+            },
+            get() {
+                return this.data.result || false;
             }
         },
         // Visualizations
@@ -129,7 +170,7 @@ export default {
             return {
                 marginLeft: Math.round(this.state.center[0] + this.x * this.state.scale) + 'px',
                 marginTop: Math.round(this.state.center[1] + this.y * this.state.scale) + 'px',
-                fontSize: Math.round(this.state.scale * this.defaultFont) + 'px',
+                fontSize: Math.round(this.state.scale * defaultFontSize) + 'px',
                 width: Math.round(this.state.scale * this.width) + 'px',
             };
         },
@@ -150,7 +191,7 @@ export default {
             return name;
         },
         outputLabel() {
-            if (this.data.result) {
+            if (this.result) {
                 return "Result";
             }
             else if (this.type === 'parameter') {
@@ -168,7 +209,7 @@ export default {
             else if (this.type === 'parameter') {
                 classes.push('block_argument');
             }
-            if (this.data.result) {
+            if (this.result) {
                 classes.push('block_result');
             }
             if (this.selected) {
@@ -207,25 +248,25 @@ export default {
             return null;
         },
         allowsParameterChange() {
-            return (this.supports('showParameterEditor') && this.editables.length > 0 && this.type !== 'parameter');
+            return (this.$parent.supports('editParameters') && this.editables.length > 0 && this.type !== 'parameter');
         },
         allowsDelete() {
-            return (!this.state.readOnly && this.type !== 'parameter');
+            return (this.state.editable && this.type !== 'parameter');
         },
         allowsInfo() {
             if (this.collectionId) {
                 // Has no info if it's a parameter
-                return this.supports('showCollection') && !Utils.isRef(this.collectionId);
+                return this.$parent.supports('showCollection') && !Utils.isRef(this.collectionId);
             }
             else if (this.type === 'parameter') {
-                return this.supports('showSchema');
+                return this.$parent.supports('showSchema');
             }
             else {
-                return this.supports('showProcess');
+                return this.$parent.supports('showProcess');
             }
         },
         allowsComment() {
-            return (!this.state.readOnly && this.type === 'process');
+            return (this.state.editable && this.type === 'process');
         },
         hasComment() {
             return (typeof this.comment === 'string');
@@ -268,6 +309,7 @@ export default {
             for(var p of this.parameters) {
                 fields[p.name] = p;
             }
+            fields.output = this.output;
             return fields;
         },
         editables() {
@@ -302,27 +344,31 @@ export default {
         document.addEventListener('mousemove', () => this.dragging());
         document.addEventListener('mouseup', () => this.stopDrag());
         this.listen('blocks.startDrag', this.startDrag);
-        this.listen('blocks.unselect', () => {this.selected = false});
     },
     methods: {
+        getValue() {
+            return Object.assign({}, this.data, {
+                x: this.x,
+                y: this.y,
+                selected: this.selected
+            })
+        },
         select(event) {
-            if (event && !event.shiftKey) {
-                this.emit('blocks.unselect');
-            }
+            this.$parent.unselectAll(event);
             this.selected = true;
         },
-        showParameters() {
-            this.emit('blocks.showParameterEditor', this.parent, this, !this.state.readOnly, null);
+        showParameters(parameterName = null) {
+            this.$parent.$emit('editParameters', this.$parent, this, this.state.editable, parameterName);
         },
         showInfo() {
             if(this.collectionId) {
-                this.emit('blocks.showCollection', this.collectionId);
+                this.$parent.$emit('showCollection', this.collectionId);
             }
             else if (this.type === 'parameter') {
-                this.emit('blocks.showSchema', this.name, this.spec.schema);
+                this.$parent.$emit('showSchema', this.name, this.spec.schema);
             }
             else {
-                this.emit('blocks.showProcess', this.processId);
+                this.$parent.$emit('showProcess', this.processId);
             }
         },
         addComment() {
@@ -354,7 +400,7 @@ export default {
         dragging() {
             if (this.drag) {
                 if (!this.historySaved) {
-                    this.parent.saveHistory();
+                    this.$parent.saveHistory();
                     this.historySaved = true;
                 }
                 this.x = (this.state.mouse[0]/this.state.scale-this.drag[0]);
@@ -367,44 +413,11 @@ export default {
         },
 
         hasOutputEdges() {
-            return this.output.getEdgeCount() > 0;
+            return this.$refs.output && this.$refs.output.getEdgeCount() > 0;
         },
 
         remove() {
-            this.emit('blocks.remove', this);
-        },
-
-        /**
-         * Find all successors of a block, and their successors
-         */
-        allSuccessors() {
-            // Blocks already explored
-            var explored = {};
-            var exploreList = [this];
-            var ids = [this.id];
-            explored[this.id] = true;
-
-            while (exploreList.length > 0) {
-                var currentBlock = exploreList.pop();
-
-                for (var key in currentBlock.edges) {
-                    for (var i in currentBlock.edges[key]) {
-                        var edge = currentBlock.edges[key][i];
-
-                        if (edge.block1 == currentBlock) {
-                            var target = edge.block2;
-                            
-                            if (!(target.id in explored)) {
-                                explored[target.id] = true;
-                                exploreList.push(target);
-                                ids.push(target.id);
-                            }
-                        }
-                    }
-                }
-            }
-
-            return ids;
+            this.$parent.removeBlock(this);
         },
 
         /**
@@ -415,7 +428,7 @@ export default {
                 return undefined;
             }
 
-    	    if (internal) {
+            if (internal) {
                 return Object.assign({
                     x: this.x,
                     y: this.y
@@ -429,8 +442,17 @@ export default {
         /**
          * Getting a field by name
          */
-        getField(name) {
-            return (name in this.fields ? this.fields[name] : null);
+        getBlockParameter(name) {
+            if (name === 'output' && this.$refs.output) {
+                return this.$refs.output;
+            }
+            else if (Array.isArray(this.$refs.parameters)) {
+                var params = this.$refs.parameters.filter(param => param.name === name);
+                if (params.length > 0) {
+                    return params[0];
+                }
+            }
+            return null;
         },
 
         /**
@@ -457,12 +479,12 @@ export default {
                 if (newKey in boolFields) {
                     delete boolFields[newKey];
                 }
-                let field = this.getField(newKey);
+                let field = this.getBlockParameter(newKey);
                 field.setValue(serialize[key]);
             }
 
             for (var key in boolFields) {
-                this.getField(key).setValue(false);
+                this.getBlockParameter(key).setValue(false);
             }
         }
     }
@@ -472,120 +494,120 @@ export default {
 
 <style scoped>
 .block {
-	position:absolute;
-	border:2px solid #ccc;
-	margin-left:0px;
-	margin-top:0px;
-	background-color:#fafafa;
-	opacity:0.8;
-	font-size:14px;
-	-moz-user-select:none;
-	-khtml-user-select:none;
-	-webkit-user-select:none;
-	-o-user-select:none;
+    position:absolute;
+    border:2px solid #ccc;
+    margin-left:0px;
+    margin-top:0px;
+    background-color:#fafafa;
+    opacity:0.8;
+    font-size:14px;
+    -moz-user-select:none;
+    -khtml-user-select:none;
+    -webkit-user-select:none;
+    -o-user-select:none;
 }
 
 .block .description {
-	display:none;
-	width:200px;
-	padding:3px;
-	border:1px solid #083776;
-	border-radius:5px;
-	color:#001531;
-	background-color:#91bcf6;
-	margin-top:15px;
-	position:absolute;
-	font-weight:normal;
+    display:none;
+    width:200px;
+    padding:3px;
+    border:1px solid #083776;
+    border-radius:5px;
+    color:#001531;
+    background-color:#91bcf6;
+    margin-top:15px;
+    position:absolute;
+    font-weight:normal;
 }
 
 .blockTitle {
-	display: flex;
-	padding: 0.3em 0.1em;
-	font-weight:bold;
-	background-color:#ddd;
-	margin-bottom: 0.1em;
-	cursor: move;
-	font-size: 0.9em;
+    display: flex;
+    padding: 0.3em 0.1em;
+    font-weight:bold;
+    background-color:#ddd;
+    margin-bottom: 0.1em;
+    cursor: move;
+    font-size: 0.9em;
 }
 
 .titleText {
-	flex-grow: 1;
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
+    flex-grow: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .block .blockTitle .blockId {
-	opacity:0.4;
-	margin-left: 2px;
+    opacity:0.4;
+    margin-left: 2px;
 }
 
 .block .blockicon
 {
-	white-space: nowrap;
-	text-align: center;
+    white-space: nowrap;
+    text-align: center;
 }
 
 
 .block .blockicon i
 {
-	min-width: 1.4em;
-	cursor: pointer;
-	opacity: 0.5;
-	margin-left: 0.1em;
+    min-width: 1.4em;
+    cursor: pointer;
+    opacity: 0.5;
+    margin-left: 0.1em;
 }
 
 .block .blockicon i:hover {
-	opacity:1.0;
+    opacity:1.0;
 }
 
 .block_collection {
-	border:2px solid #6B8DAF;
+    border:2px solid #6B8DAF;
 }
 
 .block_collection .blockTitle {
-	background-color:#A3B7CC;
+    background-color:#A3B7CC;
 }
 
 .block_argument {
-	border:2px solid #B28C6B;
+    border:2px solid #B28C6B;
 }
 
 .block_argument .blockTitle {
-	background-color:#CCB7A3;
+    background-color:#CCB7A3;
 }
 
 .block_selected {
-	border:2px solid #0a0 !important; /* important  is used to override the styles for block_collection and block_argument above */
+    border:2px solid #0a0 !important; /* important  is used to override the styles for block_collection and block_argument above */
 }
 
 .block_selected .blockTitle {
-	background-color:#0c0 !important;
+    background-color:#0c0 !important;
 }
 
 .inout {
-	display: flex;
+    display: flex;
 }
 
 .inputs {
-	flex-grow: 1;
+    flex-grow: 1;
 }
 .editComment {
-	padding: 0.3em 0.2em;
-	box-sizing: border-box;
-	font-size: 0.9em;
-	line-height: 1em;
-	overflow: auto;
-	border: 0;
-	border-top: 1px dotted #ccc;
-	background-color: transparent;
-	width: 100%;
-	max-width: 100%;
-	height: 3.7em;
-	resize: none;
+    padding: 0.3em 0.2em;
+    box-sizing: border-box;
+    font-size: 0.9em;
+    line-height: 1em;
+    overflow: auto;
+    border: 0;
+    border-top: 1px dotted #ccc;
+    background-color: transparent;
+    width: 100%;
+    max-width: 100%;
+    height: 3.7em;
+    resize: none;
 }
 .editComment:focus {
-	outline: 0;
+    outline: 0;
 }
 
 .compact .blockicon .delete, .compact .blockicon .info, .compact .blockicon .addComment, .compact .blockId, .compact .editComment {
@@ -599,6 +621,4 @@ export default {
 .scale_xs .editComment {
     visibility: hidden;
 }
-
-
 </style>

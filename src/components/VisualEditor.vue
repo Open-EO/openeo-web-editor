@@ -1,8 +1,8 @@
 <template>
 	<div class="visualEditor" ref="visualEditor">
 		<EditorToolbar :editable="editable" :onClear="clear" :isMainEditor="isMainEditor">
-<!--			<button type="button" @click="$refs.blocks.deleteEvent()" v-show="editable && blocks.canDelete()" title="Delete selected elements"><i class="fas fa-trash"></i></button>
-			<button type="button" @click="$refs.blocks.undo()" v-show="editable && blocks.hasUndo()" title="Undo last change"><i class="fas fa-undo-alt"></i></button> -->
+			<button type="button" @click="$refs.blocks.deleteSelected()" v-show="editable && hasSelection" title="Delete selected elements"><i class="fas fa-trash"></i></button>
+			<button type="button" @click="$refs.blocks.undo()" v-show="editable && hasUndo" title="Undo last change"><i class="fas fa-undo-alt"></i></button>
 			<button type="button" @click="$refs.blocks.toggleCompact()" :class="{compactMode: compactMode}" title="Compact Mode"><i class="fas fa-compress-arrows-alt"></i></button>
 			<button type="button" @click="$refs.blocks.perfectScale()" title="Scale to perfect size"><i class="fas fa-arrows-alt"></i></button>
 			<button type="button" @click="toggleFullScreen()" :title="isFullScreen ? 'Close fullscreen' : 'Show fullscreen'">
@@ -15,12 +15,18 @@
 			<div class="graphBuilder" @drop="onDrop($event)" @dragover="allowDrop($event)">
 				<Blocks
 					ref="blocks"
-					:readOnly="false"
+					:editable="true"
 					:id="id"
 					:processes="processRegistry"
 					:collections="collections"
 					:pgParameters="pgParameters"
-					:supportedEvents="['error', 'showProcess', 'showCollection', 'showSchema', 'showParameterEditor']"
+					@error="errorHandler"
+					@showProcess="id => emit('showProcess', id)"
+					@showCollection="id => emit('showCollection', id)"
+					@showSchema="showSchemaModal"
+					@editParameters="openParameterEditor"
+					@compactMode="compact => this.compactMode = compact"
+					@selectionChanged="(b, e) => this.hasSelection = (b.length || e.length)"
 					v-model="pg"
 					/>
 			</div>
@@ -81,15 +87,13 @@ export default {
 	data() {
 		return {
 			compactMode: false,
-			pg: require('../../../openeo-js-processgraphs/tests/assets/evi.json'), // ToDo: REMOVE
+			hasSelection: false,
+			hasUndo: false, // ToDo
+			pg: require('../../../openeo-js-processgraphs/tests/assets/evi.json'), // this.value
 			isFullScreen: false
 		};
 	},
 	mounted() {
-		this.listen('blocks.error', (message, title = null) => Utils.exception(this, message, title));
-		this.listen('blocks.showSchema', this.showSchemaModal);
-		this.listen('blocks.showParameterEditor', this.openParameterEditor);
-		this.listen('blocks.compactMode', compact => this.compactMode = compact)
 		if (this.active) {
 			this.onShow();
 		}
@@ -103,6 +107,10 @@ export default {
 	},
 	methods: {
 		...Utils.mapActions('userProcesses', {readUserProcess: 'read'}),
+
+		errorHandler(message, title = null) {
+			Utils.exception(this, message, title)
+		},
 
 		allowDrop(ev) {
 			ev.preventDefault();
@@ -131,7 +139,7 @@ export default {
 		},
 
 		onShow() {
-			this.insertCustomProcess(this.value, false);
+//			this.insertCustomProcess(this.value, false);
 		},
 
 		toggleFullScreen() {
@@ -207,7 +215,7 @@ export default {
 		},
 
 		makeModel(process, addToHistory = true) {
-			return this.$refs.blocks.import(process, this.processRegistry);
+			this.$refs.blocks.import(process, this.processRegistry);
 		},
 
 		makeCustomProcess() {

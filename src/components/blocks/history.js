@@ -42,10 +42,10 @@ export default class History {
     /**
      * Restores the last saved situation
      */
-    restoreLast() {
+    async restoreLast() {
         if (this.history.length) {
             var last = this.history.pop();
-            this.blocks.import(last);
+            await this.blocks.import(last);
         }
     }
 

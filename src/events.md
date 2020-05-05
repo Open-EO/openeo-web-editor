@@ -24,10 +24,10 @@ Shows a list in a modal.
 ### showWebEditorInfo()
 Showa information about the web editor in a modal.
 
-### blocks.showCollection(id)
+### showCollection(id)
 Shows collection information in a modal.
 
-### blocks.showProcess(id)
+### showProcess(id)
 Shows process information in a modal.
 
 ## Viewer & Web Services

@@ -97,8 +97,8 @@ export default {
 		...Utils.mapGetters('userProcesses', {getProcessById: 'getAllById'})
 	},
 	mounted() {
-		this.listen('blocks.showCollection', this.showCollectionInfo);
-		this.listen('blocks.showProcess', this.showProcessInfoById);
+		this.listen('showCollection', this.showCollectionInfo);
+		this.listen('showProcess', this.showProcessInfoById);
 		this.listen('showJobInfo', this.showJobInfo);
 		this.listen('showProcessInfo', this.showProcessInfo);
 		this.listen('showServiceInfo', this.showServiceInfo);

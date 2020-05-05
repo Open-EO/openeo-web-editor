@@ -59,11 +59,6 @@ class ProcessSchema {
 		return this.schemas.filter(s => s.isNull()).length > 0;
 	}
 
-	allowsMultipleInputs() {
-		// Is there any type that potentially allows multiple inputs?
-		return this.dataTypes().filter(t => MULTI_INPUT_TYPES.includes(t)).length > 0;
-	}
-
 }
 
 class ProcessParameter extends ProcessSchema {
