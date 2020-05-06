@@ -1,84 +1,88 @@
 <template>
-	<div id="login">
-		<header class="logo">
-			<img src="../assets/logo.png" alt="openEO" />
-			<h2>Web Editor <span class="version" @click="showWebEditorInfo">{{ version }}</span></h2>
-		</header>
-		<div v-if="httpsUrl" class="message error">
-			<i class="fas fa-shield-alt"></i>
-			<span>You are using an <strong>insecure</strong> HTTP connection, which is not encrypted. Please use HTTPS if possible.<br />
-			<a :href="httpsUrl">Click here to switch to a secured HTTPS connection.</a></span>
-		</div>
-		<div v-if="message" class="message warning">
-			<i class="fas fa-bullhorn"></i>
-			<span v-html="message"></span>
-		</div>
-		<form @submit.prevent="submitForm" v-if="showConnectForm" class="connect">
-			<h3>Connect to server</h3>
-			<div class="row">
-				<label for="serverUrl">URL:</label>
-				<div class="input">
-					<input id="serverUrl" v-model.lazy.trim="serverUrl" :disabled="autoConnect" />
-					<button v-if="allowOtherServers" type="button" @click="showServerSelector" title="Select previously used server"><i class="fas fa-book"></i></button>
+	<div class="connectPage">
+		<div class="connectContainer">
+			<header class="logo">
+				<img src="../assets/logo.png" alt="openEO" />
+				<h2>Web Editor <span class="version" @click="showWebEditorInfo">{{ version }}</span></h2>
+			</header>
+			<div v-if="httpsUrl" class="message error">
+				<i class="fas fa-shield-alt"></i>
+				<span>You are using an <strong>insecure</strong> HTTP connection, which is not encrypted. Please use HTTPS if possible.<br />
+				<a :href="httpsUrl">Click here to switch to a secured HTTPS connection.</a></span>
+			</div>
+			<div v-if="message" class="message warning">
+				<i class="fas fa-bullhorn"></i>
+				<span v-html="message"></span>
+			</div>
+			<transition name="connect-fade" mode="out-in">
+				<form @submit.prevent="submitForm" v-if="showConnectForm" class="connect">
+					<h3>Connect to server</h3>
+					<div class="row">
+						<label for="serverUrl">URL:</label>
+						<div class="input">
+							<input id="serverUrl" v-model.lazy.trim="serverUrl" :disabled="autoConnect" />
+							<button v-if="allowOtherServers" type="button" @click="showServerSelector" title="Select previously used server"><i class="fas fa-book"></i></button>
+						</div>
+					</div>
+					<div class="row">
+						<button type="submit" class="connectBtn" :class="{loading: loading}"><i class="fas fa-spinner fa-spin fa-lg"></i> Connect</button>
+					</div>
+				</form>
+				<div v-else-if="this.showLoginForm" class="login">
+					<h3>Log in to {{ title }}</h3>
+					<Tabs id="credentials" :pills="true">
+						<Tab v-if="supportsOidc" id="oidc" name="OpenID Connect">
+							<form @submit.prevent="loginOidc">
+								<div class="row help">
+									<i class="fas fa-info-circle"></i>
+									<span>Common and most secure workflow to login at a provider, usually with username and password. You need to specify a <em>Client ID</em>, which will be provided to you by the provider. You need to allow the URL of this service as redirect URL for the authentication service.</span>
+								</div>
+								<div class="row">
+									<label for="password">Client ID:</label>
+									<input class="input" id="clientId" type="text" v-model="clientId" required="required" />
+								</div>
+								<div class="row bottom">
+									<TermsOfServiceConsent />
+									<button type="submit" class="connectBtn" :class="{loading: loading}"><i class="fas fa-spinner fa-spin fa-lg"></i><i class="fab fa-openid"></i> Connect with OpenID Connect (experimental)</button>
+								</div>
+							</form>
+						</Tab>
+						<Tab v-if="supportsBasic" id="basic" name="Basic">
+							<form @submit.prevent="loginBasic">
+								<div class="row help">
+									<i class="fas fa-info-circle"></i>
+									<span>The <tt>Basic</tt> is mostly used for development and testing purposes. You can log in with username and password.</span>
+								</div>
+								<div class="row">
+									<label for="username">Username:</label>
+									<input class="input" id="username" type="text" v-model="username" required="required" />
+								</div>
+								<div class="row">
+									<label for="password">Password:</label>
+									<input class="input" id="password" type="password" v-model="password" required="required" />
+								</div>
+								<div class="row bottom">
+									<TermsOfServiceConsent />
+									<button type="submit" class="connectBtn" :class="{loading: loading}"><i class="fas fa-spinner fa-spin fa-lg"></i> Log in</button>
+								</div>
+							</form>
+						</Tab>
+						<Tab id="noauth" name="No credentials">
+							<form @submit.prevent="loginNoAuth(skipLogin)">
+								<div class="row help">
+									<i class="fas fa-info-circle"></i>
+									<span>Choose this if you don't have credentials for the service provider and just want to explore the service with its available data and processes. You may not be able to process any data.</span>
+								</div>
+								<div class="row bottom">
+									<TermsOfServiceConsent />
+									<button type="submit" class="connectBtn" :class="{loading: loading}"><i class="fas fa-spinner fa-spin fa-lg"></i><i class="fas fa-user-slash"></i> Proceed without logging in</button>
+								</div>
+							</form>
+						</Tab>
+					</Tabs>
+					<div v-if="allowOtherServers" class="switch"><a @click="switchServer()">Switch server</a></div>
 				</div>
-			</div>
-			<div class="row">
-				<button type="submit" class="connectBtn" :class="{loading: loading}"><i class="fas fa-spinner fa-spin fa-lg"></i> Connect</button>
-			</div>
-		</form>
-		<div v-else-if="this.showLoginForm" class="login">
-			<h3>Log in to {{ title }}</h3>
-			<Tabs id="credentials" :pills="true">
-				<Tab v-if="supportsOidc" id="oidc" name="OpenID Connect">
-					<form @submit.prevent="loginOidc">
-						<div class="row help">
-							<i class="fas fa-info-circle"></i>
-							<span>Common and most secure workflow to login at a provider, usually with username and password. You need to specify a <em>Client ID</em>, which will be provided to you by the provider. You need to allow the URL of this service as redirect URL for the authentication service.</span>
-						</div>
-						<div class="row">
-							<label for="password">Client ID:</label>
-							<input class="input" id="clientId" type="text" v-model="clientId" required="required" />
-						</div>
-						<TermsOfServiceConsent />
-						<div class="row">
-							<button type="submit" class="connectBtn" :class="{loading: loading}"><i class="fas fa-spinner fa-spin fa-lg"></i><i class="fab fa-openid"></i> Connect with OpenID Connect (experimental)</button>
-						</div>
-					</form>
-				</Tab>
-				<Tab v-if="supportsBasic" id="basic" name="Basic">
-					<form @submit.prevent="loginBasic">
-						<div class="row help">
-							<i class="fas fa-info-circle"></i>
-							<span>The <tt>Basic</tt> is mostly used for development and testing purposes. You can log in with username and password.</span>
-						</div>
-						<div class="row">
-							<label for="username">Username:</label>
-							<input class="input" id="username" type="text" v-model="username" required="required" />
-						</div>
-						<div class="row">
-							<label for="password">Password:</label>
-							<input class="input" id="password" type="password" v-model="password" required="required" />
-						</div>
-						<TermsOfServiceConsent />
-						<div class="row">
-							<button type="submit" class="connectBtn" :class="{loading: loading}"><i class="fas fa-spinner fa-spin fa-lg"></i> Log in</button>
-						</div>
-					</form>
-				</Tab>
-				<Tab id="noauth" name="No credentials">
-					<form @submit.prevent="loginNoAuth(skipLogin)">
-						<div class="row help">
-							<i class="fas fa-info-circle"></i>
-							<span>Choose this if you don't have credentials for the service provider and just want to explore the service with its available data and processes. You may not be able to process any data.</span>
-						</div>
-						<TermsOfServiceConsent />
-						<div class="row">
-							<button type="submit" class="connectBtn" :class="{loading: loading}"><i class="fas fa-spinner fa-spin fa-lg"></i><i class="fas fa-user-slash"></i> Proceed without logging in</button>
-						</div>
-					</form>
-				</Tab>
-			</Tabs>
-			<div v-if="allowOtherServers" class="switch"><a @click="switchServer()">Switch server</a></div>
+			</transition>
 		</div>
 	</div>
 </template>
@@ -286,9 +290,13 @@ export default {
 						automaticSilentRenew: true
 					});
 				}
-				else { // noauth or discover
-					Utils.info(this, 'You are working as a guest. Your data will be publicly available!');
+				else { // noauth or discovery
 					window.history.pushState({reset: true, serverUrl: this.serverUrl, autoConnect: true, skipLogin: true}, "", ".?server=" + this.serverUrl + "&discover=1");
+					// Delay info a bit to show after transition only and also avoid flickering
+					window.setTimeout(
+						() => Utils.info(this, 'You are working as a guest. Your data will be publicly available!'),
+						1000
+					);
 				}
 			} catch(error) {
 				console.log(error);
@@ -338,8 +346,16 @@ export default {
 }
 </script>
 
-<style>
-#login {
+<style scoped>
+.connectPage {
+	background-color: #1665B6;
+	align-items: center;
+	display: flex;
+	overflow: auto;
+	width: 100%;
+	height: 100%;
+}
+.connectContainer {
 	width: 500px;
 	background-color: #fff;
 	border: 1px solid #152558;
@@ -348,94 +364,81 @@ export default {
 	margin: auto;
 	font-family: 'Ubuntu', sans-serif;
 }
-#login header {
+header {
 	text-align: center;
 	margin-bottom: 2em;
 }
-#login h3 {
+h3 {
 	margin: 0 0 0.75em 0;
 }
-#login .switch {
+.switch {
 	font-size: 0.9em;
 	text-align: center;
 	margin-top: 0.5em;
 }
-#login #credentials.tabs .tabsBody {
-	overflow: visible;
-}
-#login .row {
+.row {
 	display: flex;
-	margin: 0.5em 0;
+	margin: 0.25em 0;
 }
-#login label {
+label {
 	width: 30%;
 	display: flex;
 	align-items: center;
 }
-#login .input {
+.input {
 	flex-grow: 1;
 	display: flex;
 }
-#login .input input {
+.input input {
 	flex-grow: 1;
 }
-#login input {
+input {
 	padding: 0.3em;
 }
-#login input, #login button {
+input, button {
 	margin: 3px;
 }
-#login .message {
-	padding: 0.5em;
-	margin-bottom: 1em;
-	border-radius: 0.5em;
-}
-#login .warning {
-	border: 1px solid #f9d67a;
-	background-color: #fbeabc;
-	color: #795600;
-}
-#login .error {
-	border: 1px solid #f97a7a;
-	background-color: #fbbcbc;
-	color: #790000;
-}
-#login .tabsHeader {
-	margin-bottom: 0.5em;
-}
-#login .help, #login .message {
-	display: flex;
-}
-#login .help span, #login .message span {
-	display: block;
-	flex-grow: 1;
-}
-#login .help .fas, #login .message .fas {
-	display: block;
-	height: 100%;
-	margin-right: 0.5em;
-}
-#login .help {
-	margin: 0.75em 0.5em;
-}
-#login .help span {
-	font-size: 0.9em;
-}
-#login .connectBtn {
+.connectBtn {
 	width: 100%;
-	margin: 0.75em 0 0 0;
+	margin: 0;
+	margin-top: 0.5em;
 	padding: 0.3em 1.33em 0.3em 0;
 }
-#login .fa-spinner {
+.fa-spinner {
 	visibility: hidden;
 }
-#login .loading .fa-spinner {
+.loading .fa-spinner {
 	visibility: visible;
 }
-#login .loading .fa-openid {
+.loading .fa-openid {
 	display: none;
 }
-#login .loading .fa-user-slash {
+.loading .fa-user-slash {
 	display: none;
+}
+</style>
+
+<style>
+@media only screen and (min-height: 600px) {
+	#credentials.tabs {
+		min-height: 250px;
+	}
+}
+#credentials.tabs .tabsHeader {
+	margin-bottom: 0.5em;
+}
+#credentials.tabs {
+	display: flex;
+}
+#credentials.tabs .tabsBody, #credentials.tabs .tabContent, #credentials.tabs form, #credentials.tabs form > div:last-child  {
+	flex-grow: 1;
+	display: flex;
+	flex-direction: column;
+}
+#credentials.tabs form > div {
+	flex-grow: 1;
+}
+#credentials.tabs form > div.bottom {
+	justify-content: flex-end;
 }
 </style>
