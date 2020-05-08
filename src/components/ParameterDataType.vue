@@ -253,12 +253,7 @@ export default {
 			});
 		},
 		initValue(v) {
-			if (this.type === 'process-graph') {
-				if (!(v instanceof ProcessGraph)) {
-					v = null;
-				}
-			}
-			else if (this.isArrayType) {
+			if (this.isArrayType) {
 				v = this.initArray(v);
 			}
 			else if(this.isObjectType) {

@@ -131,7 +131,7 @@ export default {
                 classes.push('io_active');
             }
 
-            var edges = this.getEdges();
+            var edges = this.edges;
             for (var n in edges) {
                 if (edges[n].selected) {
                     classes.push('io_selected');
@@ -146,7 +146,7 @@ export default {
         displayValue() {
             var maxLength = 25 - this.displayLabel.length;
             var formattedValue = null;
-            if (this.isEditable && !this.state.compactMode && !Utils.isRef(this.value)) {
+            if (this.isEditable && !this.state.compactMode/* && !Utils.isRef(this.value)*/) {
                 formattedValue = this.formatValue(this.value, maxLength, true);
             }
 
@@ -172,7 +172,7 @@ export default {
             }
         },
         isDefaultValue() {
-            return !this.hasValue || typeof this.default !== 'undefined' && this.default == this.getValue(); // Don't do ===, otherwise empty objects are not recognized as the same.
+            return !this.hasValue || (typeof this.default !== 'undefined' && this.default == this.getValue()); // Don't do ===, otherwise empty objects are not recognized as the same.
         },
 
         isArrayType() {
@@ -194,7 +194,28 @@ export default {
             return this.isArrayType || this.isObjectType || this.schemas.nativeDataType() === 'any';
         },
     },
+    watch: {
+        edges: {
+            immediate: true,
+            handler() {
+                this.updateEdgeStatus();
+            }
+        },
+        value: {
+            immediate: true,
+            handler() {
+                this.updateEdgeStatus();
+            }
+        }
+    },
     methods: {
+        updateEdgeStatus() {
+            if (!this.output) {
+                for(var edge of this.edges) {
+                    edge.inactive = !this.isEdgeUsed(edge);
+                }
+            }
+        },
         getCirclePosition() {
             var dim = Utils.domBoundingBox(this.$refs.circle);
             var blocksDim = this.state.root.getDim();
@@ -217,7 +238,7 @@ export default {
             }
             
             var value;
-            if (this.nullable()) {
+            if (this.schemas.nullable()) {
                 value = null;
             }
             else {
@@ -244,11 +265,11 @@ export default {
         },
         _getEdgeRef(edge) {
             let otherBlock;
-            if (this === this.parameter1) {
-                otherBlock = this.parameter2.$parent;
+            if (this === edge.parameter1) {
+                otherBlock = edge.parameter2.$parent;
             }
-            else if (this === this.parameter2) {
-                otherBlock = this.parameter1.$parent;
+            else if (this === edge.parameter2) {
+                otherBlock = edge.parameter1.$parent;
             }
             else {
                 return null;
@@ -286,7 +307,7 @@ export default {
                     this.setValue(ref);
                 }
             }
-            else if (this.isObjectType()) {
+            else if (this.isObjectType) {
                 var hasNoKeys = (this.value && typeof this.value === 'object' && Object.keys(this.value).length === 0);
                 if (this.getEdgeCount() === 1 && (!this.hasValue || hasNoKeys)) {
                     this.setValue(ref);
@@ -382,20 +403,20 @@ export default {
         getEdgeCount() {
             return this.edges.length;
         },
-        getEdges() {
-            return this.edges;
-        },
         setValue(value) {
             if (this.schemas.nativeDataType() == 'boolean') {
                 value = !!value;
             }
-            // ToDo
-            // edge.dashed = !this.parameter2.isEdgeUsed(edge);
             this.$emit('input', value);
         },
         formatProcess(pg) {
-            if (pg.getNodeCount() === 1) {
+            // ToDO: Earlier this was always a ProcessGraph Object, but that seems no longer to be the case. How to clean-up?
+            if (pg instanceof ProcessGraph && pg.getNodeCount() === 1) {
                 return VueUtils.htmlentities(pg.getResultNode().process_id);
+            }
+            var nodes = Object.values(pg.process_graph);
+            if (nodes.length === 1) {
+                return VueUtils.htmlentities(nodes[0].process_id);
             }
             else {
                 return 'Process';
@@ -453,7 +474,8 @@ export default {
             if (Object.keys(value).length === 0) {
                 return 'None';
             }
-            else if (value instanceof ProcessGraph) {
+            // ToDO: Earlier this was always a ProcessGraph Object, but that seems no longer to be the case. How to clean-up?
+            else if (value instanceof ProcessGraph || Utils.isObject(value.process_graph)) {
                 return this.formatProcess(value);
             }
             else if (Utils.isRef(value)) {

@@ -10,7 +10,7 @@
 							<Description :description="param.description" />
 						</div>
 					</label>
-					<ParameterDataTypes :uid="uid" :ref="param.name" :editable="editable" :spec="param" :pass="param.value" :processId="processId" />
+					<ParameterDataTypes :uid="uid" :ref="param.name" :editable="editable" :spec="param" :pass="values[param.name]" :processId="processId" />
 				</div>
 				<!-- We need a hidden submit button in the form tags to allow submiting the form via keyboard (enter key) -->
 				<button type="submit" style="display:none"></button>
@@ -42,6 +42,7 @@ export default {
 		return {
 			uid: '_' + Utils.getUniqueId(),
 			editableFields: [],
+			values: {},
 			editable: true,
 			selectFieldName: null,
 			saveCallback: null,
@@ -73,8 +74,9 @@ export default {
 				Utils.exception(this, error);
 			}
 		},
-		show(title, editableFields, editable = true, saveCallback = null, closeCallback = null, processId = null, selectFieldName = null) {
+		show(title, editableFields, values, editable = true, saveCallback = null, closeCallback = null, processId = null, selectFieldName = null) {
 			this.editableFields = editableFields;
+			this.values = values;
 			this.editable = editable;
 			this.saveCallback = saveCallback;
 			this.processId = processId;

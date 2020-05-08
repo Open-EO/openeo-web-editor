@@ -26,7 +26,7 @@ export default {
             type: Boolean,
             default: false
         },
-        used: {
+        inactive: {
             type: Boolean,
             default: false
         },
@@ -61,23 +61,33 @@ export default {
             // Drawing the arrow
             var xM = ((this.position1[0]+this.position2[0])/2.0);
             var yM = ((this.position1[1]+this.position2[1])/2.0);
-            var norm = Math.sqrt(Math.pow(this.position1[0]-this.position2[0],2)+Math.pow(this.position1[1]-this.position2[1],2));
-            var alpha = (30*Math.PI/180.0);
+
+            var alpha = (35*Math.PI/180.0);
             var cos = Math.cos(alpha);
             var sin = Math.sin(alpha);
             var cosB = Math.cos(-alpha);
             var sinB = Math.sin(-alpha);
 
-            var xA = (this.position1[0]-xM)*this.state.scale*10/(norm/2);
-            var yA = (this.position1[1]-yM)*this.state.scale*10/(norm/2);
+            var norm = Math.sqrt(Math.pow(this.position1[0]-this.position2[0],2)+Math.pow(this.position1[1]-this.position2[1],2));
+            var arrowLength = this.state.scale*10/(norm/1.5);
+            var xA = (this.position1[0]-xM)*arrowLength;
+            var yA = (this.position1[1]-yM)*arrowLength;
 
-            var lineStyle = this.getLineStyle(this.scaledLineWidth, this.selected, this.used);
-            var arrowStyle = this.getLineStyle(this.scaledLineWidth/3.0, this.selected);
-            return [
-                this.getLine(this.position1[0], this.position1[1], this.position2[0], this.position2[1], lineStyle),
-                this.getLine(xM, yM, xM+(xA*cos-yA*sin), yM+(yA*cos+xA*sin), arrowStyle),
-                this.getLine(xM, yM, xM+(xA*cosB-yA*sinB), yM+(yA*cosB+xA*sinB), arrowStyle)
-            ];
+            var lineStyle = this.getLineStyle(this.scaledLineWidth, this.selected, this.inactive);
+            var arrowStyle = this.getLineStyle(this.scaledLineWidth / 1.5, this.selected);
+
+            var mainLine = this.getLine(this.position1[0], this.position1[1], this.position2[0], this.position2[1], lineStyle);
+            if (this.inactive || norm/this.state.scale < 25) {
+                // Hide arrow
+                return [mainLine];
+            }
+            else {
+                return [
+                    mainLine,
+                    this.getLine(xM, yM, xM+(xA*cos-yA*sin), yM+(yA*cos+xA*sin), arrowStyle),
+                    this.getLine(xM, yM, xM+(xA*cosB-yA*sinB), yM+(yA*cosB+xA*sinB), arrowStyle)
+                ];
+            }
         }
     },
     watch: {
@@ -106,10 +116,11 @@ export default {
             this.position2 = this.parameter2.getCirclePosition();
         },
         getLineStyle(lineWidth, selected = false, dashed = false) {
+            let dashLength = 2 * this.state.scale;
             return {
                 'stroke': selected ? 'rgba(0, 200, 0, 1)' : 'rgba(255, 200, 0, 1)',
                 'stroke-width': lineWidth,
-                'stroke-dasharray': dashed ? '4 2' : 'none'
+                'stroke-dasharray': dashed ? dashLength * 3 + ' ' + dashLength * 2 : 'none'
             }
         },
         /**

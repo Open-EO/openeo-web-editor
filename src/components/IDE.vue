@@ -251,7 +251,9 @@ export default {
 
 		showDataForm(title, fields, saveCallback = null, closeCallback = null) {
 			var editable = typeof saveCallback === 'function';
-			this.$refs.parameterModal.show(title, fields.filter(f => f !== null), editable, saveCallback, closeCallback);
+			fields = fields.filter(f => f !== null);
+			var values = fields.map(f => f.value); // ToDo: Don't put this in obj.value, but pass directly in a separate parameter - will be much easier in code
+			this.$refs.parameterModal.show(title, fields, values, editable, saveCallback, closeCallback);
 		}
 
 	}

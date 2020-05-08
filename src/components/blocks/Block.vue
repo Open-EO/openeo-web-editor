@@ -1,11 +1,11 @@
 <template>
     <div :id="'block' + this.id" ref="div" :class="containerClasses" @mousedown.prevent.stop.left="select($event)" :style="styles">
         <div class="blockTitle" @mousedown.prevent.stop.left="emitDrag($event)">
-            <span class="titleText" :title="name + (!showId ? '' : ' #' + id)">
+            <span class="titleText" :title="plainTitle">
                 {{ name }}
                 <span v-if="showId" class="blockId">#{{ id }}</span>
             </span>
-            <div class="blockicon" @mousedown.prevent.stop.left="">
+            <div class="blockicon" @mousedown.prevent.stop.left="focus()">
                 <span v-show="allowsComment && !hasComment" class="addComment" title="Add comment" @click.stop.prevent="addComment()">
                     <i class="fas fa-comment-medical"></i>
                 </span>
@@ -20,14 +20,14 @@
         </div>
         <div class="inout">
             <div class="inputs">
-                <BlockParameter v-for="(param, i) in parameters" :key="i" ref="parameters" :state="state" :value="args[param.name]" v-bind="param" />
+                <BlockParameter v-for="(param, i) in parameters" :key="i" ref="parameters" :state="state" v-model="args[param.name]" v-bind="param" />
             </div>
             <div class="outputs">
                 <BlockParameter ref="output" :state="state" :label="outputLabel" v-bind="output" />
             </div>
         </div>
         <textarea ref="commentField" v-if="hasComment" v-model="comment" class="editComment" placeholder="Type comment here..."
-            @blur="updateComment($event)" @mousedown.stop=""></textarea>
+            @blur="updateComment($event)" @mousedown.stop="focus()"></textarea>
     </div>
 </template>
 
@@ -89,6 +89,9 @@ export default {
         };
     },
     watch: {
+        'state.compactMode'() {
+            this.$emit('moved', this.x, this.y);
+        },
         value: {
             immediate: true,
             handler(value) {
@@ -173,6 +176,9 @@ export default {
                 fontSize: Math.round(this.state.scale * defaultFontSize) + 'px',
                 width: Math.round(this.state.scale * this.width) + 'px',
             };
+        },
+        plainTitle() {
+            return this.name + (!this.showId ? '' : ' #' + this.id);
         },
         name() {
             switch(this.type) {
@@ -341,7 +347,9 @@ export default {
         }
     },
     mounted() {
+        // ToDo: Move mousemove listener for dragging to Blocks?
         document.addEventListener('mousemove', () => this.dragging());
+        // ToDO: Replace with mouseleave?
         document.addEventListener('mouseup', () => this.stopDrag());
         this.listen('blocks.startDrag', this.startDrag);
     },
@@ -353,12 +361,16 @@ export default {
                 selected: this.selected
             })
         },
+        focus() {
+            this.$parent.focus();
+        },
         select(event) {
             this.$parent.unselectAll(event);
             this.selected = true;
+            this.focus();
         },
         showParameters(parameterName = null) {
-            this.$parent.$emit('editParameters', this.$parent, this, this.state.editable, parameterName);
+            this.$parent.$emit('editParameters', this.editables, this.args, this.plainTitle, this.state.editable, parameterName, data => this.args = data, this.processId);
         },
         showInfo() {
             if(this.collectionId) {
@@ -385,6 +397,7 @@ export default {
             }
         },
         emitDrag(event) {
+            this.focus();
             this.select(event);
             this.emit('blocks.startDrag');
         },
@@ -408,6 +421,9 @@ export default {
             }
         },
 
+        isResult() {
+            return this.result;
+        },
         setResult(val) {
             this.result = val;
         },
@@ -418,25 +434,6 @@ export default {
 
         remove() {
             this.$parent.removeBlock(this);
-        },
-
-        /**
-         * Exports the block to JSON
-         */
-        export(internal = false) {
-            if (this.type === 'parameter') {
-                return undefined;
-            }
-
-            if (internal) {
-                return Object.assign({
-                    x: this.x,
-                    y: this.y
-                }, this.data);
-            }
-            else {
-                return this.data;
-            }
         },
 
         /**
@@ -453,39 +450,6 @@ export default {
                 }
             }
             return null;
-        },
-
-        /**
-         * Saves the form
-         */
-        save(serialize) {
-            var boolFields = {};
-            for (var entry in this.fields) {
-                if (this.fields[entry].type == 'boolean') {
-                    boolFields[entry] = this.fields[entry];
-                }
-            }
-            for (var key in serialize) {
-                var newKey = key;
-                var isArray = false;
-                if (newKey.substr(newKey.length-2, 2) == '[]') {
-                    newKey = newKey.substr(0, newKey.length-2);
-                    isArray = true;
-                }
-                if (serialize[key] == null && isArray) {
-                    serialize[key] = [];
-                }
-
-                if (newKey in boolFields) {
-                    delete boolFields[newKey];
-                }
-                let field = this.getBlockParameter(newKey);
-                field.setValue(serialize[key]);
-            }
-
-            for (var key in boolFields) {
-                this.getBlockParameter(key).setValue(false);
-            }
         }
     }
 

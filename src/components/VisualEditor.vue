@@ -2,7 +2,7 @@
 	<div class="visualEditor" ref="visualEditor">
 		<EditorToolbar :editable="editable" :onClear="clear" :isMainEditor="isMainEditor">
 			<button type="button" @click="$refs.blocks.deleteSelected()" v-show="editable && hasSelection" title="Delete selected elements"><i class="fas fa-trash"></i></button>
-			<button type="button" @click="$refs.blocks.undo()" v-show="editable && hasUndo" title="Undo last change"><i class="fas fa-undo-alt"></i></button>
+			<button type="button" @click="$refs.blocks.undo()" v-show="editable && canUndo" title="Undo last change"><i class="fas fa-undo-alt"></i></button>
 			<button type="button" @click="$refs.blocks.toggleCompact()" :class="{compactMode: compactMode}" title="Compact Mode"><i class="fas fa-compress-arrows-alt"></i></button>
 			<button type="button" @click="$refs.blocks.perfectScale()" title="Scale to perfect size"><i class="fas fa-arrows-alt"></i></button>
 			<button type="button" @click="toggleFullScreen()" :title="isFullScreen ? 'Close fullscreen' : 'Show fullscreen'">
@@ -27,6 +27,7 @@
 					@editParameters="openParameterEditor"
 					@compactMode="compact => this.compactMode = compact"
 					@selectionChanged="(b, e) => this.hasSelection = (b.length || e.length)"
+					@historyChanged="history => this.canUndo = history.length > 0"
 					v-model="pg"
 					/>
 			</div>
@@ -86,10 +87,10 @@ export default {
 	},
 	data() {
 		return {
+			canUndo: false,
 			compactMode: false,
 			hasSelection: false,
-			hasUndo: false, // ToDo
-			pg: require('../../../openeo-js-processgraphs/tests/assets/evi.json'), // this.value
+			pg: this.value || require('../../../openeo-js-processgraphs/tests/assets/evi.json'), // ToDo: Remove
 			isFullScreen: false
 		};
 	},
@@ -163,22 +164,8 @@ export default {
 			this.$refs.schemaModal.show(name, schema, "This is a parameter of a user-defined process. It is a value made available by the process executing this sub-processes for further use. The value will comply to the following data type(s):");
 		},
 
-		openParameterEditor(blocks, block, editable, selectField) {
-			blocks.active = false;
-			var title = block.name+' #'+block.id;
-			this.$refs.parameterModal.show(
-				title, block.editables, editable,
-				// save handler
-				editable ? (data => block.save(data)) : null,
-				// close handler
-				() => {
-					blocks.active = true;
-					return true;
-				},
-				// process id
-				block.name,
-				selectField
-			);
+		openParameterEditor(parameters, values, title = "Edit", isEditable = true, selectParameterName = null, saveCallback = null, processId = null) {
+			this.$refs.parameterModal.show(title, parameters, values, isEditable, saveCallback, null, processId, selectParameterName);
 		},
 
 		clear() {
@@ -214,8 +201,8 @@ export default {
 			}
 		},
 
-		makeModel(process, addToHistory = true) {
-			this.$refs.blocks.import(process, this.processRegistry);
+		async makeModel(process, addToHistory = true) {
+			await this.$refs.blocks.import(process, addToHistory);
 		},
 
 		makeCustomProcess() {
