@@ -61,11 +61,14 @@ export default {
 			}
 		},
 		userName() {
-			if (!this.userInfo.user_id) {
-				return 'Guest';
+			if (typeof this.userInfo.name === 'string') {
+				return this.userInfo.name;
+			}
+			else if (typeof this.userInfo.user_id === 'string') {
+				return this.userInfo.user_id;
 			}
 			else {
-				return this.userInfo.user_id;
+				return 'Guest';
 			}
 		},
 		storageUsed() {

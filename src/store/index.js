@@ -20,6 +20,7 @@ const getDefaultState = () => {
 		userInfo: {},
 		connectionError: null,
 		discoveryErrors: [],
+		authProviders: [],
 		fileFormats: {},
 		serviceTypes: {},
 		udfRuntimes: {},
@@ -75,9 +76,11 @@ export default new Vuex.Store({
 	actions: {
 		async connect(cx, {url}) {
 			await cx.dispatch('logout');
+
+			// Connect and request capabilities
+			var connection = null;
 			try {
-				var connection = await OpenEO.connect(url);
-				cx.commit('connection', connection);
+				connection = await OpenEO.connect(url);
 			} catch (error) {
 				if(error.message == 'Network Error' || error.name == 'NetworkError') {
 					error = new Error("Server is not available.");
@@ -85,6 +88,19 @@ export default new Vuex.Store({
 				cx.commit('setConnectionError', error);
 				return false;
 			}
+
+			// Request auth provider list
+			try {
+				var providers = await connection.listAuthProviders();
+				cx.commit('authProviders', providers);
+			} catch (error) {
+				cx.commit('setConnectionError', error);
+				return false;
+			}
+
+			// Only commit the connection change after requesting the auth providers
+			// as this indicates that the connection procedure has finished.
+			cx.commit('connection', connection);
 
 			return true;
 		},
@@ -150,24 +166,6 @@ export default new Vuex.Store({
 			cx.commit('discoveryCompleted', true);
 		},
 
-		async authenticateOIDC(cx, options) {
-			if (cx.getters.supports('authenticateOIDC')) {
-				await cx.state.connection.authenticateOIDC(options);
-			}
-			else {
-				throw "Sorry, OpenID Connect authentication is not supported.";
-			}
-		},
-
-		async authenticateBasic(cx, {username, password}) {
-			if (cx.getters.supports('authenticateBasic')) {
-				await cx.state.connection.authenticateBasic(username, password);
-			}
-			else {
-				throw "Sorry, Basic authentication is not supported.";
-			}
-		},
-
 		// Request user account info
 		async describeAccount(cx) {
 			if (cx.getters.supports('describeAccount') && cx.getters.isAuthenticated) {
@@ -203,6 +201,9 @@ export default new Vuex.Store({
 		},
 		connection(state, connection) {
 			state.connection = connection;
+		},
+		authProviders(state, authProviders) {
+			state.authProviders = authProviders;
 		},
 		userInfo(state, info) {
 			state.userInfo = info;
