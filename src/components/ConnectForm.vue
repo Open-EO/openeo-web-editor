@@ -205,8 +205,8 @@ export default {
 				if (evt.state.serverUrl) {
 					this.serverUrl = evt.state.serverUrl;
 				}
-				if (evt.state.autoConnect) {
-					this.autoConnect = true;
+				if (typeof evt.state.autoConnect !== 'undefined') {
+					this.autoConnect = evt.state.autoConnect;
 				}
 			}
 			if (this.autoConnect) {

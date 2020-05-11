@@ -1,8 +1,10 @@
 import Field from './field.js';
-import EventBus from '@openeo/vue-components/eventbus.js';
 import VueUtils from '@openeo/vue-components/utils.js';
 import { ProcessGraph } from '@openeo/js-processgraphs';
 import Utils from '../../utils.js';
+
+import Vue from 'vue';
+const EventBus = new Vue();
 
 export default class Block {
 
