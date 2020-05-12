@@ -1,7 +1,9 @@
 <template>
-	<div :class="{container: true, connectForm: !isDiscovered}">
-		<ConnectForm v-if="!isDiscovered" :skipLogin="skipLogin" />
-		<IDE v-else />
+	<div class="container">
+		<transition name="connect-fade" mode="out-in">
+			<ConnectForm key="1" v-if="!isDiscovered" :skipLogin="skipLogin" />
+			<IDE key="2" v-else />
+		</transition>
 		<Modal ref="modal" maxWidth="60%" />
 		<vue-snotify />
 		<div ref="webEditorInfo" style="display: none;">
@@ -95,12 +97,6 @@ export default {
 html, body, .container {
 	height: 100%;
 	overflow: hidden;
-}
-.container.connectForm {
-	background-color: #1665B6;
-	align-items: center;
-	display: flex;
-	overflow: auto;
 }
 body, input, textarea, button, select {
 	font-family: 'Ubuntu', sans-serif;
@@ -211,6 +207,10 @@ button {
 	padding-left: 20px;
 }
 
+.container {
+	width: 100%;
+	height: 100%;
+}
 .container .snotifyToast__title {
 	font-size: 1em;
 	font-weight: bold;
@@ -232,5 +232,48 @@ h3.aboutPage {
 	text-align: center;
 	margin: 1em;
 	font-weight: bold;
+}
+
+
+.message {
+	padding: 0.5em;
+	margin-bottom: 1em;
+	border-radius: 0.5em;
+}
+.warning {
+	border: 1px solid #f9d67a;
+	background-color: #fbeabc;
+	color: #795600;
+}
+.error {
+	border: 1px solid #f97a7a;
+	background-color: #fbbcbc;
+	color: #790000;
+}
+.help, .message {
+	display: flex;
+}
+.help span, .message span {
+	display: block;
+	flex-grow: 1;
+}
+.help .fas, .message .fas {
+	display: block;
+	height: 100%;
+	margin-right: 0.5em;
+}
+.help {
+	margin: 0.75em 0.5em;
+}
+.help span {
+	font-size: 0.9em;
+}
+
+/* Transition */
+.connect-fade-enter-active, .connect-fade-leave-active {
+  transition: opacity .3s ease;
+}
+.connect-fade-enter, .connect-fade-leave-to {
+  opacity: 0;
 }
 </style>
