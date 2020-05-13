@@ -225,8 +225,9 @@ export default {
 		},
 
 		switchServer() {
-			window.history.pushState({reset: true, serverUrl: this.serverUrl, autoConnect: false}, "", ".");
+			window.history.pushState({reset: true, serverUrl: this.serverUrl, autoConnect: true}, "", ".");
 			this.serverUrl = null;
+			this.autoConnect = false;
 			this.reset();
 		},
 
