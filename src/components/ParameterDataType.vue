@@ -24,7 +24,7 @@
 		<MapGeoJsonEditor v-else-if="type === 'geojson'" v-model="value" :key="type" :id="fieldName + '_geojson'" :editable="editable" class="geoJsonEditor"></MapGeoJsonEditor>
 		<!-- Process Editor -->
 		<div v-else-if="type === 'process-graph'" class="border">
-			<VisualEditor ref="callbackBuilder" class="callbackEditor" id="inlinePgEditor" :editable="editable" :pgParameters="schema.getCallbackParameters()" :value="value" />
+			<VisualEditor ref="callbackBuilder" class="callbackEditor" id="inlinePgEditor" :editable="editable" :pgParameters="schema.getCallbackParameters()" v-model="value" />
 		</div>
 		<!-- Object -->
 		<div v-else-if="isObjectType" class="objectEditor">
@@ -287,8 +287,7 @@ export default {
 				return this.$refs.fileFormatOptionsEditor.getValue();
 			}
 			else if (this.type === 'process-graph') {
-				var pg = this.$refs.callbackBuilder.makeCustomProcess();
-				var obj = new ProcessGraph(pg, this.processRegistry);
+				var obj = new ProcessGraph(this.value, this.processRegistry);
 				obj.setParent(this.processId, this.parameter.name);
 				obj.parse();
 				return obj;

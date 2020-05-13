@@ -1,9 +1,11 @@
 <template>
-    <div ref="div" :id="id" class="blocks_js_editor" tabindex="-1"
+    <div ref="div" :id="id" class="blocks_js_editor" tabindex="0"
         @mousemove="onMouseMove($event)"
         @mousedown="onMouseDown($event)"
         @mousewheel.prevent="onMouseWheel($event)"
         @keydown="onKeyDown($event)"
+        @focus="highlight(true)"
+        @blur="highlight(false)"
         @DOMMouseScroll.prevent="onMouseWheel($event)">
         <!-- @mousewheel for all brothers except Firefox, which needs @DOMMouseScroll - tabindex is to allow focus for delete keystroke etc -->
         <svg xmlns="http://www.w3.org/2000/svg" version="1.1" class="canvas">
@@ -14,8 +16,8 @@
             <line v-if="linkingLine" v-bind="linkingLine" />
         </svg>
         <div class="blocks">
-            <Block v-for="block in pgParameterBlocks" ref="pgParameters" :key="block.id" :state="state" v-model="block.value" v-bind="block" />
-            <Block v-for="block in blocks" ref="blocks" :key="block.id" :state="state" v-model="block.value" v-bind="block" />
+            <Block v-for="block in pgParameterBlocks" ref="pgParameters" :key="block.id" :state="state" v-model="block.value" v-bind="block" @move="startDragBlock" @moved="moveBlock" />
+            <Block v-for="block in blocks" ref="blocks" :key="block.id" :state="state" v-model="block.value" v-bind="block" @move="startDragBlock" @moved="moveBlock" />
         </div>
     </div>
 </template>
@@ -24,7 +26,6 @@
 import Block from './Block.vue';
 import Edge from './Edge.vue';
 import Utils from '../../utils.js';
-import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
 import { JsonSchemaValidator, ProcessGraph, ProcessRegistry } from '@openeo/js-processgraphs';
 import Vue from 'vue';
 
@@ -38,8 +39,8 @@ Emits:
 - showSchema(name, schema): Show JSON schema
 - editParameters(parameters, values, title = "Edit", isEditable = true, selectParameterName = null, saveCallback(data) = null, processId = null): Show the parameter editor
 - compactMode(enable): Informs about the current state of compact mode.
-
-- blocks.startDrag (to be removed)
+- input(value) - The value has been updated
+- historyChanged(history, undoIndex = null, redoIndex = null) - The history has been changed
 */
 
 const getDefaultState = function(blocks) {
@@ -65,7 +66,6 @@ const historySize = 30;
 
 export default {
     name: 'Blocks',
-    mixins: [EventBusMixin],
     components: {
         Block,
         Edge
@@ -81,7 +81,7 @@ export default {
         },
         value: {
             type: Object,
-            default: {},
+            default: () => ({})
         },
         collections: {
             type: Array,
@@ -103,7 +103,7 @@ export default {
 
             // History
             history: [],
-            historyEnabled: false,
+            historyPointer: null,
             // Metadata for blocks to show
             blocks: [],
             // Metadata for edges to show
@@ -113,6 +113,8 @@ export default {
             nextBlockId: 1,
             // Next edge id
             nextEdgeId: 1,
+
+            activeTransactions: 0,
             
             // State specific to this blocks instance including all children
             state: getDefaultState(this)
@@ -189,7 +191,10 @@ export default {
     },
     watch: {
         async value(value) {
-            await this.import(value, false);
+            // Only import when user changes data (i.e. not a BlocksProcess exported from export())
+            if (!(value instanceof BlocksProcess)) {
+                await this.import(value, { propagate: false, undoOnError: false }); // don't propagate, otherwise results in an infinite loop
+            }
         },
         editable: {
             immediate: true,
@@ -210,18 +215,41 @@ export default {
         this.moveCenter(0, 0, true);
 
         // ToDo: Replace with mouseleave?
-        document.addEventListener('mouseup', this.onDocumentMouseUp.bind(this));
+        this.onDocumentMouseUpFn = this.onDocumentMouseUp.bind(this)
+        document.addEventListener('mouseup', this.onDocumentMouseUpFn);
 
-        await this.import(this.value, false);
-
-        this.historyEnabled = true;
+        await this.import(this.value, { propagate: false, undoOnError: false });
+    },
+    beforeDestroy() {
+        document.removeEventListener('mouseup', this.onDocumentMouseUpFn);
     },
     methods: {
+        startDragBlock() {
+            for(let i in this.$refs.pgParameters) {
+                this.$refs.pgParameters[i].startDrag();
+            }
+            for(let i in this.$refs.blocks) {
+                this.$refs.blocks[i].startDrag();
+            }
+        },
+        moveBlock() {
+            for(let i in this.$refs.edges) {
+                this.$refs.edges[i].updatePositions();
+            }
+        },
         supports(event) {
             return this.$listeners && this.$listeners[event];
         },
         focus() {
             this.$refs.div.focus();
+        },
+        highlight(enable) {
+            if (enable) {
+                this.$refs.div.classList.add("focus");
+            }
+            else {
+                this.$refs.div.classList.remove("focus");
+            }
         },
         link(parameter) {
             if (this.state.linkFrom) {
@@ -296,7 +324,7 @@ export default {
                 if (distance > 10) {
                     this.link(this.selectedSideEdge.selectedParameter);
                     this.removeEdge(this.selectedSideEdge);
-                    this.saveHistory();
+                    this.commit();
                 }
             }
 
@@ -333,47 +361,62 @@ export default {
             else if (event.which == 1 && event.shiftKey) {
                 // Multiselect by drag&drop
             }
+
+            this.focus();
         },
 
         getDim() {
             return Utils.domBoundingBox(this.$refs.div);
         },
 
-        clear() {
-            this.edges = [];
-            this.blocks = [];
-            this.nextBlockId = 1;
-            this.nextEdgeId = 1;
+        async clear() {
+            return await this.startTransaction(async () => {
+                this.edges = [];
+                this.blocks = [];
+                this.nextBlockId = 1;
+                this.nextEdgeId = 1;
+            });
+        },
+
+        commit(data = null, history = true, propagate = true) {
+            // Don't commit when in a transaction
+            if (this.activeTransactions > 0) {
+                return;
+            }
+
+            if (history !== false) {
+                this.saveHistory();
+            }
+            if (propagate !== false) {
+                this.$emit('input', data === null ? this.export() : data);
+            }
         },
     
-        /**
-         * Enable or disable storing (e.g. for importing)
-         */
-        enableHistory(enable) {
-            this.historyEnabled = enable;
-        },
         /**
          * Save the current situation to the history
          */
         saveHistory() {
-            if (!this.historyEnabled) {
-                return;
-            }
-
-            console.trace();
-        
-            this.history.push(this.export());
-            if (this.history.length > historySize) {
+            var data = this.export(true);
+            this.history.splice(this.historyPointer + 1, this.historySize, data);
+            if (this.history.length > this.historySize) {
                 this.history.shift();
             }
-
-            this.$emit('historyChanged', this.history);
+            this.historyPointer = this.history.length - 1;
+            this.$emit('historyChanged', this.history, this.historyPointer);
         },
         async undo() {
-            if (this.history.length) {
-                var last = this.history.pop();
-                await this.import(last, false);
-                this.$emit('historyChanged', this.history);
+            await this.historyStep(-1);
+        },
+        async redo() {
+            await this.historyStep(1);
+        },
+        async historyStep(step) {
+            var index = this.historyPointer + step;
+            var element = this.history[index];
+            if (element) {
+                this.historyPointer = index;
+                this.import(element, { saveHistory: false, undoOnError: false });
+                this.$emit('historyChanged', this.history, this.historyPointer);
             }
         },
 
@@ -406,7 +449,6 @@ export default {
             if (this.blocks.length > 0 && !result && !foundNewResultNode) {
                 this.$emit("error", "No result node available, please specify one.");
             }
-            this.saveHistory();
         },
 
         getPositionForPageXY(x, y) {
@@ -417,21 +459,21 @@ export default {
             if (y !== null) {
                 y = (y - rect.offsetTop - this.state.center[1]) / this.state.scale;
             }
-            return {x, y};
+            return [x, y];
         },
 
-        addCollection(id, x = null, y = null, defaults = {}) {
+        addCollection(id, position = [], defaults = {}) {
             return this.addBlock({
                 process_id: 'load_collection',
                 arguments: Object.assign({id}, defaults),
-                x, y
+                position
             });
         },
 
-        addProcess(name, x = null, y = null, node = {}) {
+        addProcess(name, position = [], node = {}) {
             return this.addBlock(Object.assign({
                 process_id: name,
-                x, y
+                position
             }, node));
         },
 
@@ -453,18 +495,17 @@ export default {
             };
 
             var size = this.estimateBlockSize(block);
-            if (block.value.x === null) {
-                block.value.x = (-this.state.center[0] + rect.width/2)/this.state.scale - size[0]/2 + this.newBlockOffset;
-            }
-            if (block.value.y === null) {
-                block.value.y = (-this.state.center[1] + rect.height/2)/this.state.scale - size[1]/2 + this.newBlockOffset;
-            }
+            var fallbackPosition = [
+                (-this.state.center[0] + rect.width/2)/this.state.scale - size[0]/2 + this.newBlockOffset,
+                (-this.state.center[1] + rect.height/2)/this.state.scale - size[1]/2 + this.newBlockOffset
+            ];
+            block.value.position = Utils.ensurePoint(block.value.position, fallbackPosition);
             if (this.newBlockOffset < 150) {
                 this.newBlockOffset += 10;
             }
             
             this.blocks.push(Vue.observable(block));
-            this.saveHistory();
+            this.commit();
             return block;
         },
 
@@ -536,23 +577,25 @@ export default {
         /**
          * Remove a block
          */
-        removeBlock(block) {
-            var i = this.blocks.findIndex(b => b.id == block.id);
-            if (i < 0) {
-                return;
-            }
-
-            for (var edge of this.edges.slice(0)) {
-                if (edge.parameter1.$parent.id === block.id || edge.parameter2.$parent.id === block.id) {
-                    this.removeEdge(edge);
+        async removeBlock(block) {
+            return await this.startTransaction(async () => {
+                var i = this.blocks.findIndex(b => b.id == block.id);
+                if (i < 0) {
+                    return;
                 }
-            }
 
-            this.$delete(this.blocks, i);
+                for (var edge of this.edges.slice(0)) {
+                    if (edge.parameter1.$parent.id === block.id || edge.parameter2.$parent.id === block.id) {
+                        this.removeEdge(edge);
+                    }
+                }
 
-            if (block.value.result) {
-                this.setResultNode(block, false);
-            }
+                this.$delete(this.blocks, i);
+
+                if (block.value.result) {
+                    this.setResultNode(block, false);
+                }
+            });
         },
 
         /**
@@ -584,22 +627,22 @@ export default {
         /**
          * Delete the current link
          */
-        deleteSelected() {
+        async deleteSelected() {
             if (!this.hasSelection()) {
                 return;
             }
 
-            // Remove the selected blocks and its edges
-            for(var block of this.selectedBlocks.slice(0)) { // copy to avoid race condition
-                this.removeBlock(block);
-            }
+            return await this.startTransaction(async () => {
+                // Remove the selected blocks and its edges
+                for(var block of this.selectedBlocks.slice(0)) { // copy to avoid race condition
+                    this.removeBlock(block);
+                }
 
-            // Removes the selected edges
-            for(var edge of this.selectedEdges.slice(0)) { // copy to avoid race condition
-                this.removeEdge(edge);
-            }
-
-            this.saveHistory();
+                // Removes the selected edges
+                for(var edge of this.selectedEdges.slice(0)) { // copy to avoid race condition
+                    this.removeEdge(edge);
+                }
+            });
         },
 
         async addEdgeByNames(b1, p1, b2, p2) {
@@ -666,18 +709,18 @@ export default {
                 }
             }
 
-            this.unlink();
+            return await this.startTransaction(async () => {
+                this.unlink();
 
-            // Create edge
-            this.edges.push(Vue.observable(edge));
-            edge.parameter1.addEdge(edge);
-            edge.parameter2.addEdge(edge);
+                // Create edge
+                this.edges.push(Vue.observable(edge));
+                edge.parameter1.addEdge(edge);
+                edge.parameter2.addEdge(edge);
 
-            // Update result node
-            await this.$nextTick();
-            this.setResultNode(edge.parameter1.$parent, false);
-
-            this.saveHistory();
+                // Update result node
+                await this.$nextTick();
+                this.setResultNode(edge.parameter1.$parent, false);
+            });
         },
 
         /**
@@ -721,17 +764,16 @@ export default {
         export(internal = false) {
             var nodes = {};
             for(var block of this.blocks) {
-                let copy = Object({}, block);
+                let copy = Utils.deepClone(block.value);
                 if (!internal) {
-                    delete copy.x;
-                    delete copy.y;
+                    delete copy.position;
                     delete copy.selected;
                 }
                 nodes[block.id] = copy;
             }
 
             var pg = {
-            // ToDo: Add id, parameters, returns, etc.
+            // ToDo: Add id, parameters, returns, etc. (see below)
             //  id: null,
             //  summary: null,
             //  description: null,
@@ -744,30 +786,56 @@ export default {
             //  examples: [],
             //  links: []
             }
-            
-            return pg;
+            // ToDo: Currently, we just use the if, parameters etc from the original process
+            return new BlocksProcess(Object.assign({}, this.value, pg));
         },
 
-        async import(process, addToHistory = true, clear = true) {
+        // Options may contain:
+        // - undoOnError: don't undo changes when an error occured (default: true)
+        // - saveHistory: commit the changes to the history (default: true)
+        // - propagate: emit the changes to the parent v-model (default: true)
+        async startTransaction(fn, options = {}, ...args) {
             let success = true;
 
-            // disable history for import so that not every import step is in the history...
-            this.enableHistory = false;
-
-            // clear screen...
-            if (clear) {
-                this.clear();
-            }
-
-            let onError = async (error) => {
-                // If an error occured: show it an restore the last working state from history.
-                this.$emit('error', error, "Process graph invalid");
-                console.log(error);
-                await this.undo();
-                success = false;
-            };
+            this.activeTransactions++;
 
             try {
+                await fn(args);
+            } catch (error) {
+                // If an error occured: show it and restore the last working state from history.
+                this.$emit('error', error, "Model is invalid");
+                console.log(error);
+                if (options.undoOnError !== false) {
+                    try {
+                        await this.undo();
+                    } catch (error2) {
+                        this.$emit('error', error, "Revert failed");
+                        console.log(error);
+                    }
+                }
+                success = false;
+            }
+
+            this.activeTransactions--;
+            this.commit(null, options.saveHistory, options.propagate);
+
+            return success;
+        },
+
+        // Options may contain:
+        // - all from startTransaction()
+        // - clear: Clear the model builder before import (default: true)
+        async import(process, options = {}) {
+            return await this.startTransaction(async () => {
+                // clear screen...
+                if (options.clear !== false) {
+                    await this.clear();
+                }
+
+                if (!Utils.isObject(process) || Utils.size(process.process_graph) === 0) {
+                    return;
+                }
+
                 // Parse process 
                 var pg;
                 // ToDO: Earlier this was always a ProcessGraph Object, but that seems no longer to be the case. How to clean-up?
@@ -786,20 +854,11 @@ export default {
 
                 // Import edges
                 await this.$nextTick();
-                await this.importEdges(pg).catch(error => onError(error));
+                await this.importEdges(pg);
 
                 // Update scale
                 await this.perfectScale();
-            } catch (error) {
-                onError(error);
-            }
-            
-            this.enableHistory = true;
-            if (addToHistory) {
-                this.saveHistory();
-            }
-
-            return success;
+            }, options);
         },
 
         async importEdges(pg) {
@@ -846,7 +905,10 @@ export default {
             }
         },
 
-        importNodes(nodes, x = 0, y = 0, imported = []) {
+        importNodes(nodes, position = [0,0], imported = []) {
+            // Make sure to not directly change the array content
+            let x = position[0];
+            let y = position[1];
             for(let i in nodes) {
                 // `node` is a Node class instance as defined by the js-processgraphs library
                 // `data` is the simple object that is defined by JSON process graphs
@@ -857,19 +919,14 @@ export default {
                 }
 
                 let data = typeof node.toJSON === 'function' ? node.toJSON() : node;
-                if (typeof data.x !== 'number') {
-                    data.x = x;
-                }
-                if (typeof data.y !== 'number') {
-                    data.y = y;
-                }
+                data.position = Utils.ensurePoint(data.position, [x,y]);
 
                 let block = this.addBlock(data, node.id);
                 imported.push(node.id);
 
                 let size = this.estimateBlockSize(block);
-                this.importNodes(node.getNextNodes(), data.x + size[0] + 20, data.y, imported);
-                y = data.y + size[1] + 20;
+                this.importNodes(node.getNextNodes(), [data.position[0] + size[0] + 20, data.position[1]], imported);
+                y = data.position[1] + size[1] + 20;
             }
         },
 
@@ -901,15 +958,15 @@ export default {
                 let block = this.$refs.blocks[k];
                 let size = this.estimateBlockSize(block);
                 if (xMin == null) {
-                    xMin = block.x-15
-                    xMax = block.x+18;
-                    yMin = block.y-15
-                    yMax = block.y+115;
+                    xMin = block.position[0]-15
+                    xMax = block.position[0]+18;
+                    yMin = block.position[1]-15
+                    yMax = block.position[1]+115;
                 } else {
-                    xMin = Math.min(xMin, block.x-15);
-                    xMax = Math.max(xMax, block.x+size[0]+18);
-                    yMin = Math.min(yMin, block.y-15);
-                    yMax = Math.max(yMax, block.y+115);
+                    xMin = Math.min(xMin, block.position[0]-15);
+                    xMax = Math.max(xMax, block.position[0]+size[0]+18);
+                    yMin = Math.min(yMin, block.position[1]-15);
+                    yMax = Math.max(yMax, block.position[1]+115);
                 }
             }
 
@@ -926,11 +983,24 @@ export default {
 
     }
 };
+
+class BlocksProcess {
+    constructor(process) {
+        Object.assign(this, process);
+    }
+}
 </script>
 
 <style scoped>
 .canvas {
     width: 100%;
     height: 100%;
+}
+.blocks {
+    box-sizing: border-box;
+    border: 1px solid transparent;
+}
+.focus .blocks {
+    border-color: rgba(22, 102, 182, 0.3);
 }
 </style>

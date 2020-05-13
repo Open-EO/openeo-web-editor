@@ -98,7 +98,8 @@ html, body, .container {
 	height: 100%;
 	overflow: hidden;
 }
-body, input, textarea, button, select {
+
+body, input, textarea, button, select, datalist {
 	font-family: 'Ubuntu', sans-serif;
 }
 body {
@@ -118,8 +119,22 @@ ul, ol {
 	padding-bottom: 0;
 	padding-top: 0;
 }
-button {
+
+button, input[type="submit"], input[type="reset"] {
 	margin: 1px;
+}
+input, textarea, select, datalist {
+	border: 1px solid #ccc;
+}
+button:focus, input:focus, textarea:focus, select:focus, datalist:focus, .multiselect:focus-within {
+    outline: none;
+    box-shadow: 0 0 3px rgba(22, 102, 182, 0.75);
+}
+.multiselect input:focus {
+	box-shadow: 0 0 0;
+}
+button:disabled i {
+	color: #aaa;
 }
 
 .sepr {

@@ -1,8 +1,9 @@
 <template>
 	<div class="visualEditor" ref="visualEditor">
 		<EditorToolbar :editable="editable" :onClear="clear" :isMainEditor="isMainEditor">
-			<button type="button" @click="$refs.blocks.deleteSelected()" v-show="editable && hasSelection" title="Delete selected elements"><i class="fas fa-trash"></i></button>
-			<button type="button" @click="$refs.blocks.undo()" v-show="editable && canUndo" title="Undo last change"><i class="fas fa-undo-alt"></i></button>
+			<button type="button" @click="$refs.blocks.undo()" :disabled="!editable || !canUndo" title="Revert last change"><i class="fas fa-undo-alt"></i></button>
+			<button type="button" @click="$refs.blocks.redo()" :disabled="!editable || !canRedo" title="Redo last reverted change"><i class="fas fa-redo-alt"></i></button>
+			<button type="button" @click="$refs.blocks.deleteSelected()" :disabled="!editable || !hasSelection" title="Delete selected elements"><i class="fas fa-trash"></i></button>
 			<button type="button" @click="$refs.blocks.toggleCompact()" :class="{compactMode: compactMode}" title="Compact Mode"><i class="fas fa-compress-arrows-alt"></i></button>
 			<button type="button" @click="$refs.blocks.perfectScale()" title="Scale to perfect size"><i class="fas fa-arrows-alt"></i></button>
 			<button type="button" @click="toggleFullScreen()" :title="isFullScreen ? 'Close fullscreen' : 'Show fullscreen'">
@@ -15,7 +16,7 @@
 			<div class="graphBuilder" @drop="onDrop($event)" @dragover="allowDrop($event)">
 				<Blocks
 					ref="blocks"
-					:editable="true"
+					:editable="editable"
 					:id="id"
 					:processes="processRegistry"
 					:collections="collections"
@@ -27,8 +28,8 @@
 					@editParameters="openParameterEditor"
 					@compactMode="compact => this.compactMode = compact"
 					@selectionChanged="(b, e) => this.hasSelection = (b.length || e.length)"
-					@historyChanged="history => this.canUndo = history.length > 0"
-					v-model="pg"
+					@historyChanged="historyChanged"
+					v-model="model"
 					/>
 			</div>
 		</div>
@@ -88,9 +89,10 @@ export default {
 	data() {
 		return {
 			canUndo: false,
+			canRedo: false,
 			compactMode: false,
 			hasSelection: false,
-			pg: this.value || require('../../../openeo-js-processgraphs/tests/assets/evi.json'), // ToDo: Remove
+			model: this.value || require('../../../openeo-js-processgraphs/tests/assets/evi.json'), // ToDo: Remove
 			isFullScreen: false
 		};
 	},
@@ -100,6 +102,9 @@ export default {
 		}
 	},
 	watch: {
+		model(value) {
+			this.$emit('input', value);
+		},
 		active(newVal) {
 			if (newVal) {
 				this.onShow();
@@ -111,6 +116,11 @@ export default {
 
 		errorHandler(message, title = null) {
 			Utils.exception(this, message, title)
+		},
+
+		historyChanged(history, index) {
+			this.canUndo = !!history[index-1];
+			this.canRedo = !!history[index+1];
 		},
 
 		allowDrop(ev) {
@@ -140,7 +150,7 @@ export default {
 		},
 
 		onShow() {
-//			this.insertCustomProcess(this.value, false);
+//			this.insertCustomProcess(this.value);
 		},
 
 		toggleFullScreen() {
@@ -175,17 +185,9 @@ export default {
 		},
 
 		getCustomProcess(success, failure, passNull = false) {
-			var process = null;
-			try {
-				process = this.makeCustomProcess();
-			} catch (error) {
-				failure('No valid model specified.', error);
-				return;
-			}
-
-			if (Utils.isObject(process)) {
+			if (Utils.isObject(this.model)) {
 				try {
-					var pg = new ProcessGraph(process, this.processRegistry);
+					var pg = new ProcessGraph(this.model, this.processRegistry);
 					pg.parse();
 				} catch(error) {
 					failure('Process graph invalid', error);
@@ -193,29 +195,16 @@ export default {
 				}
 			}
 
-			if (process !== null || passNull) {
-				success(process);
+			if (this.model !== null || passNull) {
+				success(this.model);
 			}
 			else {
 				failure('No model specified.');
 			}
 		},
 
-		async makeModel(process, addToHistory = true) {
-			await this.$refs.blocks.import(process, addToHistory);
-		},
-
-		makeCustomProcess() {
-			return this.$refs.blocks.export();
-		},
-
-		insertCustomProcess(pg, addToHistory = true) {
-			if (!pg) {
-//				this.clear(); // ToDo: Check
-				return;
-			}
-
-			this.makeModel(pg, addToHistory);
+		insertCustomProcess(process) {
+			this.model = process;
 		},
 
 		getCollectionDefaults(id) {
@@ -243,7 +232,7 @@ export default {
 		insertCollection(collectionId, x = null, y = null) {
 			try {
 				var pos = this.$refs.blocks.getPositionForPageXY(x, y);
-				this.$refs.blocks.addCollection(collectionId, pos.x, pos.y, this.getCollectionDefaults(collectionId));
+				this.$refs.blocks.addCollection(collectionId, pos, this.getCollectionDefaults(collectionId));
 			} catch(error) {
 				Utils.exception(this, error);
 			}
@@ -252,7 +241,7 @@ export default {
 		insertProcess(name, x = null, y = null) {
 			try {
 				var pos = this.$refs.blocks.getPositionForPageXY(x, y);
-				this.$refs.blocks.addProcess(name, pos.x, pos.y);
+				this.$refs.blocks.addProcess(name, pos);
 			} catch(error) {
 				Utils.exception(this, error);
 			}

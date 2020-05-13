@@ -29,7 +29,10 @@ export default {
 		ParameterDataTypes
 	},
 	props: {
-		value: {},
+		value: {
+			type: Object,
+			default: () => ({})
+		},
 		format: {
 			type: String
 		},

@@ -14,11 +14,9 @@ import { ProcessSchema } from './processSchema.js';
 import Utils from '../../utils.js';
 import { ProcessGraph } from '@openeo/js-processgraphs';
 import { Utils as VueUtils } from '@openeo/vue-components';
-import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
 
 export default {
     name: 'BlockParameter',
-    mixins: [EventBusMixin],
     props: {
         name: {
             type: String,
@@ -103,7 +101,7 @@ export default {
                         if (event.which == 1) {
                             // ToDo: Move out of here...
                             if (this.getEdgeCount() > 0) {
-                                this.state.$root.$emit("error", "A result node can't have outgoing edges.");
+                                this.state.root.$emit("error", "A result node can't have outgoing edges.");
                                 return;
                             }
                             this.state.root.setResultNode(this.$parent);
@@ -172,17 +170,14 @@ export default {
             }
         },
         isDefaultValue() {
-            return !this.hasValue || (typeof this.default !== 'undefined' && this.default == this.getValue()); // Don't do ===, otherwise empty objects are not recognized as the same.
+            return !this.hasValue || (typeof this.default !== 'undefined' && this.default == this.value); // Don't do ===, otherwise empty objects are not recognized as the same.
         },
-
         isArrayType() {
             return this.schemas.nativeDataType() === 'array';
         },
-
         isObjectType() {
             return this.schemas.nativeDataType() === 'object';
         },
-        
         isEditable() {
             return !this.output && this.schemas.isEditable();
         },
@@ -231,6 +226,12 @@ export default {
         jsonSchema() {
             return this.schemas.toJSON();
         },
+        setValue(value) {
+            if (this.schemas.nativeDataType() == 'boolean') {
+                value = !!value;
+            }
+            this.$emit('input', value);
+        },
         resetValue() {
             if (typeof this.default !== 'undefined') {
                 this.setValue(this.default);
@@ -244,6 +245,9 @@ export default {
             else {
                 var dataType = this.schemas.nativeDataType();
                 switch(dataType) {
+                    case 'object':
+                        value = {};
+                        break;
                     case 'array':
                         value = [];
                         break;
@@ -258,36 +262,21 @@ export default {
                         value = false;
                         break;
                     default:
-                        value = null;
+                        value = undefined;
                 }
             }
-            this.setValue(value, false);
+            this.setValue(value);
         },
-        _getEdgeRef(edge) {
-            let otherBlock;
-            if (this === edge.parameter1) {
-                otherBlock = edge.parameter2.$parent;
-            }
-            else if (this === edge.parameter2) {
-                otherBlock = edge.parameter1.$parent;
+        getEdgeRef(edge) {
+            if (this.output) {
+                return this.value;
             }
             else {
-                return null;
-            }
-
-            if (otherBlock.isPgParameter) {
-                return {
-                    from_parameter: String(otherBlock.name)
-                };
-            }
-            else {
-                return {
-                    from_node: String(otherBlock.id)
-                };
+                return edge.parameter1.value;
             }
         },
-        _addValueForEdge(edge) {
-            var ref = this._getEdgeRef(edge);
+        addRefToValue(edge) {
+            var ref = this.getEdgeRef(edge);
             if (!ref) {
                 return;
             }
@@ -308,12 +297,15 @@ export default {
                 }
             }
             else if (this.isObjectType) {
-                var hasNoKeys = (this.value && typeof this.value === 'object' && Object.keys(this.value).length === 0);
-                if (this.getEdgeCount() === 1 && (!this.hasValue || hasNoKeys)) {
+                var propertyCount = Utils.size(this.value);
+                if (this.getEdgeCount() === 1 && (!this.hasValue || !propertyCount)) {
                     this.setValue(ref);
                 }
-                else if (hasNoKeys) {
+                else if (!propertyCount) {
                     this.resetValue();
+                }
+                else {
+                    // Don't change value
                 }
             }
             else {
@@ -321,17 +313,17 @@ export default {
                 this.setValue(ref);
             }
         },
-        _removeValueForEdge(edge) {
+        removeRefFromValue(edge) {
             // ToDo: Check whether this should only be executed for input fields
-            var ref = this._getEdgeRef(edge);
+            var ref = this.getEdgeRef(edge);
             if (Utils.isRefEqual(ref, this.value)) {
                 this.resetValue();
             }
             else if (this.isArrayType || this.isObjectType) {
-                this.setValue(this._removeValueForEdgeDeep(this.value, ref));
+                this.setValue(this.removeRefFromValueDeep(this.value, ref));
             }
         },
-        _removeValueForEdgeDeep(value, ref) {
+        removeRefFromValueDeep(value, ref) {
             if (Array.isArray(value)) {
                 var i = value.length;
                 while(--i >= 0) {
@@ -342,7 +334,7 @@ export default {
                         value.splice(i, 1);
                     }
                     else {
-                        value[i] = this._removeValueForEdgeDeep(value[i], ref);
+                        value[i] = this.removeRefFromValueDeep(value[i], ref);
                     }
                 }
 
@@ -356,7 +348,7 @@ export default {
                         delete value[key];
                     }
                     else {
-                        value[i] = this._removeValueForEdgeDeep(value[key], ref);
+                        value[i] = this.removeRefFromValueDeep(value[key], ref);
                     }
                 }
             }
@@ -365,14 +357,13 @@ export default {
         addEdge(edge) {
             this.edges.push(edge);
             if (!this.isEdgeUsed(edge) && !this.output) {
-                this._addValueForEdge(edge);
+                this.addRefToValue(edge);
             }
-            return this; // Allow chaining
         },
         eraseEdge(edge) {
             for (var k in this.edges) {
                 if (this.edges[k] == edge) {
-                    this._removeValueForEdge(edge);
+                    this.removeRefFromValue(edge);
                     this.$delete(this.edges, k);
                     return true;
                 }
@@ -380,13 +371,13 @@ export default {
             return false;
         },
         isEdgeUsed(edge) {
-            var ref = this._getEdgeRef(edge);
+            var ref = this.getEdgeRef(edge);
             if (Utils.isRefEqual(ref, this.value)) {
                 return true;
             }
-            return this._findRefInValue(ref, this.value);
+            return this.hasRefInValue(ref, this.value);
         },
-        _findRefInValue(ref, value) {
+        hasRefInValue(ref, value) {
             if (!value || typeof value !== 'object') {
                 return false;
             }
@@ -394,7 +385,7 @@ export default {
                 return true;
             }
             for(let key in value) {
-                if (this._findRefInValue(ref, value[key])) {
+                if (this.hasRefInValue(ref, value[key])) {
                     return true;
                 }
             }
@@ -402,12 +393,6 @@ export default {
         },
         getEdgeCount() {
             return this.edges.length;
-        },
-        setValue(value) {
-            if (this.schemas.nativeDataType() == 'boolean') {
-                value = !!value;
-            }
-            this.$emit('input', value);
         },
         formatProcess(pg) {
             // ToDO: Earlier this was always a ProcessGraph Object, but that seems no longer to be the case. How to clean-up?

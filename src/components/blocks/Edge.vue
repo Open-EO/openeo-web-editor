@@ -33,7 +33,7 @@ export default {
         lineWidth: {
             type: Number,
             default: 3
-    },
+        },
         state: {
             type: Object,
             required: true
@@ -103,12 +103,6 @@ export default {
     },
     created() {
         this.updatePositions();
-        this.parameter1.$parent.$on('moved', this.updatePositions);
-        this.parameter2.$parent.$on('moved', this.updatePositions);
-    },
-    beforeDestroy() {
-        this.parameter1.$parent.$off('moved', this.updatePositions);
-        this.parameter2.$parent.$off('moved', this.updatePositions);
     },
     methods: {
         updatePositions() {

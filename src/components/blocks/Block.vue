@@ -27,7 +27,7 @@
             </div>
         </div>
         <textarea ref="commentField" v-if="hasComment" v-model="comment" class="editComment" placeholder="Type comment here..."
-            @blur="updateComment($event)" @mousedown.stop="focus()"></textarea>
+            @blur="updateComment($event)" @mousedown.stop=""></textarea>
     </div>
 </template>
 
@@ -37,7 +37,6 @@ import VueUtils from '@openeo/vue-components/utils.js';
 import { ProcessGraph } from '@openeo/js-processgraphs';
 import Utils from '../../utils.js';
 import { ProcessParameter } from './processSchema';
-import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
 import Vue from 'vue';
 
 /*
@@ -45,13 +44,14 @@ Events:
 
 Emits locally:
 - moved(x, y) - The block has been moved
+- input(value) - The value has been updated
+- move() - A block is now being moved
 */
 
 const defaultFontSize = 10;
 
 export default {
     name: 'Block',
-    mixins: [EventBusMixin],
     components: {
         BlockParameter
     },
@@ -80,17 +80,13 @@ export default {
     data() {
         return {
             data: {},
-
-            // History saved before move
-            historySaved: false,
-
             // Is the user dragging ?
             drag: null
         };
     },
     watch: {
         'state.compactMode'() {
-            this.$emit('moved', this.x, this.y);
+            this.$emit('moved', this.position);
         },
         value: {
             immediate: true,
@@ -101,24 +97,15 @@ export default {
     },
     computed: {
         // Manage the node object (arguments, description, result, x, y, selected)
-        x: {
-            set(value) {
-                this.$set(this.data, 'x', value);
+        position: {
+            set(pos) {
+                pos = Utils.ensurePoint(pos);
+                this.$set(this.data, 'position', pos);
                 this.$emit('input', this.getValue());
-                this.$emit('moved', this.x, this.y);
+                this.$emit('moved', pos);
             },
             get() {
-                return this.data.x || 0;
-            }
-        },
-        y: {
-            set(value) {
-                this.$set(this.data, 'y', value);
-                this.$emit('input', this.getValue());
-                this.$emit('moved', this.x, this.y);
-            },
-            get() {
-                return this.data.y || 0;
+                return Utils.ensurePoint(this.data.position);
             }
         },
         selected: {
@@ -171,8 +158,8 @@ export default {
         },
         styles() {
             return {
-                marginLeft: Math.round(this.state.center[0] + this.x * this.state.scale) + 'px',
-                marginTop: Math.round(this.state.center[1] + this.y * this.state.scale) + 'px',
+                marginLeft: Math.round(this.state.center[0] + this.position[0] * this.state.scale) + 'px',
+                marginTop: Math.round(this.state.center[1] + this.position[1] * this.state.scale) + 'px',
                 fontSize: Math.round(this.state.scale * defaultFontSize) + 'px',
                 width: Math.round(this.state.scale * this.width) + 'px',
             };
@@ -341,23 +328,34 @@ export default {
                 schema: spec.schema || {},
                 description: spec.description || '',
                 optional: true,
-                output: true
+                output: true,
+                value: {}
             };
+            if (this.type === 'parameter') {
+                output.value.from_parameter = this.id;
+            }
+            else {
+                output.value.from_node = this.id;
+            }
             return output;
         }
     },
     mounted() {
         // ToDo: Move mousemove listener for dragging to Blocks?
-        document.addEventListener('mousemove', () => this.dragging());
+        this.draggingFn = this.dragging.bind(this);
+        document.addEventListener('mousemove', this.draggingFn);
         // ToDO: Replace with mouseleave?
-        document.addEventListener('mouseup', () => this.stopDrag());
-        this.listen('blocks.startDrag', this.startDrag);
+        this.stopDragFn = this.stopDrag.bind(this);
+        document.addEventListener('mouseup', this.stopDragFn);
+    },
+    beforeDestroy() {
+        document.removeEventListener('mousemove', this.draggingFn);
+        document.removeEventListener('mouseup', this.stopDragFn);
     },
     methods: {
         getValue() {
             return Object.assign({}, this.data, {
-                x: this.x,
-                y: this.y,
+                position: this.position,
                 selected: this.selected
             })
         },
@@ -366,7 +364,7 @@ export default {
         },
         select(event) {
             this.$parent.unselectAll(event);
-            this.selected = true;
+            this.selected = !this.selected;
             this.focus();
         },
         showParameters(parameterName = null) {
@@ -395,29 +393,38 @@ export default {
             else {
                 this.comment = null;
             }
+            this.$parent.commit();
         },
         emitDrag(event) {
             this.focus();
             this.select(event);
-            this.emit('blocks.startDrag');
+            if (this.selected) {
+                this.$emit('move');
+            }
+        },
+        getDragPos(pos) {
+            return [this.state.mouse[0]/this.state.scale-pos[0], this.state.mouse[1]/this.state.scale-pos[1]];
         },
         startDrag() {
             if (this.selected) {
-                this.historySaved = false;
-                this.drag = [this.state.mouse[0]/this.state.scale-this.x, this.state.mouse[1]/this.state.scale-this.y];
+                this.drag = {
+                    origin: this.position,
+                    mouse: this.getDragPos(this.position)
+                };
             }
         },
         stopDrag() {
-            this.drag = null;
+            if (this.drag) {
+                var delta = 5 / this.state.scale; // Only store History if block was moved enough
+                if (Math.abs(this.drag.origin[0] - this.position[0]) > delta || Math.abs(this.drag.origin[1] - this.position[1]) > delta) {
+                    this.$parent.commit();
+                }
+                this.drag = null;
+            }
         },
         dragging() {
             if (this.drag) {
-                if (!this.historySaved) {
-                    this.$parent.saveHistory();
-                    this.historySaved = true;
-                }
-                this.x = (this.state.mouse[0]/this.state.scale-this.drag[0]);
-                this.y = (this.state.mouse[1]/this.state.scale-this.drag[1]);
+                this.position = this.getDragPos(this.drag.mouse);
             }
         },
 
@@ -432,8 +439,8 @@ export default {
             return this.$refs.output && this.$refs.output.getEdgeCount() > 0;
         },
 
-        remove() {
-            this.$parent.removeBlock(this);
+        async remove() {
+            await this.$parent.removeBlock(this);
         },
 
         /**
@@ -568,6 +575,7 @@ export default {
     width: 100%;
     max-width: 100%;
     height: 3.7em;
+    min-height: 2.5em;
     resize: none;
 }
 .editComment:focus {

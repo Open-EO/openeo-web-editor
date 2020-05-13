@@ -37,7 +37,7 @@ export default {
 		},
 		process: {
 			type: Object,
-			default: null
+			default: () => null
 		},
 		isMainEditor: {
 			type: Boolean,
