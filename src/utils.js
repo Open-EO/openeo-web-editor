@@ -229,15 +229,18 @@ export default {
 		return (this.isObject(obj) && (obj.from_parameter || obj.from_node));
 	},
 
-	ensurePoint(pt, fallback = [0,0]) {
+	ensurePoint(pt, fallback = null) {
+		if (typeof fallback !== 'function') {
+			fallback = () => [0,0];
+		}
 		if (!Array.isArray(pt)) {
-			return fallback;
+			return fallback();
 		}
 		if (typeof pt[0] !== 'number') {
-			pt[0] = fallback[0] || 0;
+			pt[0] = fallback()[0] || 0;
 		}
 		if (typeof pt[1] !== 'number') {
-			p1[1] = fallback[1] || 0;
+			pt[1] = fallback()[1] || 0;
 		}
 		return pt;
 	},

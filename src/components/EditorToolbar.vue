@@ -2,11 +2,11 @@
 	<div class="sourceHeader">
 		<h3 v-if="isMainEditor && scriptTitle">{{ scriptTitle }}</h3>
 		<div class="sourceToolbar">
-			<slot></slot>
-			<span class="sepl" v-if="editable">
+			<span class="sepr" v-if="editable">
 				<button type="button" @click="newScript" title="New script / Clear current script"><i class="fas fa-file"></i></button>
 				<button type="button" v-show="isMainEditor && scriptTitle" @click="saveScript" :title="'Save to ' + scriptTitle"><i class="fas fa-save"></i></button>
 			</span>
+			<slot></slot>
 		</div>
 	</div>
 </template>

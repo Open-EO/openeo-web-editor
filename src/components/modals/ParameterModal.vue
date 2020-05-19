@@ -61,7 +61,7 @@ export default {
 		save() {
 			try {
 				if (typeof this.saveCallback === 'function') {
-					var data = {};
+					var data = Utils.deepClone(this.values);
 					for(var i in this.$refs) {
 						if (Array.isArray(this.$refs[i]) && this.$refs[i].length > 0 && Utils.isObject(this.$refs[i][0]) && typeof this.$refs[i][0].getValue == 'function') {
 							data[i] = this.$refs[i][0].getValue();

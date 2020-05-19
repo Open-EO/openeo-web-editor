@@ -144,7 +144,7 @@ export default {
         displayValue() {
             var maxLength = 25 - this.displayLabel.length;
             var formattedValue = null;
-            if (this.isEditable && !this.state.compactMode/* && !Utils.isRef(this.value)*/) {
+            if (this.isEditable && !this.state.compactMode && !Utils.isRef(this.value)) {
                 formattedValue = this.formatValue(this.value, maxLength, true);
             }
 

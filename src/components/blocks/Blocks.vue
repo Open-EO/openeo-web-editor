@@ -16,8 +16,10 @@
             <line v-if="linkingLine" v-bind="linkingLine" />
         </svg>
         <div class="blocks">
-            <Block v-for="block in pgParameterBlocks" ref="pgParameters" :key="block.id" :state="state" v-model="block.value" v-bind="block" @move="startDragBlock" @moved="moveBlock" />
-            <Block v-for="block in blocks" ref="blocks" :key="block.id" :state="state" v-model="block.value" v-bind="block" @move="startDragBlock" @moved="moveBlock" />
+            <Block v-for="block in allBlocks" :ref="block.type" :key="block.type + block.id"
+                v-bind="block" :state="state"
+                @input="commit()"
+                @move="startDragBlock" @moved="moveBlock" />
         </div>
     </div>
 </template>
@@ -104,10 +106,14 @@ export default {
             // History
             history: [],
             historyPointer: null,
+
             // Metadata for blocks to show
             blocks: [],
+            pgParameterBlocks: [],
             // Metadata for edges to show
             edges: [],
+
+            processGraph: null,
 
             // Next block id
             nextBlockId: 1,
@@ -143,24 +149,23 @@ export default {
                 return new ProcessRegistry(this.processes);
             }
         },
+        allBlocks() {
+            return this.blocks.concat(this.pgParameterBlocks);
+        },
         selectedBlocks() {
             var selected = [];
-            if (Array.isArray(this.blocks)) {
-                for(var block of this.blocks) {
-                    if (Utils.isObject(block.value) && block.value.selected) {
-                        selected.push(block);
-                    }
+            for(var block of this.allBlocks) {
+                if (Utils.isObject(block.value) && block.value.selected) {
+                    selected.push(block);
                 }
             }
             return selected;
         },
         selectedEdges() {
             var selected = [];
-            if (Array.isArray(this.edges)) {
-                for(var edge of this.edges) {
-                    if (edge.selected) {
-                        selected.push(edge);
-                    }
+            for(var edge of this.edges) {
+                if (edge.selected) {
+                    selected.push(edge);
                 }
             }
             return selected;
@@ -170,26 +175,12 @@ export default {
                 return this.selectedEdges[0];
             }
             return null;
-        },
-        pgParameterBlocks() {
-            var blocks = [];
-            for(var i in this.pgParameters) {
-                let param = this.pgParameters[i];
-                blocks.push(Vue.observable({
-                    id: param.name,
-                    type: 'parameter',
-                    value: {
-                        from_parameter: param.name
-                    },
-                    x: 0,
-                    y: i * 50, // ToDo
-                    spec: param
-                }));
-            }
-            return blocks;
         }
     },
     watch: {
+        pgParameters(value) {
+            this.importPgParameters(value, 'prop');
+        },
         async value(value) {
             // Only import when user changes data (i.e. not a BlocksProcess exported from export())
             if (!(value instanceof BlocksProcess)) {
@@ -218,6 +209,7 @@ export default {
         this.onDocumentMouseUpFn = this.onDocumentMouseUp.bind(this)
         document.addEventListener('mouseup', this.onDocumentMouseUpFn);
 
+        this.importPgParameters(this.pgParameters, 'prop');
         await this.import(this.value, { propagate: false, undoOnError: false });
     },
     beforeDestroy() {
@@ -225,11 +217,11 @@ export default {
     },
     methods: {
         startDragBlock() {
-            for(let i in this.$refs.pgParameters) {
-                this.$refs.pgParameters[i].startDrag();
+            for(let i in this.$refs.parameter) {
+                this.$refs.parameter[i].startDrag();
             }
-            for(let i in this.$refs.blocks) {
-                this.$refs.blocks[i].startDrag();
+            for(let i in this.$refs.process) {
+                this.$refs.process[i].startDrag();
             }
         },
         moveBlock() {
@@ -373,6 +365,7 @@ export default {
             return await this.startTransaction(async () => {
                 this.edges = [];
                 this.blocks = [];
+                this.pgParameterBlocks = this.pgParameterBlocks.filter(b => b.origin === 'prop');
                 this.nextBlockId = 1;
                 this.nextEdgeId = 1;
             });
@@ -422,14 +415,14 @@ export default {
 
         setResultNode(block, result = true) {
             block = this.getBlockById(block.id);
-            if (block.isResult() === result) {
+            if (!block || block.isResult() === result) {
                 return; // Nothing to change
             }
 
             block.setResult(result);
             var foundNewResultNode = false;
-            for(var i in this.$refs.blocks) {
-                var other = this.$refs.blocks[i];
+            for(var i in this.$refs.process) {
+                var other = this.$refs.process[i];
                 if (other !== block) {
                     // If we set a new result node, ensure that only that node is a result node and no other.
                     if (result) {
@@ -486,7 +479,6 @@ export default {
                 process = {};
             }
 
-            var rect = this.getDim();
             var block = {
                 id: String(this.incrementId(id)),
                 type: 'process',
@@ -495,18 +487,23 @@ export default {
             };
 
             var size = this.estimateBlockSize(block);
-            var fallbackPosition = [
-                (-this.state.center[0] + rect.width/2)/this.state.scale - size[0]/2 + this.newBlockOffset,
-                (-this.state.center[1] + rect.height/2)/this.state.scale - size[1]/2 + this.newBlockOffset
-            ];
-            block.value.position = Utils.ensurePoint(block.value.position, fallbackPosition);
-            if (this.newBlockOffset < 150) {
-                this.newBlockOffset += 10;
-            }
+            block.value.position = Utils.ensurePoint(block.value.position, () => this.getNewBlockDefaultPosition(size));
             
             this.blocks.push(Vue.observable(block));
             this.commit();
             return block;
+        },
+
+        getNewBlockDefaultPosition(blockSize) {
+            var rect = this.getDim();
+            var position = [
+                (-this.state.center[0] + rect.width/2)/this.state.scale - blockSize[0]/2 + this.newBlockOffset,
+                (-this.state.center[1] + rect.height/2)/this.state.scale - blockSize[1]/2 + this.newBlockOffset
+            ];
+            if (this.newBlockOffset < 150) {
+                this.newBlockOffset += 10;
+            }
+            return position;
         },
 
         estimateBlockSize(block) {
@@ -543,8 +540,8 @@ export default {
             if (event && event.shiftKey) {
                 return; // Allow multi select
             }
-            for(var i in this.blocks) {
-                this.$set(this.blocks[i].value, "selected", false);
+            for(var i in this.allBlocks) {
+                this.$set(this.allBlocks[i].value, "selected", false);
             }
             for(var i in this.edges) {
                 this.selectEdge(i, false);
@@ -602,8 +599,8 @@ export default {
          * Retreive a block by ID
          */
         getBlockById(blockId) {
-            if (Array.isArray(this.$refs.blocks)) {
-                var blocks = this.$refs.blocks.filter(block => block.id === blockId);
+            if (Array.isArray(this.$refs.process)) {
+                var blocks = this.$refs.process.filter(block => block.id === blockId);
                 if (blocks.length > 0) {
                     return blocks[0];
                 }
@@ -612,8 +609,8 @@ export default {
         },
 
         getPgParameterBlockByName(name)  {
-            for(var i in this.$refs.pgParameters) {
-                var block = this.$refs.pgParameters[i];
+            for(var i in this.$refs.parameter) {
+                var block = this.$refs.parameter[i];
                 if (block.name === name) {
                     return block;
                 }
@@ -621,14 +618,11 @@ export default {
             return null;
         },
 
-        hasSelection() {
-            return this.selectedBlocks.length > 0 || this.selectedEdges.length > 0;
-        },
         /**
          * Delete the current link
          */
         async deleteSelected() {
-            if (!this.hasSelection()) {
+            if (this.selectedBlocks.length === 0 && this.selectedEdges.length === 0) {
                 return;
             }
 
@@ -694,8 +688,8 @@ export default {
                 throw 'You can not create a loop';
             }
             // Check type compatibility
-            if (!JsonSchemaValidator.isSchemaCompatible(edge.parameter1.schema, edge.parameter2.schema, false, true)) {
-                throw 'Incoming data type is not compatible for parameter "' + edge.parameter2.name;
+            if (!JsonSchemaValidator.isSchemaCompatible(edge.parameter2.schema, edge.parameter1.schema, false, true)) {
+                throw 'Incoming data type is not compatible for parameter "' + edge.parameter2.name + '"';
             }
             // Check whether the data type allows multiple input edges
             if (edge.parameter2.getEdgeCount() > 0 && !edge.parameter2.allowsMultipleInputs) {
@@ -766,8 +760,16 @@ export default {
             for(var block of this.blocks) {
                 let copy = Utils.deepClone(block.value);
                 if (!internal) {
+                    // Delete internal state for external export 
                     delete copy.position;
                     delete copy.selected;
+                }
+                // Remove default values for simplicity
+                if (copy.description === null) {
+                    delete copy.description;
+                }
+                if (copy.result !== true) {
+                    delete copy.result;
                 }
                 nodes[block.id] = copy;
             }
@@ -837,28 +839,69 @@ export default {
                 }
 
                 // Parse process 
-                var pg;
                 // ToDO: Earlier this was always a ProcessGraph Object, but that seems no longer to be the case. How to clean-up?
                 if (process instanceof ProcessGraph) {
                     // Make a copy
-                    pg = new ProcessGraph(process.toJSON(), this.processRegistry);
-                    pg.setParent(process.parentProcessId, process.parentParameterName);
+                    this.processGraph = new ProcessGraph(process.toJSON(), this.processRegistry);
+                    this.processGraph.setParent(process.parentProcessId, process.parentParameterName);
                 }
                 else {
-                    pg = new ProcessGraph(process, this.processRegistry);
+                    this.processGraph = new ProcessGraph(process, this.processRegistry);
                 }
-                pg.parse();
+                this.processGraph.parse();
+
+                this.importPgParameters(this.processGraph.getParameters(), 'pg');
 
                 // Import nodes
-                this.importNodes(pg.getStartNodes());
+                this.importNodes(this.processGraph.getStartNodes());
 
                 // Import edges
                 await this.$nextTick();
-                await this.importEdges(pg);
+                await this.importEdges(this.processGraph);
 
                 // Update scale
                 await this.perfectScale();
             }, options);
+        },
+
+        importPgParameters(params, origin) {
+            if (!Array.isArray(params)) {
+                return;
+            }
+
+            // Remove existing parameters from the given origin
+            this.pgParameterBlocks.filter(b => b.origin !== origin);
+
+            let size = this.estimateBlockSize({}); // Estimate base size for an empty block
+            for(var i in params) {
+                let param = params[i];
+                let position = [
+                    -size[0] - 20,
+                    i * (size[1] + 20)
+                ];
+                this.addPgParameter(params[i], origin, position);
+            }
+        },
+
+        addPgParameter(param, origin = 'user', position = null) {
+            // Check a parameter with the same name exists
+            if (this.pgParameterBlocks.findIndex(p => p.id == param.name) >= 0) {
+                return;
+            }
+            param = Utils.deepClone(param);
+            if (typeof param.schema === 'undefined') {
+                param.schema = {};
+            }
+            this.pgParameterBlocks.push(Vue.observable({
+                id: param.name,
+                type: 'parameter',
+                value: {
+                    from_parameter: param.name,
+                    position: Utils.ensurePoint(position, () => this.getNewBlockDefaultPosition(this.estimateBlockSize({})))
+                },
+                spec: param,
+                origin: origin
+            }));
         },
 
         async importEdges(pg) {
@@ -897,10 +940,10 @@ export default {
                     continue;
                 }
                 else if (val.from_node) {
-                    await this.addEdgeByNames(pg.getNode(val.from_node).blockId, "output", node.blockId, args[i], false);
+                    await this.addEdgeByNames(pg.getNode(val.from_node).id, "output", node.id, args[i], false);
                 }
                 else if (val.from_parameter) {
-                    await this.addEdgeByNames(val.from_parameter, "output", node.blockId, args[i], false);
+                    await this.addEdgeByNames(val.from_parameter, "output", node.id, args[i], false);
                 }
             }
         },
@@ -919,7 +962,7 @@ export default {
                 }
 
                 let data = typeof node.toJSON === 'function' ? node.toJSON() : node;
-                data.position = Utils.ensurePoint(data.position, [x,y]);
+                data.position = Utils.ensurePoint(data.position, () => [x,y]);
 
                 let block = this.addBlock(data, node.id);
                 imported.push(node.id);
@@ -947,26 +990,27 @@ export default {
         async perfectScale() {
             await this.$nextTick();
 
-            if (!this.$refs.div || this.$refs.blocks.length === 0) {
+            if (!this.$refs.div || this.allBlocks.length === 0) {
                 return;
             }
 
             var xMin = null, xMax = null;
             var yMin = null, yMax = null;
 
-            for (let k in this.$refs.blocks) {
-                let block = this.$refs.blocks[k];
+            for (let k in this.allBlocks) {
+                let block = this.allBlocks[k];
                 let size = this.estimateBlockSize(block);
+                let pos = Utils.ensurePoint(block.value.position);
                 if (xMin == null) {
-                    xMin = block.position[0]-15
-                    xMax = block.position[0]+18;
-                    yMin = block.position[1]-15
-                    yMax = block.position[1]+115;
+                    xMin = pos[0]-15
+                    xMax = pos[0]+size[0]+15;
+                    yMin = pos[1]-15
+                    yMax = pos[1]+size[1]+15;
                 } else {
-                    xMin = Math.min(xMin, block.position[0]-15);
-                    xMax = Math.max(xMax, block.position[0]+size[0]+18);
-                    yMin = Math.min(yMin, block.position[1]-15);
-                    yMax = Math.max(yMax, block.position[1]+115);
+                    xMin = Math.min(xMin, pos[0]-15);
+                    xMax = Math.max(xMax, pos[0]+size[0]+15);
+                    yMin = Math.min(yMin, pos[1]-15);
+                    yMax = Math.max(yMax, pos[1]+size[1]+15);
                 }
             }
 

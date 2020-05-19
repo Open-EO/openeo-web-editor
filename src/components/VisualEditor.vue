@@ -1,9 +1,14 @@
 <template>
 	<div class="visualEditor" ref="visualEditor">
 		<EditorToolbar :editable="editable" :onClear="clear" :isMainEditor="isMainEditor">
-			<button type="button" @click="$refs.blocks.undo()" :disabled="!editable || !canUndo" title="Revert last change"><i class="fas fa-undo-alt"></i></button>
-			<button type="button" @click="$refs.blocks.redo()" :disabled="!editable || !canRedo" title="Redo last reverted change"><i class="fas fa-redo-alt"></i></button>
-			<button type="button" @click="$refs.blocks.deleteSelected()" :disabled="!editable || !hasSelection" title="Delete selected elements"><i class="fas fa-trash"></i></button>
+			<span class="sepr" v-if="editable">
+				<button type="button" @click="$refs.blocks.undo()" :disabled="!canUndo" title="Revert last change"><i class="fas fa-undo-alt"></i></button>
+				<button type="button" @click="$refs.blocks.redo()" :disabled="!canRedo" title="Redo last reverted change"><i class="fas fa-redo-alt"></i></button>
+				<button type="button" @click="$refs.blocks.deleteSelected()" :disabled="!hasSelection" title="Delete selected elements"><i class="fas fa-trash"></i></button>
+			</span>
+			<span class="sepr" v-if="editable">
+				<button type="button" @click="addParameter" title="Add Parameter"><i class="fas fa-parking"></i></button>
+			</span>
 			<button type="button" @click="$refs.blocks.toggleCompact()" :class="{compactMode: compactMode}" title="Compact Mode"><i class="fas fa-compress-arrows-alt"></i></button>
 			<button type="button" @click="$refs.blocks.perfectScale()" title="Scale to perfect size"><i class="fas fa-arrows-alt"></i></button>
 			<button type="button" @click="toggleFullScreen()" :title="isFullScreen ? 'Close fullscreen' : 'Show fullscreen'">
@@ -167,11 +172,30 @@ export default {
 			}
 		},
 
+		addParameter() {
+			var fields = [
+				{
+					name: 'name',
+					label: 'Parameter name',
+					schema: {type: 'string'},
+					default: null
+				}
+			];
+			this.emit('showDataForm', "Add Parameter", fields, data => {
+				if (typeof data.name === 'string' && data.name.length > 0) {
+					this.$refs.blocks.addPgParameter(data);
+				}
+			});
+		},
+
 		showSchemaModal(name, schema) {
 			if (!this.$refs.schemaModal) {
 				return;
 			}
-			this.$refs.schemaModal.show(name, schema, "This is a parameter of a user-defined process. It is a value made available by the process executing this sub-processes for further use. The value will comply to the following data type(s):");
+			const msg = "This is a parameter for a user-defined process.\n"
+						+ " It is a value made available by the parent entity (usually another process or a secondary web service) that is executing this processes for further use.\n"
+						+ "The value will comply to the following data type(s):";
+			this.$refs.schemaModal.show(name, schema, msg);
 		},
 
 		openParameterEditor(parameters, values, title = "Edit", isEditable = true, selectParameterName = null, saveCallback = null, processId = null) {

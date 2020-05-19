@@ -101,8 +101,9 @@ export default {
             set(pos) {
                 pos = Utils.ensurePoint(pos);
                 this.$set(this.data, 'position', pos);
-                this.$emit('input', this.getValue());
                 this.$emit('moved', pos);
+                // Position changes need to be commited/emitted manually, 
+                // otherwise each change is a step in the history (see stopDrag)
             },
             get() {
                 return Utils.ensurePoint(this.data.position);
@@ -171,7 +172,7 @@ export default {
             switch(this.type) {
                 case 'process':
                     if (this.collectionId) {
-                        return Utils.formatRef(this.collectionId);
+                        return this.collectionId;
                     }
                     else {
                         return this.processId;
@@ -235,7 +236,7 @@ export default {
             return null;
         },
         collectionId() {
-            if (this.type === 'process' && this.processId === 'load_collection') {
+            if (this.type === 'process' && this.processId === 'load_collection' && !Utils.isRef(this.args.id)) {
                 return this.args.id;
             }
             return null;
@@ -248,8 +249,7 @@ export default {
         },
         allowsInfo() {
             if (this.collectionId) {
-                // Has no info if it's a parameter
-                return this.$parent.supports('showCollection') && !Utils.isRef(this.collectionId);
+                return this.$parent.supports('showCollection');
             }
             else if (this.type === 'parameter') {
                 return this.$parent.supports('showSchema');
@@ -271,16 +271,6 @@ export default {
         parameters() {
             if (Utils.isObject(this.spec) && Array.isArray(this.spec.parameters) && this.spec.parameters.length > 0) {
                 return this.spec.parameters;
-            }
-            else if (Utils.size(this.spec) > 0) {
-                try {
-                    var pg = new ProcessGraph(this.spec);
-                    pg.parse();
-                    return pg.getParameters();
-                } catch (error) {
-                    console.log(error);
-                    return [];
-                }
             }
             else if (Utils.size(this.args) > 0) {
                 let parameters = [];
@@ -393,7 +383,6 @@ export default {
             else {
                 this.comment = null;
             }
-            this.$parent.commit();
         },
         emitDrag(event) {
             this.focus();
@@ -417,7 +406,7 @@ export default {
             if (this.drag) {
                 var delta = 5 / this.state.scale; // Only store History if block was moved enough
                 if (Math.abs(this.drag.origin[0] - this.position[0]) > delta || Math.abs(this.drag.origin[1] - this.position[1]) > delta) {
-                    this.$parent.commit();
+                    this.$emit('input', this.getValue());
                 }
                 this.drag = null;
             }
