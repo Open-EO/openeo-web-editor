@@ -97,7 +97,7 @@ export default {
 			canRedo: false,
 			compactMode: false,
 			hasSelection: false,
-			model: this.value || require('../../../openeo-js-processgraphs/tests/assets/evi.json'), // ToDo: Remove
+			model: this.value,
 			isFullScreen: false
 		};
 	},

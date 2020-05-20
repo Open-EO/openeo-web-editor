@@ -16,9 +16,10 @@
             <line v-if="linkingLine" v-bind="linkingLine" />
         </svg>
         <div class="blocks">
-            <Block v-for="block in allBlocks" :ref="block.type" :key="block.type + block.id"
-                v-bind="block" :state="state"
+            <Block v-for="block in blocks" :key="block.type + block.id"
+                :id="block.id" :type="block.type" :value="block.value" :spec="block.spec" :state="state"
                 @input="commit()"
+                @mounted="mountBlock" @unmounted="unmountBlock"
                 @move="startDragBlock" @moved="moveBlock" />
         </div>
     </div>
@@ -109,7 +110,6 @@ export default {
 
             // Metadata for blocks to show
             blocks: [],
-            pgParameterBlocks: [],
             // Metadata for edges to show
             edges: [],
 
@@ -149,12 +149,12 @@ export default {
                 return new ProcessRegistry(this.processes);
             }
         },
-        allBlocks() {
-            return this.blocks.concat(this.pgParameterBlocks);
+        processBlocks() {
+            return this.blocks.filter(b => b.type === 'process');
         },
         selectedBlocks() {
             var selected = [];
-            for(var block of this.allBlocks) {
+            for(var block of this.blocks) {
                 if (Utils.isObject(block.value) && block.value.selected) {
                     selected.push(block);
                 }
@@ -216,12 +216,25 @@ export default {
         document.removeEventListener('mouseup', this.onDocumentMouseUpFn);
     },
     methods: {
-        startDragBlock() {
-            for(let i in this.$refs.parameter) {
-                this.$refs.parameter[i].startDrag();
+        mountBlock(node) {
+            this.setBlockElement(node, node);
+        },
+        unmountBlock(node) {
+            this.setBlockElement(node, null);
+        },
+        setBlockElement(node, setTo) {
+            for(var block of this.blocks) {
+                if (block.id === node.id) {
+                    block.$el = setTo;
+                    return;
+                }
             }
-            for(let i in this.$refs.process) {
-                this.$refs.process[i].startDrag();
+        },
+        startDragBlock() {
+            for(let i in this.blocks) {
+                if (this.blocks[i].$el) {
+                    this.blocks[i].$el.startDrag();
+                }
             }
         },
         moveBlock() {
@@ -364,8 +377,8 @@ export default {
         async clear() {
             return await this.startTransaction(async () => {
                 this.edges = [];
-                this.blocks = [];
-                this.pgParameterBlocks = this.pgParameterBlocks.filter(b => b.origin === 'prop');
+                // Don't remove parameters injected by props (fixed callback parameters)
+                this.blocks = this.blocks.filter(b => b.type === 'parameter' && b.origin === 'prop');
                 this.nextBlockId = 1;
                 this.nextEdgeId = 1;
             });
@@ -415,31 +428,39 @@ export default {
 
         setResultNode(block, result = true) {
             block = this.getBlockById(block.id);
-            if (!block || block.isResult() === result) {
+            if (!block || block.value.result === result) {
                 return; // Nothing to change
             }
 
-            block.setResult(result);
+            var setResult = (obj, val) => {
+                this.$set(obj.value, 'result', val);
+                this.commit();
+            }
+
+            setResult(block, result);
             var foundNewResultNode = false;
-            for(var i in this.$refs.process) {
-                var other = this.$refs.process[i];
-                if (other !== block) {
-                    // If we set a new result node, ensure that only that node is a result node and no other.
-                    if (result) {
-                        other.setResult(false);
-                    }
-                    // Find a potential result node if we don't want this to be the result node
-                    else {
-                        if (!other.hasOutputEdges()) {
-                            other.setResult(true);
-                            foundNewResultNode = true;
-                            break;
-                        }
+            var hasOtherBlocks = false;
+            for(var other of this.processBlocks) {
+                if (other.id === block.id) {
+                    continue;
+                }
+                
+                hasOtherBlocks = true;
+                // If we set a new result node, ensure that only that node is a result node and no other.
+                if (result) {
+                    setResult(other, false);
+                }
+                // Find a potential result node if we don't want this to be the result node
+                else {
+                    if (other.$el && !other.$el.hasOutputEdges()) {
+                        setResult(other, true);
+                        foundNewResultNode = true;
+                        break;
                     }
                 }
             }
             // If we have no new potential result node, communicate to the user.
-            if (this.blocks.length > 0 && !result && !foundNewResultNode) {
+            if (hasOtherBlocks && !result && !foundNewResultNode) {
                 this.$emit("error", "No result node available, please specify one.");
             }
         },
@@ -466,6 +487,7 @@ export default {
         addProcess(name, position = [], node = {}) {
             return this.addBlock(Object.assign({
                 process_id: name,
+                arguments: {},
                 position
             }, node));
         },
@@ -540,8 +562,8 @@ export default {
             if (event && event.shiftKey) {
                 return; // Allow multi select
             }
-            for(var i in this.allBlocks) {
-                this.$set(this.allBlocks[i].value, "selected", false);
+            for(var i in this.blocks) {
+                this.$set(this.blocks[i].value, "selected", false);
             }
             for(var i in this.edges) {
                 this.selectEdge(i, false);
@@ -587,11 +609,11 @@ export default {
                     }
                 }
 
-                this.$delete(this.blocks, i);
-
                 if (block.value.result) {
                     this.setResultNode(block, false);
                 }
+
+                this.$delete(this.blocks, i);
             });
         },
 
@@ -599,21 +621,9 @@ export default {
          * Retreive a block by ID
          */
         getBlockById(blockId) {
-            if (Array.isArray(this.$refs.process)) {
-                var blocks = this.$refs.process.filter(block => block.id === blockId);
-                if (blocks.length > 0) {
-                    return blocks[0];
-                }
-            }
-            return null;
-        },
-
-        getPgParameterBlockByName(name)  {
-            for(var i in this.$refs.parameter) {
-                var block = this.$refs.parameter[i];
-                if (block.name === name) {
-                    return block;
-                }
+            var blocks = this.blocks.filter(block => block.id === blockId);
+            if (blocks.length > 0) {
+                return blocks[0];
             }
             return null;
         },
@@ -640,17 +650,20 @@ export default {
         },
 
         async addEdgeByNames(b1, p1, b2, p2) {
-            var block1 = this.getBlockById(b1) || this.getPgParameterBlockByName(b1);
-            if (!block1) {
-                throw "Can't find block " + b1;
-            }
-            var block2 = this.getBlockById(b2) || this.getPgParameterBlockByName(b2);
-            if (!block2) {
-                throw "Can't find block " + b2;
+            var blocks = [];
+            for(var id of [b1, b2]) {
+                var block = this.getBlockById(id);
+                if (!block) {
+                    throw "Can't find block: " + id;
+                }
+                else if (!block.$el) {
+                    throw "Block not mounted yet: " + id;
+                }
+                blocks.push(block.$el);
             }
             await this.addEdge(
-                block1.getBlockParameter(p1),
-                block2.getBlockParameter(p2)
+                blocks[0].getBlockParameter(p1),
+                blocks[1].getBlockParameter(p2)
             );
         },
  
@@ -757,7 +770,7 @@ export default {
 
         export(internal = false) {
             var nodes = {};
-            for(var block of this.blocks) {
+            for(var block of this.processBlocks) {
                 let copy = Utils.deepClone(block.value);
                 if (!internal) {
                     // Delete internal state for external export 
@@ -870,7 +883,7 @@ export default {
             }
 
             // Remove existing parameters from the given origin
-            this.pgParameterBlocks.filter(b => b.origin !== origin);
+            this.blocks = this.blocks.filter(b => b.type !== 'parameter' || b.origin !== origin);
 
             let size = this.estimateBlockSize({}); // Estimate base size for an empty block
             for(var i in params) {
@@ -885,14 +898,14 @@ export default {
 
         addPgParameter(param, origin = 'user', position = null) {
             // Check a parameter with the same name exists
-            if (this.pgParameterBlocks.findIndex(p => p.id == param.name) >= 0) {
+            if (this.blocks.findIndex(p => p.type === 'parameter' && p.id == param.name) >= 0) {
                 return;
             }
             param = Utils.deepClone(param);
             if (typeof param.schema === 'undefined') {
                 param.schema = {};
             }
-            this.pgParameterBlocks.push(Vue.observable({
+            this.blocks.push(Vue.observable({
                 id: param.name,
                 type: 'parameter',
                 value: {
@@ -990,15 +1003,15 @@ export default {
         async perfectScale() {
             await this.$nextTick();
 
-            if (!this.$refs.div || this.allBlocks.length === 0) {
+            if (!this.$refs.div || this.blocks.length === 0) {
                 return;
             }
 
             var xMin = null, xMax = null;
             var yMin = null, yMax = null;
 
-            for (let k in this.allBlocks) {
-                let block = this.allBlocks[k];
+            for (let k in this.blocks) {
+                let block = this.blocks[k];
                 let size = this.estimateBlockSize(block);
                 let pos = Utils.ensurePoint(block.value.position);
                 if (xMin == null) {

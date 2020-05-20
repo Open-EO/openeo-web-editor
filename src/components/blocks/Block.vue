@@ -26,7 +26,7 @@
                 <BlockParameter ref="output" :state="state" :label="outputLabel" v-bind="output" />
             </div>
         </div>
-        <textarea ref="commentField" v-if="hasComment" v-model="comment" class="editComment" placeholder="Type comment here..."
+        <textarea ref="commentField" v-if="hasComment" v-model.lazy="comment" class="editComment" placeholder="Type comment here..."
             @blur="updateComment($event)" @mousedown.stop=""></textarea>
     </div>
 </template>
@@ -46,6 +46,8 @@ Emits locally:
 - moved(x, y) - The block has been moved
 - input(value) - The value has been updated
 - move() - A block is now being moved
+- mounted(node) - The block is now part of the DOM.
+- unmounted(node) - The block not not part of the DOM anylonger.
 */
 
 const defaultFontSize = 10;
@@ -112,7 +114,7 @@ export default {
         selected: {
             set(value) {
                 this.$set(this.data, 'selected', value);
-                this.$emit('input', this.getValue());
+                this.commit();
             },
             get() {
                 return this.data.selected || false;
@@ -120,8 +122,11 @@ export default {
         },
         args: {
             set(value) {
+                if (!Utils.isObject(this.data.arguments)) {
+                    this.data.arguments = {};
+                }
                 this.$set(this.data, 'arguments', value);
-                this.$emit('input', this.getValue());
+                this.commit();
             },
             get() {
                 return Utils.isObject(this.data.arguments) ? this.data.arguments : {};
@@ -130,7 +135,7 @@ export default {
         comment: {
             set(value) {
                 this.$set(this.data, 'description', value);
-                this.$emit('input', this.getValue());
+                this.commit();
             },
             get() {
                 return this.data.description;
@@ -139,7 +144,7 @@ export default {
         result: {
             set(value) {
                 this.$set(this.data, 'result', value);
-                this.$emit('input', this.getValue());
+                this.commit();
             },
             get() {
                 return this.data.result || false;
@@ -337,17 +342,18 @@ export default {
         // ToDO: Replace with mouseleave?
         this.stopDragFn = this.stopDrag.bind(this);
         document.addEventListener('mouseup', this.stopDragFn);
+
+        this.$emit('mounted', this);
     },
     beforeDestroy() {
         document.removeEventListener('mousemove', this.draggingFn);
         document.removeEventListener('mouseup', this.stopDragFn);
+
+        this.$emit('unmounted', this);
     },
     methods: {
-        getValue() {
-            return Object.assign({}, this.data, {
-                position: this.position,
-                selected: this.selected
-            })
+        commit() {
+            this.$emit('input', this.data);
         },
         focus() {
             this.$parent.focus();
@@ -406,7 +412,7 @@ export default {
             if (this.drag) {
                 var delta = 5 / this.state.scale; // Only store History if block was moved enough
                 if (Math.abs(this.drag.origin[0] - this.position[0]) > delta || Math.abs(this.drag.origin[1] - this.position[1]) > delta) {
-                    this.$emit('input', this.getValue());
+                    this.commit();
                 }
                 this.drag = null;
             }
@@ -415,13 +421,6 @@ export default {
             if (this.drag) {
                 this.position = this.getDragPos(this.drag.mouse);
             }
-        },
-
-        isResult() {
-            return this.result;
-        },
-        setResult(val) {
-            this.result = val;
         },
 
         hasOutputEdges() {
