@@ -1,6 +1,6 @@
 <template>
 	<div class="visualEditor" ref="visualEditor">
-		<EditorToolbar :editable="editable" :onClear="clear" :isMainEditor="isMainEditor">
+		<EditorToolbar :editable="editable" :onClear="clear">
 			<span class="sepr" v-if="editable">
 				<button type="button" @click="$refs.blocks.undo()" :disabled="!canUndo" title="Revert last change"><i class="fas fa-undo-alt"></i></button>
 				<button type="button" @click="$refs.blocks.redo()" :disabled="!canRedo" title="Redo last reverted change"><i class="fas fa-redo-alt"></i></button>
@@ -17,7 +17,7 @@
 			</button>
 		</EditorToolbar>
 		<div class="editorSplitter">
-			<DiscoveryToolbar v-if="!isMainEditor && editable" class="discoveryToolbar" :onAddCollection="insertCollection" :onAddProcess="insertProcess" :onAddCustomProcess="insertCustomProcess" />
+			<DiscoveryToolbar v-if="showDiscoveryToolbar && editable" class="discoveryToolbar" :onAddCollection="insertCollection" :onAddProcess="insertProcess" />
 			<div class="graphBuilder" @drop="onDrop($event)" @dragover="allowDrop($event)">
 				<Blocks
 					ref="blocks"
@@ -26,6 +26,8 @@
 					:processes="processRegistry"
 					:collections="collections"
 					:pgParameters="pgParameters"
+					:value="value"
+					@input="commit"
 					@error="errorHandler"
 					@showProcess="id => emit('showProcess', id)"
 					@showCollection="id => emit('showCollection', id)"
@@ -34,7 +36,6 @@
 					@compactMode="compact => this.compactMode = compact"
 					@selectionChanged="(b, e) => this.hasSelection = (b.length || e.length)"
 					@historyChanged="historyChanged"
-					v-model="model"
 					/>
 			</div>
 		</div>
@@ -69,10 +70,6 @@ export default {
 			type: Boolean,
 			default: true
 		},
-		active: {
-			type: Boolean,
-			default: true
-		},
 		value: {
 			type: Object,
 			default: () => null
@@ -81,7 +78,7 @@ export default {
 			type: Array,
 			default: () => []
 		},
-		isMainEditor: {
+		showDiscoveryToolbar: {
 			type: Boolean,
 			default: false
 		}
@@ -97,27 +94,15 @@ export default {
 			canRedo: false,
 			compactMode: false,
 			hasSelection: false,
-			model: this.value,
 			isFullScreen: false
 		};
 	},
-	mounted() {
-		if (this.active) {
-			this.onShow();
-		}
-	},
-	watch: {
-		model(value) {
-			this.$emit('input', value);
-		},
-		active(newVal) {
-			if (newVal) {
-				this.onShow();
-			}
-		}
-	},
 	methods: {
 		...Utils.mapActions('userProcesses', {readUserProcess: 'read'}),
+
+		commit(value) {
+			this.$emit('input', value);
+		},
 
 		errorHandler(message, title = null) {
 			Utils.exception(this, message, title)
@@ -152,10 +137,6 @@ export default {
 				event.preventDefault();
 				this.insertCollection(collection, event.pageX, event.pageY);
 			}
-		},
-
-		onShow() {
-//			this.insertCustomProcess(this.value);
 		},
 
 		toggleFullScreen() {
@@ -206,29 +187,6 @@ export default {
 			if (this.$refs.blocks) {
 				this.$refs.blocks.clear();
 			}
-		},
-
-		getCustomProcess(success, failure, passNull = false) {
-			if (Utils.isObject(this.model)) {
-				try {
-					var pg = new ProcessGraph(this.model, this.processRegistry);
-					pg.parse();
-				} catch(error) {
-					failure('Process graph invalid', error);
-					return;
-				}
-			}
-
-			if (this.model !== null || passNull) {
-				success(this.model);
-			}
-			else {
-				failure('No model specified.');
-			}
-		},
-
-		insertCustomProcess(process) {
-			this.model = process;
 		},
 
 		getCollectionDefaults(id) {

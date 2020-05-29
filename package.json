@@ -38,14 +38,14 @@
     "build": "npm run build:epsg && vue-cli-service build --report"
   },
   "dependencies": {
-    "@openeo/js-client": "^1.0.0-beta.1",
-    "@openeo/js-processgraphs": "^1.0.0-beta.1",
-    "@openeo/vue-components": "^1.0.0-beta.5",
+    "@openeo/js-client": "Open-EO/openeo-js-client#development",
+    "@openeo/js-processgraphs": "Open-EO/openeo-js-processgraphs#dev",
+    "@openeo/vue-components": "Open-EO/openeo-vue-components#dev",
     "ajv": "^6.10.0",
     "codemirror": "^5.47.0",
     "content-type": "^1.0.4",
     "core-js": "^2.6.9",
-    "fast-stable-stringify": "^1.0.0",
+    "jsonlint-mod": "^1.7.5",
     "ol": "^5.3.3",
     "ol-ext": "^3.1.4",
     "regenerator-runtime": "^0.13.3",

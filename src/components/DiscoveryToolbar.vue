@@ -51,10 +51,6 @@ export default {
 		onAddProcess: {
 			type: Function,
 			required: true
-		},
-		onAddCustomProcess: {
-			type: Function,
-			required: true
 		}
 	},
 	data() {
@@ -169,9 +165,6 @@ export default {
 		},
 		insertProcess(id) {
 			this.onAddProcess(id);
-		},
-		insertCustomProcess(pg) {
-			this.onAddCustomProcess(pg);
 		}
 	}
 }

@@ -8,7 +8,7 @@
 				<!-- ToDo: Show info (badge?) that process is custom -->
 				<section class="process-graph" v-if="process.process_graph">
 					<div class="vue-component"><h3>Model</h3></div>
-					<Editor :process="process" :editable="false" class="infoViewer" id="pgInfoViewer" />
+					<Editor :value="process" :editable="false" class="infoViewer" id="pgInfoViewer" />
 				</section>
 			</div>
 		</template>

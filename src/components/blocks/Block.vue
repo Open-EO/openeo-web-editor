@@ -112,6 +112,7 @@ export default {
             }
         },
         selected: {
+            // ToDo: Don't store this in this.data to avoid history changes for selection
             set(value) {
                 this.$set(this.data, 'selected', value);
                 this.commit();

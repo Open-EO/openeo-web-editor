@@ -442,11 +442,7 @@ export default {
         },
         formatArray(value, maxLength, html = true) {
             var formatted = value.map(v => this.formatValue(v, 25, false)).join(", ");
-            // ToDo: htmlentities_decode is only available in a more recent version, remove condition once dependency has been updated.
-            var unformatted = formatted;
-            if (typeof VueUtils.htmlentities_decode === 'function') {
-                unformatted = VueUtils.htmlentities_decode(formatted);
-            }
+            var unformatted = VueUtils.htmlentities_decode(formatted);
             if (unformatted.length > 0 && unformatted.length <= maxLength) {
                 return "[" + formatted + "]";
             }

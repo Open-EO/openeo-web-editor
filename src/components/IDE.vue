@@ -13,11 +13,11 @@
 			</header>
 			<main class="page">
 				<div id="discovery" ref="discovery">
-					<DiscoveryToolbar class="toolbar" :onAddCollection="insertCollection" :onAddProcess="insertProcess" :onAddCustomProcess="insertCustomProcess" />
+					<DiscoveryToolbar class="toolbar" :onAddCollection="insertCollection" :onAddProcess="insertProcess" />
 				</div>
 				<hr class="separator" ref="separator0" @dblclick="centerSeparator($event, 0)" @mousedown="startMovingSeparator($event, 0)" />
 				<div id="workspace" ref="workspace">
-					<Editor ref="editor" class="mainEditor" id="main" :isMainEditor="true" />
+					<Editor ref="editor" class="mainEditor" id="main" :value="process" @input="setProcess" />
 					<UserWorkspace class="userContent" v-if="isAuthenticated" />
 				</div>
 				<hr class="separator" ref="separator1" @dblclick="centerSeparator($event, 1)" @mousedown="startMovingSeparator($event, 1)" />
@@ -50,7 +50,6 @@ import JobInfoModal from './modals/JobInfoModal.vue';
 import ServiceInfoModal from './modals/ServiceInfoModal.vue';
 import ParameterModal from './modals/ParameterModal.vue';
 import DiscoveryToolbar from './DiscoveryToolbar.vue';
-import { Job, Service, UserProcess } from '@openeo/js-client';
 
 export default {
 	name: 'IDE',
@@ -94,7 +93,8 @@ export default {
 	computed: {
 		...Utils.mapState(['connection']),
 		...Utils.mapGetters(['title', 'isAuthenticated', 'apiVersion']),
-		...Utils.mapGetters('userProcesses', {getProcessById: 'getAllById'})
+		...Utils.mapGetters('userProcesses', {getProcessById: 'getAllById'}),
+		...Utils.mapState('editor', ['process'])
 	},
 	mounted() {
 		this.listen('showCollection', this.showCollectionInfo);
@@ -103,7 +103,6 @@ export default {
 		this.listen('showProcessInfo', this.showProcessInfo);
 		this.listen('showServiceInfo', this.showServiceInfo);
 		this.listen('showDataForm', this.showDataForm);
-		this.listen('getCustomProcess', this.getCustomProcess);
 		this.listen('editProcess', this.editProcess);
 
 		this.resizeListener = (event) => this.emit('windowResized', event);
@@ -124,30 +123,10 @@ export default {
 	methods: {
 		...Utils.mapActions(['describeAccount']),
 		...Utils.mapActions('userProcesses', {readUserProcess: 'read'}),
-		...Utils.mapMutations('editor', ['setScript']),
-
-		getCustomProcess(success, failure = null, passNull = false) {
-			this.$refs.editor.getCustomProcess(success, failure, passNull);
-		},
+		...Utils.mapMutations('editor', ['setContext', 'setProcess']),
 
 		editProcess(obj) {
-			this.setScript(obj);
-			if (obj instanceof Job || obj instanceof Service) {
-				this.insertCustomProcess(obj.process);
-			}
-			else if (obj instanceof UserProcess) {
-				this.insertCustomProcess(obj.toJSON());
-			}
-			else if (obj.process) {
-				this.insertCustomProcess(obj.process);
-			}
-			else {
-				this.insertCustomProcess(obj);
-			}
-		},
-
-		insertCustomProcess(pg) {
-			this.$refs.editor.insertCustomProcess(pg);
+			this.setContext(obj);
 		},
 
 		insertCollection(id) {
@@ -252,7 +231,10 @@ export default {
 		showDataForm(title, fields, saveCallback = null, closeCallback = null) {
 			var editable = typeof saveCallback === 'function';
 			fields = fields.filter(f => f !== null);
-			var values = fields.map(f => f.value); // ToDo: Don't put this in obj.value, but pass directly in a separate parameter - will be much easier in code
+			var values = {};
+			for(let field of fields) {
+				values[field.name] = field.value;
+			}
 			this.$refs.parameterModal.show(title, fields, values, editable, saveCallback, closeCallback);
 		}
 

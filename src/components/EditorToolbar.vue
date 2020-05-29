@@ -1,10 +1,10 @@
 <template>
 	<div class="sourceHeader">
-		<h3 v-if="isMainEditor && scriptTitle">{{ scriptTitle }}</h3>
+		<h3 v-if="contextTitle">{{ contextTitle }}</h3>
 		<div class="sourceToolbar">
 			<span class="sepr" v-if="editable">
 				<button type="button" @click="newScript" title="New script / Clear current script"><i class="fas fa-file"></i></button>
-				<button type="button" v-show="isMainEditor && scriptTitle" @click="saveScript" :title="'Save to ' + scriptTitle"><i class="fas fa-save"></i></button>
+				<button type="button" v-show="contextTitle" @click="saveScript" :title="'Save to ' + contextTitle"><i class="fas fa-save"></i></button>
 			</span>
 			<slot></slot>
 		</div>
@@ -26,31 +26,27 @@ export default {
 		onClear: {
 			type: Function,
 			required: true
-		},
-		isMainEditor: {
-			type: Boolean,
-			default: false
 		}
 	},
 	computed: {
 		...Utils.mapState(['connection']),
-		...Utils.mapState('editor', ['activeScript']),
-		...Utils.mapGetters('editor', ['scriptTitle']),
+		...Utils.mapState('editor', ['context', 'process']),
+		...Utils.mapGetters('editor', ['contextTitle']),
 		...Utils.mapGetters(['supports', 'isAuthenticated'])
 	},
 	methods: {
-		...Utils.mapMutations('editor', ['setScript']),
+		...Utils.mapMutations('editor', ['setContext']),
 
 		newScript() {
 			var confirmed = confirm("Do you really want to clear the existing script to create a new one?");
 			if (confirmed) {
 				this.onClear();
-				this.setScript(null);
+				this.setContext(null);
 			}
 		},
 
 		saveScript() {
-			this.emit('getCustomProcess', newScript => this.emit('replaceProcess', this.activeScript, newScript));
+			this.emit('replaceProcess', this.context, this.process);
 		}
 	}
 }

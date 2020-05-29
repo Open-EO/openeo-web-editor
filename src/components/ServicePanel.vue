@@ -66,6 +66,9 @@ export default {
 			}
 		};
 	},
+	computed: {
+		...Utils.mapState('editor', ['process'])
+	},
 	mounted() {
 		this.listen('replaceProcess', this.replaceProcess);
 	},
@@ -98,7 +101,8 @@ export default {
 				label: 'Title',
 				schema: {type: 'string'},
 				default: null,
-				value: value
+				value: value,
+				optional: true
 			};
 		},
 		getDescriptionField(value = null) {
@@ -108,7 +112,8 @@ export default {
 				schema: {type: 'string', subtype: 'commonmark'},
 				default: null,
 				value: value,
-				description: 'CommonMark (Markdown) is allowed.'
+				description: 'CommonMark (Markdown) is allowed.',
+				optional: true
 			};
 		},
 		getServiceTypeField(value = undefined) {
@@ -116,8 +121,7 @@ export default {
 				name: 'type',
 				label: 'Type',
 				schema: {type: 'string', subtype: 'service-type'},
-				value: value,
-				optional: false
+				value: value
 			};
 		},
 		getBillingPlanField(value = undefined) {
@@ -125,7 +129,8 @@ export default {
 				name: 'plan',
 				label: 'Billing plan',
 				schema: {type: 'string', subtype: 'billing-plan'},
-				value: value
+				value: value,
+				optional: true
 			};
 		},
 		getBudgetField(value = null) {
@@ -134,7 +139,8 @@ export default {
 				label: 'Budget',
 				schema: {type: 'number', subtype: 'budget'},
 				default: null,
-				value: value
+				value: value,
+				optional: true
 			};
 		},
 		getEnabledField(value = true) {
@@ -143,7 +149,8 @@ export default {
 				label: 'Enabled',
 				schema: {type: 'boolean'},
 				default: true,
-				value: value
+				value: value,
+				optional: true
 			};
 		},
 		getConfigField(value = undefined) {
@@ -151,7 +158,8 @@ export default {
 				name: 'configuration',
 				label: 'Service Configuration',
 				schema: {type: 'object', subtype: 'service-config'},
-				value: value
+				value: value,
+				optional: true
 			};
 		},
 		normalizeToDefaultData(data) {
@@ -182,18 +190,16 @@ export default {
 				.catch(error => Utils.exception(this, error, 'Creating service failed'));
 		},
 		createServiceFromScript() {
-			this.emit('getCustomProcess', script => {
-				var fields = [
-					this.getServiceTypeField(),
-					this.getTitleField(),
-					this.getDescriptionField(),
-					this.getEnabledField(),
-					this.supportsBillingPlans ? this.getBillingPlanField() : null,
-					this.supportsBilling ? this.getBudgetField() : null,
-					this.getConfigField()
-				];
-				this.emit('showDataForm', "Create new web service", fields, data => this.createService(script, data));
-			});
+			var fields = [
+				this.getServiceTypeField(),
+				this.getTitleField(),
+				this.getDescriptionField(),
+				this.getEnabledField(),
+				this.supportsBillingPlans ? this.getBillingPlanField() : null,
+				this.supportsBilling ? this.getBudgetField() : null,
+				this.getConfigField()
+			];
+			this.emit('showDataForm', "Create new web service", fields, data => this.createService(this.process, data));
 		},
 		editMetadata(oldService) {
 			this.refreshElement(oldService, service => {

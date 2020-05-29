@@ -441,7 +441,7 @@ export default {
             var foundNewResultNode = false;
             var hasOtherBlocks = false;
             for(var other of this.processBlocks) {
-                if (other.id === block.id) {
+                if (block && other.id === block.id) {
                     continue;
                 }
                 
@@ -510,6 +510,10 @@ export default {
 
             var size = this.estimateBlockSize(block);
             block.value.position = Utils.ensurePoint(block.value.position, () => this.getNewBlockDefaultPosition(size));
+
+            if (this.processBlocks.length === 0) {
+                block.value.result = true;
+            }
             
             this.blocks.push(Vue.observable(block));
             this.commit();
@@ -801,7 +805,7 @@ export default {
             //  examples: [],
             //  links: []
             }
-            // ToDo: Currently, we just use the if, parameters etc from the original process
+            // ToDo: Currently, we just use the id, parameters etc from the original process
             return new BlocksProcess(Object.assign({}, this.value, pg));
         },
 
@@ -928,12 +932,7 @@ export default {
                             await this.addEdgeByNames(pg.getNode(val).id, "output", node.id, args[i], false);
                             break;
                         case 'parameter':
-                            // ToDo, add pg parameter block similar to reduce/apply etc. instead of try-catching this
-                            try {
-                                await this.addEdgeByNames(val, "output", node.id, args[i], false);
-                            } catch (error) {
-                                console.log(error);
-                            }
+                            await this.addEdgeByNames(val, "output", node.id, args[i], false);
                             break;
                         case 'object':
                         case 'array':

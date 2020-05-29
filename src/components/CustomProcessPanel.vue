@@ -40,6 +40,9 @@ export default {
 			}
 		};
 	},
+	computed: {
+		...Utils.mapState('editor', ['process'])
+	},
 	mounted() {
 		this.listen('replaceProcess', this.replaceProcess);
 	},
@@ -47,54 +50,64 @@ export default {
 		showInEditor(process) {
 			this.refreshElement(process, updatedProcess => this.emit('editProcess', updatedProcess));
 		},
-		getIdField(defaultValue = undefined) {
+		getIdField(value = undefined) {
 			return {
 				name: 'id',
 				label: 'Name',
 				schema: {type: 'string'},
-				default: defaultValue,
-				optional: false
+				default: null,
+				value: value
 			};
 		},
-		getSummaryField(defaultValue = undefined) {
+		getSummaryField(value = undefined) {
 			return {
 				name: 'summary',
 				label: 'Summary',
 				schema: {type: 'string'},
-				default: defaultValue
+				default: null,
+				value: value,
+				optional: true
 			};
 		},
-		getDescriptionField(defaultValue = undefined) {
+		getDescriptionField(value = undefined) {
 			return {
 				name: 'description',
 				label: 'Description',
 				schema: {type: 'string', subtype: 'commonmark'},
-				default: defaultValue,
-				description: 'CommonMark (Markdown) is allowed.'
+				default: null,
+				value: value,
+				description: 'CommonMark (Markdown) is allowed.',
+				optional: true
 			};
 		},
-		getCategoriesField(defaultValue = undefined) {
+		getCategoriesField(value = undefined) {
 			return {
 				name: 'categories',
 				label: 'Categories',
 				schema: {type: 'array', items: {type: 'string'}},
-				default: defaultValue
+				default: [],
+				value: value,
+				optional: true
 			};
 		},
-		getDeprecatedField(defaultValue = false) {
+		getDeprecatedField(value = false) {
 			return {
 				name: 'deprecated',
 				label: 'Deprecated',
 				schema: {type: 'boolean'},
-				default: defaultValue
+				default: false,
+				value: value,
+				optional: true
 			};
 		},
-		getExperimentalField(defaultValue = false) {
+		getExperimentalField(value = false) {
 			return {
 				name: 'experimental',
 				label: 'Experimental',
 				schema: {type: 'boolean'},
-				default: defaultValue
+				default: false,
+				value: value,
+				optional: true
 			};
 		},
 		getFields(process) {
@@ -109,10 +122,8 @@ export default {
 		},
 		// Add parameters, return value, exceptions, examples, links
 		addProcessFromScript() {
-			this.emit('getCustomProcess', process => {
-				let fields = this.getFields(process);
-				this.emit('showDataForm', "Store a new custom process", fields, data => this.addProcess(this.normalize(process, data)));
-			});
+			let fields = this.getFields(this.process);
+			this.emit('showDataForm', "Store a new custom process", fields, data => this.addProcess(this.normalize(this.process, data)));
 		},
 		normalize(process, data) {
 			return Object.assign(

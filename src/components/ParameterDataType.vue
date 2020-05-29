@@ -23,9 +23,7 @@
 		<!-- GeoJSON -->
 		<MapGeoJsonEditor v-else-if="type === 'geojson'" v-model="value" :key="type" :id="fieldName + '_geojson'" :editable="editable" class="geoJsonEditor"></MapGeoJsonEditor>
 		<!-- Process Editor -->
-		<div v-else-if="type === 'process-graph'" class="border">
-			<VisualEditor ref="callbackBuilder" class="callbackEditor" id="inlinePgEditor" :editable="editable" :pgParameters="schema.getCallbackParameters()" v-model="value" />
-		</div>
+		<Editor v-else-if="type === 'process-graph'" class="callbackEditor" :editable="editable" :pgParameters="schema.getCallbackParameters()" :showDiscoveryToolbar="true" v-model="value" />
 		<!-- Object -->
 		<div v-else-if="isObjectType" class="objectEditor">
 			<div class="objectElement" v-for="(propVal, propName) in value" :key="propName">
@@ -94,8 +92,8 @@ export default {
 		TemporalPicker,
 		// Asynchronously load the following components to avoid circular references.
 		// See https://vuejs.org/v2/guide/components-edge-cases.html#Circular-References-Between-Components
+		Editor: () => import('./Editor.vue'),
 		FileFormatOptionsEditor: () => import('./datatypes/FileFormatOptionsEditor.vue'),
-		VisualEditor: () => import('./VisualEditor.vue'),
 		ParameterDataTypes: () => import('./ParameterDataTypes.vue')
 	},
 	props: {
@@ -472,11 +470,6 @@ export default {
 	width: 100%;
 	height: 200px;
 	font-family: monospace;
-}
-.border {
-	border: 1px solid #ccc;
-	width: 100%;
-	height: 100%;
 }
 .externalData span {
 	display: inline-block; 

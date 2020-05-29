@@ -67,7 +67,8 @@ export default {
 		this.listen('replaceProcess', this.replaceProcess);
 	},
 	computed: {
-		...Utils.mapGetters(['supports', 'supportsBilling', 'supportsBillingPlans'])
+		...Utils.mapGetters(['supports', 'supportsBilling', 'supportsBillingPlans']),
+		...Utils.mapState('editor', ['process'])
 	},
 	watch: {
 		data: {
@@ -102,10 +103,8 @@ export default {
 			this.refreshElement(job, updatedJob => this.emit('editProcess', updatedJob));
 		},
 		executeProcess() {
-			this.emit('getCustomProcess', script => {
-				Utils.info(this, 'Data requested. Please wait...');
-				this.emit('viewSyncResult', script);
-			});
+			Utils.info(this, 'Data requested. Please wait...');
+			this.emit('viewSyncResult', this.process);
 		},
 		jobCreated(job) {
 			var buttons = [];
@@ -126,7 +125,8 @@ export default {
 				label: 'Title',
 				schema: {type: 'string'},
 				default: null,
-				value: value
+				value: value,
+				optional: true
 			};
 		},
 		getDescriptionField(value = null) {
@@ -136,7 +136,8 @@ export default {
 				schema: {type: 'string', subtype: 'commonmark'},
 				default: null,
 				value: value,
-				description: 'CommonMark (Markdown) is allowed.'
+				description: 'CommonMark (Markdown) is allowed.',
+				optional: true
 			};
 		},
 		getBillingPlanField(value = undefined) {
@@ -144,7 +145,8 @@ export default {
 				name: 'plan',
 				label: 'Billing plan',
 				schema: {type: 'string', subtype: 'billing-plan'},
-				value: value
+				value: value,
+				optional: true
 			};
 		},
 		getBudgetField(value = null) {
@@ -153,7 +155,8 @@ export default {
 				label: 'Budget',
 				schema: {type: 'number', subtype: 'budget'},
 				default: null,
-				value: value
+				value: value,
+				optional: true
 			};
 		},
 		normalizeToDefaultData(data) {
@@ -178,15 +181,13 @@ export default {
 				.catch(error => Utils.exception(this, error, 'Sorry, could not create a batch job.'));
 		},
 		createJobFromScript() {
-			this.emit('getCustomProcess', script => {
-				var fields = [
-					this.getTitleField(),
-					this.getDescriptionField(),
-					this.supportsBillingPlans ? this.getBillingPlanField() : null,
-					this.supportsBilling ? this.getBudgetField() : null
-				];
-				this.emit('showDataForm', "Create new batch job", fields, data => this.createJob(script, data));
-			});
+			var fields = [
+				this.getTitleField(),
+				this.getDescriptionField(),
+				this.supportsBillingPlans ? this.getBillingPlanField() : null,
+				this.supportsBilling ? this.getBudgetField() : null
+			];
+			this.emit('showDataForm', "Create new batch job", fields, data => this.createJob(this.process, data));
 		},
 		deleteJob(job) {
 			this.delete({data: job})
