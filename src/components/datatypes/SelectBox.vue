@@ -1,5 +1,5 @@
 <template>
-	<MultiSelect v-model="selected" :key="type" ref="htmlElement" label="label" track-by="id" :multiple="multiple" :options="selectOptions" :allowEmpty="false" :preselectFirst="preselect" :disabled="!editable" :deselectLabel="deselectLabel"></MultiSelect>
+	<MultiSelect v-model="selected" :key="type" ref="htmlElement" label="label" track-by="id" :multiple="multiple" :options="selectOptions" :allowEmpty="false" :preselectFirst="preselect" :disabled="!editable" :deselectLabel="deselectLabel" :taggable="taggable" :tagPlaceholder="tagPlaceholder" @tag="addValue"></MultiSelect>
 </template>
 
 <script>
@@ -64,10 +64,7 @@ export default {
 			let data = [];
 			switch(this.type) {
 				case 'collection-id':
-					return state.map(c => ({
-						id: c.id,
-						label: c.id
-					})).sort(this.sortByLabel);
+					return state.map(c => this.e(c.id)).sort(this.sortByLabel);
 				case 'job-id':
 					return state.map(j => ({
 						id: j.id,
@@ -75,10 +72,7 @@ export default {
 					})).sort(this.sortByLabel);
 				case 'file-path':
 				case 'file-paths':
-					return state.map(f => ({
-						id: f.path,
-						label: f.path
-					})).sort((a, b) => Utils.sortByPath(a.id, b.id));
+					return state.map(f => this.e(f.path)).sort((a, b) => Utils.sortByPath(a.id, b.id));
 				case 'epsg-code':
 					for(let key in state) {
 						data.push({
@@ -102,18 +96,26 @@ export default {
 						id: p.name,
 						label: p.name + (p.paid ? ' (paid)' : ' (free)')
 					}));
-				default:
-					if (this.schemas.isEnum()) {
-						return this.schema.getEnumChoices().map(val => ({
-							id: val,
-							label: val
-						}));
+				case 'year':
+					let thisYear = new Date().getFullYear();
+					let years = Array.from({length: 100}, (x,i) => this.e(String(thisYear - i)));
+					// Add custom years to select box
+					if (typeof this.value === 'string' && this.value.length > 0 && years.findIndex(y => y.id === this.value) === -1) {
+						var customYear = this.e(this.value);
+						if (this.value > thisYear) {
+							years.unshift(customYear);
+						}
+						else {
+							years.push(this.e(this.value));
+						}
 					}
-					else if (Array.is(this.options)) {
-						return this.options.map(val => ({
-							id: val,
-							label: val
-						}));
+					return years;
+				default:
+					if (Utils.isObject(this.schemas) && this.schemas.isEnum()) {
+						return this.schema.getEnumChoices().map(val => this.e(val));
+					}
+					else if (Array.isArray(this.options)) {
+						return this.options.map(val => this.e(val));
 					}
 					else {
 						return this.options;
@@ -123,8 +125,14 @@ export default {
 		deselectLabel() {
 			return this.multiple ? 'Press enter to remove' : '';
 		},
+		tagPlaceholder() {
+			return this.type === 'year' ? 'Press enter to select' : 'Press enter to create a tag';
+		},
 		multiple() {
 			return (this.type === 'file-paths');
+		},
+		taggable() {
+			return (this.type === 'year');
 		},
 		preselect() {
 			if (this.multiple) {
@@ -161,6 +169,9 @@ export default {
 						var num = Number.parseInt(newValue.id);
 						value = Number.isNaN(num) ? null : num;
 						break;
+					case 'year':
+						value = String(newValue.id);
+						break;
 					default:
 						value = newValue.id;
 				}
@@ -170,6 +181,12 @@ export default {
 	},
 	methods: {
 		...Utils.mapActions('editor', ['loadEpsgCodes']),
+		e(val) {
+			return {
+				id: val,
+				label: val
+			};
+		},
 		async loadData() {
 			if (this.type === 'epsg-code') {
 				await this.loadEpsgCodes();
@@ -213,6 +230,9 @@ export default {
 		},
 		sortByLabel(a,b) {
 			return VueUtils.compareStringCaseInsensitive(a.label, b.label);
+		},
+		addValue(value) {
+			this.selected = this.e(value);
 		}
 	}
 }

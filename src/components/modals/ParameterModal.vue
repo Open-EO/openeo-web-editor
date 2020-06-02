@@ -4,13 +4,13 @@
 			<p v-if="editableFields.length === 0">No editable parameters available.</p>
 			<form v-else id="parameterModal" @submit.prevent="save">
 				<div class="fieldRow" v-for="(param, k) in editableFields" :key="k">
-					<label :class="{ fieldLabel: true, highlight: param.name === selectFieldName }">
+					<label :class="{ fieldLabel: true, highlight: param.name === selectParameter }">
 						{{ displayLabel(param) }}<strong class="required" v-if="!param.optional" title="required">*</strong>
 						<div v-if="param.description" class="description">
 							<Description :description="param.description" />
 						</div>
 					</label>
-					<ParameterDataTypes :uid="uid" :ref="param.name" :editable="editable" :spec="param" :pass="values[param.name]" :processId="processId" />
+					<ParameterDataTypes :uid="uid" :ref="param.name" :editable="editable" :spec="param" v-model="values[param.name]" :processId="processId" />
 				</div>
 				<!-- We need a hidden submit button in the form tags to allow submiting the form via keyboard (enter key) -->
 				<button type="submit" style="display:none"></button>
@@ -44,7 +44,7 @@ export default {
 			editableFields: [],
 			values: {},
 			editable: true,
-			selectFieldName: null,
+			selectParameter: null,
 			saveCallback: null,
 			processId: null
 		};
@@ -61,32 +61,26 @@ export default {
 		save() {
 			try {
 				if (typeof this.saveCallback === 'function') {
-					var data = Utils.deepClone(this.values);
-					for(var i in this.$refs) {
-						if (Array.isArray(this.$refs[i]) && this.$refs[i].length > 0 && Utils.isObject(this.$refs[i][0]) && typeof this.$refs[i][0].getValue == 'function') {
-							data[i] = this.$refs[i][0].getValue();
-						}
-					}
-					this.saveCallback(data);
+					this.saveCallback(this.values);
 				}
 				this.$refs.__modal.close();
 			} catch (error) {
 				Utils.exception(this, error);
 			}
 		},
-		show(title, editableFields, values, editable = true, saveCallback = null, closeCallback = null, processId = null, selectFieldName = null) {
+		show(title, editableFields, values, editable = true, saveCallback = null, closeCallback = null, processId = null, selectParameter = null) {
 			this.editableFields = editableFields;
 			this.values = values;
 			this.editable = editable;
 			this.saveCallback = saveCallback;
 			this.processId = processId;
-			this.selectFieldName = selectFieldName;
+			this.selectParameter = selectParameter;
 			this.$refs.__modal.show(title, closeCallback);
 
 			// ToDo: It's a bit hacky to have a fixed timeout set to allow the element to be available for scrolling => improve?!
 			setTimeout(() => {
-				if (this.selectFieldName && Array.isArray(this.$refs[this.selectFieldName]) && this.$refs[this.selectFieldName][0]) {
-					this.$refs[this.selectFieldName][0].$el.scrollIntoView();
+				if (this.selectParameter && Array.isArray(this.$refs[this.selectParameter]) && this.$refs[this.selectParameter][0]) {
+					this.$refs[this.selectParameter][0].$el.scrollIntoView();
 				}
 			}, 100);
 		}
@@ -123,6 +117,7 @@ export default {
 #parameterModal .fieldRow .fieldLabel {
 	min-width: 30%;
 	width: 30%;
+	padding-right: 1em;
 }
 #parameterModal .fieldRow .fieldLabel.highlight {
 	width: calc(35% - 5px);
@@ -135,7 +130,6 @@ export default {
 }
 #parameterModal .fieldRow .fieldContainer {
 	flex-grow: 1;
-	padding-left: 1em;
 }
 #parameterModal .fieldRow .fieldValue {
 	display: flex;
@@ -143,7 +137,7 @@ export default {
 }
 #parameterModal .fieldRow .fieldValue input, .fieldRow .fieldValue textarea, .fieldRow .fieldValue select {
 	flex-grow: 1;
-	width: 99%;
+	width: 100%;
 }
 #parameterModal .fieldRow input[type="checkbox"].fieldValue  {
 	display: inline-block;

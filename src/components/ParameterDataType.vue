@@ -3,80 +3,61 @@
 		<!-- Result Node -->
 		<template v-if="isResult">
 			<div class="fieldValue externalData fromNode">
-				<span>Output of <tt>#{{ value.from_node }}</tt></span>
+				<span>Output of <tt>#{{ state.from_node }}</tt></span>
 			</div>
-			<button type="button" v-if="isArrayType" @click="convertToArray()"><i class="fas fa-list"></i> Convert to array</button>
+			<button type="button" v-if="nativeParameterType === 'array'" @click="convertToArray()"><i class="fas fa-list"></i> Convert to array</button>
 		</template>
 		<!-- Process Parameter -->
 		<template v-else-if="isPgParameter">
 			<div class="fieldValue externalData fromArgument">
-				<span>Value of process parameter <tt>${{ value.from_parameter }}</tt></span>
+				<span>Value of process parameter <tt>${{ state.from_parameter }}</tt></span>
 			</div>
-			<button type="button" v-if="isArrayType" @click="convertToArray()"><i class="fas fa-list"></i> Convert to array</button>
+			<button type="button" v-if="nativeParameterType === 'array'" @click="convertToArray()"><i class="fas fa-list"></i> Convert to array</button>
 		</template>
-		<!-- Select Boxes (collection id, job id, epsg code, in/output format, service type, billing plan, enums) -->
-		<SelectBox v-else-if="isSelection" v-model="value" :key="type" :type="type" :editable="editable" :schema="schema"></SelectBox>
-		<!-- Temporal (date, time, date-time, temporal-interval) -->
-		<TemporalPicker v-else-if="isTemporal" v-model="value" :key="type" :type="type" :editable="editable"></TemporalPicker>
-		<!-- Bounding Box -->
-		<MapAreaSelect v-else-if="type === 'bounding-box'" v-model="value" :key="type" :id="fieldName + '_bbox'" :editable="editable" class="areaSelector"></MapAreaSelect>
-		<!-- GeoJSON -->
-		<MapGeoJsonEditor v-else-if="type === 'geojson'" v-model="value" :key="type" :id="fieldName + '_geojson'" :editable="editable" class="geoJsonEditor"></MapGeoJsonEditor>
-		<!-- Process Editor -->
-		<Editor v-else-if="type === 'process-graph'" class="callbackEditor" :editable="editable" :pgParameters="schema.getCallbackParameters()" :showDiscoveryToolbar="true" v-model="value" />
-		<!-- Object -->
-		<div v-else-if="isObjectType" class="objectEditor">
-			<div class="objectElement" v-for="(propVal, propName) in value" :key="propName">
-				<input class= "fieldKey" :ref="propName" :value="propName" type="text" :name="fieldName" :disabled="!editable"/>
-				<ParameterDataTypes :ref="propName" :editable="editable" :spec="field" :useAny="true" :isObjectItem="true" :pass="propVal" />
-				<button v-if="editable" class="arrayElementDelete" type="button" @click="removeFieldInObject(propName)"><i class="fas fa-trash"></i></button>
-			</div>
-			<button type="button" class="addBtn" v-if="editable" @click="addFieldInObject('unnamed', 1)"><i class="fas fa-plus"></i> Add</button>
-		</div>
 		<!-- Null -->
-		<div class="description" v-else-if="type === 'null'"><i class="fas fa-info-circle"></i> The parameter is set to&nbsp;<strong><tt>null</tt></strong>, which is usually used as placeholder for no-data values or a default value.</div>
-		<!-- Arrays -->
-		<div v-else-if="isArrayType" class="arrayEditor">
-			<draggable v-model="value" handle=".mover">
-				<transition-group name="arrayElements">
-					<div class="fieldValue arrayElement" v-for="(e, k) in value" :key="e.id">
-						<ParameterDataType :ref="e.id" :editable="editable" :field="field" :schema="schema" :pass="e.value" :isItem="true" />
-						<button v-if="editable" class="arrayElementDelete" type="button" @click="removeField(k)"><i class="fas fa-trash"></i></button>
-						<div class="mover" v-if="editable"><i class="fas fa-arrows-alt"></i></div>
-					</div>
-				</transition-group>
-			</draggable>
-			<button type="button" class="addBtn" v-if="editable" @click="addField()"><i class="fas fa-plus"></i> Add</button>
-		</div>
+		<div class="description" v-else-if="type === 'null'"><i class="fas fa-info-circle"></i> This is set to&nbsp;<strong><tt>null</tt></strong>, which is usually used as placeholder for no-data values or a default value.</div>
+		<!-- Select Boxes (collection id, job id, epsg code, in/output format, service type, billing plan, enums) -->
+		<SelectBox v-else-if="isSelection" v-model="state" :key="type" :type="type" :editable="editable" :schema="schema"></SelectBox>
+		<!-- Temporal (date, time, date-time, temporal-interval) -->
+		<TemporalPicker v-else-if="isTemporal" v-model="state" :key="type" :type="type" :editable="editable"></TemporalPicker>
+		<!-- Bounding Box -->
+		<MapAreaSelect v-else-if="type === 'bounding-box'" v-model="state" :key="type" :id="name + '_bbox'" :editable="editable" class="areaSelector"></MapAreaSelect>
+		<!-- GeoJSON -->
+		<MapGeoJsonEditor v-else-if="type === 'geojson'" v-model="state" :key="type" :id="name + '_geojson'" :editable="editable" class="geoJsonEditor"></MapGeoJsonEditor>
+		<!-- Process Editor -->
+		<Editor v-else-if="type === 'process-graph'" class="callbackEditor" :id="name" :editable="editable" :pgParameters="schema.getCallbackParameters()" :showDiscoveryToolbar="true" v-model="state" />
 		<!-- Output format options -->
-		<FileFormatOptionsEditor v-else-if="type === 'output-format-options' || type === 'input-format-options'" ref="fileFormatOptionsEditor" :type="type" :value="value" :format="this.context"></FileFormatOptionsEditor>
+		<FileFormatOptionsEditor v-else-if="type === 'output-format-options' || type === 'input-format-options'" ref="fileFormatOptionsEditor" :type="type" v-model="state" :format="this.context"></FileFormatOptionsEditor>
 		<!-- Budget -->
-		<Budget v-else-if="type === 'budget'" v-model="value" :editable="editable" />
-		<!-- Multiline text / Textarea -->
-		<textarea class="fieldValue textarea" v-else-if="useTextarea" :name="fieldName" v-model="value" :disabled="!editable"></textarea>
+		<Budget v-else-if="type === 'budget'" v-model="state" :editable="editable" />
+		<!-- CommonMark -->
+		<TextEditor class="fieldValue textarea" v-else-if="type === 'commonmark'" :id="name" :editable="editable" v-model="state" language="markdown" />
+		<!-- WKT / PROJ -->
+		<TextEditor class="fieldValue textarea" v-else-if="type === 'wkt2-definition' || type === 'proj-definition'" :id="name" :editable="editable" v-model="state" />
 		<!-- Boolean -->
-		<input class="fieldValue" v-else-if="type === 'boolean'" :checked="!!value" v-model="value" type="checkbox" :name="fieldName" :disabled="!editable" />
+		<input class="fieldValue" v-else-if="type === 'boolean'" :checked="!!state" v-model="state" type="checkbox" :name="name" :disabled="!editable" />
 		<!-- Integer -->
-		<input class="fieldValue" v-else-if="type === 'integer'" v-model.number="value" type="number" :min="numericMin" :max="numericMax" :step="1" :name="fieldName" :disabled="!editable" />
+		<input class="fieldValue" v-else-if="type === 'integer'" v-model.number="state" type="number" :min="numericMin" :max="numericMax" :step="1" :name="name" :disabled="!editable" />
 		<!-- Number -->
-		<input class="fieldValue" v-else-if="type === 'number'" v-model.number="value" type="number" :min="numericMin" :max="numericMax" :step="0.01" :name="fieldName" :disabled="!editable" />
+		<input class="fieldValue" v-else-if="type === 'number'" v-model.number="state" type="number" :min="numericMin" :max="numericMax" :step="0.01" :name="name" :disabled="!editable" />
 		<!-- URL -->
-		<input class="fieldValue" v-else-if="type === 'url' || type === 'uri'" v-model="value" type="url" :name="fieldName" :disabled="!editable" />
+		<input class="fieldValue" v-else-if="type === 'url' || type === 'uri'" v-model="state" type="url" :name="name" :disabled="!editable" />
+		<!-- Objects / Arrays -->
+		<ObjectEditor  v-else-if="nativeType === 'object' || nativeType === 'array'" :editable="editable" :parameter="parameter" :schema="schema" :isObject="nativeType === 'object'" v-model="state" />
 		<!-- String and all other -->
-		<input class="fieldValue" v-else v-model="value" type="text" :name="fieldName" :disabled="!editable" />
+		<input class="fieldValue" v-else v-model="state" type="text" :name="name" :disabled="!editable" />
 	</div>
 </template>
 
 <script>
-import draggable from 'vuedraggable';
 import { ProcessGraph } from '@openeo/js-processgraphs';
 import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
 
+import ObjectEditor from './datatypes/ObjectEditor.vue';
 import Budget from './datatypes/Budget.vue';
-import SelectBox from './datatypes/SelectBox.vue';
-import TemporalPicker from './datatypes/TemporalPicker.vue';
 import MapAreaSelect from './datatypes/MapAreaSelect.vue';
 import MapGeoJsonEditor from './datatypes/MapGeoJsonEditor.vue';
+import TextEditor from './TextEditor.vue';
 
 import Utils from '../utils.js';
 
@@ -84,17 +65,19 @@ export default {
 	name: 'ParameterDataType',
 	mixins: [EventBusMixin],
 	components: {
-		draggable,
+		ObjectEditor,
 		Budget,
 		MapAreaSelect,
 		MapGeoJsonEditor,
-		SelectBox,
-		TemporalPicker,
+		TextEditor,
 		// Asynchronously load the following components to avoid circular references.
 		// See https://vuejs.org/v2/guide/components-edge-cases.html#Circular-References-Between-Components
 		Editor: () => import('./Editor.vue'),
 		FileFormatOptionsEditor: () => import('./datatypes/FileFormatOptionsEditor.vue'),
-		ParameterDataTypes: () => import('./ParameterDataTypes.vue')
+		ParameterDataTypes: () => import('./ParameterDataTypes.vue'),
+		// Async loading for smaller starting bundle
+		SelectBox: () => import('./datatypes/SelectBox.vue'),
+		TemporalPicker: () => import('./datatypes/TemporalPicker.vue')
 	},
 	props: {
 		parameter: Object,
@@ -103,41 +86,29 @@ export default {
 			default: true
 		},
 		schema: Object,
-		pass: {},
+		value: {},
 		uid: String,
-		processId: String,
-		isItem: {
-			type: Boolean,
-			default: false
-		},
-		isObjectItem: {
-			type: Boolean,
-			default: false
-		}
+		processId: String
 	},
 	data() {
 		return {
-			value: null,
+			state: null,
 			context: null
 		};
 	},
 	computed: {
 		...Utils.mapGetters(['processRegistry']),
 		type() {
-			if (this.isItem) {
-				return this.schema.arrayOf();
-			}
-// ToDo
-/*			else if (this.schema.isRef) {
-				return this.schema.isRef;
-			} */
 			return this.schema.dataType();
 		},
-		isTemporal() {
-			return (this.type === 'date' || this.type === 'time' || this.type === 'date-time' || this.type === 'temporal-interval');
+		nativeType() {
+			return this.schema.nativeDataType();
 		},
-		useTextarea() {
-			return (this.type === 'proj-definition' || this.type === 'commonmark');
+		nativeParameterType() {
+			return this.parameter.nativeDataType();
+		},
+		isTemporal() {
+			return (this.type === 'date' || this.type === 'time' || this.type === 'date-time' || this.type === 'temporal-interval' || this.type === 'year');
 		},
 		isSelection() {
 			switch(this.type) {
@@ -155,26 +126,14 @@ export default {
 					return this.schema.isEnum();
 			}
 		},
-		fieldName() {
+		name() {
 			return this.parameter.name + (Array.isArray(this.parameter.value) ? '[]' : '');
 		},
 		isResult() {
-			return Utils.isObject(this.value) && this.value.from_node && Object.keys(this.value).length == 1 && (this.type !== "object" || this.isObjectItem);
-		},
-		hasResult() {
-			return Utils.isObject(this.value) && (this.value.from_node || this.refs.from_node.length > 0);
+			return Boolean(Utils.isObject(this.state) && this.state.from_node && Utils.size(this.state) === 1 && this.schema.schema.isRef);
 		},
 		isPgParameter() {
-			return Utils.isObject(this.value) && this.value.from_parameter && Object.keys(this.value).length == 1 && (this.type !== "object" || this.isObjectItem);
-		},
-		hasPgParameter() {
-			return Utils.isObject(this.value) && (this.value.from_parameter || this.refs.from_parameter.length > 0);
-		},
-		isObjectType() {
-			return this.checkObjectType(this.type);
-		},
-		isArrayType() {
-			return (this.type === 'array' || this.type === 'temporal-intervals');
+			return Boolean(Utils.isObject(this.state) && this.state.from_parameter && Utils.size(this.state) === 1 && this.schema.schema.isRef);
 		},
 		numericMin() {
 			if (typeof this.schema.minimum === 'number') {
@@ -188,36 +147,61 @@ export default {
 			}
 			return ""; // Empty seems to be the default for the input element
 		},
-		refs() {
-			return this.parameter.getRefs();
+		newValue() {
+			if (this.isPgParameter) {
+				return {from_parameter: this.schema.schema.from_parameter};
+			}
+			else if (this.isResult) {
+				return {from_node: this.schema.schema.from_node};
+			}
+			else if (this.type === 'number') {
+				return Number.isNaN(this.state) ? null : this.state;
+			}
+			else if (this.type === 'integer') {
+				var num = Number.parseInt(this.state);
+				return Number.isNaN(num) ? null : num;
+			}
+			else if (this.type === 'null') {
+				return null;
+			}
+			else if (typeof this.state === 'string' && this.state.length > 0 && (this.type === 'any' || this.type === 'mixed')) {
+				// Try to guess whether it is a number or not
+				var num = Number(this.state);
+				return Number.isNaN(num) ? this.state : num;
+			}
+			else {
+				return this.state;
+			}
 		}
 	},
 	watch: {
-		pass() {
-			this.value = this.initValue(this.pass);
-			this.initView();
-		},
 		type(newType, oldType) {
 			var refTypes = ['from_parameter', 'from_node'];
-			if (refTypes.includes(oldType) && this.checkObjectType(newType)) {
-				this.value = {};
+			if (refTypes.includes(oldType) && (newType === 'object' || newType === 'service-config')) {
+				this.state = {};
 			}
-// ToDo
-/*			else if (refTypes.includes(newType)) {
+			else if (refTypes.includes(newType)) {
 				var s = this.schema.schema
 				var value = {};
 				value[s.isRef] = s[s.isRef];
-				this.value = value;
-			} */
+				this.state = value;
+			}
 		},
 		value(newVal, oldVal) {
+			if (newVal !== this.state) {
+				this.state = this.value;
+				this.initView();
+			}
+		},
+		newValue(newVal, oldVal) {
 			if (this.mounted && this.uid) {
 				this.emit('processParameterValueChanged', this.uid, this.processId, this.parameter, this.type, newVal, oldVal);
 			}
+			this.$emit('input', newVal);
 		}
 	},
 	created() {
-		this.value = this.initValue(this.pass);
+		this.state = this.value;
 	},
 	mounted() {
 		this.initView();
@@ -225,10 +209,7 @@ export default {
 		this.listen('processParameterTypeChanged', this.processParameterTypeChanged);
 	},
 	methods: {
-		checkObjectType(type) {
-			return (type === 'object' || type === 'service-config');
-		},
-		processParameterValueChanged(uid, processId, field, type, value, oldValue) {
+		processParameterValueChanged(uid, processId, parameter, type, value, oldValue) {
 			if (this.uid !== uid) {
 				return;
 			}
@@ -237,7 +218,7 @@ export default {
 				this.context = value;
 			}
 		},
-		processParameterTypeChanged(uid, processId, field, newType, oldType) {
+		processParameterTypeChanged(uid, processId, parameter, newType, oldType) {
 			if (this.uid !== uid) {
 				return;
 			}
@@ -247,229 +228,26 @@ export default {
 		initView() {
 			this.$nextTick(() => {
 				this.mounted = true;
-				this.emit('processParameterValueChanged', this.uid, this.processId, this.parameter, this.type, this.value, this.value, undefined);
+				this.emit('processParameterValueChanged', this.uid, this.processId, this.parameter, this.type, this.state, this.state, undefined);
 			});
-		},
-		initValue(v) {
-			if (this.isArrayType) {
-				v = this.initArray(v);
-			}
-			else if(this.isObjectType) {
-				if(v == null || Object.keys(v).length == 0) {
-					return {};
-				}
-				else {
-					return v;
-				}
-			}
-			else if (this.useTextarea) {
-				if (typeof v === 'object') {
-					if (typeof this.pass === 'object' && this.pass !== null) {
-						v = JSON.stringify(v, null, 2);
-					}
-					else {
-						v = "";
-					}
-				}
-			}
-			return v;
-		},
-		getValue() {
-			if (this.isPgParameter) {
-				return {from_parameter: this.schema.schema.from_parameter};
-			}
-			else if (this.isResult) {
-				return {from_node: this.schema.schema.from_node};
-			}
-			else if (this.type === 'output-format-options' || this.type === 'input-format-options') {
-				return this.$refs.fileFormatOptionsEditor.getValue();
-			}
-			else if (this.type === 'process-graph') {
-				var obj = new ProcessGraph(this.value, this.processRegistry);
-				obj.setParent(this.processId, this.parameter.name);
-				obj.parse();
-				return obj;
-			}
-			else if(this.isObjectType) {
-				for (let key in this.value) {
-					if(this.value.hasOwnProperty(key)) {
-						//check if output/callbackArg is selected in top selection box
-						let isResultVal = this.$refs[key].length == 1 && (this.$refs[key][0].value.from_node || this.$refs[key][0].value.from_parameter);
-						let inputType = this.$refs[key][0].value.from_node ? "from_node" : "from_parameter";
-						let newKey = isResultVal ? inputType : this.$refs[key][0].value;
-						let newValue;
-						if (isResultVal) {
-							newValue = this.$refs[key][0].value[inputType];
-						}
-						else {
-							newValue = this.$refs[key][1].getValue();
-						}
-						if(newKey !== key) {
-							delete this.value[key];
-						}
-						this.value[newKey] = newValue;
-					}
-				}
-				return this.value;
-			}
-			else if (this.isArrayType) {
-				var values = [];
-				var itemType = this.schema.arrayOf();
-				for(var i in this.value) {
-					var fieldId = this.value[i].id;
-					var value = this.$refs[fieldId][0].getValue();
-					if (itemType === 'band-name' && (typeof value !== 'string' || value.length === 0)) {
-						continue; // Ignore invalid band names
-					}
-					values.push(value);
-				}
-				return values;
-			}
-			else if (this.type === 'number') {
-				return Number.isNaN(this.value) ? null : this.value;
-			}
-			else if (this.type === 'integer') {
-				var num = Number.parseInt(this.value);
-				return Number.isNaN(num) ? null : num;
-			}
-			else if (this.type === 'null') {
-				return null;
-			}
-			else if (this.useTextarea) {
-				if (typeof this.value === 'string' && this.value.length > 0) {
-					if (this.type === 'object' || (typeof this.pass === 'object' && this.pass !== null)) {
-						return JSON.parse(this.value);
-					}
-					else {
-						return this.value;
-					}
-				}
-				else {
-					return null;
-				}
-			}
-			else if (typeof this.value === 'string' && this.value.length > 0 && (this.type === 'any' || this.type === 'mixed')) {
-				// Try to guess whether it is a number or not
-				var num = Number(this.value);
-				return Number.isNaN(num) ? this.value : num;
-			}
-			else {
-				return this.value;
-			}
-		},
-		initArray(arr) {
-			var v = [];
-			if (Array.isArray(arr)) {
-				for(var i in arr) {
-					if (Utils.isObject(arr[i]) && arr[i].id) {
-						v.push(arr[i]);
-					}
-					else {
-						v.push({
-							id: "arrayElement" + i,
-							value: arr[i]
-						});
-					}
-				}
-			}
-			return v;
 		},
 		convertToArray() {
-			this.value = this.initArray([this.value]);
-		},
-		addField() {
-			if (!Array.isArray(this.value)) {
-				this.value = [];
-			}
-
-			var def = null;
-			var itemType = this.schema.arrayOf();
-			if (itemType === 'string' || itemType === 'band-name') {
-				def = "";
-			}
-			else if (itemType === 'number' || itemType === 'integer') {
-				def = 0;
-			}
-			else if (itemType === 'array') {
-				def = [];
-			}
-
-			this.value.push({
-				id: this.value.length,
-				value: def
-			});
-			return false;
-		},
-		addFieldInObject(newPropName, number) {
-			if (!Utils.isObject(this.value)) {
-				this.value = {};
-			}
-			if(typeof this.value[newPropName + number] === 'undefined'){
-				this.$set(this.value, newPropName + number, "");
-				return false;
-			}
-			else{
-				number++;
-				this.addFieldInObject(newPropName, number);
-			}
-		},
-		removeFieldInObject(propName){
-			this.$delete(this.value, propName);
-		},
-		removeField(k) {
-			this.value.splice(k, 1);
-			return false;
+			this.state = [this.state];
+			this.$emit('input', this.state);
+			this.$emit('changeType', 'array');
 		}
 	}
 };
 </script>
 
 <style scoped>
-.arrayEditor, .objectEditor, .arrayEditor > div, .objectEditor > div {
-	width: 100%;
-}
-.arrayElement {
-	transition: all 0.5s;
-	padding: 1px;
-	margin: 1px 0;
-	border: 1px solid transparent;
-}
-.arrayElement.sortable-chosen {
-	background: #eee;
-	border-color: #ccc;
-	border-radius: 3px;
-}
-.arrayElement.sortable-chosen .arrayElementDelete {
-	visibility: hidden;
-}
-
-.arrayElements-enter, .arrayElements-active {
-	opacity: 0;
-}
-.arrayElementDelete {
-	margin-left: 1em;
-}
-.addBtn {
-	margin: 5px 0;
-}
-.objectElement {
-	display: flex;
-	align-items: flex-start;
-	padding: 5px 0;
-	border-bottom: 1px dotted #ccc;
-}
-.mover {
-	padding: 3px 1em;
-	cursor: pointer;
-}
 .areaSelector, .geoJsonEditor {
 	height: 500px;
 	flex-grow: 1;
 }
 .textarea {
 	width: 100%;
-	height: 200px;
-	font-family: monospace;
+	height: 250px;
 }
 .externalData span {
 	display: inline-block; 

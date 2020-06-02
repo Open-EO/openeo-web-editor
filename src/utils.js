@@ -270,6 +270,35 @@ export default {
 		return value;
 	},
 
+	resolveJsonRefs(schema) {
+		var resolver = obj => {
+			if (!obj || typeof obj !== 'object') {
+				return obj;
+			}
+			for(var key in obj) {
+				var value = obj[key];
+				if (this.isObject(value) && typeof value.$ref === 'string' && value.$ref.match(/^#(\/[^\/]+)+$/i)) {
+					var parts = value.$ref.split('/').slice(1);
+					var result = schema;
+					while (parts.length) {
+						let propertyName = parts.shift();
+						console.log(propertyName, result, result[propertyName]);
+						result = result[propertyName];
+						if (typeof result === 'undefined') {
+							break;
+						}
+					}
+					obj[key] = result;
+					continue;
+				}
+
+				obj[key] = resolver(value);
+			}
+			return obj;
+		};
+		return resolver(schema);
+	},
+
 	mapState,
 	mapGetters,
 	mapMutations,

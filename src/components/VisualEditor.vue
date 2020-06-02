@@ -243,6 +243,7 @@ export default {
 
 .visualEditor .editorSplitter {
 	display: flex;
+	flex-direction: row-reverse;
 	flex-grow: 1;
 	height: 100%;
 	overflow: hidden;
@@ -251,7 +252,7 @@ export default {
 .visualEditor .discoveryToolbar {
 	width: 25%;
 	min-width: 150px;
-	border-right: 1px solid #ddd;
+	border-left: 1px solid #ddd;
 }
 .visualEditor.fullscreen .discoveryToolbar {
 	width: 15%;

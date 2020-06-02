@@ -52,7 +52,7 @@ export default {
 		},
 		language: {
 			type: String,
-			default: 'json' // json, r, python, markdown, processgraph
+			default: null // json, r, python, markdown, processgraph or null
 		}
 	},
 	computed: {
@@ -83,6 +83,7 @@ export default {
 						gutters: ["CodeMirror-lint-markers"],
 						lint: true
 					});
+					break;
 			}
 			return options;
 		}
@@ -226,6 +227,7 @@ export default {
 	height: 100%;
 	display: flex;
 	flex-direction: column;
+	border: 1px solid #ddd;
 }
 .fullscreen {
 	position: absolute;

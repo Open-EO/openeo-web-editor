@@ -1,10 +1,10 @@
 <template>
 	<Tabs class="editor" ref="tabs" id="customProcessContent" position="bottom">
 		<Tab id="visual" name="Visual Model" icon="fa-code-branch" :selected="true" :allowShow="canSwitchView" @show="showModel">
-			<VisualEditor ref="graphBuilder" :editable="editable" :pgParameters="pgParameters" :value="modelValue" @input="commit" @error="onError" :id="id + '_visual'" :showDiscoveryToolbar="showDiscoveryToolbar" />
+			<VisualEditor class="visualEditorTab" ref="graphBuilder" :editable="editable" :pgParameters="pgParameters" :value="modelValue" @input="commit" @error="onError" :id="id + '_visual'" :showDiscoveryToolbar="showDiscoveryToolbar" />
 		</Tab>
 		<Tab id="source" name="Code" icon="fa-code" :allowShow="canSwitchView" @show="showCode">
-			<TextEditor ref="sourceEditor" :editable="editable" :value="codeValue" @input="commit" @error="onError" :id="id + '_text'" language="processgraph" />
+			<TextEditor class="textEditorTab" ref="sourceEditor" :editable="editable" :value="codeValue" @input="commit" @error="onError" :id="id + '_text'" language="processgraph" />
 		</Tab>
 	</Tabs>
 </template>
@@ -109,3 +109,9 @@ export default {
 	}
 }
 </script>
+
+<style>
+.textEditorTab.textEditor {
+	border: 0;
+}
+</style>

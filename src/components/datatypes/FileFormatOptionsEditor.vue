@@ -8,7 +8,7 @@
 						<Description :description="parameter.description" />
 					</div>
 				</label>
-				<ParameterDataTypes :uid="uid" :ref="parameter.name" :editable="editable" :spec="parameter" :pass="value[parameter.name]" />
+				<ParameterDataTypes :uid="uid" :ref="parameter.name" :editable="editable" :spec="parameter" v-model="options[parameter.name]" />
 			</div>
 		</template>
 		<template v-else>
@@ -46,6 +46,7 @@ export default {
 	},
 	data() {
 		return {
+			options: this.value,
 			uid: '_' + Utils.getUniqueId(),
 		};
 	},
@@ -97,20 +98,18 @@ export default {
 			return Utils.isObject(this.fileFormat) && Utils.isObject(this.fileFormat.parameters) && Object.keys(this.fileFormat.parameters).length > 0;
 		}
 	},
-	methods: {
-		getValue() {
-			var options = {};
-			for(var i in this.$refs) {
-				if (Array.isArray(this.$refs[i]) && this.$refs[i].length > 0 && Utils.isObject(this.$refs[i][0]) && typeof this.$refs[i][0].getValue == 'function') {
-					options[i] = this.$refs[i][0].getValue();
-				}
+	watch: {
+		options: {
+			deep: true,
+			handler(newValue) {
+				this.$emit('input', newValue);
 			}
-			return options;
 		},
-		// ToDo: Convert from getValue() to v-modal
-/*		updateValue() {
-			this.$emit('input', this.getValue());
-		} */
+		value(newValue) {
+			if (this.options !== newValue) {
+				this.options = newValue;
+			}
+		}
 	}
 };
 </script>

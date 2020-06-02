@@ -1,5 +1,6 @@
 import { JsonSchemaValidator } from '@openeo/js-processgraphs';
 import { Utils as VueUtils } from '@openeo/vue-components';
+import Utils from '../../utils.js';
 
 class ProcessSchema {
 	
@@ -38,14 +39,6 @@ class ProcessSchema {
 		}
 	}
 
-	isArrayType() {
-		return this.nativeDataType() === 'array';
-	}
-
-	isObjectType() {
-		return this.nativeDataType() === 'object';
-	}
-
 	dataTypes(includeNull = false, native = false) {
 		var types = this.schemas.map(s => s.dataType(native));
 		types = types.filter((v, i, a) => a.indexOf(v) === i); // Return each type only once
@@ -75,17 +68,40 @@ class ProcessDataType {
 	
 	constructor(schema) {
 		this.schema = schema;
-
-		if (this.schema.type === 'array') {
-			this.arrayItems = new ProcessSchema(this.schema.items || {});
-		}
-		else {
-			this.arrayItems = null;
-		}
 	}
 
 	toJSON() {
 		return this.schema;
+	}
+
+	getElementSchema(key = null) {
+		let element = {};
+		if (this.schema.type === 'array') {
+			if (Utils.isObject(this.schema.items)) {
+				// Array with one schema for all items: https://json-schema.org/understanding-json-schema/reference/array.html#id5
+				element = this.schema.items;
+			}
+			else if (Array.isArray(this.schema.items)) {
+				// Tuple validation: https://json-schema.org/understanding-json-schema/reference/array.html#id6
+				if (Utils.isObject(this.schema.items[key])) {
+					element = this.schema.items[key];
+				}
+				else if (Utils.isObject(this.schema.additionalItems)) {
+					element = this.schema.additionalItems;
+				}
+			}
+		}
+		else if (this.schema.type === 'object') {
+			if (Utils.isObject(this.schema.properties) && Utils.isObject(this.schema.properties[key])) {
+				element = this.schema.properties[key];
+			}
+			else if (Utils.isObject(this.schema.additionalProperties)) {
+				element = this.schema.additionalProperties;
+			}
+			// ToDo: No support for patternProperties yet
+		}
+
+		return new ProcessSchema(element);
 	}
 
 	isNull() {
@@ -96,20 +112,16 @@ class ProcessDataType {
 		return (this.dataType() !== 'raster-cube' && this.dataType() !== 'vector-cube');
 	}
 
-	arrayOf() {
-		if (this.arrayItems === null) {
-			return null;
-		}
-		
-		return this.arrayItems.dataType();
-	}
-
 	dataType(native = false) {
 		var type = this.schema.type || "any";
 		if (!native) {
 			type = this.schema.subtype || type;
 		}
 		return type;
+	}
+
+	nativeDataType() {
+		return this.dataType(true);
 	}
 
 	isEnum() {

@@ -1059,4 +1059,7 @@ class BlocksProcess {
 .focus .blocks {
     border-color: rgba(22, 102, 182, 0.3);
 }
+.blocks_js_editor:focus, .blocks:focus, .canvas:focus {
+    outline: 0;
+}
 </style>
