@@ -28,7 +28,7 @@ export default {
 		},
 		geoJson: {
 			type: Object,
-			default: null
+			default: () => null
 		}
 	},
 	data() {

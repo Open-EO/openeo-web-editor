@@ -248,7 +248,7 @@ export default {
 			return value;
 		},
 		formatFileSize(value, col) {
-			if (!value) {
+			if (typeof value !== 'number') {
 				return '';
 			}
 			var i = value == 0 ? 0 : Math.floor( Math.log(value) / Math.log(1024) );
