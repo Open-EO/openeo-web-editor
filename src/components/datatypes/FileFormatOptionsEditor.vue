@@ -1,14 +1,14 @@
 <template>
 	<div class="datatypeEditor fileFormatOptionsEditor">
 		<template v-if="hasOptions">
-			<div class="fieldRow" v-for="(field, name) in parameters" :key="name">
+			<div class="fieldRow" v-for="parameter in parameters" :key="parameter.name">
 				<label class="fieldLabel">
-					{{ field.label }}<strong class="required" v-if="field.isRequired" title="required">*</strong>
-					<div v-if="field.description" class="description">
-						<Description :description="field.description" />
+					{{ parameter.label }}<strong class="required" v-if="!parameter.optional" title="required">*</strong>
+					<div v-if="parameter.description" class="description">
+						<Description :description="parameter.description" />
 					</div>
 				</label>
-				<ParameterFields :uid="uid" :ref="field.name" :editable="editable" :field="field" :pass="field.getValue()" />
+				<ParameterDataTypes :uid="uid" :ref="parameter.name" :editable="editable" :spec="parameter" v-model="options[parameter.name]" />
 			</div>
 		</template>
 		<template v-else>
@@ -18,19 +18,21 @@
 </template>
 
 <script>
-import ParameterFields from '../ParameterFields.vue';
+import ParameterDataTypes from '../ParameterDataTypes.vue';
 import Utils from '../../utils.js';
-import Field from '../blocks/field';
 import Description from '@openeo/vue-components/components/Description.vue';
 
 export default {
 	name: 'FileFormatOptionsEditor',
 	components: {
 		Description,
-		ParameterFields
+		ParameterDataTypes
 	},
 	props: {
-		value: {},
+		value: {
+			type: Object,
+			default: () => ({})
+		},
 		format: {
 			type: String
 		},
@@ -44,6 +46,7 @@ export default {
 	},
 	data() {
 		return {
+			options: this.value,
 			uid: '_' + Utils.getUniqueId(),
 		};
 	},
@@ -58,16 +61,13 @@ export default {
 			}
 		},
 		parameters() {
-			var fields = {};
+			var parameters = [];
 			// Convert to Fields
 			for (var name in this.fileFormat.parameters) {
 				var p = this.fileFormat.parameters[name];
 				var schema = {};
 				if (typeof p.type !== 'undefined') {
 					schema.type = [p.type, "null"];
-				}
-				if (typeof p.default !== 'undefined') {
-					schema.default = p.default;
 				}
 				if (typeof p.minimum !== 'undefined') {
 					schema.minimum = p.minimum;
@@ -81,12 +81,15 @@ export default {
 				if (typeof p.example !== 'undefined') {
 					schema.examples = [p.example];
 				}
-				fields[name] = new Field(name, name, schema, undefined, p.description, !!p.required);
-				if (Utils.isObject(this.value) && typeof this.value[name] !== 'undefined') {
-					fields[name].setValue(this.value[name]);
-				}
+				parameters.push({
+					name: name,
+					description: p.description,
+					schema: schema,
+					optional: !p.required,
+					default: p.default
+				});
 			}
-			return fields;
+			return parameters;
 		},
 		hasOptions() {
 			if (typeof this.format !== 'string') {
@@ -95,19 +98,18 @@ export default {
 			return Utils.isObject(this.fileFormat) && Utils.isObject(this.fileFormat.parameters) && Object.keys(this.fileFormat.parameters).length > 0;
 		}
 	},
-	methods: {
-		getValue() {
-			var options = {};
-			for(var i in this.$refs) {
-				if (Array.isArray(this.$refs[i]) && this.$refs[i].length > 0 && Utils.isObject(this.$refs[i][0]) && typeof this.$refs[i][0].getValue == 'function') {
-					options[i] = this.$refs[i][0].getValue();
-				}
+	watch: {
+		options: {
+			deep: true,
+			handler(newValue) {
+				this.$emit('input', newValue);
 			}
-			return options;
 		},
-/*		updateValue() {
-			this.$emit('input', this.getValue());
-		} */
+		value(newValue) {
+			if (this.options !== newValue) {
+				this.options = newValue;
+			}
+		}
 	}
 };
 </script>

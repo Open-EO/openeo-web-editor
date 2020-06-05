@@ -1,19 +1,22 @@
 <template>
 	<div class="datatypeEditor fieldValue temporalPicker">
+		<SelectBox v-if="type === 'year'" :key="type" v-model="dateTimes" :type="type" :editable="editable" />
 		<!-- ToDo: Support open date ranges, probably by using two separate date pickers, see also https://github.com/chronotruck/vue-ctk-date-time-picker/issues/121 -->
-		<VueCtkDateTimePicker :key="type" v-model="dateTimes" :disabled="!editable" :range="true" :label="label" :format="format" :only-date="onlyDate" :only-time="onlyTime" :no-button="noButton" :formatted="formatted" locale="en-gb" position="bottom"></VueCtkDateTimePicker>
+		<VueCtkDateTimePicker v-else :key="type" v-model="dateTimes" :disabled="!editable" :range="range" :label="label" :format="format" :only-date="onlyDate" :only-time="onlyTime" :no-button="!range" :formatted="formatted" locale="en-gb" position="bottom"></VueCtkDateTimePicker>
 	</div>
 </template>
 
 <script>
 import VueCtkDateTimePicker from 'vue-ctk-date-time-picker';
 import 'vue-ctk-date-time-picker/dist/vue-ctk-date-time-picker.css';
+import SelectBox from './SelectBox.vue';
 import Utils from '../../utils';
 
 export default {
 	name: 'TemporalPicker',
 	components: {
-		VueCtkDateTimePicker
+		VueCtkDateTimePicker,
+		SelectBox
 	},
 	props: {
 		value: {
@@ -61,8 +64,8 @@ export default {
 					return 'Select time';
 			}
 		},
-		noButton() {
-			return (this.type !== 'temporal-interval');
+		range() {
+			return (this.type === 'temporal-interval');
 		},
 		onlyTime() {
 			return (this.type === 'time');

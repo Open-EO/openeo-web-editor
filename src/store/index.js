@@ -63,13 +63,8 @@ export default new Vuex.Store({
 		supportsBillingPlans: (state) => state.connection !== null && state.connection.capabilities().currency() !== null && state.connection.capabilities().listPlans().length > 0,
 		apiVersion: (state) => state.connection !== null ? state.connection.capabilities().apiVersion() : null,
 		processRegistry: (state) => {
-			var registry = new ProcessRegistry();
-			for (let process of state.predefinedProcesses) { // pre-defined processes as plain object
-				registry.add(process);
-			}
-			for(let process of state.userProcesses.userProcesses) { // user-defined processes as UserProcess object
-				registry.add(process.toJSON());
-			}
+			var registry = new ProcessRegistry(state.predefinedProcesses);
+			registry.addAll(state.userProcesses.userProcesses);
 			return registry;
 		}
 	},

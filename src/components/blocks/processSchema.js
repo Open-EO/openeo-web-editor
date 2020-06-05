@@ -1,12 +1,11 @@
 import { JsonSchemaValidator } from '@openeo/js-processgraphs';
 import { Utils as VueUtils } from '@openeo/vue-components';
+import Utils from '../../utils.js';
 
 class ProcessSchema {
 	
 	constructor(schema) {
-		this.schemas = JsonSchemaValidator.convertSchemaToArray(schema).map(s => new ProcessSubSchema(s));
-
-		// ToDO: Cache data?
+		this.schemas = JsonSchemaValidator.convertSchemaToArray(schema).map(s => new ProcessDataType(s));
 	}
 
 	toJSON() {
@@ -20,6 +19,10 @@ class ProcessSchema {
 	is(type) {
 		var types = this.dataTypes();
 		return (types.length === 1 && types[0] === type);
+	}
+
+	nativeDataType() {
+		return this.dataType(true);
 	}
 
 	dataType(native = false) {
@@ -51,21 +54,54 @@ class ProcessSchema {
 
 }
 
-class ProcessSubSchema {
+class ProcessParameter extends ProcessSchema {
+
+	constructor(parameter) {
+		super(parameter.schema || {});
+
+		Object.assign(this, parameter);
+	}
+
+}
+
+class ProcessDataType {
 	
 	constructor(schema) {
 		this.schema = schema;
-
-		if (this.schema.type === 'array') {
-			this.arrayItems = new ProcessSchema(this.schema.items || {});
-		}
-		else {
-			this.arrayItems = null;
-		}
 	}
 
 	toJSON() {
 		return this.schema;
+	}
+
+	getElementSchema(key = null) {
+		let element = {};
+		if (this.schema.type === 'array') {
+			if (Utils.isObject(this.schema.items)) {
+				// Array with one schema for all items: https://json-schema.org/understanding-json-schema/reference/array.html#id5
+				element = this.schema.items;
+			}
+			else if (Array.isArray(this.schema.items)) {
+				// Tuple validation: https://json-schema.org/understanding-json-schema/reference/array.html#id6
+				if (Utils.isObject(this.schema.items[key])) {
+					element = this.schema.items[key];
+				}
+				else if (Utils.isObject(this.schema.additionalItems)) {
+					element = this.schema.additionalItems;
+				}
+			}
+		}
+		else if (this.schema.type === 'object') {
+			if (Utils.isObject(this.schema.properties) && Utils.isObject(this.schema.properties[key])) {
+				element = this.schema.properties[key];
+			}
+			else if (Utils.isObject(this.schema.additionalProperties)) {
+				element = this.schema.additionalProperties;
+			}
+			// ToDo: No support for patternProperties yet
+		}
+
+		return new ProcessSchema(element);
 	}
 
 	isNull() {
@@ -76,20 +112,16 @@ class ProcessSubSchema {
 		return (this.dataType() !== 'raster-cube' && this.dataType() !== 'vector-cube');
 	}
 
-	arrayOf() {
-		if (this.arrayItems === null) {
-			return null;
-		}
-		
-		return this.arrayItems.dataType();
-	}
-
 	dataType(native = false) {
 		var type = this.schema.type || "any";
 		if (!native) {
 			type = this.schema.subtype || type;
 		}
 		return type;
+	}
+
+	nativeDataType() {
+		return this.dataType(true);
 	}
 
 	isEnum() {
@@ -120,6 +152,7 @@ class ProcessSubSchema {
 }
 
 export {
+	ProcessDataType,
 	ProcessSchema,
-	ProcessSubSchema
+	ProcessParameter
 };

@@ -1,14 +1,10 @@
 <template>
-	<Tabs class="editor" ref="tabs" id="customProcessContent">
-		<Tab id="visual" name="Visual Model" icon="fa-code-branch" :selected="true" :allowShow="prepareProcess" @show="transferProcess">
-			<template #default="{ tab }">
-				<VisualEditor ref="graphBuilder" :active="tab.active" :editable="editable" :value="process" :id="id + '_visual'" :isMainEditor="isMainEditor" />
-			</template>
+	<Tabs class="editor" ref="tabs" id="customProcessContent" position="bottom">
+		<Tab id="visual" name="Visual Model" icon="fa-code-branch" :selected="true" :allowShow="canSwitchView" @show="showModel">
+			<VisualEditor class="visualEditorTab" ref="graphBuilder" :editable="editable" :pgParameters="pgParameters" :value="modelValue" @input="commit" @error="onError" :id="id + '_visual'" :showDiscoveryToolbar="showDiscoveryToolbar" />
 		</Tab>
-		<Tab id="source" name="Code" icon="fa-code" :allowShow="prepareProcess" @show="transferProcess">
-			<template #default="{ tab }">
-				<TextEditor ref="sourceEditor" :active="tab.active" :editable="editable" :value="process" :id="id + '_text'" :isMainEditor="isMainEditor" />
-			</template>
+		<Tab id="source" name="Code" icon="fa-code" :allowShow="canSwitchView" @show="showCode">
+			<TextEditor class="textEditorTab" ref="sourceEditor" :editable="editable" :value="codeValue" @input="commit" @error="onError" :id="id + '_text'" language="processgraph" />
 		</Tab>
 	</Tabs>
 </template>
@@ -19,7 +15,6 @@ import Tabs from '@openeo/vue-components/components/Tabs.vue';
 import Tab from '@openeo/vue-components/components/Tab.vue';
 import VisualEditor from './VisualEditor.vue';
 import TextEditor from './TextEditor.vue';
-import stringify from 'fast-stable-stringify';
 
 export default {
 	name: 'Editor',
@@ -35,22 +30,52 @@ export default {
 			type: Boolean,
 			default: true
 		},
-		process: {
+		value: {
 			type: Object,
-			default: null
+			default: () => null
 		},
-		isMainEditor: {
+		pgParameters: {
+			type: Array,
+			default: () => []
+		},
+		showDiscoveryToolbar: {
 			type: Boolean,
 			default: false
 		}
 	},
+	watch: {
+		value(value, oldValue) {
+			if (this.$refs.tabs.getActiveTabId() === 'source') {
+				this.showCode();
+			}
+			else {
+				this.showModel();
+			}
+		}
+	},
 	data() {
 		return {
-			lastProcessToInsert: null,
-			processToInsert: this.process
+			modelValue: null,
+			codeValue: null,
+			error: null
 		};
 	},
 	methods: {
+		showModel() {
+			this.error = null;
+			this.modelValue = this.value;
+		},
+		showCode() {
+			this.error = null;
+			this.codeValue = this.value;
+		},
+		commit(value) {
+			this.error = null;
+			this.$emit('input', value);
+		},
+		onError(error) {
+			this.error = error;
+		},
 		activeEditor() {
 			if (this.$refs.tabs.getActiveTabId() === 'source') {
 				return this.$refs.sourceEditor;
@@ -67,66 +92,26 @@ export default {
 				return this.$refs.graphBuilder;
 			}
 		},
-		getCustomProcess(success, failure = null, passNull = false) {
-			if (failure === null) {
-				failure = (message, exception = null) => {
-					if (exception !== null) {
-						Utils.exception(this, exception, message);
-					}
-					else {
-						Utils.error(this, message);
-					}
-				};
-			}
-			this.activeEditor().getCustomProcess(success, failure, passNull);
-		},
 		insertProcess(id) {
 			this.activeEditor().insertProcess(id);
 		},
 		insertCollection(id) {
 			this.activeEditor().insertCollection(id);
 		},
-		insertCustomProcess(pg) {
-			this.activeEditor().insertCustomProcess(pg);
-		},
-		prepareProcess() {
-			if (this.editable) {
-				return new Promise((resolve, reject) => {
-					this.getCustomProcess(
-						pg => {
-							this.processToInsert = pg;
-							resolve(true);
-						},
-						(message, exception) => {
-							if (exception) {
-								Utils.exception(this, exception, message);
-							}
-							// Don't show default error that the model is invalid
-							// We resolve here as reject would lead to an error popping up from Vue.
-							// We can resolve safely as we have handled and shown the exception.
-							resolve(false);
-						},
-						true
-					);
-				});
+		canSwitchView() {
+			if (this.editable && this.error !== null) {
+				Utils.exception(this, this.error, 'Process invalid');
+				return false;
 			}
-			else {
-				this.processToInsert = this.process;
-				return true;
-			}
-		},
-
-		transferProcess(tab) {
-			this.activeEditor().onShow();
-			// Don't update process graph if it hasn't changed.
-			// use fast-stable-stringify as it's stable/deterministic. 
-			if (!this.editable || !this.lastProcessToInsert || stringify(this.processToInsert) !== this.lastProcessToInsert) {
-				this.insertCustomProcess(this.processToInsert);
-				this.lastProcessToInsert = stringify(this.processToInsert);
-			}
-			this.processToInsert = null;
+			return true;
 		}
 
 	}
 }
 </script>
+
+<style>
+.textEditorTab.textEditor {
+	border: 0;
+}
+</style>

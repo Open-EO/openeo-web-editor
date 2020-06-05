@@ -1,11 +1,13 @@
 import Utils from '../utils';
+import { Job, Service, UserProcess } from '@openeo/js-client';
 
 const serverStorage = "serverUrls";
 
 const getDefaultState = () => {
 	return {
 		storedServers: JSON.parse(localStorage.getItem(serverStorage) || "[]"),
-		activeScript: null,
+		context: null,
+		process: null,
 		hightestModalZIndex: 1000,
 		epsgCodes: []
 	};
@@ -15,7 +17,7 @@ export default {
 	namespaced: true,
 	state: getDefaultState(),
 	getters: {
-		scriptTitle: (state) => state.activeScript !== null ? Utils.getResourceTitle(state.activeScript, true) : ''
+		contextTitle: (state) => state.context !== null ? Utils.getResourceTitle(state.context, true) : ''
 	},
 	actions: {
 		async loadEpsgCodes(cx) {
@@ -42,8 +44,23 @@ export default {
 			state.storedServers.splice(state.storedServers.indexOf(url), 1);
 			localStorage.setItem(serverStorage, JSON.stringify(state.storedServers));
 		},
-		setScript(state, obj) {
-			state.activeScript = obj;
+		setContext(state, obj) {
+			state.context = obj;
+			if (obj instanceof Job || obj instanceof Service) {
+				state.process = obj.process;
+			}
+			else if (obj instanceof UserProcess) {
+				state.process = obj.toJSON();
+			}
+			else if (obj.process) {
+				state.process = obj.process;
+			}
+			else {
+				state.process = obj;
+			}
+		},
+		setProcess(state, process) {
+			state.process = process;
 		},
 		epsgCodes(state, epsgCodes) {
 			state.epsgCodes = epsgCodes;

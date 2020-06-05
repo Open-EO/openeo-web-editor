@@ -17,7 +17,6 @@
 import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
 import WorkPanelMixin from './WorkPanelMixin';
 import Utils from '../utils.js';
-import Field from './blocks/field';
 import { UserProcess } from '@openeo/js-client';
 
 export default {
@@ -41,6 +40,9 @@ export default {
 			}
 		};
 	},
+	computed: {
+		...Utils.mapState('editor', ['process'])
+	},
 	mounted() {
 		this.listen('replaceProcess', this.replaceProcess);
 	},
@@ -48,23 +50,65 @@ export default {
 		showInEditor(process) {
 			this.refreshElement(process, updatedProcess => this.emit('editProcess', updatedProcess));
 		},
-		getIdField(defaultValue = undefined) {
-			return new Field('id', 'Name', {type: 'string'}, defaultValue, '', true);
+		getIdField(value = undefined) {
+			return {
+				name: 'id',
+				label: 'Name',
+				schema: {type: 'string'},
+				default: null,
+				value: value
+			};
 		},
-		getSummaryField(defaultValue = undefined) {
-			return new Field('summary', 'Summary', {type: 'string'}, defaultValue);
+		getSummaryField(value = undefined) {
+			return {
+				name: 'summary',
+				label: 'Summary',
+				schema: {type: 'string'},
+				default: null,
+				value: value,
+				optional: true
+			};
 		},
-		getDescriptionField(defaultValue = undefined) {
-			return new Field('description', 'Description', {type: 'string', subtype: 'commonmark'}, defaultValue, 'CommonMark (Markdown) is allowed.');
+		getDescriptionField(value = undefined) {
+			return {
+				name: 'description',
+				label: 'Description',
+				schema: {type: 'string', subtype: 'commonmark'},
+				default: null,
+				value: value,
+				description: 'CommonMark (Markdown) is allowed.',
+				optional: true
+			};
 		},
-		getCategoriesField(defaultValue = undefined) {
-			return new Field('categories', 'Categories', {type: 'array', items: {type: 'string'}}, defaultValue);
+		getCategoriesField(value = undefined) {
+			return {
+				name: 'categories',
+				label: 'Categories',
+				schema: {type: 'array', items: {type: 'string'}},
+				default: [],
+				value: value,
+				optional: true
+			};
 		},
-		getDeprecatedField(defaultValue = false) {
-			return new Field('deprecated', 'Deprecated', {type: 'boolean'}, defaultValue);
+		getDeprecatedField(value = false) {
+			return {
+				name: 'deprecated',
+				label: 'Deprecated',
+				schema: {type: 'boolean'},
+				default: false,
+				value: value,
+				optional: true
+			};
 		},
-		getExperimentalField(defaultValue = false) {
-			return new Field('experimental', 'Experimental', {type: 'boolean'}, defaultValue);
+		getExperimentalField(value = false) {
+			return {
+				name: 'experimental',
+				label: 'Experimental',
+				schema: {type: 'boolean'},
+				default: false,
+				value: value,
+				optional: true
+			};
 		},
 		getFields(process) {
 			return [
@@ -78,10 +122,8 @@ export default {
 		},
 		// Add parameters, return value, exceptions, examples, links
 		addProcessFromScript() {
-			this.emit('getCustomProcess', process => {
-				let fields = this.getFields(process);
-				this.emit('showDataForm', "Store a new custom process", fields, data => this.addProcess(this.normalize(process, data)));
-			});
+			let fields = this.getFields(this.process);
+			this.emit('showDataForm', "Store a new custom process", fields, data => this.addProcess(this.normalize(this.process, data)));
 		},
 		normalize(process, data) {
 			return Object.assign(

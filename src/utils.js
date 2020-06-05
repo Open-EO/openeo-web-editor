@@ -68,7 +68,7 @@ export default {
 	}, 
 
 	formatDateTime(value) {
-		if ( ! value) {
+		if (!value) {
 			return ''; 
 		}
 		let date = new Date(value); 
@@ -98,6 +98,10 @@ export default {
 
 	size(obj) {
 		return CommonUtils.size(obj);
+	},
+
+	deepClone(obj) {
+		return CommonUtils.deepClone(obj);
 	},
 
 	domBoundingBox(el) {
@@ -143,10 +147,10 @@ export default {
 				}
 				return true;
 			case "Feature":
-				if (data.geometry !== null && !Utils.isObject(data.geometry)) {
+				if (data.geometry !== null && !this.isObject(data.geometry)) {
 					return false;
 				}
-				if (data.properties !== null && !Utils.isObject(data.properties)) {
+				if (data.properties !== null && !this.isObject(data.properties)) {
 					return false;
 				}
 				return true;
@@ -219,6 +223,80 @@ export default {
 			title += "Unnamed";
 		}
 		return title;
+	},
+
+	isRef(obj) {
+		return (this.isObject(obj) && (obj.from_parameter || obj.from_node));
+	},
+
+	ensurePoint(pt, fallback = null) {
+		if (typeof fallback !== 'function') {
+			fallback = () => [0,0];
+		}
+		if (!Array.isArray(pt)) {
+			return fallback();
+		}
+		if (typeof pt[0] !== 'number') {
+			pt[0] = fallback()[0] || 0;
+		}
+		if (typeof pt[1] !== 'number') {
+			pt[1] = fallback()[1] || 0;
+		}
+		return pt;
+	},
+
+	isRefEqual(ref1, ref2) {
+		if (!this.isRef(ref1) || !this.isRef(ref2)) {
+			return false;
+		}
+		else if (ref1.from_parameter && ref1.from_parameter === ref2.from_parameter) {
+			return true;
+		}
+		else if (ref1.from_node && ref1.from_node === ref2.from_node) {
+			return true;
+		}
+		return false;
+	},
+
+	formatRef(value) {
+		if (this.isRef(value)) {
+			if (value.from_node) {
+				return "#" + value.from_node;
+			}
+			else if (value.from_parameter) {
+				return "$" + value.from_parameter;
+			}
+		}
+		return value;
+	},
+
+	resolveJsonRefs(schema) {
+		var resolver = obj => {
+			if (!obj || typeof obj !== 'object') {
+				return obj;
+			}
+			for(var key in obj) {
+				var value = obj[key];
+				if (this.isObject(value) && typeof value.$ref === 'string' && value.$ref.match(/^#(\/[^\/]+)+$/i)) {
+					var parts = value.$ref.split('/').slice(1);
+					var result = schema;
+					while (parts.length) {
+						let propertyName = parts.shift();
+						console.log(propertyName, result, result[propertyName]);
+						result = result[propertyName];
+						if (typeof result === 'undefined') {
+							break;
+						}
+					}
+					obj[key] = result;
+					continue;
+				}
+
+				obj[key] = resolver(value);
+			}
+			return obj;
+		};
+		return resolver(schema);
 	},
 
 	mapState,
