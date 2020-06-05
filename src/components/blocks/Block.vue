@@ -1,5 +1,5 @@
 <template>
-    <div :id="'block' + this.id" ref="div" :class="containerClasses" @mousedown.prevent.stop.left="select($event)" :style="styles">
+    <div :id="'block' + this.id" ref="div" :class="containerClasses" @mousedown.prevent.stop.left="onMouseDown($event)" :style="styles">
         <div class="blockTitle" @mousedown.prevent.stop.left="emitDrag($event)">
             <span class="titleText" :title="plainTitle">
                 {{ name }}
@@ -70,6 +70,10 @@ export default {
             type: Object,
             required: true
         },
+        selected: {
+            type: Boolean,
+            default: false
+        },
         spec: {
             type: Object,
             default: () => ({})
@@ -82,8 +86,7 @@ export default {
     data() {
         return {
             data: {},
-            // Is the user dragging ?
-            drag: null
+            drag: null // Is the user dragging ?
         };
     },
     watch: {
@@ -109,16 +112,6 @@ export default {
             },
             get() {
                 return Utils.ensurePoint(this.data.position);
-            }
-        },
-        selected: {
-            // ToDo: Don't store this in this.data to avoid history changes for selection
-            set(value) {
-                this.$set(this.data, 'selected', value);
-                this.commit();
-            },
-            get() {
-                return this.data.selected || false;
             }
         },
         args: {
@@ -359,10 +352,18 @@ export default {
         focus() {
             this.$parent.focus();
         },
-        select(event) {
+        async onMouseDown(event) {
             this.$parent.unselectAll(event);
-            this.selected = !this.selected;
+            return await this.select(!this.selected, false);
+        },
+        async select(selected = true, unselectOthers = true) {
+            if (this.unselectOthers) {
+                this.$parent.unselectAll();
+            }
+            this.$emit('update:selected', selected);
             this.focus();
+            await this.$nextTick();
+            return selected;
         },
         showParameters(parameterName = null) {
             this.$parent.$emit('editParameters', this.editables, this.args, this.plainTitle, this.state.editable, parameterName, data => this.args = data, this.processId);
@@ -378,8 +379,8 @@ export default {
                 this.$parent.$emit('showProcess', this.processId);
             }
         },
-        addComment() {
-            this.select();
+        async addComment() {
+            await this.select();
             this.comment = "";
             this.$nextTick(() => this.$refs.commentField.focus());
         },
@@ -391,10 +392,10 @@ export default {
                 this.comment = null;
             }
         },
-        emitDrag(event) {
+        async emitDrag(event) {
             this.focus();
-            this.select(event);
-            if (this.selected) {
+            let selected = await this.onMouseDown(event);
+            if (selected) {
                 this.$emit('move');
             }
         },

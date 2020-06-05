@@ -282,7 +282,6 @@ export default {
 					var result = schema;
 					while (parts.length) {
 						let propertyName = parts.shift();
-						console.log(propertyName, result, result[propertyName]);
 						result = result[propertyName];
 						if (typeof result === 'undefined') {
 							break;

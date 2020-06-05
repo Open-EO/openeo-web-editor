@@ -17,7 +17,7 @@
         </svg>
         <div class="blocks">
             <Block v-for="block in blocks" :key="block.type + block.id"
-                :id="block.id" :type="block.type" :value="block.value" :spec="block.spec" :state="state"
+                :id="block.id" :type="block.type" :value="block.value" :spec="block.spec" :state="state" :selected.sync="block.selected"
                 @input="commit()"
                 @mounted="mountBlock" @unmounted="unmountBlock"
                 @move="startDragBlock" @moved="moveBlock" />
@@ -59,9 +59,9 @@ const getDefaultState = function(blocks) {
         linkTo: null // Array
     });
 };
-const selectionChangeWatcher = {
-    immediate: true,
-    handler() {
+
+const selectionChangeWatcher = function (newVal, oldVal) {
+    if (!Array.isArray(newVal) || !Array.isArray(oldVal) || newVal.length !== oldVal.length || !newVal.every((value,i) => value.id === oldVal[i].id)) {
         this.$emit('selectionChanged', this.selectedBlocks, this.selectedEdges);
     }
 };
@@ -153,22 +153,10 @@ export default {
             return this.blocks.filter(b => b.type === 'process');
         },
         selectedBlocks() {
-            var selected = [];
-            for(var block of this.blocks) {
-                if (Utils.isObject(block.value) && block.value.selected) {
-                    selected.push(block);
-                }
-            }
-            return selected;
+            return this.blocks.filter(block => block.selected);
         },
         selectedEdges() {
-            var selected = [];
-            for(var edge of this.edges) {
-                if (edge.selected) {
-                    selected.push(edge);
-                }
-            }
-            return selected;
+            return this.edges.filter(edge => edge.selected);
         },
         selectedSideEdge() {
             if (this.selectedEdges.length === 1 && this.selectedEdges[0].selectedParameter) {
@@ -211,6 +199,7 @@ export default {
 
         this.importPgParameters(this.pgParameters, 'prop');
         await this.import(this.value, { propagate: false, undoOnError: false });
+        selectionChangeWatcher.bind(this)();
     },
     beforeDestroy() {
         document.removeEventListener('mouseup', this.onDocumentMouseUpFn);
@@ -504,6 +493,7 @@ export default {
             var block = {
                 id: String(this.incrementId(id)),
                 type: 'process',
+                selected: false,
                 value: typeof node.toJSON === 'function' ? node.toJSON() : node,
                 spec: process || {}
             };
@@ -567,7 +557,7 @@ export default {
                 return; // Allow multi select
             }
             for(var i in this.blocks) {
-                this.$set(this.blocks[i].value, "selected", false);
+                this.$set(this.blocks[i], "selected", false);
             }
             for(var i in this.edges) {
                 this.selectEdge(i, false);
@@ -779,7 +769,6 @@ export default {
                 if (!internal) {
                     // Delete internal state for external export 
                     delete copy.position;
-                    delete copy.selected;
                 }
                 // Remove default values for simplicity
                 if (copy.description === null) {

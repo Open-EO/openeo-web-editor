@@ -23,7 +23,6 @@ import { ProcessGraphNode } from '@openeo/js-processgraphs';
 import { ProcessParameter, ProcessDataType } from './blocks/processSchema.js';
 
 const API_TYPES = Utils.resolveJsonRefs(require('@openeo/js-processgraphs/assets/openeo-api/subtype-schemas.json')).definitions;
-console.log(API_TYPES);
 
 const SUPPORTED_TYPES = [
 		// Native types
