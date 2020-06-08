@@ -2,7 +2,7 @@
 	<div class="datatypeEditor fieldValue temporalPicker">
 		<SelectBox v-if="type === 'year'" :key="type" v-model="dateTimes" :type="type" :editable="editable" />
 		<!-- ToDo: Support open date ranges, probably by using two separate date pickers, see also https://github.com/chronotruck/vue-ctk-date-time-picker/issues/121 -->
-		<VueCtkDateTimePicker v-else :key="type" v-model="dateTimes" :disabled="!editable" :range="range" :label="label" :format="format" :only-date="onlyDate" :only-time="onlyTime" :no-button="!range" :formatted="formatted" locale="en-gb" position="bottom"></VueCtkDateTimePicker>
+		<VueCtkDateTimePicker v-else :key="type" :value="dateTimes" @input="importValue" :disabled="!editable" :range="range" :label="label" :format="format" :only-date="onlyDate" :only-time="onlyTime" :no-button="!range" :formatted="formatted" locale="en-gb" position="bottom"></VueCtkDateTimePicker>
 	</div>
 </template>
 
@@ -72,32 +72,68 @@ export default {
 		},
 		onlyDate() {
 			return (this.type === 'date');
+		},
+		exportValue() {
+			let value = this.dateTimes;
+			if (Utils.isObject(value) && this.type === 'temporal-interval') {
+				value = [value.start, value.end];
+			}
+			return value;
 		}
 	},
 	data() {
-		let value = this.value;
-		if (this.type === 'temporal-interval') {
-			if (Array.isArray(value) && value.length >= 2) {
-				value = {
-					start: value[0],
-					end: value[1]
-				};
-			}
-			else if (!Utils.isObject(value) || !value.start || !value.end) {
-				value = null;
-			}
-		}
 		return {
-			dateTimes: value
+			dateTimes: null
 		};
 	},
 	watch: {
-		dateTimes() {
-			let value = this.dateTimes;
-			if (this.type === 'temporal-interval') {
-				value = [value.start, value.end];
+		value: {
+			immediate: true,
+			handler(newValue) {
+				if (this.exportValue !== newValue) {
+					this.importValue(newValue);
+				}
 			}
-      		this.$emit('input', value);
+		},
+		dateTimes() {
+      		this.$emit('input', this.exportValue);
+		}
+	},
+	errorCaptured(err, vm, info) {
+		// Catch errors thrown by VueCtkDateTimePicker
+		if (vm.value === 'Invalid date') {
+			this.dateTimes = null;
+			return false;
+		}
+		return true;
+	},
+	methods: {
+		importValue(value) {
+			switch(this.type) {
+				case 'temporal-interval':
+					if (Array.isArray(value) && value.length >= 2) {
+						value = {
+							start: value[0],
+							end: value[1]
+						};
+					}
+					else if (!Utils.isObject(value) || !value.start || !value.end) {
+						value = null;
+					}
+					break;
+				case 'date':
+				case 'date-time':
+					if (Date.parse(value) === NaN) {
+						value = null;
+					}
+					break;
+				case 'time':
+					if (typeof value !== 'string') {
+						value = null;
+					}
+					break;
+			}
+			this.dateTimes = value;
 		}
 	}
 }

@@ -1,7 +1,7 @@
 <template>
 	<div class="fieldContainer" v-if="selectedType !== null">
 		<div class="dataTypeChooser" v-if="allowedSchemas.length > 1">
-			<select name="dataType" v-model="selectedType" :disabled="!editable">
+			<select name="dataType" :value="selectedType" @input="onSelectType" :disabled="!editable">
 				<option v-for="(schema, type) in allowedSchemas" :key="type" :value="type">{{ schema.title() }}</option>
 			</select>
 		</div>
@@ -24,24 +24,25 @@ import { ProcessParameter, ProcessDataType } from './blocks/processSchema.js';
 
 const API_TYPES = Utils.resolveJsonRefs(require('@openeo/js-processgraphs/assets/openeo-api/subtype-schemas.json')).definitions;
 
+const now = () => new Date().toISOString().replace(/\.\d+/, '');
 const SUPPORTED_TYPES = [
 		// Native types
-		{type: 'null'},
-		{type: 'string'},
-		{type: 'integer'},
-		{type: 'number'},
-		{type: 'boolean'},
+		{type: 'null', default: null},
+		{type: 'string', default: ""},
+		{type: 'integer', default: 0},
+		{type: 'number', default: 0},
+		{type: 'boolean', default: false},
 	//	{type: 'array', subtype: 'labeled-array', title: 'Array with labels'},
-		{type: 'array'},
-		{type: 'object'},
+		{type: 'array', default: []},
+		{type: 'object', default: {}},
 
 		// temporal types
-		{type: 'string', subtype: 'date-time', format: 'date-time', title: 'Date and Time'},
-		{type: 'string', subtype: 'date', format: 'date', title: 'Date only'},
-		{type: 'string', subtype: 'time', format: 'time', title: 'Time only'},
+		{type: 'string', subtype: 'date-time', format: 'date-time', title: 'Date and Time', default: () => now()},
+		{type: 'string', subtype: 'date', format: 'date', title: 'Date only', default: () => now().substring(0, 10)},
+		{type: 'string', subtype: 'time', format: 'time', title: 'Time only', default: () => now().substring(11)},
 	//	{type: 'string', subtype: 'year', title: 'Year only'}, ToDo: Implemented, but only available after rc.2, wait until release
 		{type: 'array', subtype: 'temporal-interval', title: "Temporal interval"},
-		{type: 'array', subtype: 'temporal-intervals', title: "Temporal intervals (multiple)"},
+		{type: 'array', subtype: 'temporal-intervals', title: "Temporal intervals (multiple)", default: []},
 
 		// Other types
 		{type: 'string', subtype: 'band-name', title: 'Band'},
@@ -54,15 +55,15 @@ const SUPPORTED_TYPES = [
 		{type: 'string', subtype: 'uri', format: 'uri', title: 'URI / URL'},
 
 		{type: 'array', subtype: 'file-path', title: 'File path'},
-		{type: 'array', subtype: 'file-paths', title: 'File paths (multiple)'},
+		{type: 'array', subtype: 'file-paths', title: 'File paths (multiple)', default: []},
 
 	//	{type: 'string', subtype: 'udf-code', title: 'UDF Source Code'},
 	//	{type: 'string', subtype: 'udf-runtime', title: 'UDF Runtime'},
 	//	{type: 'string', subtype: 'udf-runtime-version', title: 'UDF Runtime Version'},
 
 		{type: 'integer', subtype: 'epsg-code', title: 'EPSG Code (CRS)'},
-		{type: 'string', subtype: 'proj-definition', title: 'PROJ defintiion (CRS)'},
-		{type: 'string', subtype: 'wkt2-definition', title: 'WKT2 defintiion (CRS)'},
+		{type: 'string', subtype: 'proj-definition', title: 'PROJ defintiion (CRS)', default: ""},
+		{type: 'string', subtype: 'wkt2-definition', title: 'WKT2 defintiion (CRS)', default: ""},
 
 		{type: 'string', subtype: 'output-format', title: 'Export file format'},
 	//	{type: 'object', subtype: 'output-format-options', title: 'Export file format parameters'},
@@ -216,9 +217,24 @@ export default {
 		}
 	},
 	methods: {
+		async onSelectType(evt) {
+			let selectedSchema = this.allowedSchemas[evt.target.value];
+			let defaultValue = selectedSchema.default();
+			try {
+				if ((await this.jsonSchemaValidator.validateValue(defaultValue, selectedSchema)).length > 0) {
+					this.state = defaultValue;
+				}
+			}
+			catch (error) {
+				this.state = defaultValue;
+			}
+			await this.$nextTick();
+			this.selectedType = evt.target.value;
+		},
 		changeType(type) {
 			for(var i in this.allowedSchemas) {
-				if (this.allowedSchemas[i].dataType() === type) {
+				let schema = this.allowedSchemas[i];
+				if (schema.dataType() === type) {
 					this.setSelectedType(i);
 					return;
 				}

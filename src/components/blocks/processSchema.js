@@ -149,6 +149,18 @@ class ProcessDataType {
 		return this.schema.description || "";
 	}
 
+	default() {
+		if (typeof this.schema.default === 'function') {
+			return this.schema.default();
+		}
+		else if (typeof this.schema.default !== 'undefined') {
+			return this.schema.default;
+		}
+		else {
+			return null;
+		}
+	}
+
 }
 
 export {
