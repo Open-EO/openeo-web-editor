@@ -70,7 +70,7 @@ export default {
 		},
 		show(title, editableFields, values, editable = true, saveCallback = null, closeCallback = null, processId = null, selectParameter = null) {
 			this.editableFields = editableFields;
-			this.values = values;
+			this.values = Utils.deepClone(values);
 			this.editable = editable;
 			this.saveCallback = saveCallback;
 			this.processId = processId;
