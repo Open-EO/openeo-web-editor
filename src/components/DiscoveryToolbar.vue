@@ -21,7 +21,7 @@
 			<div :class="{ category: true, processes: true, expanded: processesExpanded }">
 				<strong @click="toggle('processes')" :title="'Processes ('+processesCount+')'"><span class="toggle">▸</span> Processes</strong>
 				<div class="discovery-entity" v-for="(e, i) in processes" v-show="processesShow[i]" :key="e.id" draggable="true" @dragstart="onDrag($event, 'process', e.id)">
-					<div class="discovery-info" @click="showProcessInfo(e.id)">
+					<div class="discovery-info" @click="showProcessInfo(e)">
 						<strong :title="e.id">{{ e.id }}</strong>
 						<small v-if="e.summary" :title="e.summary">{{ e.summary }}</small>
 					</div>
@@ -30,19 +30,6 @@
 				<div class="noData" v-if="!processesCount && searchTerm === ''">No processes available.</div>
 				<div class="noData" v-else-if="!processesCount">No processes found.</div>
 			</div>
-
-			<div v-if="loadHubProcessGraphs" :class="{ category: true, hubGraphs: true, expanded: hubGraphsExpanded }">
-				<strong @click="toggle('hubGraphs')" :title="'Process Graphs @ Hub ('+hubGraphsCount+')'"><span class="toggle">▸</span> Process Graphs @ Hub</strong>
-				<div class="discovery-entity" v-for="(e,i) in hubGraphs" v-show="hubGraphsShow[i]" :key="e.id" draggable="true" @dragstart="onDrag($event, 'process-graph', e.process_graph)">
-					<div class="discovery-info" @click="showProcessGraphInfo(e)">
-						<small v-if="e.title" :title="e.title">{{ e.title }}</small>
-						<small v-else>{{ e.id }}</small>
-					</div>
-					<button class="discovery-button" type="button" @click="insertProcessGraph(e.process_graph)" title="Insert"><i class="fas fa-plus"></i></button>
-				</div>
-				<div class="noData" v-if="!hubGraphsCount && searchTerm === ''">No compatible process graphs available at the openEO Hub.</div>
-				<div class="noData" v-else-if="!hubGraphsCount">No compatible process graphs found at the openEO Hub.</div>
-			</div>
 		</div>
 	</div>
 </template>
@@ -50,14 +37,12 @@
 <script>
 import Config from '../../config.js';
 import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
-import ConnectionMixin from './ConnectionMixin.vue';
 import Utils from '../utils.js';
-import { ProcessGraph as ProcessGraphParser } from '@openeo/js-commons';
 import { ProcessGraph } from '@openeo/js-client';
 
 export default {
 	name: 'DiscoveryToolbar',
-	mixins: [ConnectionMixin, EventBusMixin],
+	mixins: [EventBusMixin],
 	props: {
 		onAddCollection: {
 			type: Function,
@@ -66,43 +51,33 @@ export default {
 		onAddProcess: {
 			type: Function,
 			required: true
-		},
-		onAddProcessGraph: {
-			type: Function,
-			required: true
 		}
 	},
 	data() {
 		return {
-			loadHubProcessGraphs: Config.loadHubProcessGraphs,
 			searchTerm: '',
 			collectionsExpanded: false,
 			processesExpanded: false,
-			hubGraphsExpanded: false,
 			collectionsShow: [],
 			processesShow: [],
-			hubGraphs: [],
-			hubGraphsShow: [],
 			collectionsCount: 0,
 			processesCount: 0,
-			hubGraphsCount: 0,
 			timeout: null
 		};
 	},
 	created() {
 		this.filter('processes');
 		this.filter('collections');
-		this.loadHubGraphs();
 	},
 	watch: {
 		processes() {
-			if (typeof this.processes !== 'object') {
+			if (!Array.isArray(this.processes)) {
 				return;
 			}
 			this.filter('processes');
 		},
 		collections() {
-			if (typeof this.collections !== 'object') {
+			if (!Array.isArray(this.collections)) {
 				return;
 			}
 			this.filter('collections');
@@ -115,43 +90,21 @@ export default {
 				this.timeout = null;
 				this.filter('processes');
 				this.filter('collections');
-				this.filter('hubGraphs');
 			}, 500);
 		}
 	},
 	computed: {
-		...Utils.mapState('server', ['processes', 'collections']),
-		...Utils.mapGetters('server', ['processRegistry'])
+		...Utils.mapState(['predefinedProcesses', 'collections']),
+		...Utils.mapState('userProcesses', ['userProcesses']),
+		...Utils.mapGetters(['supports']),
+		processes() {
+			return this.predefinedProcesses.concat(this.userProcesses).sort(Utils.sortById);
+		}
 	},
 	methods: {
 		async filterArrayAsync(arr, callback) {
 			const fail = Symbol();
 			return (await Promise.all(arr.map(async item => (await callback(item)) ? item : fail))).filter(i=>i!==fail);
-		},
-		async loadHubGraphs() {
-			if (!this.loadHubProcessGraphs) {
-				return;
-			}
-			try {
-				var res = await axios.get('https://hub.openeo.org/api/process_graphs');
-				if (!Array.isArray(res.data)) {
-					return;
-				}
-				this.hubGraphs = await this.filterArrayAsync(res.data, async meta => {
-					try {
-						// ToDo: Parse JSON from Hub, this will likely change soon and can be removed.
-						if (!Utils.isObject(meta.process_graph)) {
-							meta.process_graph = JSON.parse(meta.process_graph);
-						}
-						var pgObj = new ProcessGraphParser(meta.process_graph, this.processRegistry);
-						var errors = await pgObj.validate();
-						return errors.count() === 0;
-					} catch (e) {
-						return false;
-					}
-				});
-				this.filter('hubGraphs');
-			} catch (e) {}
 		},
 		onDrag(event, type, data) {
 			if (Utils.isObject(data)) {
@@ -184,13 +137,13 @@ export default {
 			this.toggle(type, expand);
 		},
 		filterFn(e, term) {
+			if (e.id.toLowerCase().includes(term)) {
+				return true;
+			}
 			if (typeof e.summary === 'string' && e.summary.toLowerCase().includes(term)) {
 				return true;
 			}
 			if (typeof e.title === 'string' && e.title.toLowerCase().includes(term)) {
-				return true;
-			}
-			else if (e.id.toLowerCase().includes(term)) {
 				return true;
 			}
 			return false;
@@ -201,25 +154,17 @@ export default {
 		},
 		showCollectionInfo(id) {
 			if (this.supports('listCollections')) {
-				this.emit('showCollectionInfo', id);
+				this.emit('showCollection', id);
 			}
 		},
-		showProcessInfo(id) {
-			if (this.supports('listProcesses')) {
-				this.emit('showProcessInfo', id);
-			}
-		},
-		showProcessGraphInfo(pg) {
-			this.emit('showProcessGraphInfo', (new ProcessGraph()).setAll(pg));
+		showProcessInfo(process) {
+			this.emit('showProcessInfo', process);
 		},
 		insertCollection(id) {
 			this.onAddCollection(id);
 		},
 		insertProcess(id) {
 			this.onAddProcess(id);
-		},
-		insertProcessGraph(pg) {
-			this.onAddProcessGraph(pg);
 		}
 	}
 }
@@ -324,9 +269,6 @@ export default {
 .discovery-entity small {
 	margin-top: 0.25em;
 	display: block;
-}
-.hubGraphs .discovery-info small {
-	margin-top: 0;
 }
 .discovery-button {
 	display: block;

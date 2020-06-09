@@ -1,29 +1,26 @@
 <template>
 	<div id="FilePanel" @dragenter="dropZoneInfo(true)" @dragleave="dropZoneInfo(false)" @drop="uploadFiles($event)" @dragover="allowDrop($event)">
 		<div class="dropZone" v-show="showUploadDropHint">To upload files, drop them here.</div>
-		<div v-show="supports('uploadFile')" class="addFile">
+		<div v-show="supportsCreate" class="addFile">
 			<input type="file" name="uploadUserFile" id="uploadUserFile" @change="uploadFiles" multiple>
 		</div>
 		<div class="percent"><div class="used" :class="{error: uploadErrored}" :style="'width: ' + this.uploadProgress + '%; opacity: ' + this.uploadFadeOut"></div></div>
-		<DataTable ref="table" :dataSource="listFiles" :columns="columns">
-			<template slot="toolbar">
-				<button title="Refresh files" v-if="isListDataSupported" @click="updateData()"><i class="fas fa-sync-alt"></i></button> <!-- ToDo: Should be done automatically later -->
-			</template>
+		<DataTable ref="table" :data="data" :columns="columns">
 			<template slot="actions" slot-scope="p">
-				<button title="Download" @click="downloadFile(p.row)" v-show="supports('downloadFile')"><i class="fas fa-download"></i></button>
-				<button title="Delete" @click="deleteFile(p.row)" v-show="supports('deleteFile')"><i class="fas fa-trash"></i></button>
+				<button title="Download" @click="downloadFile(p.row)" v-show="supportsRead"><i class="fas fa-download"></i></button>
+				<button title="Delete" @click="deleteFile(p.row)" v-show="supportsDelete"><i class="fas fa-trash"></i></button>
 			</template>
 		</DataTable>
 	</div>
 </template>
 
 <script>
-import WorkPanelMixin from './WorkPanelMixin.vue';
+import WorkPanelMixin from './WorkPanelMixin';
 import Utils from '../utils.js';
 
 export default {
   	name: 'FilePanel',
-	mixins: [WorkPanelMixin],
+	mixins: [WorkPanelMixin('files', 'file', 'files')],
 	data() {
 		return {
 			columns: {
@@ -45,14 +42,11 @@ export default {
 					filterable: false
 				}
 			},
-			subscribed: false,
 			uploadProgress: 0,
 			uploadProgressPerFile: [],
 			uploadErrored: false,
 			uploadFadeOut: 1,
-			showUploadDropHint: 0,
-			listFunc: 'listFiles',
-			createFunc: 'uploadFile'
+			showUploadDropHint: 0
 		};
 	},
 	watch: {
@@ -68,19 +62,13 @@ export default {
 	},
   	methods: {
 		allowDrop(ev) {
-			if(this.supports('uploadFile')) {
+			if(this.supportsCreate) {
 				ev.preventDefault();
 				ev.stopPropagation();
 			}
 		},
 		dropZoneInfo(show) {
 			this.showUploadDropHint += show ? 1 : -1;
-		},
-		listFiles() {
-			return this.connection.listFiles();
-		},
-		updateData() {
-			this.updateTable(this.$refs.table);
 		},
 		uploadFiles(e) {
 			this.showUploadDropHint = 0;
@@ -93,7 +81,7 @@ export default {
 			else if (e.target && e.target.files && e.target.files.length){
 				files = e.target.files;
 			}
-			if(!this.supports('uploadFile')) {
+			if(!this.supportsCreate) {
 				Utils.error(this, 'Uploading files is not supported.');
 				return;
 			}
@@ -113,10 +101,13 @@ export default {
 			if (typeof file.name !== 'string') {
 				return;
 			}
-			var virtualFile = this.connection.openFile(file.name);
-			virtualFile.uploadFile(file, percent => this.$set(this.uploadProgressPerFile, i, percent))
+
+			this.create({parameters: [
+				file,
+				null,
+				percent => this.$set(this.uploadProgressPerFile, i, percent)
+			]})
 				.then(uploadedFile => {
-					this.$refs.table.replaceData(uploadedFile);
 					this.$set(this.uploadProgressPerFile, i, 100);
 					Utils.ok(this, 'File upload completed.', file.name);
 				}).catch(error => {
@@ -140,26 +131,8 @@ export default {
 			file.downloadFile(file.path);
 		},
 		deleteFile(file) {
-			file.deleteFile()
-				.then(data => {
-					this.$refs.table.removeData(file.path);
-				})
-				.catch(error => {
-					Utils.error(this, 'Sorry, could not delete file.');
-				});
-		},
-		subscribeToFileChanges() {
-			this.connection.subscribe(
-				'openeo.files', {},
-				(data, info) => {
-					console.info("File change: " + JSON.stringify(data)); // ToDo: Update table
-				}
-			);
-			this.subscribed = true;
-		},
-		unsubscribeFromFileChanges(id) {
-			this.connection.unsubscribe('openeo.files', {});
-			this.subscribed = false;
+			this.delete({data: file})
+				.catch(error => Utils.exception(this, error, 'Sorry, could not delete file.'));
 		}
 	}
 }

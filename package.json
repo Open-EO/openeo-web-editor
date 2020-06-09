@@ -1,10 +1,8 @@
 {
   "name": "@openeo/web-editor",
-  "version": "0.4.0",
+  "version": "0.5.0-beta.1",
   "apiVersions": [
-    "0.4.0",
-    "0.4.1",
-    "0.4.2"
+    "1.0.0-rc.2"
   ],
   "author": "openEO Consortium",
   "contributors": [
@@ -40,32 +38,32 @@
     "build": "npm run build:epsg && vue-cli-service build --report"
   },
   "dependencies": {
-    "@openeo/js-client": "^0.4.3",
-    "@openeo/js-commons": "^0.4.7",
-    "@openeo/vue-components": "^0.4.3",
+    "@openeo/js-client": "Open-EO/openeo-js-client#development",
+    "@openeo/js-processgraphs": "Open-EO/openeo-js-processgraphs#dev",
+    "@openeo/vue-components": "Open-EO/openeo-vue-components#dev",
     "ajv": "^6.10.0",
     "codemirror": "^5.47.0",
     "content-type": "^1.0.4",
     "core-js": "^2.6.9",
-    "fast-stable-stringify": "^1.0.0",
+    "jsonlint-mod": "^1.7.5",
     "ol": "^5.3.3",
     "ol-ext": "^3.1.4",
     "regenerator-runtime": "^0.13.3",
-    "vue": "^2.6.10",
+    "vue": "^2.6.0",
     "vue-ctk-date-time-picker": "^2.3.1",
+    "vue-multiselect": "^2.1.6",
     "vue-snotify": "^3.2.1",
     "vuedraggable": "^2.21.0",
     "vuex": "^3.1.1"
   },
   "devDependencies": {
-    "@vue/cli-plugin-babel": "^3.12.1",
-    "@vue/cli-service": "^3.12.1",
+    "@vue/cli-plugin-babel": "3.10.0",
+    "@vue/cli-service": "3.10.0",
     "epsg-index": "^1.0.0",
-    "vue-template-compiler": "^2.6.10"
+    "vue-template-compiler": "^2.6.0"
   },
   "browserslist": [
     "> 1%",
-    "last 2 versions",
-    "not ie <= 8"
+    "not ie > 0"
   ]
 }

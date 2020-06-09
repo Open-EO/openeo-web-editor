@@ -34,7 +34,7 @@
 
 <script>
 import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
-import Utils from '../utils.js';
+import Utils from '../../utils.js';
 
 const getDefaultState = () => {
 	return {
@@ -59,7 +59,7 @@ export default {
 		},
 		maxWidth: {
 			type: String,
-			default: "80%"
+			default: "85%"
 		}
 	},
 	data() {

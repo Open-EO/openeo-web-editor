@@ -1,14 +1,12 @@
 <template>
 	<div class="sourceHeader">
-		<h3 v-if="scriptName">{{ scriptName }}</h3>
+		<h3 v-if="contextTitle">{{ contextTitle }}</h3>
 		<div class="sourceToolbar">
-			<slot></slot>
-			<span class="sepl" v-if="enableLocalStorage || enableClear">
-				<button v-if="enableClear && editable" type="button" @click="newScript" title="Clear current script / New script"><i class="fas fa-file"></i></button>
-				<button v-if="enableLocalStorage && editable" type="button" @click="openScriptChooser" title="Load script from local storage"><i class="fas fa-folder-open"></i></button>
-				<button v-if="enableLocalStorage" type="button" @click="saveScript" title="Save script to local storage"><i class="fas fa-save"></i></button>
+			<span class="sepr" v-if="editable">
+				<button type="button" @click="newScript" title="New script / Clear current script"><i class="fas fa-file"></i></button>
+				<button type="button" v-show="contextTitle" @click="saveScript" :title="'Save to ' + contextTitle"><i class="fas fa-save"></i></button>
 			</span>
-			<button v-if="enableExecute && supports('computeResult')" type="button" @click="executeProcessGraph" title="Run current process graph and view results" class="sepl"><i class="fas fa-play"></i></button>
+			<slot></slot>
 		</div>
 	</div>
 </template>
@@ -28,92 +26,28 @@ export default {
 		onClear: {
 			type: Function,
 			required: true
-		},
-		onInsert: {
-			type: Function,
-			required: true
-		},
-		onStore: {
-			type: Function,
-			required: true
-		},
-		enableClear: {
-			type: Boolean,
-			default: true
-		},
-		enableLocalStorage: {
-			type: Boolean,
-			default: true
-		},
-		enableExecute: {
-			type: Boolean,
-			default: true
 		}
 	},
 	computed: {
-		...Utils.mapState('server', ['connection']),
-		...Utils.mapState('editor', ['storedScripts', 'scriptName']),
-		...Utils.mapGetters('server', ['supports'])
+		...Utils.mapState(['connection']),
+		...Utils.mapState('editor', ['context', 'process']),
+		...Utils.mapGetters('editor', ['contextTitle']),
+		...Utils.mapGetters(['supports', 'isAuthenticated'])
 	},
 	methods: {
-		...Utils.mapMutations('editor', ['addScript', 'removeScript', 'setScriptName']),
+		...Utils.mapMutations('editor', ['setContext']),
 
 		newScript() {
 			var confirmed = confirm("Do you really want to clear the existing script to create a new one?");
 			if (confirmed) {
 				this.onClear();
-				this.setScriptName(null);
+				this.setContext(null);
 			}
-		},
-
-		loadScript(name) {
-			var pg = this.storedScripts[name];
-			if (pg) {
-				this.onInsert(pg);
-				this.setScriptName(name);
-				return true;  // to close the modal
-			}
-			else {
-				Utils.info(this, 'No script with the name "' + name + '" found.');
-				return false;  // to keep the modal open
-			}
-		},
-		
-		openScriptChooser() {
-			this.emit(
-				'showListModal', 
-				'Select script to load',
-				this.storedScripts,
-				[
-					{
-						callback: (name) => this.loadScript(name)
-					},
-					{
-						callback: (name) => this.removeScript(name),
-						icon: 'trash',
-						title: 'Delete script'
-					}
-				]
-			);
 		},
 
 		saveScript() {
-			var name = prompt("Name for the script:", typeof this.scriptName === 'string' ? this.scriptName : "");
-			if (!name) {
-				return;
-			}
-			this.onStore(script => {
-				this.addScript({name, script});
-				this.setScriptName(name);
-			});
-		},
-
-		executeProcessGraph() {
-			this.emit('getProcessGraph', script => {
-				Utils.info(this, 'Data requested. Please wait...');
-				this.emit('viewSyncResult', script);
-			});
-		},
+			this.emit('replaceProcess', this.context, this.process);
+		}
 	}
 }
 </script>

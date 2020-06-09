@@ -1,5 +1,5 @@
 <template>
-	<Modal ref="modal" minWidth="80%">
+	<Modal ref="modal" minWidth="85%">
 		<template #main>
 			<section class="vue-component basedata">
 				<div class="tabular"><label>ID:</label> <code class="value">{{ job.id }}</code></div>
@@ -18,17 +18,17 @@
 						<span class="number" v-if="job.progress <= 50">{{ progress }}</span>
 					</div>
 				</div></div>
-				<div class="tabular" v-if="job.error"><label>Error(s):</label> <div class="value">
+				<!-- ToDo: Show logs -->
+				<!-- <div class="tabular" v-if="job.error"><label>Error(s):</label> <div class="value">
 					<div class="errorMessage">{{ job.error.message }}</div>
-					<div class="errorLinks" v-if="Array.isArray(job.error.links) && job.error.links.length > 0">
-						<strong>Further information:</strong><br />
-						<LinkList :links="job.error.links" />
+					<div class="errorLinks" v-if="Array.isArray(job.error.links)">
+						<LinkList :links="job.error.links" heading="Further information:" />
 					</div>
 					<div class="errorInternals">
 						Code: <code>{{job.error.code}}</code>
 						<span class="sepl" v-if="job.error.id">ID: <code>{{ job.error.id }}</code></span>
 					</div>
-				</div></div>
+				</div></div> -->
 			</section>
 
 			<section class="vue-component billing" v-if="job.plan || job.costs || job.budget">
@@ -44,8 +44,8 @@
 			</section>
 
 			<section class="process-graph">
-				<div class="vue-component"><h3>Process Graph</h3></div>
-				<Editor :processGraph="job.processGraph" :editable="false" :enableExecute="false" class="infoViewer" id="jobPgViewer" />
+				<div class="vue-component"><h3>Process</h3></div>
+				<Editor :value="job.process" :editable="false" class="infoViewer" id="jobPgViewer" />
 			</section>
 
 		</template>
@@ -53,11 +53,11 @@
 </template>
 
 <script>
-import Utils from '../utils';
+import Utils from '../../utils';
 import Modal from './Modal.vue';
 import Description from '@openeo/vue-components/components/Description.vue';
 import LinkList from '@openeo/vue-components/components/LinkList.vue';
-import Editor from './Editor.vue';
+import Editor from '../Editor.vue';
 
 export default {
 	name: 'JobInfoModal',
@@ -68,7 +68,7 @@ export default {
 		Modal
 	},
 	computed: {
-		...Utils.mapGetters('server', ['formatCurrency']),
+		...Utils.mapGetters(['formatCurrency']),
 		submitted() {
 			return Utils.formatDateTime(this.job.submitted);
 		},

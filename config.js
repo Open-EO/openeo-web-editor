@@ -3,7 +3,7 @@ export default {
 	serverUrl: '',
 
 	// A message shown on the login page
-	loginMessage: '',
+	loginMessage: '<strong>Note:</strong> This version of the Web Editor supports openEO API v1.0. <a href="/0.4">Click here to load the Web Editor supporting openEO API v0.4</a>',
 
 	// Defaults for notifications
 	snotifyDefaults: {
@@ -19,6 +19,6 @@ export default {
 		'xyz'
 	],
 
-	// Load process graphs from the openEO Hub?
-	loadHubProcessGraphs: true
+	// Show a warning if HTTP is used instead of HTTPS
+	showHttpWarning: true
 };

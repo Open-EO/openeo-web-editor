@@ -1,14 +1,15 @@
-import Vue from 'vue';
+import Utils from '../utils';
+import { Job, Service, UserProcess } from '@openeo/js-client';
 
 const serverStorage = "serverUrls";
-const scriptStorage = "savedScripts";
 
 const getDefaultState = () => {
 	return {
 		storedServers: JSON.parse(localStorage.getItem(serverStorage) || "[]"),
-		storedScripts: JSON.parse(localStorage.getItem(scriptStorage) || "{}"),
-		scriptName: null,
-		hightestModalZIndex: 1000
+		context: null,
+		process: null,
+		hightestModalZIndex: 1000,
+		epsgCodes: []
 	};
 };
 
@@ -16,10 +17,15 @@ export default {
 	namespaced: true,
 	state: getDefaultState(),
 	getters: {
-		getScriptByName: (state) => (name) => state.storedScripts[name]
+		contextTitle: (state) => state.context !== null ? Utils.getResourceTitle(state.context, true) : ''
 	},
 	actions: {
-
+		async loadEpsgCodes(cx) {
+			if (cx.state.epsgCodes.length === 0) {
+				let res = await import('../assets/epsg.json');
+				cx.commit('epsgCodes', res.default);
+			}
+		},
 	},
 	mutations: {
 		openModal(state) {
@@ -38,16 +44,26 @@ export default {
 			state.storedServers.splice(state.storedServers.indexOf(url), 1);
 			localStorage.setItem(serverStorage, JSON.stringify(state.storedServers));
 		},
-		addScript(state, { name, script }) {
-			state.storedScripts[name] = script;
-			localStorage.setItem(scriptStorage, JSON.stringify(state.storedScripts));
+		setContext(state, obj) {
+			state.context = obj;
+			if (obj instanceof Job || obj instanceof Service) {
+				state.process = obj.process;
+			}
+			else if (obj instanceof UserProcess) {
+				state.process = obj.toJSON();
+			}
+			else if (obj.process) {
+				state.process = obj.process;
+			}
+			else {
+				state.process = obj;
+			}
 		},
-		removeScript(state, name) {
-			Vue.delete(state.storedScripts, name);
-			localStorage.setItem(scriptStorage, JSON.stringify(state.storedScripts));
+		setProcess(state, process) {
+			state.process = process;
 		},
-		setScriptName(state, name) {
-			state.scriptName = name;
+		epsgCodes(state, epsgCodes) {
+			state.epsgCodes = epsgCodes;
 		},
 		reset(state) {
 			Object.assign(state, getDefaultState());

@@ -4,6 +4,7 @@ import 'vue-snotify/styles/simple.css';
 import store from './store/index';
 import Config from '../config';
 import Page from './Page.vue';
+import filters from './filters';
 
 Vue.use(Snotify);
 
@@ -14,6 +15,10 @@ Vue.config.errorHandler = function (err, vm, info) {
 		vm.$snotify.error(err.message || err, 'Fatal error', Config.snotifyDefaults);
 	}
 };
+
+for(var name in filters) {
+	Vue.filter(name, filters[name]);
+}
 
 new Vue({
 	store,

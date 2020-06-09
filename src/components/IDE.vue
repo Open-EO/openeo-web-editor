@@ -13,12 +13,12 @@
 			</header>
 			<main class="page">
 				<div id="discovery" ref="discovery">
-					<DiscoveryToolbar class="toolbar" :onAddCollection="insertCollection" :onAddProcess="insertProcess" :onAddProcessGraph="insertProcessGraph" />
+					<DiscoveryToolbar class="toolbar" :onAddCollection="insertCollection" :onAddProcess="insertProcess" />
 				</div>
 				<hr class="separator" ref="separator0" @dblclick="centerSeparator($event, 0)" @mousedown="startMovingSeparator($event, 0)" />
 				<div id="workspace" ref="workspace">
-					<Editor ref="editor" class="mainEditor" id="main" :showDiscoveryToolbar="false" />
-					<UserWorkspace class="userContent" />
+					<Editor ref="editor" class="mainEditor" id="main" :value="process" @input="setProcess" />
+					<UserWorkspace class="userContent" v-if="isAuthenticated" />
 				</div>
 				<hr class="separator" ref="separator1" @dblclick="centerSeparator($event, 1)" @mousedown="startMovingSeparator($event, 1)" />
 				<div id="viewer" ref="viewer">
@@ -31,7 +31,6 @@
 		<ServerInfoModal ref="serverInfoModal" />
 		<ServiceInfoModal ref="serviceModal" />
 		<JobInfoModal ref="jobModal" />
-		<ProcessGraphInfoModal ref="pgModal" />
 		<ParameterModal ref="parameterModal" />
 	</div>
 </template>
@@ -40,23 +39,21 @@
 import Package from '../../package.json';
 import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
 import Utils from '../utils.js';
-import ConnectionMixin from './ConnectionMixin.vue';
 import UserMenu from './UserMenu.vue';
 import UserWorkspace from './UserWorkspace.vue';
 import Viewer from './Viewer.vue';
 import Editor from './Editor.vue';
-import CollectionModal from './CollectionModal.vue';
-import ProcessModal from './ProcessModal.vue';
-import ServerInfoModal from './ServerInfoModal.vue';
-import JobInfoModal from './JobInfoModal.vue';
-import ProcessGraphInfoModal from './ProcessGraphInfoModal.vue';
-import ServiceInfoModal from './ServiceInfoModal.vue';
-import ParameterModal from './ParameterModal.vue';
+import CollectionModal from './modals/CollectionModal.vue';
+import ProcessModal from './modals/ProcessModal.vue';
+import ServerInfoModal from './modals/ServerInfoModal.vue';
+import JobInfoModal from './modals/JobInfoModal.vue';
+import ServiceInfoModal from './modals/ServiceInfoModal.vue';
+import ParameterModal from './modals/ParameterModal.vue';
 import DiscoveryToolbar from './DiscoveryToolbar.vue';
 
 export default {
 	name: 'IDE',
-	mixins: [ConnectionMixin, EventBusMixin],
+	mixins: [EventBusMixin],
 	components: {
 		DiscoveryToolbar,
 		Editor,
@@ -67,7 +64,6 @@ export default {
 		ProcessModal,
 		ServerInfoModal,
 		JobInfoModal,
-		ProcessGraphInfoModal,
 		ServiceInfoModal,
 		ParameterModal
 	},
@@ -80,13 +76,13 @@ export default {
 					left: 'discovery',
 					right: 'workspace',
 					anchor: 'left',
-					width: "20%"
+					width: '20%'
 				},
 				{
 					left: 'workspace',
 					right: 'viewer',
 					anchor: 'right',
-					width: "30%"
+					width: '30%'
 				}
 			],
 			version: Package.version,
@@ -95,22 +91,25 @@ export default {
 		};
 	},
 	computed: {
-		...Utils.mapGetters('server', ['title']),
-		...Utils.mapState('server', ['collections', 'processes', 'outputFormats', 'serviceTypes']),
+		...Utils.mapState(['connection']),
+		...Utils.mapGetters(['title', 'isAuthenticated', 'apiVersion']),
+		...Utils.mapGetters('userProcesses', {getProcessById: 'getAllById'}),
+		...Utils.mapState('editor', ['process'])
 	},
 	mounted() {
-		this.listen('showCollectionInfo', this.showCollectionInfo);
-		this.listen('showProcessInfo', this.showProcessInfo);
+		this.listen('showCollection', this.showCollectionInfo);
+		this.listen('showProcess', this.showProcessInfoById);
 		this.listen('showJobInfo', this.showJobInfo);
-		this.listen('showProcessGraphInfo', this.showProcessGraphInfo);
+		this.listen('showProcessInfo', this.showProcessInfo);
 		this.listen('showServiceInfo', this.showServiceInfo);
 		this.listen('showDataForm', this.showDataForm);
-		this.listen('getProcessGraph', this.getProcessGraph);
-		this.listen('insertProcessGraph', this.insertProcessGraph);
+		this.listen('editProcess', this.editProcess);
 
 		this.resizeListener = (event) => this.emit('windowResized', event);
 		window.addEventListener('resize', this.resizeListener);
-		this.userInfoUpdater = setInterval(this.describeAccount, 2*60*1000); // Refresh user data every 2 minutes
+		if (this.isAuthenticated) {
+			this.userInfoUpdater = setInterval(this.describeAccount, 2*60*1000); // Refresh user data every 2 minutes
+		}
 		this.emit('title', this.title);
 	},
 	beforeDestroy() {
@@ -122,14 +121,12 @@ export default {
 		}
 	},
 	methods: {
-		...Utils.mapActions('server', ['describeAccount']),
+		...Utils.mapActions(['describeAccount']),
+		...Utils.mapActions('userProcesses', {readUserProcess: 'read'}),
+		...Utils.mapMutations('editor', ['setContext', 'setProcess']),
 
-		getProcessGraph(success, failure = null, passNull = false) {
-			this.$refs.editor.getProcessGraph(success, failure, passNull);
-		},
-
-		insertProcessGraph(pg) {
-			this.$refs.editor.insertProcessGraph(pg);
+		editProcess(obj) {
+			this.setContext(obj);
 		},
 
 		insertCollection(id) {
@@ -188,15 +185,31 @@ export default {
 
 		showCollectionInfo(id) {
 			this.connection.describeCollection(id)
-				.then(info => {
-					this.$refs.collectionModal.show(info, this.apiVersion);
-				})
-				.catch(error => Utils.error(this, "Sorry, can't load collection details."));
+				.then(info => this.$refs.collectionModal.show(info, this.apiVersion))
+				.catch(error => Utils.error(this, "Sorry, can't load collection details for " + id + "."));
 		},
 
-		showProcessInfo(id) {
-			const info = this.processes.find(p => p.id == id);
-			this.$refs.processModal.show(info, this.apiVersion);
+		showProcessInfoById(id) {
+			this._showProcessInfo(this.getProcessById(id));
+		},
+
+		showProcessInfo(process) {
+			this._showProcessInfo(process);
+		},
+
+		_showProcessInfo(process) {
+			if (!process.native) {
+				this.readUserProcess({data: process})
+					.then(updated => this._showProcessInfoModal(updated.toJSON()))
+					.catch(error => Utils.exception(this, error, "Sorry, couldn't fully load custom process."));
+			}
+			else {
+				this._showProcessInfoModal(process);
+			}
+		},
+
+		_showProcessInfoModal(process) {
+			this.$refs.processModal.show(process, this.apiVersion);
 		},
 
 		showServiceInfo(service) {
@@ -207,12 +220,8 @@ export default {
 			this.$refs.jobModal.show(job);
 		},
 
-		showProcessGraphInfo(pg) {
-			this.$refs.pgModal.show(pg);
-		},
-
 		showServerInfo() {
-			this.$refs.serverInfoModal.show(this.connection, this.outputFormats, this.serviceTypes);
+			this.$refs.serverInfoModal.show();
 		},
 
 		showWebEditorInfo() {
@@ -221,7 +230,12 @@ export default {
 
 		showDataForm(title, fields, saveCallback = null, closeCallback = null) {
 			var editable = typeof saveCallback === 'function';
-			this.$refs.parameterModal.show(title, fields.filter(f => f !== null), editable, saveCallback, closeCallback);
+			fields = fields.filter(f => f !== null);
+			var values = {};
+			for(let field of fields) {
+				values[field.name] = field.value;
+			}
+			this.$refs.parameterModal.show(title, fields, values, editable, saveCallback, closeCallback);
 		}
 
 	}
@@ -260,7 +274,7 @@ export default {
 }
 #viewer {
 	min-width: 200px;
-	width: 30%;
+	width: 25%;
 }
 .mainEditor, .userContent {
 	height: calc(50% - 1em);

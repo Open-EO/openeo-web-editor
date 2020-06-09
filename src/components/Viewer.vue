@@ -3,7 +3,7 @@
 		<template #default="{ tabs }">
 			<Tab id="mapView" name="Map" icon="fa-map" :selected="true">
 				<template #default="{ tab }">
-					<MapViewer id="mapCanvas" ref="mapViewer" :show="tab.active" />
+					<MapViewer id="mapCanvas" ref="mapViewer" :show="tab.active" :center="[50.1725, 9.15]" :zoom="6" />
 				</template>
 			</Tab>
 		</template>
@@ -49,7 +49,7 @@ export default {
 		}
 	},
 	computed: {
-		...Utils.mapState('server', ['connection'])
+		...Utils.mapState(['connection'])
 	},
 	methods: {
 		showWebService(service) {
@@ -67,23 +67,24 @@ export default {
 				.then(data => this.showViewer(data))
 				.catch(error => Utils.exception(this, error, 'Computation failed'));
 		},
-		showJobResults(result, job) {
-			for(var i in result.links) {
-				var id = result.id || job.id;
-				this.showViewer(result.links[i], this.makeTitle(result.title || job.title, "Job " + id.substr(0, 6) + "...", true));
+		showJobResults(item, job) {
+			for(var key in item.assets) {
+				var asset = item.assets[key];
+				this.showViewer(asset, this.makeTitle(key, job.id, true));
 			}
 		},
 		uniqueTitle(title) {
 			if (!this.tabCounter[title]) {
 				this.tabCounter[title] = 1;
+				return title;
 			}
 			else {
 				this.tabCounter[title]++;
+				return title + " (" + this.tabCounter[title] + ")";
 			}
-			return title + " (" + this.tabCounter[title] + ")";
 		},
 		makeTitle(title, type, inc = false) {
-			if (title === null) {
+			if (!title) {
 				return this.uniqueTitle(type);
 			}
 			else if (inc) {

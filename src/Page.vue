@@ -1,7 +1,9 @@
 <template>
-	<div id="container">
-		<ConnectForm v-if="!isDiscovered" :skipLogin="skipLogin" />
-		<IDE v-else />
+	<div class="container">
+		<transition name="connect-fade" mode="out-in">
+			<ConnectForm key="1" v-if="!isDiscovered" :skipLogin="skipLogin" />
+			<IDE key="2" v-else />
+		</transition>
 		<Modal ref="modal" maxWidth="60%" />
 		<vue-snotify />
 		<div ref="webEditorInfo" style="display: none;">
@@ -20,7 +22,7 @@ import Package from '../package.json';
 import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
 import Utils from './utils';
 import ConnectForm from './components/ConnectForm.vue';
-import Modal from './components/Modal.vue';
+import Modal from './components/modals/Modal.vue';
 import axios from 'axios';
 import Vue from 'vue';
 
@@ -63,7 +65,7 @@ export default {
 		}
 	},
 	computed: {
-		...Utils.mapGetters('server', ['isDiscovered'])
+		...Utils.mapGetters(['isDiscovered'])
 	},
 	methods: {
 		setTitle(subtitle) {
@@ -92,11 +94,12 @@ export default {
 <style>
 @import url('https://fonts.googleapis.com/css?family=Ubuntu&display=swap');
 
-html, body, #container {
+html, body, .container {
 	height: 100%;
 	overflow: hidden;
 }
-body, input, textarea, button, select {
+
+body, input, textarea, button, select, datalist {
 	font-family: 'Ubuntu', sans-serif;
 }
 body {
@@ -116,8 +119,22 @@ ul, ol {
 	padding-bottom: 0;
 	padding-top: 0;
 }
-button {
+
+button, input[type="submit"], input[type="reset"] {
 	margin: 1px;
+}
+input, textarea, select, datalist {
+	border: 1px solid #ccc;
+}
+button:focus, input:focus, textarea:focus, select:focus, datalist:focus, .multiselect:focus-within {
+    outline: none;
+    box-shadow: 0 0 3px rgba(22, 102, 182, 0.75);
+}
+.multiselect input:focus {
+	box-shadow: 0 0 0;
+}
+button:disabled i {
+	color: #aaa;
 }
 
 .sepr {
@@ -195,6 +212,9 @@ button {
 	padding: 0.25em 0 0.25em 0;
 	border-bottom: 1px dotted #ccc;
 }
+.vue-component h4 {
+	font-size: 1.2em;
+}
 .vue-component .tabular {
 	margin: 0.5em 0;
 }
@@ -202,11 +222,15 @@ button {
 	padding-left: 20px;
 }
 
-#container .snotifyToast__title {
+.container {
+	width: 100%;
+	height: 100%;
+}
+.container .snotifyToast__title {
 	font-size: 1em;
 	font-weight: bold;
 }
-#container .snotifyToast__body {
+.container .snotifyToast__body {
 	font-size: 0.9em;
 }
 
@@ -223,5 +247,48 @@ h3.aboutPage {
 	text-align: center;
 	margin: 1em;
 	font-weight: bold;
+}
+
+
+.message {
+	padding: 0.5em;
+	margin-bottom: 1em;
+	border-radius: 0.5em;
+}
+.warning {
+	border: 1px solid #f9d67a;
+	background-color: #fbeabc;
+	color: #795600;
+}
+.error {
+	border: 1px solid #f97a7a;
+	background-color: #fbbcbc;
+	color: #790000;
+}
+.help, .message {
+	display: flex;
+}
+.help span, .message span {
+	display: block;
+	flex-grow: 1;
+}
+.help .fas, .message .fas {
+	display: block;
+	height: 100%;
+	margin-right: 0.5em;
+}
+.help {
+	margin: 0.75em 0.5em;
+}
+.help span {
+	font-size: 0.9em;
+}
+
+/* Transition */
+.connect-fade-enter-active, .connect-fade-leave-active {
+  transition: opacity .3s ease;
+}
+.connect-fade-enter, .connect-fade-leave-to {
+  opacity: 0;
 }
 </style>
