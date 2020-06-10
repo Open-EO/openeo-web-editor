@@ -117,7 +117,7 @@ export default {
 						this.setSelectedType(types[0]);
 						break;
 					default:
-						let typeNames = evalType.map(t => this.allowedSchemas[t].dataType()).sort();
+						let typeNames = types.map(t => this.allowedSchemas[t].dataType()).sort();
 						// Ignore if number/integer was detected as they always overlap and number always works
 						let numerics = typeNames.length === 2 && typeNames[0] === 'integer' && typeNames[1] === 'number';
 						if (!Utils.isRef(this.value) && !numerics) {

@@ -35,7 +35,7 @@
 		<!-- WKT / PROJ -->
 		<TextEditor class="fieldValue textarea" v-else-if="type === 'wkt2-definition' || type === 'proj-definition'" :id="name" :editable="editable" v-model="state" />
 		<!-- Boolean -->
-		<input class="fieldValue" v-else-if="type === 'boolean'" :checked="!!state" v-model="state" type="checkbox" :name="name" :disabled="!editable" />
+		<input class="fieldValue" v-else-if="type === 'boolean'" v-model="state" type="checkbox" :name="name" :disabled="!editable" />
 		<!-- Integer -->
 		<input class="fieldValue" v-else-if="type === 'integer'" v-model.number="state" type="number" :min="numericMin" :max="numericMax" :step="1" :name="name" :disabled="!editable" />
 		<!-- Number -->
@@ -92,7 +92,7 @@ export default {
 	},
 	data() {
 		return {
-			state: null,
+			state: this.value,
 			context: null
 		};
 	},
@@ -187,8 +187,8 @@ export default {
 				this.state = value;
 			}
 		},
-		value(newVal, oldVal) {
-			if (newVal !== this.state) {
+		value(newVal) {
+			if (newVal !== this.newValue) {
 				this.state = this.value;
 				this.initView();
 			}
@@ -198,10 +198,8 @@ export default {
 				this.emit('processParameterValueChanged', this.uid, this.processId, this.parameter, this.type, newVal, oldVal);
 			}
 			this.$emit('input', newVal);
+			console.trace();
 		}
-	},
-	created() {
-		this.state = this.value;
 	},
 	mounted() {
 		this.initView();
