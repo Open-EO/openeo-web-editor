@@ -9,6 +9,10 @@ module.exports = {
 	},
 	configureWebpack: {
 		devtool: 'source-map',
+        externals: {
+			// Leaflet is part of openeo-vue-components, but not needed here as we use OpenLayers
+            leaflet: 'L'
+        },
 		plugins: [
 			new webpack.ContextReplacementPlugin(/moment[/\\]locale$/, /en-gb/)
 		],
