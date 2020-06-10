@@ -52,7 +52,7 @@ export default {
 			else if (obj instanceof UserProcess) {
 				state.process = obj.toJSON();
 			}
-			else if (obj.process) {
+			else if (Utils.isObject(obj) && obj.process) {
 				state.process = obj.process;
 			}
 			else {
