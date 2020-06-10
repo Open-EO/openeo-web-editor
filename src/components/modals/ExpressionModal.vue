@@ -2,26 +2,26 @@
 	<Modal ref="modal" minWidth="70%">
 		<template #main>
 			<div class="content">
-				<TextEditor id="input" class="editor" v-model="input" language="math" placeholder="e.g. x * 2.5 / (x - y)" />
+				<TextEditor ref="editor" id="input" class="editor" v-model="input" language="math" placeholder="e.g. x * 2.5 / (x - y)" @drop="onDrop($event)" @dragover="allowDrop($event)" />
 				<div class="description"><i  class="fas fa-info-circle"></i> Above you can insert a mathematical formula and it will be converted to openEO code for you.
 					<p><strong>Operators</strong>:<br />
-						<kbd v-for="op in operators" :key="op.op" :title="op.title" @click="emit('showProcess', op.processId)" class="click">{{ op.op }}</kbd>
+						<kbd v-for="op in operators" :key="op.op" :title="op.title" @click="emit('showProcess', op.processId)" class="click" draggable="true" @dragstart="onDrag($event, 'operators', op.op)">{{ op.op }}</kbd>
 					</p>
 					<p>Supported <strong>mathematical functions</strong>:
 						<template v-if="functions.length">
-							<br /><kbd v-for="func in functions" :key="func.id" :title="func.summary" @click="emit('showProcess', func.id)" class="click">{{ func.id }}</kbd>
+							<br /><kbd v-for="func in functions" :key="func.id" :title="func.summary" @click="emit('showProcess', func.id)" class="click" draggable="true" @dragstart="onDrag($event, 'functions', func)">{{ func.id }}</kbd>
 						</template>
 						<template v-else>None</template>
 					</p>
 					<p>Available <strong>output from processes</strong>:
 						<template v-if="results.length">
-							<br /><kbd v-for="id in results" :key="id">#{{ id }}</kbd> <!-- ToDo: Open non-editable parameter editor or process schema -->
+							<br /><kbd v-for="id in results" :key="id" draggable="true" @dragstart="onDrag($event, 'results', id)">#{{ id }}</kbd> <!-- ToDo: Open non-editable parameter editor or process schema -->
 						</template>
 						<template v-else>None</template>
 					</p>
 					<p><strong>Parameters</strong>: If a variable if found in the formula which can't be resolved to a pre-defined parameter, a new parameter will be created for it. Available pre-defined parameters:
 						<template v-if="pgParameters.length">
-							<br /><kbd v-for="param in pgParameters" :key="param.id" @click="$emit('showSchema', param.id, param.spec.schema)" class="click">{{ param.id }}</kbd>
+							<br /><kbd v-for="param in pgParameters" :key="param.id" @click="$emit('showSchema', param.id, param.spec.schema)" class="click" draggable="true" @dragstart="onDrag($event, 'pgParameters', param.id)">{{ param.id }}</kbd>
 						</template>
 						<template v-else>None</template>
 					</p>
@@ -142,6 +142,28 @@ export default {
 				if (node.process_id === 'array_element' && Utils.isObject(node.arguments) && node.arguments.label) {
 					this.arrayElements[node.arguments.label] = node;
 				}
+			}
+		},
+		onDrag(event, type, data) {
+			switch(type) {
+				case 'functions':
+					let params = (data.parameters || []).map(p => p.name);
+					data = data.id + '(' + params.join(', ') + ')';
+					break;
+				case 'results':
+					data = '#' + data;
+					break;
+			}
+			event.dataTransfer.setData("text/plain", data);
+		},
+		allowDrop(event) {
+			event.preventDefault();
+		},
+		onDrop(event) {
+			var text = event.dataTransfer.getData("text/plain");
+			if (text) {
+				event.preventDefault();
+				this.$refs.editor.insert(text, false);
 			}
 		},
 		importFormula(process) {
