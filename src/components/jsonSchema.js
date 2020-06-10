@@ -67,8 +67,23 @@ export default class JsonSchema extends JsonSchemaValidator {
 		}]);
 	}
 
+	async validateUri(data) {
+		if (data.match(/^(([^:/?#]+):)?(\/\/([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?$/)) {
+			return true;
+		}
+		throw new ajv.ValidationError([{
+			message: "URI is invalid"
+		}]);
+	}
+
 	async validateUdfCode(data) {
-		throw "Not supported";
+		// This is no real validation, but most data types don't have line breaks so trying this for now...
+		if (data.match(/(\r|\n)/)) {
+			return true;
+		}
+		throw new ajv.ValidationError([{
+			message: "UDF Code is invalid"
+		}]);
 	}
 
 	async validateUdfRuntime(data) {

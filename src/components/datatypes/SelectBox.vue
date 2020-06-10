@@ -28,7 +28,8 @@ export default {
 		},
 		schema: {
 			type: Object
-		}
+		},
+		context: {}
 	},
 	computed: {
 		selectOptions() {
@@ -58,6 +59,12 @@ export default {
 					break;
 				case 'billing-plan':
 					state = this.$store.state.connection.capabilities().listPlans();
+					break;
+				case 'udf-runtime':
+					state = Object.keys(this.$store.state.udfRuntimes);
+					break;
+				case 'udf-runtime-version':
+					state = this.context in this.$store.state.udfRuntimes ? Object.keys(this.$store.state.udfRuntimes[this.context].versions) : [];
 					break;
 			}
 
@@ -110,6 +117,9 @@ export default {
 						}
 					}
 					return years;
+				case 'udf-runtime':
+				case 'udf-runtime-version':
+					return state.map(val => this.e(val));
 				default:
 					if (Utils.isObject(this.schemas) && this.schemas.isEnum()) {
 						return this.schema.getEnumChoices().map(val => this.e(val));
@@ -157,7 +167,10 @@ export default {
 		},
 		selected(newValue) {
 			let value;
-			if (this.multiple) {
+			if (newValue === null) {
+				value = null;
+			}
+			else if (this.multiple) {
 				if (!Array.isArray(newValue)) {
 					newValue = [newValue];
 				}
@@ -177,6 +190,15 @@ export default {
 				}
 			}
 			this.$emit('input', value);
+		},
+		context() {
+			switch(this.type) {
+				case 'udf-runtime':
+				case 'udf-runtime-version':
+					this.selected = null;
+					this.preselectFirst();
+					break;
+			}
 		}
 	},
 	methods: {
@@ -204,7 +226,7 @@ export default {
 			this.$nextTick(() => {
 				let elem = this.$refs.htmlElement;
 				// Code inspired from mounted() method in vue-multiselect's multiselectMixin.js
-				if (elem.preselectFirst && elem.filteredOptions.length) {
+				if (elem.preselectFirst && Array.isArray(elem.filteredOptions) && elem.filteredOptions.length) {
 					elem.select(elem.filteredOptions[0]);
 				}
 			});

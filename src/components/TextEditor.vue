@@ -1,5 +1,5 @@
 <template>
-	<div class="textEditor" :class="language">
+	<div class="textEditor" :class="languageString">
 		<EditorToolbar :editable="editable" :onClear="clear">
 			<span class="sepr" v-if="editable">
 				<button type="button" @click="editor.undo()" :disabled="!canUndo" title="Revert last change"><i class="fas fa-undo-alt"></i></button>
@@ -64,6 +64,9 @@ export default {
 	},
 	computed: {
 		...Utils.mapGetters(['processRegistry']),
+		languageString() {
+			return typeof this.language === 'string' ? this.language.toLowerCase() : '';
+		},
 		editorOptions() {
 			let options = {
 				indentUnit: 2,
@@ -74,7 +77,7 @@ export default {
 				readOnly: !this.editable,
 				placeholder: this.placeholder
 			};
-			switch(this.language) {
+			switch(this.languageString) {
 				case 'r':
 					options.mode = 'text/x-rsrc';
 					break;
@@ -115,12 +118,17 @@ export default {
 				this.editor.refresh();
 				this.editor.clearHistory();
 			}
+		},
+		editorOptions() {
+			for(var key in this.editorOptions) {
+				this.editor.setOption(key, this.editorOptions[key]);
+			}
 		}
 	},
 	mounted() {
 		this.editor = CodeMirror(document.getElementById(this.id), this.editorOptions);
 		this.editor.setSize(null, "100%");
-		if (this.language === 'processgraph') {
+		if (this.languageString === 'processgraph') {
 			this.editor.on("change", () => {
 				// Don't lint empty values
 				this.editor.setOption("lint", !!this.editor.getValue().trim());
@@ -164,7 +172,7 @@ export default {
 		},
 		commit() {
 			var value = this.editor.getValue();
-			switch(this.language) {
+			switch(this.languageString) {
 				case 'math':
 					return this.emit(value.replace(/[\r\n\t]+/, ' ')); // Replace line breaks and tabs with simple spaces
 				case 'processgraph':
@@ -208,7 +216,7 @@ export default {
 		},
 		updateContent() {
 			if (this.value) {
-				switch(this.language) {
+				switch(this.languageString) {
 					case 'processgraph':
 						if (Utils.isObject(this.value)) {
 							this.insert(JSON.stringify(this.value, null, this.editorOptions.indentUnit));

@@ -1,7 +1,7 @@
 <template>
 	<div class="fieldEditorContainer">
 		<!-- Result Node -->
-		<template v-if="isResult">
+		<template v-if="isResult || type === 'raster-cube' || type === 'vector-cube'">
 			<div class="fieldValue externalData fromNode">
 				<span>Output of <tt>#{{ state.from_node }}</tt></span>
 			</div>
@@ -10,14 +10,14 @@
 		<!-- Process Parameter -->
 		<template v-else-if="isPgParameter">
 			<div class="fieldValue externalData fromArgument">
-				<span>Value of process parameter <tt>${{ state.from_parameter }}</tt></span>
+				<span>Value of process parameter <tt>{{ state.from_parameter }}</tt></span>
 			</div>
 			<button type="button" v-if="nativeParameterType === 'array'" @click="convertToArray()"><i class="fas fa-list"></i> Convert to array</button>
 		</template>
 		<!-- Null -->
 		<div class="description" v-else-if="type === 'null'"><i class="fas fa-info-circle"></i> This is set to&nbsp;<strong><tt>null</tt></strong>, which is usually used as placeholder for no-data values or a default value.</div>
 		<!-- Select Boxes (collection id, job id, epsg code, in/output format, service type, billing plan, enums) -->
-		<SelectBox v-else-if="isSelection" v-model="state" :key="type" :type="type" :editable="editable" :schema="schema"></SelectBox>
+		<SelectBox v-else-if="isSelection" v-model="state" :key="type" :type="type" :editable="editable" :schema="schema" :context="context"></SelectBox>
 		<!-- Temporal (date, time, date-time, temporal-interval) -->
 		<TemporalPicker v-else-if="isTemporal" v-model="state" :key="type" :type="type" :editable="editable"></TemporalPicker>
 		<!-- Bounding Box -->
@@ -27,9 +27,11 @@
 		<!-- Process Editor -->
 		<Editor v-else-if="type === 'process-graph'" class="callbackEditor" :id="name" :editable="editable" :pgParameters="schema.getCallbackParameters()" :showDiscoveryToolbar="true" v-model="state" />
 		<!-- Output format options -->
-		<FileFormatOptionsEditor v-else-if="type === 'output-format-options' || type === 'input-format-options'" ref="fileFormatOptionsEditor" :type="type" v-model="state" :format="this.context"></FileFormatOptionsEditor>
+		<FileFormatOptionsEditor v-else-if="type === 'output-format-options' || type === 'input-format-options'" ref="fileFormatOptionsEditor" :type="type" v-model="state" :format="context"></FileFormatOptionsEditor>
 		<!-- Budget -->
 		<Budget v-else-if="type === 'budget'" v-model="state" :editable="editable" />
+		<!-- UDF-Code -->
+		<TextEditor class="fieldValue textarea" v-else-if="type === 'udf-code'" :id="name" :editable="editable" v-model="state" :language="context" />
 		<!-- CommonMark -->
 		<TextEditor class="fieldValue textarea" v-else-if="type === 'commonmark'" :id="name" :editable="editable" v-model="state" language="markdown" />
 		<!-- WKT / PROJ -->
@@ -121,6 +123,8 @@ export default {
 				case 'output-format':
 				case 'service-type':
 				case 'billing-plan':
+				case 'udf-runtime':
+				case 'udf-runtime-version':
 					return true;
 				default:
 					return this.schema.isEnum();
@@ -190,21 +194,21 @@ export default {
 		value(newVal) {
 			if (newVal !== this.newValue) {
 				this.state = this.value;
-				this.initView();
 			}
 		},
-		newValue(newVal, oldVal) {
-			if (this.mounted && this.uid) {
+		async newValue(newVal, oldVal) {
+			this.$emit('input', newVal);
+			if (this.uid) {
 				this.emit('processParameterValueChanged', this.uid, this.processId, this.parameter, this.type, newVal, oldVal);
 			}
-			this.$emit('input', newVal);
-			console.trace();
 		}
 	},
-	mounted() {
-		this.initView();
+	created() {
 		this.listen('processParameterValueChanged', this.processParameterValueChanged);
-		this.listen('processParameterTypeChanged', this.processParameterTypeChanged);
+	},
+	async mounted() {
+		await this.$nextTick();
+		this.emit('processParameterValueChanged', this.uid, this.processId, this.parameter, this.type, this.state, this.state, undefined);
 	},
 	methods: {
 		processParameterValueChanged(uid, processId, parameter, type, value, oldValue) {
@@ -215,19 +219,9 @@ export default {
 			if ((type === 'output-format' && this.type === 'output-format-options') || (type === 'input-format' && this.type === 'input-format-options')) {
 				this.context = value;
 			}
-		},
-		processParameterTypeChanged(uid, processId, parameter, newType, oldType) {
-			if (this.uid !== uid) {
-				return;
+			else if (type === 'udf-runtime' && (this.type === 'udf-runtime-version' || this.type === 'udf-code' || this.type === 'null')) {
+				this.context = value;
 			}
-
-			// Nothing to do yet
-		},
-		initView() {
-			this.$nextTick(() => {
-				this.mounted = true;
-				this.emit('processParameterValueChanged', this.uid, this.processId, this.parameter, this.type, this.state, this.state, undefined);
-			});
 		},
 		convertToArray() {
 			this.state = [this.state];

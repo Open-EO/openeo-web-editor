@@ -129,6 +129,8 @@ export default {
 	display: flex;
 }
 #parameterModal .fieldRow .fieldContainer {
+	min-width: 50%;
+	width: 70%;
 	flex-grow: 1;
 }
 #parameterModal .fieldRow .fieldValue {

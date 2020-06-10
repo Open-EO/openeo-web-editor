@@ -57,9 +57,9 @@ const SUPPORTED_TYPES = [
 		{type: 'array', subtype: 'file-path', title: 'File path'},
 		{type: 'array', subtype: 'file-paths', title: 'File paths (multiple)', default: []},
 
-	//	{type: 'string', subtype: 'udf-code', title: 'UDF Source Code'},
-	//	{type: 'string', subtype: 'udf-runtime', title: 'UDF Runtime'},
-	//	{type: 'string', subtype: 'udf-runtime-version', title: 'UDF Runtime Version'},
+		{type: 'string', subtype: 'udf-code', title: 'UDF Source Code', default: ""},
+		{type: 'string', subtype: 'udf-runtime', title: 'UDF Runtime'},
+		{type: 'string', subtype: 'udf-runtime-version', title: 'UDF Runtime Version'},
 
 		{type: 'integer', subtype: 'epsg-code', title: 'EPSG Code (CRS)'},
 		{type: 'string', subtype: 'proj-definition', title: 'PROJ defintiion (CRS)', default: ""},
@@ -202,11 +202,6 @@ export default {
 		}
 	},
 	watch: {
-		type(newType, oldType) {
-			if (this.uid) {
-				this.emit('processParameterTypeChanged', this.uid, this.processId, this.parameter, newType, oldType);
-			}
-		},
 		value(value) {
 			if (value !== this.state) {
 				this.state = value;
@@ -228,8 +223,7 @@ export default {
 			catch (error) {
 				this.state = defaultValue;
 			}
-			await this.$nextTick();
-			this.selectedType = evt.target.value;
+			this.setSelectedType(evt.target.value);
 		},
 		changeType(type) {
 			for(var i in this.allowedSchemas) {
