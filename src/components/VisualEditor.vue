@@ -253,11 +253,11 @@ export default {
 			}
 		},
 
-		async insertNodes(nodes) {
-			await this.$refs.blocks.import({
+		async insertNodes(nodes, replace = false) {
+			return await this.$refs.blocks.import({
 				process_graph: nodes
 			}, {
-				clear: false
+				clear: this.replace
 			});
 		}
 

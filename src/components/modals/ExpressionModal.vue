@@ -21,11 +21,11 @@
 					</p>
 					<p><strong>Parameters</strong>: If a variable if found in the formula which can't be resolved to a pre-defined parameter, a new parameter will be created for it. Available pre-defined parameters:
 						<template v-if="pgParameters.length">
-							<br /><kbd v-for="param in pgParameters" :key="param.id" @click="$emit('showSchema', param.schema)" class="click">{{ param.id }}</kbd>
+							<br /><kbd v-for="param in pgParameters" :key="param.id" @click="$emit('showSchema', param.id, param.spec.schema)" class="click">{{ param.id }}</kbd>
 						</template>
 						<template v-else>None</template>
 					</p>
-					<p v-if="supportsArrayElementWithLabels">If the first pre-defined parameter is a <strong>labeled array</strong>, the value for a label can be accessed by typing the label with a <kbd>$</kbd> in front, for example <kbd>$B1</kbd>. This is especially useful in reducers.</p>
+					<p v-if="supportsArrayElement">If the first pre-defined parameter is a (labeled) <strong>array</strong>, the value for a specific index or label can be accessed by typing the numeric index or textual label with a <kbd>$</kbd> in front, for example <kbd>$B1</kbd> for the label B1 or <kbd>$0</kbd> for the first element in the array. Numeric labels are not supported.</p>
 				</div>
 			</div>
 		</template>
@@ -44,6 +44,7 @@ import Utils from '../../utils.js';
 import TextEditor from '../TextEditor.vue';
 import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
 import { ProcessSchema } from '../blocks/processSchema.js';
+import { ProcessGraph } from '@openeo/js-processgraphs';
 
 export default {
 	name: 'ExpressionModal',
@@ -62,7 +63,8 @@ export default {
 			pgParameters: [],
 			arrayElements: {},
 			processGraph: {},
-			result: {}
+			result: {},
+			replace: false
 		};
 	},
 	computed: {
@@ -76,8 +78,20 @@ export default {
 			}
 			return ops;
 		},
+		reverseOperatorMapping() {
+			let mapping = {};
+			for(var op in this.operatorMapping) {
+				mapping[this.operatorMapping[op]] = op;
+			}
+			mapping['product'] = '*';
+			mapping['sum'] = '+';
+			return mapping;
+		},
 		functions() {
-			return this.processRegistry.all().filter(this.isMathProcess).map(p => ({id: p.id, summary: p.summary}));
+			return this.processRegistry.all().filter(this.isMathProcess);
+		},
+		importProcesses() {
+			return this.functions.map(p => p.id).concat(Object.values(this.operatorMapping)).concat(['array_element', 'product', 'sum']);
 		},
 		results() {
 			let resultNodes = [];
@@ -90,7 +104,7 @@ export default {
 			}
 			return resultNodes;
 		},
-		supportsArrayElementWithLabels() {
+		supportsArrayElement() {
 			// A pg parameter needs to be available
 			if (this.pgParameters.length === 0) {
 				return false;
@@ -102,16 +116,24 @@ export default {
 				return false;
 			}
 
-			// array_element must have a parameter called label
-			return process.parameters.filter(p => p.name === 'label').length > 0;
+			return true;
+			// ToDo: Check that labels are supported?!
+			// return process.parameters.filter(p => p.name === 'label').length > 0;
 		}
 	},
 	methods: {
 		show(process = {}, pgParameters = []) {
 			this.$refs.modal.show("Insert Formula");
+			this.result = {};
+			this.input = '';
+			this.replace = false;
 			this.pgParameters = pgParameters;
 			this.processGraph = process.process_graph || {};
-			this.result = {};
+			try {
+				this.importFormula(process);
+			} catch (error) {
+				console.info(error);
+			}
 
 			// Add all array_element calls for labels to the list so that we don't get duplicate array_element calls
 			this.arrayElements = {};
@@ -120,6 +142,101 @@ export default {
 				if (node.process_id === 'array_element' && Utils.isObject(node.arguments) && node.arguments.label) {
 					this.arrayElements[node.arguments.label] = node;
 				}
+			}
+		},
+		importFormula(process) {
+			if (!Utils.isObject(process) || !Utils.isObject(process.process_graph)) {
+				return;
+			}
+			let unsupportedFuncs = Object.values(process.process_graph).filter(node => !this.importProcesses.includes(node.process_id));
+			if (unsupportedFuncs.length) {
+				return;
+			}
+
+			var pg = new ProcessGraph(process, this.processRegistry);
+			pg.parse();
+			let formula = this.nodeToFormula(pg.getResultNode());
+			if (formula) {
+				this.input = formula;
+				this.replace = true;
+			}
+		},
+		nodeToFormula(node, parentOperator = null) {
+			if (node.process_id === 'array_element') {
+				return '$' + (node.getArgument('label') || node.getArgument('index'));
+			}
+
+			let operator = this.reverseOperatorMapping[node.process_id];
+			let process = this.processRegistry.get(node.process_id);
+			let isArrayData = (node.process_id === 'sum' || node.process_id === 'product');
+			let parameterNames = (process.parameters || []).map(p => p.name);
+
+			let convertValue = value => {
+				if (Utils.isObject(value)) {
+					if (value.from_node) {
+						let refNode = node.getProcessGraph().getNode(value.from_node);
+						if (refNode) {
+							value = this.nodeToFormula(refNode, operator);
+						}
+						else {
+							value = '#' + value.from_node;
+						}
+					}
+					else if (value.from_parameter) {
+						value = value.from_parameter;
+					}
+					else {
+						throw new Error('Objects not allowed');
+					}
+				}
+				return value;
+			};
+
+			// Create the list of arguments
+			let argList = [];
+			for(let name of parameterNames) {
+				let value = convertValue(node.getRawArgument(name));
+
+				if (isArrayData && Array.isArray(value) && name === 'data') {
+					argList = value.map(v => convertValue(v));
+					break;
+				}
+				else if(typeof value !== 'undefined') {
+					argList.push(value);
+				}
+				else {
+					throw new Error('Argument missing');
+				}
+			}
+			 
+			 // Filter null values for array data to handle ignore_nodata
+			if (isArrayData) {
+				argList = argList.filter(v => v !== null);
+			}
+
+			if (operator) {
+				let strongOps = ['/', '*']; // "Punktrechnung" vor
+				let weakOps = ['-', '+']; // "Strichrechung"
+				let formula = argList
+					.map(v => v < 0 ? '(' + v + ')' : v) // Put negative values in brackets
+					.join(operator); // Merge everything together
+				
+				// Check whether brackets are required
+				if (
+					!parentOperator // No brackets on top-level
+					|| (weakOps.includes(parentOperator) && weakOps.includes(operator)) // If operators are both weak, no brackets required
+					|| (strongOps.includes(parentOperator) && strongOps.includes(operator)) // If operators are both strong, no brackets required
+					|| operator === '^' // No brackets required for power, it's the strongest operation
+					|| (weakOps.includes(parentOperator) && strongOps.includes(operator)) // If the parent operation is a weak operation (+/-) and this is a strong operation, no brackets required
+				) {
+					return formula;
+				}
+				else {
+					return '(' + formula + ')';
+				}
+			}
+			else {
+				return node.process_id + '(' + argList.join(', ') + ')';
 			}
 		},
 		isMathProcess(p, excludeOperators = true) {
@@ -178,7 +295,7 @@ export default {
 				// Set result node
 				this.result[res.from_node].result = true;
 				// Send result
-				this.$emit('save', this.result);
+				this.$emit('save', this.result, this.replace);
 				this.$refs.modal.close();
 			} catch(e) {
 				Utils.exception(this, e);
@@ -225,6 +342,17 @@ export default {
 			}
 		},
 		getRef(value) {
+			// Convert native data types
+			if (value === 'true') {
+				return true;
+			}
+			else if (value === 'false') {
+				return false;
+			}
+			else if (value === 'null') {
+				return null;
+			}
+
 			// Output of a process
 			if (typeof value === 'string' && value.startsWith('#')) {
 				let nodeId = value.substring(1);
@@ -233,23 +361,24 @@ export default {
 				}
 			}
 			// Array labels
-			if (this.supportsArrayElementWithLabels && typeof value === 'string' && value.startsWith('$')) {
-				let label = value.substring(1);
-				// ToDo 1.0: Populate label parameter
-				// ToDo: Only create if it doesn't exist in process graph yet
-				if (label in this.arrayElements) {
-					return this.arrayElements[label];
-				}
-				else {
-					let arrayElement = this.addProcess("array_element", {
+			if (this.supportsArrayElement && typeof value === 'string' && value.startsWith('$')) {
+				let ref = value.substring(1);
+				if (!(ref in this.arrayElements)) {
+					// ToDo: Check whether label is really supported - see implementation for supportsArrayElement()
+					let args = {
 						data: {
-							from_argument: this.pgParameters[0].id
-						},
-						label: label
-					});
-					this.arrayElements[label] = arrayElement;
-					return arrayElement;
+							from_parameter: this.pgParameters[0].id
+						}
+					};
+					if (ref.match(/^\d+$/)) {
+						args.index = parseInt(ref, 10);
+					}
+					else {
+						args.label = ref;
+					}
+					this.arrayElements[ref] = this.addProcess("array_element", args);
 				}
+				return this.arrayElements[ref];
 			}
 
 			// Everything else is a parameter
