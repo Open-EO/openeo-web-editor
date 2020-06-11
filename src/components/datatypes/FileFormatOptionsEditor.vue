@@ -8,7 +8,7 @@
 						<Description :description="parameter.description" />
 					</div>
 				</label>
-				<ParameterDataTypes :uid="uid" :ref="parameter.name" :editable="editable" :spec="parameter" v-model="options[parameter.name]" />
+				<ParameterDataTypes :ref="parameter.name" :editable="editable" :spec="parameter" v-model="options[parameter.name]" />
 			</div>
 		</template>
 		<template v-else>
@@ -46,8 +46,7 @@ export default {
 	},
 	data() {
 		return {
-			options: this.value,
-			uid: '_' + Utils.getUniqueId(),
+			options: this.value
 		};
 	},
 	computed: {

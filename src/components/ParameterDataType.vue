@@ -17,7 +17,7 @@
 		<!-- Null -->
 		<div class="description" v-else-if="type === 'null'"><i class="fas fa-info-circle"></i> This is set to&nbsp;<strong><tt>null</tt></strong>, which is usually used as placeholder for no-data values or a default value.</div>
 		<!-- Select Boxes (collection id, job id, epsg code, in/output format, service type, billing plan, enums) -->
-		<SelectBox v-else-if="isSelection" v-model="state" :key="type" :type="type" :editable="editable" :schema="schema" :context="context"></SelectBox>
+		<SelectBox v-else-if="isSelection" v-model="state" :key="type" :type="type" :editable="editable" :schema="schema" :context="dependency"></SelectBox>
 		<!-- Temporal (date, time, date-time, temporal-interval) -->
 		<TemporalPicker v-else-if="isTemporal" v-model="state" :key="type" :type="type" :editable="editable"></TemporalPicker>
 		<!-- Bounding Box -->
@@ -27,11 +27,11 @@
 		<!-- Process Editor -->
 		<Editor v-else-if="type === 'process-graph'" class="callbackEditor" :id="name" :editable="editable" :pgParameters="schema.getCallbackParameters()" :showDiscoveryToolbar="true" v-model="state" />
 		<!-- Output format options -->
-		<FileFormatOptionsEditor v-else-if="type === 'output-format-options' || type === 'input-format-options'" ref="fileFormatOptionsEditor" :type="type" v-model="state" :format="context"></FileFormatOptionsEditor>
+		<FileFormatOptionsEditor v-else-if="type === 'output-format-options' || type === 'input-format-options'" ref="fileFormatOptionsEditor" :type="type" v-model="state" :format="dependency"></FileFormatOptionsEditor>
 		<!-- Budget -->
 		<Budget v-else-if="type === 'budget'" v-model="state" :editable="editable" />
 		<!-- UDF-Code -->
-		<TextEditor class="fieldValue textarea" v-else-if="type === 'udf-code'" :id="name" :editable="editable" v-model="state" :language="context" />
+		<TextEditor class="fieldValue textarea" v-else-if="type === 'udf-code'" :id="name" :editable="editable" v-model="state" :language="dependency" />
 		<!-- CommonMark -->
 		<TextEditor class="fieldValue textarea" v-else-if="type === 'commonmark'" :id="name" :editable="editable" v-model="state" language="markdown" />
 		<!-- WKT / PROJ -->
@@ -89,13 +89,12 @@ export default {
 		},
 		schema: Object,
 		value: {},
-		uid: String,
-		processId: String
+		processId: String,
+		context: {}
 	},
 	data() {
 		return {
-			state: this.value,
-			context: null
+			state: this.value
 		};
 	},
 	computed: {
@@ -176,6 +175,18 @@ export default {
 			else {
 				return this.state;
 			}
+		},
+		dependency() {
+			switch(this.type) {
+				case 'output-format-options':
+				case 'input-format-options':
+					return this.getValueFromOtherParameterByDataType(this.type.replace('-options', ''));
+				case 'udf-runtime-version':
+				case 'udf-code':
+					return this.getValueFromOtherParameterByDataType('udf-runtime');
+				default:
+					return undefined;
+			}
 		}
 	},
 	watch: {
@@ -198,30 +209,20 @@ export default {
 		},
 		async newValue(newVal, oldVal) {
 			this.$emit('input', newVal);
-			if (this.uid) {
-				this.emit('processParameterValueChanged', this.uid, this.processId, this.parameter, this.type, newVal, oldVal);
-			}
 		}
 	},
-	created() {
-		this.listen('processParameterValueChanged', this.processParameterValueChanged);
-	},
-	async mounted() {
-		await this.$nextTick();
-		this.emit('processParameterValueChanged', this.uid, this.processId, this.parameter, this.type, this.state, this.state, undefined);
-	},
 	methods: {
-		processParameterValueChanged(uid, processId, parameter, type, value, oldValue) {
-			if (this.uid !== uid) {
+		getValueFromOtherParameterByDataType(dataType) {
+			if (!Utils.isObject(this.context) || !Utils.isObject(this.context.schemas) || !Utils.isObject(this.context.values)) {
 				return;
 			}
-
-			if ((type === 'output-format' && this.type === 'output-format-options') || (type === 'input-format' && this.type === 'input-format-options')) {
-				this.context = value;
+			for(let name in this.context.schemas) {
+				let schema = this.context.schemas[name];
+				if (schema.dataType() === dataType) {
+					return this.context.values[name];
+				}
 			}
-			else if (type === 'udf-runtime' && (this.type === 'udf-runtime-version' || this.type === 'udf-code' || this.type === 'null')) {
-				this.context = value;
-			}
+			return;
 		},
 		convertToArray() {
 			this.state = [this.state];

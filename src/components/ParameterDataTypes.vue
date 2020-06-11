@@ -9,7 +9,7 @@
 			<i class="fas fa-info-circle"></i>
 			<Description :description="selectedSchema.description()" :compact="true" />
 		</div>
-		<ParameterDataType ref="editor" :uid="uid" :editable="editable" :parameter="parameter" :schema="selectedSchema" v-model="state" :processId="processId" @changeType="changeType" />
+		<ParameterDataType ref="editor" :editable="editable" :parameter="parameter" :schema="selectedSchema" v-model="state" :processId="processId" :context="context" @changeType="changeType" />
 	</div>
 </template>
 
@@ -92,11 +92,11 @@ export default {
 		},
 		processId: String,
 		value: {},
-		uid: String,
 		isItem: {
 			type: Boolean,
 			default: false
-		}
+		},
+		context: {}
 	},
 	data() {
 		return {
@@ -209,6 +209,9 @@ export default {
 		},
 		state(value) {
 			this.$emit('input', value);
+		},
+		selectedSchema(schema) {
+			this.$emit('schemaSelected', schema);
 		}
 	},
 	methods: {

@@ -10,7 +10,7 @@
 							<Description :description="param.description" />
 						</div>
 					</label>
-					<ParameterDataTypes :uid="uid" :ref="param.name" :editable="editable" :spec="param" v-model="values[param.name]" :processId="processId" />
+					<ParameterDataTypes :ref="param.name" :editable="editable" :spec="param" v-model="values[param.name]" :processId="processId" :context="context" @schemaSelected="updateType(param, $event)" />
 				</div>
 				<!-- We need a hidden submit button in the form tags to allow submiting the form via keyboard (enter key) -->
 				<button type="submit" style="display:none"></button>
@@ -40,16 +40,28 @@ export default {
 	},
 	data() {
 		return {
-			uid: '_' + Utils.getUniqueId(),
 			editableFields: [],
 			values: {},
+			schemas: {},
 			editable: true,
 			selectParameter: null,
 			saveCallback: null,
 			processId: null
 		};
 	},
+	computed: {
+		context() {
+			return {
+				values: this.values,
+				schemas: this.schemas,
+				parameters: this.editableFields
+			};
+		}
+	},
 	methods: {
+		updateType(parameter, schema) {
+			this.schemas[parameter.name] = schema;
+		},
 		displayLabel(param) {
 			if (typeof param.label === 'string' && param.label.length > 0) {
                 return param.label;
@@ -79,10 +91,17 @@ export default {
 
 			// ToDo: It's a bit hacky to have a fixed timeout set to allow the element to be available for scrolling => improve?!
 			setTimeout(() => {
-				if (this.selectParameter && Array.isArray(this.$refs[this.selectParameter]) && this.$refs[this.selectParameter][0]) {
-					this.$refs[this.selectParameter][0].$el.scrollIntoView();
+				let component = this.componentforParameter(this.selectParameter);
+				if (component) {
+					component.$el.scrollIntoView();
 				}
 			}, 100);
+		},
+		componentforParameter(name) {
+			if (this.selectParameter && Array.isArray(this.$refs[this.selectParameter]) && this.$refs[this.selectParameter][0]) {
+				return this.$refs[this.selectParameter][0];
+			}
+			return null;
 		}
 	}
 };

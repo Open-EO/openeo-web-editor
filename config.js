@@ -3,7 +3,7 @@ export default {
 	serverUrl: '',
 
 	// A message shown on the login page
-	loginMessage: '<strong>Note:</strong> This version of the Web Editor supports openEO API v1.0. <a href="/0.4">Click here to load the Web Editor supporting openEO API v0.4</a>',
+	loginMessage: '',
 
 	// Defaults for notifications
 	snotifyDefaults: {
