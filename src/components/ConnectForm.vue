@@ -43,7 +43,7 @@
 								</div>
 								<div class="row help">
 									<i class="fas fa-exclamation-circle"></i>
-									<span>You need to specify the <em>Client ID</em> provided to you by the provider. You need to allow the URL of this service as redirect URL with the authentication service.</span>
+									<span>You need to specify the <em>Client ID</em> provided to you by the provider. You need to allow the <a :href="redirectUrl" target="_blank" :title="redirectUrl">URL of this service</a> as redirect URL with the authentication service.</span>
 								</div>
 								<div class="row bottom">
 									<TermsOfServiceConsent />
@@ -174,7 +174,8 @@ export default {
 			clientId: '',
 			loading: false,
 			version: Package.version,
-			message: Config.loginMessage
+			message: Config.loginMessage,
+			redirectUrl: window.location.toString().split('?')[0]
 		};
 	},
 	async created() {
@@ -297,7 +298,7 @@ export default {
 					var options = {
 						automaticSilentRenew: true
 					};
-					await provider.login(this.clientId, window.location.toString(), options);
+					await provider.login(this.clientId, this.redirectUrl, options);
 				}
 				else { // noauth/discovery
 					window.history.pushState({reset: true, serverUrl: this.serverUrl, autoConnect: true, skipLogin: true}, "", ".?server=" + this.serverUrl + "&discover=1");
