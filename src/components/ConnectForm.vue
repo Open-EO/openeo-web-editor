@@ -246,7 +246,7 @@ export default {
 				else if (type === 'oidc') {
 					await this.authenticateOIDC({
 						client_id: this.clientId,
-						redirect_uri: window.location,
+						redirect_uri: window.location.toString().split('?')[0],
 						scope: 'openid email',
 						uiMethod: 'popup',
 						automaticSilentRenew: true
