@@ -190,7 +190,11 @@ export default {
 
 		// Do this after the other initial work as the await delays execution and makes mounted run before created sometimes.
 		OidcProvider.setUiMethod('popup');
-		await OidcProvider.signinCallback();
+		try {
+			await OidcProvider.signinCallback();
+		} catch (error) {
+			Utils.exception(this, error);
+		}
 	},
 	mounted() {
 		window.onpopstate = evt => this.historyNavigate(evt);
@@ -290,11 +294,12 @@ export default {
 
 		async initDiscovery(provider = null) {
 			this.loading = true;
+			let authType = Utils.isObject(provider) && typeof provider.getType() === 'string' ? provider.getType() : null;
 			try {
-				if (Utils.isObject(provider) && provider.getType() === 'basic') {
+				if (authType === 'basic') {
 					await provider.login(this.username, this.password);
 				}
-				else if (Utils.isObject(provider) && provider.getType() === 'oidc') {
+				else if (authType === 'oidc') {
 					var options = {
 						automaticSilentRenew: true
 					};
@@ -310,7 +315,12 @@ export default {
 				}
 			} catch(error) {
 				console.log(error);
-				Utils.error(this, 'Sorry, credentials are wrong.');
+				if (authType === 'basic') {
+					Utils.error(this, 'Sorry, credentials are wrong.');
+				}
+				else {
+					Utils.exception(this, error);
+				}
 				this.loading = false;
 				return;
 			}
