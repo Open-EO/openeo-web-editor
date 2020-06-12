@@ -8,7 +8,7 @@
 			</span>
 			<span class="sepr" v-if="editable">
 				<button type="button" @click="addParameter" title="Add Parameter"><i class="fas fa-parking"></i></button>
-				<button type="button" v-if="supportsExpressionModal" @click="showExpressionModal" title="Insert formula"><i class="fas fa-calculator"></i></button>
+				<button type="button" v-if="supportsMath" :class="{highlightFormula: isMath}" @click="showExpressionModal" title="Insert/Edit formula"><i class="fas fa-square-root-alt"></i></button>
 			</span>
 			<button type="button" @click="$refs.blocks.toggleCompact()" :class="{compactMode: compactMode}" title="Compact Mode"><i class="fas fa-compress-arrows-alt"></i></button>
 			<button type="button" @click="$refs.blocks.perfectScale()" title="Scale to perfect size"><i class="fas fa-arrows-alt"></i></button>
@@ -40,9 +40,8 @@
 					/>
 			</div>
 		</div>
-		<SchemaModal ref="schemaModal" />
 		<ParameterModal ref="parameterModal" />
-		<ExpressionModal v-if="supportsExpressionModal" ref="expressionModal" :operatorMapping="operatorMapping" @showSchema="showSchemaModal" @save="insertNodes" />
+		<ExpressionModal v-if="editable && supportsMath" ref="expressionModal" @save="insertNodes" />
 	</div>
 </template>
 
@@ -52,7 +51,6 @@ import Utils from '../utils.js';
 import EditorToolbar from './EditorToolbar.vue';
 import DiscoveryToolbar from './DiscoveryToolbar.vue';
 import ParameterModal from './modals/ParameterModal.vue'; // Add a paremeter modal to each visual editor, otherwise we can't open a parameter modal over a parameter modal (e.g. edit the parameters of a callback)
-import SchemaModal from './modals/SchemaModal.vue';
 import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
 
 export default {
@@ -63,7 +61,6 @@ export default {
 		EditorToolbar,
 		DiscoveryToolbar,
 		ParameterModal,
-		SchemaModal,
 		// Async loading for smaller starting bundle
 		ExpressionModal: () => import('./modals/ExpressionModal.vue')
 	},
@@ -90,18 +87,7 @@ export default {
 		...Utils.mapState(['collections']),
 		...Utils.mapGetters(['processRegistry']),
 		...Utils.mapGetters('userProcesses', {getProcessById: 'getAllById'}),
-		supportsExpressionModal() {
-			if (!this.editable) {
-				return false;
-			}
-			for(let i in this.operatorMapping) {
-				let processId = this.operatorMapping[i];
-				if (!this.getProcessById(processId)) {
-					return false;
-				}
-			}
-			return true;
-		}
+		...Utils.mapGetters('userProcesses', ['supportsMath', 'isMathProcess'])
 	},
 	data() {
 		return {
@@ -110,14 +96,13 @@ export default {
 			compactMode: false,
 			hasSelection: false,
 			isFullScreen: false,
-			operatorMapping: {
-				"-": "subtract",
-				"+": "add",
-				"/": "divide",
-				"*": "multiply",
-				"^": "power"
-			}
+			isMath: false
 		};
+	},
+	watch: {
+		value(value) {
+			this.isMath = this.isMathProcess(value);
+		}
 	},
 	methods: {
 		...Utils.mapActions('userProcesses', {readUserProcess: 'read'}),
@@ -192,13 +177,7 @@ export default {
 		},
 
 		showSchemaModal(name, schema) {
-			if (!this.$refs.schemaModal) {
-				return;
-			}
-			const msg = "This is a parameter for a user-defined process.\n"
-						+ " It is a value made available by the parent entity (usually another process or a secondary web service) that is executing this processes for further use.\n"
-						+ "The value will comply to the following data type(s):";
-			this.$refs.schemaModal.show(name, schema, msg);
+			this.emit('showSchema', name, schema);
 		},
 		showExpressionModal() {
 			this.$refs.expressionModal.show(this.value, this.$refs.blocks.getPgParameters());
@@ -257,7 +236,7 @@ export default {
 			return await this.$refs.blocks.import({
 				process_graph: nodes
 			}, {
-				clear: this.replace
+				clear: replace
 			});
 		}
 
@@ -336,5 +315,24 @@ export default {
 	z-index: 3;
 	width: 100%;
 	height: 100%;
+}
+
+@keyframes glowing {
+  0% {
+    background-color: green;
+    box-shadow: 0 0 3px green;
+  }
+  50% {
+    background-color: green;
+    box-shadow: 0 0 10px green;
+  }
+  100% {
+    background-color: green;
+    box-shadow: 0 0 3px green;
+  }
+}
+
+.highlightFormula {
+    animation: glowing 1500ms infinite;
 }
 </style>

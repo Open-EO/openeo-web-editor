@@ -25,6 +25,9 @@ Shows collection information in a modal.
 ### showProcess(id)
 Shows process information in a modal.
 
+### showSchema(name, schema, message)
+Shows schema information in a modal.
+
 ## Viewer & Web Services
 
 ### viewBlob(Blob $data, $title = null)

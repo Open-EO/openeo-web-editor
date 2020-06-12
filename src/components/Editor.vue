@@ -84,14 +84,6 @@ export default {
 				return this.$refs.graphBuilder;
 			}
 		},
-		inactiveEditor() {
-			if (this.$refs.tabs.getActiveTabId() !== 'source') {
-				return this.$refs.sourceEditor;
-			}
-			else {
-				return this.$refs.graphBuilder;
-			}
-		},
 		insertProcess(id) {
 			this.activeEditor().insertProcess(id);
 		},

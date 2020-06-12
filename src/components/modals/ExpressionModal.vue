@@ -8,8 +8,8 @@
 						<kbd v-for="op in operators" :key="op.op" :title="op.title" @click="emit('showProcess', op.processId)" class="click" draggable="true" @dragstart="onDrag($event, 'operators', op.op)">{{ op.op }}</kbd>
 					</p>
 					<p>Supported <strong>mathematical functions</strong>:
-						<template v-if="functions.length">
-							<br /><kbd v-for="func in functions" :key="func.id" :title="func.summary" @click="emit('showProcess', func.id)" class="click" draggable="true" @dragstart="onDrag($event, 'functions', func)">{{ func.id }}</kbd>
+						<template v-if="mathProcesses.length">
+							<br /><kbd v-for="func in mathProcesses" :key="func.id" :title="func.summary" @click="emit('showProcess', func.id)" class="click" draggable="true" @dragstart="onDrag($event, 'functions', func)">{{ func.id }}</kbd>
 						</template>
 						<template v-else>None</template>
 					</p>
@@ -21,7 +21,7 @@
 					</p>
 					<p><strong>Parameters</strong>: If a variable is found in the formula which can't be resolved to a pre-defined parameter, a new parameter will be created for it. Available pre-defined parameters:
 						<template v-if="pgParameters.length">
-							<br /><kbd v-for="param in pgParameters" :key="param.id" @click="$emit('showSchema', param.id, param.spec.schema)" class="click" draggable="true" @dragstart="onDrag($event, 'pgParameters', param.id)">{{ param.id }}</kbd>
+							<br /><kbd v-for="param in pgParameters" :key="param.id" @click="emit('showSchema', param.id, param.spec.schema)" class="click" draggable="true" @dragstart="onDrag($event, 'pgParameters', param.id)">{{ param.id }}</kbd>
 						</template>
 						<template v-else>None</template>
 					</p>
@@ -43,7 +43,7 @@ import TapDigit from '../math/TapDigit.js'
 import Utils from '../../utils.js';
 import TextEditor from '../TextEditor.vue';
 import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
-import { ProcessSchema } from '../blocks/processSchema.js';
+import { Process } from '../blocks/processSchema.js';
 import { ProcessGraph } from '@openeo/js-processgraphs';
 
 export default {
@@ -52,9 +52,6 @@ export default {
 	components: {
 		Modal,
 		TextEditor
-	},
-	props: {
-		operatorMapping: Object
 	},
 	data() {
 		return {
@@ -68,7 +65,9 @@ export default {
 		};
 	},
 	computed: {
+		...Utils.mapState('userProcesses', ['operatorMapping', 'arrayOperatorMapping']),
 		...Utils.mapGetters(['processRegistry']),
+		...Utils.mapGetters('userProcesses', ['mathProcesses', 'isMathProcess', 'reverseOperatorMapping']),
 		operators() {
 			var ops = [];
 			for(var op in this.operatorMapping) {
@@ -78,27 +77,12 @@ export default {
 			}
 			return ops;
 		},
-		reverseOperatorMapping() {
-			let mapping = {};
-			for(var op in this.operatorMapping) {
-				mapping[this.operatorMapping[op]] = op;
-			}
-			mapping['product'] = '*';
-			mapping['sum'] = '+';
-			return mapping;
-		},
-		functions() {
-			return this.processRegistry.all().filter(this.isMathProcess);
-		},
-		importProcesses() {
-			return this.functions.map(p => p.id).concat(Object.values(this.operatorMapping)).concat(['array_element', 'product', 'sum']);
-		},
 		results() {
 			let resultNodes = [];
 			for(var id in this.processGraph) {
 				var node = this.processGraph[id];
-				var process = this.processRegistry.get(node.process_id);
-				if (this.isMathProcess(process, false)) {
+				var p = this.processRegistry.get(node.process_id);
+				if (Process.isMathProcess(p)) {
 					resultNodes.push(id);
 				}
 			}
@@ -167,11 +151,7 @@ export default {
 			}
 		},
 		importFormula(process) {
-			if (!Utils.isObject(process) || !Utils.isObject(process.process_graph)) {
-				return;
-			}
-			let unsupportedFuncs = Object.values(process.process_graph).filter(node => !this.importProcesses.includes(node.process_id));
-			if (unsupportedFuncs.length) {
+			if (!this.isMathProcess(process)) {
 				return;
 			}
 
@@ -190,7 +170,7 @@ export default {
 
 			let operator = this.reverseOperatorMapping[node.process_id];
 			let process = this.processRegistry.get(node.process_id);
-			let isArrayData = (node.process_id === 'sum' || node.process_id === 'product');
+			let isArrayData = (typeof this.arrayOperatorMapping[node.process_id] !== 'undefined');
 			let parameterNames = (process.parameters || []).map(p => p.name);
 
 			let convertValue = value => {
@@ -260,47 +240,6 @@ export default {
 			else {
 				return node.process_id + '(' + argList.join(', ') + ')';
 			}
-		},
-		isMathProcess(p, excludeOperators = true) {
-			// Skip processes handled by operators
-			if (excludeOperators) {
-				let operatorProcesses = Object.values(this.operatorMapping);
-				if (operatorProcesses.includes(p.id)) {
-					return false;
-				}
-			}
-
-			// Process must return a numerical value
-			if (!Utils.isObject(p.returns) || !p.returns.schema) {
-				return false;
-			}
-
-			let allowedTypes = ['number', 'integer', 'any'];
-			let returns = new ProcessSchema(p.returns.schema);
-			if (!allowedTypes.includes(returns.nativeDataType())) {
-				return false;
-			}
-
-			// Required Process parameters must accept numerical values
-			if (Array.isArray(p.parameters)) {
-				for(var i in p.parameters) {
-					let param = p.parameters[i];
-					if (param.optional) {
-						continue; // Skip optional parameters
-					}
-					if (!param.schema) {
-						return false;
-					}
-					let schema = new ProcessSchema(param.schema);
-					if (!allowedTypes.includes(schema.nativeDataType())) {
-						return false;
-					}
-				}
-			}
-			
-			// ToDo: Parameters with a dash (and other operators) in them are a problem
-
-			return true;
 		},
 		createResult() {
 			if (this.input.length === 0) {
@@ -467,6 +406,7 @@ export default {
 }
 .editor {
 	width: 100%;
+	min-height: 4em;
 	height: 10em;
 }
 kbd {

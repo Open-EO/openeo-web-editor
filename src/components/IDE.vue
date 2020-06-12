@@ -32,6 +32,7 @@
 		<ServiceInfoModal ref="serviceModal" />
 		<JobInfoModal ref="jobModal" />
 		<ParameterModal ref="parameterModal" />
+		<SchemaModal ref="schemaModal" />
 	</div>
 </template>
 
@@ -49,6 +50,7 @@ import ServerInfoModal from './modals/ServerInfoModal.vue';
 import JobInfoModal from './modals/JobInfoModal.vue';
 import ServiceInfoModal from './modals/ServiceInfoModal.vue';
 import ParameterModal from './modals/ParameterModal.vue';
+import SchemaModal from './modals/SchemaModal.vue';
 import DiscoveryToolbar from './DiscoveryToolbar.vue';
 
 export default {
@@ -65,7 +67,8 @@ export default {
 		ServerInfoModal,
 		JobInfoModal,
 		ServiceInfoModal,
-		ParameterModal
+		ParameterModal,
+		SchemaModal
 	},
 	data() {
 		return {
@@ -102,6 +105,7 @@ export default {
 		this.listen('showJobInfo', this.showJobInfo);
 		this.listen('showProcessInfo', this.showProcessInfo);
 		this.listen('showServiceInfo', this.showServiceInfo);
+		this.listen('showSchema', this.showSchemaInfo);
 		this.listen('showDataForm', this.showDataForm);
 		this.listen('editProcess', this.editProcess);
 
@@ -195,6 +199,15 @@ export default {
 
 		showProcessInfo(process) {
 			this._showProcessInfo(process);
+		},
+
+		showSchemaInfo(name, schema, msg = null) {
+			if (msg === null) {
+				msg = "This is a parameter for a user-defined process.\n"
+					+ "It is a value made available by the parent entity (usually another process or a secondary web service) that is executing this processes for further use.\n"
+					+ "The value will comply to the following data type(s):";
+			}
+			this.$refs.schemaModal.show(name, schema, msg);
 		},
 
 		_showProcessInfo(process) {

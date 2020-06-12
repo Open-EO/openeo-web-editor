@@ -42,4 +42,14 @@ export default {
 #schemaModal .json-schema {
 	border: 0;
 }
+#schemaModal table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 0.95em;
+}
+#schemaModal table td,
+#schemaModal table th {
+	border: 1px solid #ddd;
+	padding: 3px;
+}
 </style>

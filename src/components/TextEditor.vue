@@ -251,12 +251,12 @@ export default {
 	border: 1px solid #ddd;
 }
 .fullscreen {
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	z-index: 9990; /* Snotify has 9999 and is intentionally above the fullscreen */
+	position: absolute !important;
+	top: 0 !important;
+	left: 0 !important;
+	width: 100% !important;
+	height: 100% !important;
+	z-index: 9990 !important; /* Snotify has 9999 and is intentionally above the fullscreen */
 }
 .sourceCodeEditor {
 	flex-grow: 1;
