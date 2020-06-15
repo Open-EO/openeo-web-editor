@@ -12,10 +12,7 @@
 			</span>
 			<button type="button" @click="$refs.blocks.toggleCompact()" :class="{compactMode: compactMode}" title="Compact Mode"><i class="fas fa-compress-arrows-alt"></i></button>
 			<button type="button" @click="$refs.blocks.perfectScale()" title="Scale to perfect size"><i class="fas fa-arrows-alt"></i></button>
-			<button type="button" @click="toggleFullScreen()" :title="isFullScreen ? 'Close fullscreen' : 'Show fullscreen'">
-				<span v-show="isFullScreen"><i class="fas fa-compress"></i></span>
-				<span v-show="!isFullScreen"><i class="fas fa-expand"></i></span>
-			</button>
+			<FullscreenButton :element="() => this.$refs.visualEditor" @changed="() => this.$refs.blocks.perfectScale()" />
 		</EditorToolbar>
 		<div class="editorSplitter">
 			<DiscoveryToolbar v-if="showDiscoveryToolbar && editable" class="discoveryToolbar" :onAddCollection="insertCollection" :onAddProcess="insertProcess" />
@@ -52,6 +49,7 @@ import EditorToolbar from './EditorToolbar.vue';
 import DiscoveryToolbar from './DiscoveryToolbar.vue';
 import ParameterModal from './modals/ParameterModal.vue'; // Add a paremeter modal to each visual editor, otherwise we can't open a parameter modal over a parameter modal (e.g. edit the parameters of a callback)
 import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
+import FullscreenButton from './FullscreenButton.vue';
 
 export default {
 	name: 'VisualEditor',
@@ -61,6 +59,7 @@ export default {
 		EditorToolbar,
 		DiscoveryToolbar,
 		ParameterModal,
+		FullscreenButton,
 		// Async loading for smaller starting bundle
 		ExpressionModal: () => import('./modals/ExpressionModal.vue')
 	},
@@ -95,7 +94,6 @@ export default {
 			canRedo: false,
 			compactMode: false,
 			hasSelection: false,
-			isFullScreen: false,
 			isMath: false
 		};
 	},
@@ -143,20 +141,6 @@ export default {
 			else if (collection) {
 				event.preventDefault();
 				this.insertCollection(collection, event.pageX, event.pageY);
-			}
-		},
-
-		toggleFullScreen() {
-			var element = this.$refs.visualEditor;
-			if (!this.isFullScreen) {
-				this.isFullScreen = true;
-				element.classList.add('fullscreen');
-				this.$refs.blocks.perfectScale();
-			}
-			else {
-				this.isFullScreen = false;
-				element.classList.remove('fullscreen');
-				this.$refs.blocks.perfectScale();
 			}
 		},
 
@@ -276,12 +260,6 @@ export default {
 }
 
 .visualEditor.fullscreen {
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	z-index: 9990; /* Snotify has 9999 and is intentionally above the fullscreen */
 	display: flex;
 	flex-direction: column;
 }

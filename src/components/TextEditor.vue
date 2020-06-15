@@ -5,10 +5,7 @@
 				<button type="button" @click="editor.undo()" :disabled="!canUndo" title="Revert last change"><i class="fas fa-undo-alt"></i></button>
 				<button type="button" @click="editor.redo()" :disabled="!canRedo" title="Redo last reverted change"><i class="fas fa-redo-alt"></i></button>
 			</span>
-			<button type="button" @click="toggleFullScreen()" :title="isFullScreen ? 'Close fullscreen' : 'Show fullscreen'">
-				<span v-show="isFullScreen"><i class="fas fa-compress"></i></span>
-				<span v-show="!isFullScreen"><i class="fas fa-expand"></i></span>
-			</button>
+			<FullscreenButton :element="$el" />
 		</EditorToolbar>
 		<div :id="id" class="sourceCodeEditor"></div>
 	</div>
@@ -17,6 +14,7 @@
 <script>
 import Utils from '../utils.js';
 import EditorToolbar from './EditorToolbar.vue';
+import FullscreenButton from './FullscreenButton.vue';
 import { ProcessGraph } from '@openeo/js-processgraphs';
 
 import CodeMirror from 'codemirror';
@@ -42,7 +40,8 @@ window.jsonlint = jsonlint;
 export default {
 	name: 'TextEditor',
 	components: {
-		EditorToolbar
+		EditorToolbar,
+		FullscreenButton
 	},
 	props: {
 		id: String,
@@ -107,8 +106,7 @@ export default {
 			canUndo: false,
 			canRedo: false,
 			editor: null,
-			emitValue: this.value,
-			isFullScreen: false
+			emitValue: this.value
 		}
 	},
 	watch: {
@@ -158,17 +156,6 @@ export default {
 			let history = this.editor.getDoc().historySize();
 			this.canUndo = history.undo > 0;
 			this.canRedo = history.redo > 0;
-		},
-		toggleFullScreen() {
-			var element = this.$el;
-			if (!this.isFullScreen) {
-				this.isFullScreen = true;
-				element.classList.add('fullscreen');
-			}
-			else {
-				this.isFullScreen = false;
-				element.classList.remove('fullscreen');
-			}
 		},
 		commit() {
 			var value = this.editor.getValue();
@@ -249,14 +236,6 @@ export default {
 	display: flex;
 	flex-direction: column;
 	border: 1px solid #ddd;
-}
-.fullscreen {
-	position: absolute !important;
-	top: 0 !important;
-	left: 0 !important;
-	width: 100% !important;
-	height: 100% !important;
-	z-index: 9990 !important; /* Snotify has 9999 and is intentionally above the fullscreen */
 }
 .sourceCodeEditor {
 	flex-grow: 1;

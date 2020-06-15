@@ -1,6 +1,15 @@
 <template>
 	<div :class="{editor: true, array: !isObject, object: isObject}">
-		<draggable v-model="elements" handle=".mover">
+		<div class="buttons">
+			<button type="button" class="addBtn" v-if="editable" @click="add()"><i class="fas fa-plus"></i> Add</button>
+			<FullscreenButton :element="() => this.$el" />
+		</div>
+		<div v-if="!elements.length" class="empty description">
+			<i class="fas fa-info-circle"></i>
+			<template v-if="isObject">&nbsp;Object is empty</template>
+			<template v-else>&nbsp;Array is empty</template>
+		</div>
+		<draggable v-else v-model="elements" handle=".mover">
 			<div class="fieldValue element" v-for="(e, k) in elements" :key="e.id">
 				<label class="fieldLabel" :key="k">
 					<input v-if="isObject" v-model="e.key" type="text" :disabled="!editable"/>
@@ -11,19 +20,19 @@
 				<button v-show="editable && !isObject" class="mover" type="button"><i class="fas fa-arrows-alt"></i></button>
 			</div>
 		</draggable>
-		<button type="button" class="addBtn" v-if="editable" @click="add()"><i class="fas fa-plus"></i> Add</button>
 	</div>
 </template>
 
 <script>
 import draggable from 'vuedraggable';
-
+import FullscreenButton from '../FullscreenButton.vue';
 import Utils from '../../utils.js';
 
 export default {
 	name: 'ObjectEditor',
 	components: {
 		draggable,
+		FullscreenButton,
 		ParameterDataTypes: () => import('../ParameterDataTypes.vue')
 	},
 	props: {
@@ -154,6 +163,13 @@ export default {
 }
 .addBtn {
 	margin: 0.25em;
+}
+.empty.description {
+	padding: 0.5em 0.25em;
+}
+.fullscreen {
+	padding: 1em;
+	box-sizing: border-box;
 }
 .mover {
 	cursor: pointer;
