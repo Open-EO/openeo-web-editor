@@ -112,7 +112,7 @@ export default {
 			this.input = '';
 			this.replace = false;
 			this.pgParameters = pgParameters;
-			this.processGraph = process.process_graph || {};
+			this.processGraph = Utils.isObject(process) && Utils.isObject(process.process_graph) ? process.process_graph : {};
 			try {
 				this.importFormula(process);
 			} catch (error) {
