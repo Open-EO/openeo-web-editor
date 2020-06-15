@@ -26,7 +26,9 @@ export default {
 			columns: {
 				path: {
 					name: 'Path',
-					primaryKey: true
+					primaryKey: true,
+					sortFn: Utils.sortByPath,
+					sort: 'asc'
 				},
 				size: {
 					name: 'Size',
@@ -39,7 +41,8 @@ export default {
 				},
 				actions: {
 					name: 'Actions',
-					filterable: false
+					filterable: false,
+					sort: false
 				}
 			},
 			uploadProgress: 0,

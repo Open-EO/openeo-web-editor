@@ -27,7 +27,8 @@ export default {
 			columns: {
 				id: {
 					name: 'ID',
-					primaryKey: true
+					primaryKey: true,
+					sort: 'asc'
 				},
 				summary: {
 					name: 'Summary',
@@ -35,7 +36,8 @@ export default {
 				},
 				actions: {
 					name: 'Actions',
-					filterable: false
+					filterable: false,
+					sort: false
 				}
 			}
 		};

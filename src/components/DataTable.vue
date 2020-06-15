@@ -12,7 +12,7 @@
 		</div>
 		<table v-if="data.length > 0">
 			<tr>
-				<th v-for="(col, id) in columns" v-show="!col.hide" :key="id" :class="id">{{ col.name }}</th>
+				<th v-for="(col, id) in columns" v-show="!col.hide" :key="id" :class="thClasses(id)" @click="enableSort(id)" :title="thTitle(id)">{{ col.name }}</th>
 			</tr>
 			<tr v-for="(row, i) in view" :key="i">
 				<td v-for="(col, id) in columns" v-show="!col.hide" :key="id" 
@@ -56,15 +56,34 @@ export default {
 			filterValue: null,
 			primaryKey: null,
 			noDataMessage: 'Sorry, no data available.',
-			editField: null
+			editField: null,
+			sortState: {
+				id: null,
+				direction: null
+			}
 		};
 	},
 	watch: {
-		data(newVal, oldVal) {
+		data() {
 			this.updateView();
 		},
-		filterValue(newVal, oldVal) {
+		filterValue() {
 			this.updateView();
+		},
+		sortState() {
+			this.updateView();
+		},
+		columns: {
+			immediate: true,
+			handler() {
+				for(let id in this.columns) {
+					let direction = this.columns[id].sort;
+					if (['asc', 'desc'].includes(direction)) {
+						this.enableSort(id, direction);
+						break;
+					}
+				}
+			}
 		}
 	},
 	computed: {
@@ -143,36 +162,6 @@ export default {
 			console.warn(error);
 			this.noDataMessage = "Sorry, an unknown error has occured.";
 		},
-/*		removeData(id) {
-			if (this.primaryKey === null) {
-				throw new Error('No primary key specified.');
-			}
-			this.data = this.data.filter(row => row[this.primaryKey] != id);
-			if(this.data.length == 0) {
-				this.setNoData('');  // empty
-			}
-		},
-		addData(newData) {
-			if (!newData.hasOwnProperty(this.primaryKey)) {
-				throw new Error('Object does not contain a value for the primary key.');
-			}
-			this.data.push(newData);
-		},
-		replaceData(newData) {
-			if (this.primaryKey === null) {
-				throw new Error('No primary key specified.');
-			}
-			if (!newData.hasOwnProperty(this.primaryKey)) {
-				throw new Error('Object does not contain a value for the primary key.');
-			}
-			const index = this.data.findIndex(row => row[this.primaryKey] == newData[this.primaryKey]);
-			if (index >= 0) {
-				this.$set(this.data, index, newData);
-			}
-			else {
-				this.data.push(newData);
-			}
-		}, */
 		value(row, col, id) {
 			var data;
 			if (typeof row === 'object') {
@@ -189,16 +178,61 @@ export default {
 		formattedValue(row, col, id) {
 			return this.format(this.value(row, col, id), col);
 		},
-		sort() {
-			// Sort this.view...
+		thClasses(id) {
+			let col = this.columns[id];
+			let classes = [id];
+			if (col.sort !== false) {
+				classes.push('sortable');
+				if (this.sortState.id === id) {
+					classes.push('sort-' + this.sortState.direction);
+				}
+			}
+			return classes;
 		},
-		filter() {
-			if (!this.hasFilter) {
+		thTitle(id) {
+			let col = this.columns[id];
+			if (col.sort !== false) {
+				if (this.sortState.id === id && this.sortState.direction === 'asc') {
+					return "Click to sort column in descending order";
+				}
+				else {
+					return "Click to sort column in ascending order";
+				}
+			}
+			return null;
+		},
+		enableSort(id, direction = null) {
+			if (this.columns[id].sort === false) {
 				return;
+			}
+			if (direction === null) {
+				direction = this.sortState.id === id && this.sortState.direction === 'asc' ? 'desc' : 'asc';
+			}
+			this.sortState = {id, direction};
+		},
+		sort(data) {
+			let colId = this.sortState.id;
+			if (colId === null || !this.columns[colId]) {
+				return data;
+			}
+			let col = this.columns[colId];
+			if (col.sort === false) {
+				return data;
+			}
+
+			return data.slice(0).sort((a,b) => {
+				let fn = typeof col.sortFn === 'function' ? col.sortFn : Utils.compareStringCaseInsensitive;
+				let result = fn(a[colId], b[colId]);
+				return this.sortState.direction === 'desc' ? result * -1 : result;
+			});
+		},
+		filter(data) {
+			if (!this.hasFilter) {
+				return data;
 			}
 			var searchTerm = this.filterValue.toLowerCase();
 
-			this.view = this.view.filter(row => {
+			return data.filter(row => {
 				for(var key in row) {
 					var col = this.columns[key];
 					if (typeof col === 'undefined' || col.hasOwnProperty('filterable') && col.filterable === false) {
@@ -227,11 +261,7 @@ export default {
 				this.view = [];
 				return;
 			}
-			this.view = this.data;
-			if (this.data.length > 0) {
-				this.filter();
-				this.sort();
-			}
+			this.view = this.sort(this.filter(this.data));
 		},
 		format(value, col) {
 			if (typeof col.format === 'string') {
@@ -265,10 +295,45 @@ export default {
 </script>
 
 <style>
-.filter-icon {
+.dataTable .filter-icon {
 	margin-right: 3px;
 }
-.noSearchResults td {
+.dataTable th {
+	text-align: left !important;
+}
+.dataTable th.sortable {
+	cursor: pointer;
+}
+.dataTable th.sortable:hover {
+	cursor: pointer;
+	background-color: #eee;
+}
+.dataTable th.sort-asc:after, .dataTable th.sortable:after {
+	visibility: hidden;
+	font-family: "Font Awesome 5 Free";
+	margin-left: 5px;
+	font-weight: 900;
+	content: "\f0de";
+}
+.dataTable th.sort-asc:after, .dataTable th.sortable:hover:after {
+	visibility: visible;
+}
+.dataTable th.sort-desc:after {
+	visibility: visible;
+	font-family: "Font Awesome 5 Free";
+	margin-left: 5px;
+	font-weight: 900;
+	content: "\f0dd";
+}
+.dataTable th.sort-asc:hover:after, .dataTable th.sort-desc:hover:after {
+	visibility: visible;
+	font-family: "Font Awesome 5 Free";
+	margin-left: 5px;
+	font-weight: 900;
+	content: "\f0dc";
+}
+
+.dataTable .noSearchResults td {
 	text-align: center;
 }
 .dataTableFilter {
@@ -279,7 +344,7 @@ export default {
 	margin-bottom: 5px;
 	display: flex;
 }
-.edit {
+.dataTableFilter .edit {
 	cursor: pointer;
 }
 </style>

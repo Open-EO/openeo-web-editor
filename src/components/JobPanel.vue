@@ -46,9 +46,10 @@ export default {
 					name: 'Status',
 					stylable: true
 				},
-				submitted: {
+				created: {
 					name: 'Submitted',
-					format: 'DateTime'
+					format: 'DateTime',
+					sort: 'desc'
 				},
 				updated: {
 					name: 'Last update',
@@ -56,7 +57,8 @@ export default {
 				},
 				actions: {
 					name: 'Actions',
-					filterable: false
+					filterable: false,
+					sort: false
 				}
 			},
 			watchers: {},
@@ -323,7 +325,7 @@ export default {
 #JobPanel .status {
 	width: 10%;
 }
-#JobPanel .submitted {
+#JobPanel .created {
 	width: 18%;
 }
 #JobPanel .updated {
@@ -332,7 +334,7 @@ export default {
 #JobPanel .consumed_credits {
 	width: 5%;
 }
-#JobPanel td.consumed_credits, #JobPanel td.updated, #JobPanel td.submitted {
+#JobPanel td.consumed_credits, #JobPanel td.updated, #JobPanel td.created {
 	text-align: right;
 }
 </style>

@@ -12,7 +12,7 @@
 					<span v-else><i class="fas fa-question-circle"></i></span>
 				</span></div>
 
-				<div class="tabular" v-if="service.submitted"><label>Submitted:</label> <code class="value">{{ submitted }}</code></div>
+				<div class="tabular" v-if="service.created"><label>Submitted:</label> <code class="value">{{ created }}</code></div>
 			</section>
 
 			<section class="vue-component billing" v-if="service.plan || service.costs || service.budget">
@@ -82,8 +82,8 @@ export default {
 		hasConfig() {
 			return Utils.size(this.service.configuration) > 0;
 		},
-		submitted() {
-			return Utils.formatDateTime(this.service.submitted);
+		created() {
+			return Utils.formatDateTime(this.service.created);
 		},
 		type() {
 			if (typeof this.service.type === 'string') {

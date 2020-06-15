@@ -7,7 +7,7 @@
 
 			<section class="vue-component progress">
 				<h3>Progress</h3>
-				<div class="tabular"><label>Submitted:</label> <span class="value">{{ submitted }}</span></div>
+				<div class="tabular"><label>Submitted:</label> <span class="value">{{ created }}</span></div>
 				<div class="tabular"><label>Updated:</label> <span class="value">{{ updated }}</span></div>
 				<div class="tabular"><label>Status:</label> <span class="value status" :data-value="job.status">{{ job.status }}</span></div>
 				<div class="tabular" v-if="typeof job.progress === 'number'"><label>Progress:</label> <div class="value">
@@ -69,8 +69,8 @@ export default {
 	},
 	computed: {
 		...Utils.mapGetters(['formatCurrency']),
-		submitted() {
-			return Utils.formatDateTime(this.job.submitted);
+		created() {
+			return Utils.formatDateTime(this.job.created);
 		},
 		updated() {
 			if (this.job.updated) {

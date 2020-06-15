@@ -55,13 +55,15 @@ export default {
 					name: 'Enabled',
 					edit: this.toggleEnabled
 				},
-				submitted: {
+				created: {
 					name: 'Submitted',
-					format: 'DateTime'
+					format: 'DateTime',
+					sort: 'desc'
 				},
 				actions: {
 					name: 'Actions',
-					filterable: false
+					filterable: false,
+					sort: false
 				}
 			}
 		};
@@ -259,7 +261,7 @@ export default {
 	width: 10%;
 	text-align: center;
 }
-#ServicePanel .submitted {
+#ServicePanel .created {
 	width: 20%;
 }
 #ServicePanel .actions {
