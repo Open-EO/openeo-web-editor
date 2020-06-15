@@ -6,7 +6,7 @@
 		<Tab v-if="showServices" id="services" name="Web Services" icon="fa-cloud" @show="onShow" @hide="onHide">
 			<ServicePanel />
 		</Tab>
-		<Tab v-if="showCustomProcesses" id="customProcesses" name="Custom Processes" icon="fa-code-branch" @show="onShow" @hide="onHide">
+		<Tab v-if="showCustomProcesses" id="customProcesses" name="Custom Processes" icon="fa-sitemap" @show="onShow" @hide="onHide">
 			<CustomProcessPanel />
 		</Tab>
 		<Tab v-if="showFiles" id="files" name="Files" icon="fa-file" @show="onShow" @hide="onHide">

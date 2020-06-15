@@ -7,7 +7,7 @@
 			<button title="Details" @click="processInfo(p.row)" v-show="supportsRead"><i class="fas fa-info"></i></button>
 			<!-- ToDo: Align with 1.0, move edit metadata to visual model editor -->
 			<button title="Edit metadata" @click="editMetadata(p.row)" v-show="supportsUpdate"><i class="fas fa-edit"></i></button>
-			<button title="Edit process" @click="showInEditor(p.row)" v-show="supportsRead"><i class="fas fa-code-branch"></i></button>
+			<button title="Edit process" @click="showInEditor(p.row)" v-show="supportsRead"><i class="fas fa-project-diagram"></i></button>
 			<button title="Delete" @click="deleteProcess(p.row)" v-show="supportsDelete"><i class="fas fa-trash"></i></button>
 		</template>
 	</DataTable>

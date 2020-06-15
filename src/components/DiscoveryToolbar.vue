@@ -22,6 +22,7 @@
 				<strong @click="toggle('processes')" :title="'Processes ('+processesCount+')'"><span class="toggle">▸</span> Processes</strong>
 				<div class="discovery-entity" v-for="(e, i) in processes" v-show="processesShow[i]" :key="e.id" draggable="true" @dragstart="onDrag($event, 'process', e.id)">
 					<div class="discovery-info" @click="showProcessInfo(e)">
+						<i v-if="!e.native" class="custom-process fas fa-xs fa-sitemap" title="Custom Process"></i>
 						<strong :title="e.id">{{ e.id }}</strong>
 						<small v-if="e.summary" :title="e.summary">{{ e.summary }}</small>
 					</div>
@@ -248,8 +249,9 @@ export default {
 .discovery-info {
 	flex-grow: 1;
 	padding: 5px;
-	width: 100%;                   
+	width: 100%;
 	overflow: hidden; 
+	position: relative;
 }
 .discovery-info:hover {
 	background-color: #eee;
@@ -258,7 +260,7 @@ export default {
 	display: block;
 	font-weight: normal;
 	white-space: nowrap;
-	width: 100%;                   
+	width: 100%;
 	overflow: hidden; 
 	text-overflow: ellipsis;
 	color: #1665B6;
@@ -282,5 +284,10 @@ export default {
 .discovery-button:hover {
 	background-color: #eee;
 	color: #000;
+}
+.custom-process {
+	position: absolute;
+	top: 7px;
+	right: 5px;
 }
 </style>

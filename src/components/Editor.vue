@@ -1,6 +1,6 @@
 <template>
 	<Tabs class="editor" ref="tabs" id="customProcessContent" position="bottom">
-		<Tab id="visual" name="Visual Model" icon="fa-code-branch" :selected="true" :allowShow="canSwitchView" @show="showModel">
+		<Tab id="visual" name="Visual Model" icon="fa-project-diagram" :selected="true" :allowShow="canSwitchView" @show="showModel">
 			<VisualEditor class="visualEditorTab" ref="graphBuilder" :editable="editable" :pgParameters="pgParameters" :value="modelValue" @input="commit" @error="onError" :id="id + '_visual'" :showDiscoveryToolbar="showDiscoveryToolbar" />
 		</Tab>
 		<Tab id="source" name="Code" icon="fa-code" :allowShow="canSwitchView" @show="showCode">

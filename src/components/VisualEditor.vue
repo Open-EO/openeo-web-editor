@@ -125,18 +125,9 @@ export default {
 		onDrop(event) {
 			var processId = event.dataTransfer.getData("application/openeo-process");
 			var collection = event.dataTransfer.getData("application/openeo-collection");
-			var pg = event.dataTransfer.getData("application/openeo-process-graph");
 			if (processId) {
 				event.preventDefault();
-				let process = this.getProcessById(processId);
-				if (process != null && !process.native) {
-					this.readUserProcess({data: process})
-						.then(updated => this.insertProcess(updated.toJSON(), event.pageX, event.pageY))
-						.catch(error => Utils.exception(this, error, "Sorry, couldn't fully load custom process."));
-				}
-				else {
-					this.insertProcess(processId, event.pageX, event.pageY);
-				}
+				this.insertProcess(processId, event.pageX, event.pageY);
 			}
 			else if (collection) {
 				event.preventDefault();
@@ -207,8 +198,14 @@ export default {
 			}
 		},
 
-		insertProcess(name, x = null, y = null) {
+		async insertProcess(name, x = null, y = null) {
 			try {
+				// Fully load or update custom process
+				let process = this.getProcessById(name);
+				if (process != null && !process.native) {
+					await this.readUserProcess({data: process});
+				}
+				// Insert process
 				var pos = this.$refs.blocks.getPositionForPageXY(x, y);
 				this.$refs.blocks.addProcess(name, pos);
 			} catch(error) {

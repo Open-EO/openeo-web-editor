@@ -8,7 +8,7 @@
 			<button title="Details" @click="showJobInfo(p.row)" v-show="supportsRead"><i class="fas fa-info"></i></button>
 			<button title="Estimate" @click="estimateJob(p.row)" v-show="supports('estimateJob')"><i class="fas fa-file-invoice-dollar"></i></button>
 			<button title="Edit metadata" @click="editMetadata(p.row)" v-show="supportsUpdate && isJobInactive(p.row)"><i class="fas fa-edit"></i></button>
-			<button title="Edit process" @click="showInEditor(p.row)" v-show="supportsRead && isJobInactive(p.row)"><i class="fas fa-code-branch"></i></button>
+			<button title="Edit process" @click="showInEditor(p.row)" v-show="supportsRead && isJobInactive(p.row)"><i class="fas fa-project-diagram"></i></button>
 			<button title="Delete" @click="deleteJob(p.row)" v-show="supportsDelete"><i class="fas fa-trash"></i></button>
 			<button title="Start processing" @click="queueJob(p.row)" v-show="supports('startJob') && isJobInactive(p.row)"><i class="fas fa-play-circle"></i></button>
 			<button title="Cancel processing" @click="cancelJob(p.row)" v-show="supports('stopJob') && isJobActive(p.row)"><i class="fas fa-stop-circle"></i></button>

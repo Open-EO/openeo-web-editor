@@ -13,7 +13,7 @@
 		<template slot="actions" slot-scope="p">
 			<button title="Details" @click="serviceInfo(p.row)" v-show="supportsRead"><i class="fas fa-info"></i></button>
 			<button title="Edit metadata" @click="editMetadata(p.row)" v-show="supportsUpdate"><i class="fas fa-edit"></i></button>
-			<button title="Edit process" @click="showInEditor(p.row)" v-show="supportsRead"><i class="fas fa-code-branch"></i></button>
+			<button title="Edit process" @click="showInEditor(p.row)" v-show="supportsRead"><i class="fas fa-project-diagram"></i></button>
 			<button title="Delete" @click="deleteService(p.row)" v-show="supportsDelete"><i class="fas fa-trash"></i></button>
 			<button v-show="p.row.enabled && isMapServiceSupported(p.row.type)" title="View on map" @click="viewService(p.row)"><i class="fas fa-map"></i></button>
 		</template>
