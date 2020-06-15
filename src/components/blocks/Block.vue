@@ -33,7 +33,6 @@
 
 <script>
 import BlockParameter from './BlockParameter.vue';
-import VueUtils from '@openeo/vue-components/utils.js';
 import { ProcessGraph } from '@openeo/js-processgraphs';
 import Utils from '../../utils.js';
 import { ProcessParameter } from './processSchema';

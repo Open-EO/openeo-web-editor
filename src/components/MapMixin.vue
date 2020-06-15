@@ -126,7 +126,7 @@ export default {
 
 		addGeoJson(geojson) {
 			var sourceOpts = {};
-			if (Utils.validateGeoJsonSimple(geojson)) {
+			if (Utils.detectGeoJson(geojson)) {
 				sourceOpts.features = (new GeoJSON()).readFeatures(
 					geojson,
 					{

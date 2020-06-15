@@ -29,7 +29,6 @@ import Utils from '../../utils';
 import Modal from './Modal.vue';
 import Description from '@openeo/vue-components/components/Description.vue';
 import ParameterDataTypes from '../ParameterDataTypes.vue';
-import { Utils as VueUtils } from '@openeo/vue-components';
 
 export default {
 	name: 'ParameterModal',
@@ -67,7 +66,7 @@ export default {
                 return param.label;
             }
             else {
-                return VueUtils.prettifyString(param.name);
+                return Utils.prettifyString(param.name);
             }
 		},
 		save() {

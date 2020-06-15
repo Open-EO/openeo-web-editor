@@ -13,7 +13,6 @@
 import { ProcessSchema } from './processSchema.js';
 import Utils from '../../utils.js';
 import { ProcessGraph } from '@openeo/js-processgraphs';
-import { Utils as VueUtils } from '@openeo/vue-components';
 
 export default {
     name: 'BlockParameter',
@@ -397,11 +396,11 @@ export default {
         formatProcess(pg) {
             // ToDO: Earlier this was always a ProcessGraph Object, but that seems no longer to be the case. How to clean-up?
             if (pg instanceof ProcessGraph && pg.getNodeCount() === 1) {
-                return VueUtils.htmlentities(pg.getResultNode().process_id);
+                return Utils.htmlentities(pg.getResultNode().process_id);
             }
             var nodes = Object.values(pg.process_graph);
             if (nodes.length === 1) {
-                return VueUtils.htmlentities(nodes[0].process_id);
+                return Utils.htmlentities(nodes[0].process_id);
             }
             else {
                 return 'Process';
@@ -422,11 +421,11 @@ export default {
             }
             else if (typeof value === 'string') {
                 if (value.length > maxLength) {
-                    var text = VueUtils.htmlentities(value.substr(0, maxLength)) + '…';
-                    formattedValue = html ? '<span title="' + VueUtils.htmlentities(value) + '">' + text + '…</span>' : text;
+                    var text = Utils.htmlentities(value.substr(0, maxLength)) + '…';
+                    formattedValue = html ? '<span title="' + Utils.htmlentities(value) + '">' + text + '…</span>' : text;
                 }
                 else {
-                    formattedValue = VueUtils.htmlentities(value);
+                    formattedValue = Utils.htmlentities(value);
                 }
             }
             else if (typeof value === 'boolean') {
@@ -436,13 +435,13 @@ export default {
                 formattedValue = value.toString();
             }
             else {
-                formattedValue = VueUtils.htmlentities(JSON.stringify(value));
+                formattedValue = Utils.htmlentities(JSON.stringify(value));
             }
             return formattedValue;
         },
         formatArray(value, maxLength, html = true) {
             var formatted = value.map(v => this.formatValue(v, 25, false)).join(", ");
-            var unformatted = VueUtils.htmlentities_decode(formatted);
+            var unformatted = Utils.htmlentities_decode(formatted);
             if (unformatted.length > 0 && unformatted.length <= maxLength) {
                 return "[" + formatted + "]";
             }
@@ -465,12 +464,12 @@ export default {
             else if (typeof value.west !== 'undefined' && typeof value.east !== 'undefined' && typeof value.south !== 'undefined' && typeof value.north !== 'undefined') {
                 return 'Bounding Box';
             }
-            else if (Utils.validateGeoJsonSimple(value)) {
+            else if (Utils.detectGeoJson(value)) {
                 return value.type;
             }
 
             // Fallback to default
-            return html ? '<span title="' + VueUtils.htmlentities(JSON.stringify(value)) + '">Object</span>' : 'Object';
+            return html ? '<span title="' + Utils.htmlentities(JSON.stringify(value)) + '">Object</span>' : 'Object';
         }
     }
 }

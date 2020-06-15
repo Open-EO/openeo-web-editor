@@ -5,7 +5,6 @@
 <script>
 import MultiSelect from 'vue-multiselect'
 import Utils from '../../utils';
-import { Utils as VueUtils } from '@openeo/vue-components';
 
 export default {
 	name: 'SelectBox',
@@ -251,7 +250,7 @@ export default {
 			}
 		},
 		sortByLabel(a,b) {
-			return VueUtils.compareStringCaseInsensitive(a.label, b.label);
+			return Utils.compareStringCaseInsensitive(a.label, b.label);
 		},
 		addValue(value) {
 			this.selected = this.e(value);

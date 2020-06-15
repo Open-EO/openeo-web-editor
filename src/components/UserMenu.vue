@@ -31,7 +31,6 @@
 
 <script>
 import Utils from '../utils.js';
-import { Utils as VueUtils } from '@openeo/vue-components';
 
 export default {
 	name: 'UserMenu',
@@ -39,7 +38,7 @@ export default {
 		...Utils.mapState(['userInfo']),
 		...Utils.mapGetters(['formatCurrency']),
 		links() {
-			return VueUtils.friendlyLinks(this.userInfo.links);
+			return Utils.friendlyLinks(this.userInfo.links);
 		},
 		hasBudget() {
 			return this.userInfo.budget === null || (typeof this.userInfo.budget === 'number' && this.userInfo.budget >= 0);

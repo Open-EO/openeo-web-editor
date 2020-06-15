@@ -1,5 +1,4 @@
 import { JsonSchemaValidator } from '@openeo/js-processgraphs';
-import { Utils as VueUtils } from '@openeo/vue-components';
 import Utils from '../../utils.js';
 
 class Process {
@@ -184,7 +183,7 @@ class ProcessDataType {
 			return this.schema.title;
 		}
 		else {
-			return VueUtils.prettifyString(this.dataType());
+			return Utils.prettifyString(this.dataType());
 		}
 	}
 
