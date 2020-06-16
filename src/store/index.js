@@ -66,7 +66,36 @@ export default new Vuex.Store({
 			var registry = new ProcessRegistry(state.predefinedProcesses);
 			registry.addAll(state.userProcesses.userProcesses);
 			return registry;
-		}
+		},
+		collectionDefaults: (state) => (id) => {
+			var collection = state.collections.filter(c => c.id === id);
+			if (collection.length === 0) {
+				return {};
+			}
+
+			var spatial_extent = null;
+			try {
+				spatial_extent = Utils.extentToBBox(collection[0].extent.spatial);
+			} catch (error) {
+				// Catch invalid responses from back-ends
+			}
+
+			var temporal_extent = null;
+			try {
+				temporal_extent = collection[0].extent.temporal;
+			} catch (error) {
+				// Catch invalid responses from back-ends
+			}
+	
+			var bands = null;
+			try {
+				bands = collection[0].summaries['eo:bands'].map(band => band.name);
+			} catch (error) {
+				// Catch invalid responses from back-ends
+			}
+
+			return {id, spatial_extent, temporal_extent, bands};
+		},
 	},
 	actions: {
 		async connect(cx, {url}) {

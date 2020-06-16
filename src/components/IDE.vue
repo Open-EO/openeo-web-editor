@@ -13,7 +13,7 @@
 			</header>
 			<main class="page">
 				<div id="discovery" ref="discovery">
-					<DiscoveryToolbar class="toolbar" :onAddCollection="insertCollection" :onAddProcess="insertProcess" />
+					<DiscoveryToolbar class="toolbar" :onAddProcess="insertProcess" />
 				</div>
 				<hr class="separator" ref="separator0" @dblclick="centerSeparator($event, 0)" @mousedown="startMovingSeparator($event, 0)" />
 				<div id="workspace" ref="workspace">
@@ -133,12 +133,8 @@ export default {
 			this.setContext(obj);
 		},
 
-		insertCollection(id) {
-			this.$refs.editor.insertCollection(id);
-		},
-
-		insertProcess(id) {
-			this.$refs.editor.insertProcess(id);
+		insertProcess(id, args = {}) {
+			this.$refs.editor.insertProcess(id, args);
 		},
 
 		startMovingSeparator(evt, id) {

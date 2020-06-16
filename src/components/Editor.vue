@@ -84,11 +84,8 @@ export default {
 				return this.$refs.graphBuilder;
 			}
 		},
-		insertProcess(id) {
-			this.activeEditor().insertProcess(id);
-		},
-		insertCollection(id) {
-			this.activeEditor().insertCollection(id);
+		insertProcess(id, args = {}) {
+			this.activeEditor().insertProcess(id, args);
 		},
 		canSwitchView() {
 			if (this.editable && this.error !== null) {

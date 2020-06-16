@@ -15,7 +15,7 @@
 			<FullscreenButton :element="() => this.$refs.visualEditor" @changed="() => this.$refs.blocks.perfectScale()" />
 		</EditorToolbar>
 		<div class="editorSplitter">
-			<DiscoveryToolbar v-if="showDiscoveryToolbar && editable" class="discoveryToolbar" :onAddCollection="insertCollection" :onAddProcess="insertProcess" />
+			<DiscoveryToolbar v-if="showDiscoveryToolbar && editable" class="discoveryToolbar" :onAddProcess="insertProcess" />
 			<div class="graphBuilder" @drop="onDrop($event)" @dragover="allowDrop($event)">
 				<Blocks
 					ref="blocks"
@@ -84,7 +84,7 @@ export default {
 	},
 	computed: {
 		...Utils.mapState(['collections']),
-		...Utils.mapGetters(['processRegistry']),
+		...Utils.mapGetters(['processRegistry', 'collectionDefaults']),
 		...Utils.mapGetters('userProcesses', {getProcessById: 'getAllById'}),
 		...Utils.mapGetters('userProcesses', ['supportsMath', 'isMathProcess'])
 	},
@@ -123,15 +123,11 @@ export default {
 		},
 
 		onDrop(event) {
-			var processId = event.dataTransfer.getData("application/openeo-process");
-			var collection = event.dataTransfer.getData("application/openeo-collection");
-			if (processId) {
+			var json = event.dataTransfer.getData("application/openeo-node");
+			if (json) {
 				event.preventDefault();
-				this.insertProcess(processId, event.pageX, event.pageY);
-			}
-			else if (collection) {
-				event.preventDefault();
-				this.insertCollection(collection, event.pageX, event.pageY);
+				let node = JSON.parse(json);
+				this.insertProcess(node.process_id, node.arguments, event.pageX, event.pageY);
 			}
 		},
 
@@ -167,38 +163,7 @@ export default {
 			}
 		},
 
-		getCollectionDefaults(id) {
-			var collection = this.collections.filter(c => c.id === name);
-			if (collection.length === 0) {
-				return {};
-			}
-			var temporal_extent = null;
-			var spatial_extent = null;
-			if (collection) {
-				try {
-					spatial_extent = Utils.extentToBBox(collection[0].extent.spatial);
-				} catch (error) {
-					console.log(error); // Catch invalid responses from back-ends
-				}
-				try {
-					temporal_extent = collection[0].extent.temporal;
-				} catch (error) {
-					console.log(error); // Catch invalid responses from back-ends
-				}
-			}
-			return {id, spatial_extent, temporal_extent};
-		},
-
-		insertCollection(collectionId, x = null, y = null) {
-			try {
-				var pos = this.$refs.blocks.getPositionForPageXY(x, y);
-				this.$refs.blocks.addCollection(collectionId, pos, this.getCollectionDefaults(collectionId));
-			} catch(error) {
-				Utils.exception(this, error);
-			}
-		},
-
-		async insertProcess(name, x = null, y = null) {
+		async insertProcess(name, args = {}, x = null, y = null) {
 			try {
 				// Fully load or update custom process
 				let process = this.getProcessById(name);
@@ -207,7 +172,7 @@ export default {
 				}
 				// Insert process
 				var pos = this.$refs.blocks.getPositionForPageXY(x, y);
-				this.$refs.blocks.addProcess(name, pos);
+				this.$refs.blocks.addProcess(name, args, pos);
 			} catch(error) {
 				Utils.exception(this, error);
 			}

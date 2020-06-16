@@ -7,12 +7,12 @@
 		<div class="search-results">
 			<div :class="{ category: true, collections: true, expanded: collectionsExpanded }">
 				<strong @click="toggle('collections')" :title="'Collections ('+collectionsCount+')'"><span class="toggle">▸</span> Collections</strong>
-				<div class="discovery-entity" v-for="(e, i) in collections" v-show="collectionsShow[i]" :key="e.id" draggable="true" @dragstart="onDrag($event, 'collection', e.id)">
+				<div class="discovery-entity" v-for="(e, i) in collections" v-show="collectionsShow[i]" :key="e.id" :draggable="supportsLoadCollection" @dragstart="onDrag($event, 'collection', e)">
 					<div class="discovery-info" @click="showCollectionInfo(e.id)">
 						<strong :title="e.id">{{ e.id }}</strong>
 						<small v-if="e.title" :title="e.title">{{ e.title }}</small>
 					</div>
-					<button class="discovery-button" type="button" @click="insertCollection(e.id)" title="Insert"><i class="fas fa-plus"></i></button>
+					<button v-if="supportsLoadCollection" class="discovery-button" type="button" @click="insertCollection(e)" title="Insert"><i class="fas fa-plus"></i></button>
 				</div>
 				<div class="noData" v-if="!collectionsCount && searchTerm === ''">No collections available.</div>
 				<div class="noData" v-else-if="!collectionsCount">No collections found.</div>
@@ -20,16 +20,28 @@
 
 			<div :class="{ category: true, processes: true, expanded: processesExpanded }">
 				<strong @click="toggle('processes')" :title="'Processes ('+processesCount+')'"><span class="toggle">▸</span> Processes</strong>
-				<div class="discovery-entity" v-for="(e, i) in processes" v-show="processesShow[i]" :key="e.id" draggable="true" @dragstart="onDrag($event, 'process', e.id)">
+				<div class="discovery-entity" v-for="(e, i) in processes" v-show="processesShow[i]" :key="e.id" draggable="true" @dragstart="onDrag($event, 'process', e)">
 					<div class="discovery-info" @click="showProcessInfo(e)">
 						<i v-if="!e.native" class="custom-process fas fa-xs fa-sitemap" title="Custom Process"></i>
 						<strong :title="e.id">{{ e.id }}</strong>
 						<small v-if="e.summary" :title="e.summary">{{ e.summary }}</small>
 					</div>
-					<button class="discovery-button" type="button" @click="insertProcess(e.id)" title="Insert"><i class="fas fa-plus"></i></button>
+					<button class="discovery-button" type="button" @click="insertProcess(e)" title="Insert"><i class="fas fa-plus"></i></button>
 				</div>
 				<div class="noData" v-if="!processesCount && searchTerm === ''">No processes available.</div>
 				<div class="noData" v-else-if="!processesCount">No processes found.</div>
+			</div>
+
+			<div :class="{ category: true, udfs: true, expanded: udfsExpanded }">
+				<strong @click="toggle('udfs')" :title="'UDFs ('+udfsCount+')'"><span class="toggle">▸</span> UDF Runtimes</strong>
+				<div class="discovery-entity" v-for="(e, i) in udfs" v-show="udfsShow[i]" :key="e.id" :draggable="supportsRunUdf" @dragstart="onDrag($event, 'udf', e)">
+					<div class="discovery-info">
+						<strong :title="e.id">{{ e.id }} {{ e.version }}</strong>
+					</div>
+					<button v-if="supportsRunUdf" class="discovery-button" type="button" @click="insertUdf(e)" title="Insert"><i class="fas fa-plus"></i></button>
+				</div>
+				<div class="noData" v-if="!udfsCount && searchTerm === ''">No UDFs runtimes available.</div>
+				<div class="noData" v-else-if="!udfsCount">No UDF runtimes found.</div>
 			</div>
 		</div>
 	</div>
@@ -45,10 +57,6 @@ export default {
 	name: 'DiscoveryToolbar',
 	mixins: [EventBusMixin],
 	props: {
-		onAddCollection: {
-			type: Function,
-			required: true
-		},
 		onAddProcess: {
 			type: Function,
 			required: true
@@ -59,16 +67,20 @@ export default {
 			searchTerm: '',
 			collectionsExpanded: false,
 			processesExpanded: false,
+			udfsExpanded: false,
 			collectionsShow: [],
 			processesShow: [],
+			udfsShow: [],
 			collectionsCount: 0,
 			processesCount: 0,
+			udfCount: 0,
 			timeout: null
 		};
 	},
 	created() {
 		this.filter('processes');
 		this.filter('collections');
+		this.filter('udfs');
 	},
 	watch: {
 		processes() {
@@ -83,6 +95,12 @@ export default {
 			}
 			this.filter('collections');
 		},
+		udfRuntimes() {
+			if (!Array.isArray(this.udfRuntimes)) {
+				return;
+			}
+			this.filter('udfs');
+		},
 		searchTerm() {
 			if (this.timeout !== null) {
 				clearTimeout(this.timeout);
@@ -91,15 +109,36 @@ export default {
 				this.timeout = null;
 				this.filter('processes');
 				this.filter('collections');
+				this.filter('udfs');
 			}, 500);
 		}
 	},
 	computed: {
-		...Utils.mapState(['predefinedProcesses', 'collections']),
+		...Utils.mapState(['predefinedProcesses', 'collections', 'udfRuntimes']),
 		...Utils.mapState('userProcesses', ['userProcesses']),
-		...Utils.mapGetters(['supports']),
+		...Utils.mapGetters(['supports', 'collectionDefaults']),
+		...Utils.mapGetters('userProcesses', {getProcessById: 'getAllById'}),
+		supportsLoadCollection() {
+			return this.getProcessById('load_collection');
+		},
+		supportsRunUdf() {
+			return this.getProcessById('run_udf');
+		},
 		processes() {
 			return this.predefinedProcesses.concat(this.userProcesses).sort(Utils.sortById);
+		},
+		udfs() {
+			let udfs = [];
+			for(let runtime in this.udfRuntimes) {
+				let language = {
+					id: runtime,
+					title: this.udfRuntimes[runtime].title || runtime
+				};
+				for (let version in this.udfRuntimes[runtime].versions) {
+					udfs.push(Object.assign({}, language, {version}));
+				}
+			}
+			return udfs;
 		}
 	},
 	methods: {
@@ -108,11 +147,9 @@ export default {
 			return (await Promise.all(arr.map(async item => (await callback(item)) ? item : fail))).filter(i=>i!==fail);
 		},
 		onDrag(event, type, data) {
-			if (Utils.isObject(data)) {
-				data = JSON.stringify(data);
-			}
-			event.dataTransfer.setData("application/openeo-" + type, data);
-			event.dataTransfer.setData("text/plain", data);
+			let node = this.getNode(type, data);
+			event.dataTransfer.setData("application/openeo-node", JSON.stringify(node));
+			event.dataTransfer.setData("text/plain", JSON.stringify(node, null, 2));
 		},
 		filter(type) {
 			var count = 0;
@@ -161,11 +198,36 @@ export default {
 		showProcessInfo(process) {
 			this.emit('showProcessInfo', process);
 		},
-		insertCollection(id) {
-			this.onAddCollection(id);
+		getNode(type, data) {
+			switch(type) {
+				case 'collection':
+					return {
+						process_id: 'load_collection',
+						arguments: this.collectionDefaults(data.id)
+					};
+				case 'process':
+					return {
+						process_id: data.id,
+						arguments: {}
+					};
+				case 'udf':
+					return {
+						process_id: 'run_udf',
+						arguments: {runtime: data.id, version: data.version}
+					};
+			}
 		},
-		insertProcess(id) {
-			this.onAddProcess(id);
+		insertCollection(collection) {
+			let node = this.getNode('collection', collection);
+			this.onAddProcess(node.process_id, node.arguments);
+		},
+		insertProcess(process) {
+			let node = this.getNode('process', process);
+			this.onAddProcess(node.process_id, node.arguments);
+		},
+		insertUdf(udf) {
+			let node = this.getNode('udf', udf);
+			this.onAddProcess(node.process_id, node.arguments);
 		}
 	}
 }

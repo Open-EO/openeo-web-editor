@@ -32,7 +32,7 @@ const SUPPORTED_TYPES = [
 		{type: 'integer', default: 0},
 		{type: 'number', default: 0},
 		{type: 'boolean', default: false},
-	//	{type: 'array', subtype: 'labeled-array', title: 'Array with labels'},
+	//	{type: 'array', subtype: 'labeled-array', title: 'Array with labels'}, // Can't be transfered between client and server, no JSON encoding available.
 		{type: 'array', default: []},
 		{type: 'object', default: {}},
 

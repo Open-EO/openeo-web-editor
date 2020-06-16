@@ -468,18 +468,10 @@ export default {
             return [x, y];
         },
 
-        addCollection(id, position = [], defaults = {}) {
-            return this.addBlock({
-                process_id: 'load_collection',
-                arguments: Object.assign({id}, defaults),
-                position
-            });
-        },
-
-        addProcess(name, position = [], node = {}) {
+        addProcess(name, args = {}, position = [], node = {}) {
             return this.addBlock(Object.assign({
                 process_id: name,
-                arguments: {},
+                arguments: args,
                 position
             }, node));
         },
