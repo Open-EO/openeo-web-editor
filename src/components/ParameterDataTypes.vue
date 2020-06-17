@@ -82,9 +82,9 @@ export default {
 		ParameterDataType
 	},
 	props: {
-		spec: {
+		parameter: {
 			type: Object,
-			default: () => ({})
+			default: () => new ProcessParameter({})
 		},
 		editable: {
 			type: Boolean,
@@ -100,47 +100,19 @@ export default {
 	},
 	data() {
 		return {
-			state: this.value,
+			created: false,
+			state: typeof this.value === 'undefined' ? this.parameter.default : this.value,
 			selectedType: null,
 			jsonSchemaValidator: JsonSchema.create(this.$store)
 		};
 	},
 	async created() {
-		if (this.allowedSchemas.length > 1) {
-			try {
-				let types = await this.jsonSchemaValidator.getTypeForValue(this.allowedSchemas.map(s => s.schema), this.value);
-				switch(types.length) {
-					case 0:
-						this.guessType();
-						break;
-					case 1:
-						this.setSelectedType(types[0]);
-						break;
-					default:
-						let typeNames = types.map(t => this.allowedSchemas[t].dataType()).sort();
-						// Ignore if number/integer was detected as they always overlap and number always works
-						let numerics = typeNames.length === 2 && typeNames[0] === 'integer' && typeNames[1] === 'number';
-						if (!Utils.isRef(this.value) && !numerics) {
-							console.warn("A parameter is ambiguous. Potential types: " + typeNames.join(', ') + ". Value: " + JSON.stringify(this.value));
-						}
-						this.setSelectedType(types[0]);
-				}
-			}
-			catch(error) {
-				console.warn(error);
-				this.guessType();
-			}
-		}
-		else {
-			this.setSelectedType(0);
-		}
+		await this.detectSelectedType();
+		this.created = true;
 	},
 	computed: {
-		parameter() {
-			return new ProcessParameter(this.spec);
-		},
 		refSchemas() {
-			return ProcessGraphNode.getValueRefs(this.state)
+			return this.parameter.getRefs()
 				.map(r => {
 					if (r.from_node) {
 						return new ProcessDataType({
@@ -155,6 +127,7 @@ export default {
 									const: r.from_node
 								}
 							},
+							default: r,
 							additionalProperties: false
 						});
 					}
@@ -171,6 +144,7 @@ export default {
 									const: r.from_parameter
 								}
 							},
+							default: r,
 							additionalProperties: false
 						});
 					}
@@ -186,14 +160,15 @@ export default {
 				return this.refSchemas.concat(this.supportedTypes);
 			}
 			else {
-				return this.refSchemas.concat(this.parameter.schemas);
+				return this.parameter.schemas.concat(this.refSchemas);
 			}
 		},
 		supportedTypes() {
 			return SUPPORTED_TYPES.map(s => {
 				let name = s.subtype || s.type;
 				return new ProcessDataType(
-					Object.assign({}, API_TYPES[name], s)
+					Object.assign({}, API_TYPES[name], s),
+					this.parameter
 				)
 			});
 		},
@@ -208,18 +183,52 @@ export default {
 			}
 		},
 		state(value) {
-			this.$emit('input', value);
+			if (this.created) {
+				this.$emit('input', value);
+			}
 		},
 		selectedSchema(schema) {
-			this.$emit('schemaSelected', schema);
+			if (this.created) {
+				this.$emit('schemaSelected', schema);
+			}
 		}
 	},
 	methods: {
+		async detectSelectedType() {
+			if (this.allowedSchemas.length > 1) {
+				try {
+					let types = await this.jsonSchemaValidator.getTypeForValue(this.allowedSchemas.map(s => s.schema), this.state);
+					switch(types.length) {
+						case 0:
+							this.guessType();
+							break;
+						case 1:
+							this.setSelectedType(types[0]);
+							break;
+						default:
+							let typeNames = types.map(t => this.allowedSchemas[t].dataType()).sort();
+							// Ignore if number/integer was detected as they always overlap and number always works
+							let numerics = typeNames.length === 2 && typeNames[0] === 'integer' && typeNames[1] === 'number';
+							if (!Utils.isRef(this.state) && !numerics) {
+								console.warn("A parameter is ambiguous. Potential types: " + typeNames.join(', ') + ". Value: " + JSON.stringify(this.state));
+							}
+							this.setSelectedType(types[0]);
+					}
+				}
+				catch(error) {
+					console.warn(error);
+					this.guessType();
+				}
+			}
+			else {
+				this.setSelectedType(0);
+			}
+		},
 		async onSelectType(evt) {
 			let selectedSchema = this.allowedSchemas[evt.target.value];
 			let defaultValue = selectedSchema.default();
 			try {
-				if ((await this.jsonSchemaValidator.validateValue(defaultValue, selectedSchema)).length > 0) {
+				if ((await this.jsonSchemaValidator.validateValue(this.state, this.selectedSchema)).length > 0) {
 					this.state = defaultValue;
 				}
 			}

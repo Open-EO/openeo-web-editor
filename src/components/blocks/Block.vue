@@ -20,7 +20,7 @@
         </div>
         <div class="inout">
             <div class="inputs">
-                <BlockParameter v-for="(param, i) in parameters" :key="i" ref="parameters" :state="state" v-model="args[param.name]" v-bind="param" />
+                <BlockParameter v-for="(param, i) in parameters" :key="i" ref="parameters" :state="state" v-model="args[param.name]" @edgesChanged="edgesChanged(param, $event)" v-bind="param" />
             </div>
             <div class="outputs">
                 <BlockParameter ref="output" :state="state" :label="outputLabel" v-bind="output" />
@@ -240,7 +240,7 @@ export default {
             return null;
         },
         allowsParameterChange() {
-            return (this.$parent.supports('editParameters') && this.editables.length > 0 && this.type !== 'parameter');
+            return (this.$parent.supports('editParameters') && this.parameters.filter(p => p.isEditable()).length > 0 && this.type !== 'parameter');
         },
         allowsDelete() {
             return (this.state.editable && this.type !== 'parameter');
@@ -268,16 +268,16 @@ export default {
         // Parameters and related
         parameters() {
             if (Utils.isObject(this.spec) && Array.isArray(this.spec.parameters) && this.spec.parameters.length > 0) {
-                return this.spec.parameters;
+                return this.spec.parameters.map(p => new ProcessParameter(p));
             }
             else if (Utils.size(this.args) > 0) {
                 let parameters = [];
                 for(var key in this.args) {
-                    parameters.push({
+                    parameters.push(new ProcessParameter({
                         name: key,
                         description: '',
                         schema: {}
-                    });
+                    }));
                 }
                 return parameters;
             }
@@ -292,16 +292,6 @@ export default {
             }
             fields.output = this.output;
             return fields;
-        },
-        editables() {
-            var editables = [];
-            for(var p of this.parameters) {
-                var field = new ProcessParameter(p);
-                if (field.isEditable()) {
-                    editables.push(p);
-                }
-            }
-            return editables;
         },
         output() {
             var spec = {};
@@ -364,8 +354,11 @@ export default {
             await this.$nextTick();
             return selected;
         },
+        edgesChanged(parameter, edges, el) {
+            parameter.setRefs(edges.map(edge => edge.parameter1.value));
+        },
         showParameters(parameterName = null) {
-            this.$parent.$emit('editParameters', this.editables, this.args, this.plainTitle, this.state.editable, parameterName, data => this.args = data, this.processId);
+            this.$parent.$emit('editParameters', this.parameters.filter(p => p.isEditable()), this.args, this.plainTitle, this.state.editable, parameterName, data => this.args = data, this.processId);
         },
         showInfo() {
             if(this.collectionId) {

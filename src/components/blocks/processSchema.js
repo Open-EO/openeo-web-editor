@@ -46,8 +46,14 @@ class Process {
 
 class ProcessSchema {
 	
-	constructor(schema) {
-		this.schemas = JsonSchemaValidator.convertSchemaToArray(schema).map(s => new ProcessDataType(s));
+	constructor(schema, defaultValue = undefined) {
+		if (!Utils.isObject(schema) && !Array.isArray(schema)) {
+			this.schemas = [];
+		}
+		else {
+			this.schemas = JsonSchemaValidator.convertSchemaToArray(schema).map(s => new ProcessDataType(s, defaultValue, this));
+		}
+		this.refs = [];
 	}
 
 	toJSON() {
@@ -94,12 +100,20 @@ class ProcessSchema {
 		return this.schemas.filter(s => s.isNull()).length > 0;
 	}
 
+	setRefs(refs) {
+		this.refs = refs;
+	}
+
+	getRefs() {
+		return this.refs
+	}
+
 }
 
 class ProcessParameter extends ProcessSchema {
 
 	constructor(parameter) {
-		super(parameter.schema || {});
+		super(parameter.schema, parameter.default);
 
 		Object.assign(this, parameter);
 	}
@@ -108,8 +122,12 @@ class ProcessParameter extends ProcessSchema {
 
 class ProcessDataType {
 	
-	constructor(schema) {
+	constructor(schema, defaultValue = undefined, parent = null) {
 		this.schema = schema;
+		if (typeof this.schema.default === 'undefined' && typeof defaultValue !== 'undefined') {
+			this.schema.default = defaultValue;
+		}
+		this.parent = parent;
 	}
 
 	toJSON() {
@@ -143,7 +161,11 @@ class ProcessDataType {
 			// ToDo: No support for patternProperties yet
 		}
 
-		return new ProcessSchema(element);
+		let schema = new ProcessSchema(element);
+		if (this.parent instanceof ProcessSchema) {
+			schema.setRefs(this.parent.getRefs());
+		}
+		return schema;
 	}
 
 	isNull() {
@@ -199,7 +221,7 @@ class ProcessDataType {
 			return this.schema.default;
 		}
 		else {
-			return null;
+			return undefined;
 		}
 	}
 

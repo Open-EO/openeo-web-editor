@@ -8,7 +8,7 @@
 						<Description :description="parameter.description" />
 					</div>
 				</label>
-				<ParameterDataTypes :ref="parameter.name" :editable="editable" :spec="parameter" v-model="options[parameter.name]" />
+				<ParameterDataTypes :ref="parameter.name" :editable="editable" :parameter="parameter" v-model="options[parameter.name]" />
 			</div>
 		</template>
 		<template v-else>

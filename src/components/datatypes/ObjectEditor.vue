@@ -15,7 +15,7 @@
 					<input v-if="isObject" v-model="e.key" type="text" :disabled="!editable"/>
 					<template v-else>{{ k }}</template>
 				</label>
-				<ParameterDataTypes :editable="editable" :spec="schema.getElementSchema(e.key || k)" :isItem="true" v-model="e.value" />
+				<ParameterDataTypes :editable="editable" :parameter="schema.getElementSchema(e.key || k)" :isItem="true" v-model="e.value" />
 				<button v-if="editable" class="deleteBtn" type="button" @click="remove(k)"><i class="fas fa-trash"></i></button>
 				<button v-show="editable && !isObject" class="mover" type="button"><i class="fas fa-arrows-alt"></i></button>
 			</div>

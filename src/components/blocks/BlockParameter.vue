@@ -193,6 +193,7 @@ export default {
             immediate: true,
             handler() {
                 this.updateEdgeStatus();
+                this.$emit('edgesChanged', this.edges, this);
             }
         },
         value: {

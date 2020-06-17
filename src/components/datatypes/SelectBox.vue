@@ -120,14 +120,14 @@ export default {
 				case 'udf-runtime-version':
 					return state.map(val => this.e(val));
 				default:
-					if (Utils.isObject(this.schemas) && this.schemas.isEnum()) {
+					if (Utils.isObject(this.schema) && this.schema.isEnum()) {
 						return this.schema.getEnumChoices().map(val => this.e(val));
 					}
 					else if (Array.isArray(this.options)) {
 						return this.options.map(val => this.e(val));
 					}
 					else {
-						return this.options;
+						return [];
 					}
 			}
 		},

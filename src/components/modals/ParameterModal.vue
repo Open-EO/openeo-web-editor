@@ -10,7 +10,7 @@
 							<Description :description="param.description" />
 						</div>
 					</label>
-					<ParameterDataTypes :ref="param.name" :editable="editable" :spec="param" v-model="values[param.name]" :processId="processId" :context="context" @schemaSelected="updateType(param, $event)" />
+					<ParameterDataTypes :ref="param.name" :editable="editable" :parameter="param" v-model="values[param.name]" :processId="processId" :context="context" @schemaSelected="updateType(param, $event)" />
 				</div>
 				<!-- We need a hidden submit button in the form tags to allow submiting the form via keyboard (enter key) -->
 				<button type="submit" style="display:none"></button>
@@ -59,7 +59,7 @@ export default {
 	},
 	methods: {
 		updateType(parameter, schema) {
-			this.schemas[parameter.name] = schema;
+			this.$set(this.schemas, parameter.name, schema);
 		},
 		displayLabel(param) {
 			if (typeof param.label === 'string' && param.label.length > 0) {

@@ -151,13 +151,7 @@ export default {
 			return ""; // Empty seems to be the default for the input element
 		},
 		newValue() {
-			if (this.isPgParameter) {
-				return {from_parameter: this.schema.schema.from_parameter};
-			}
-			else if (this.isResult) {
-				return {from_node: this.schema.schema.from_node};
-			}
-			else if (this.type === 'number') {
+			if (this.type === 'number') {
 				return Number.isNaN(this.state) ? null : this.state;
 			}
 			else if (this.type === 'integer') {
@@ -190,18 +184,6 @@ export default {
 		}
 	},
 	watch: {
-		type(newType, oldType) {
-			var refTypes = ['from_parameter', 'from_node'];
-			if (refTypes.includes(oldType) && (newType === 'object' || newType === 'service-config')) {
-				this.state = {};
-			}
-			else if (refTypes.includes(newType)) {
-				var s = this.schema.schema
-				var value = {};
-				value[s.isRef] = s[s.isRef];
-				this.state = value;
-			}
-		},
 		value(newVal) {
 			if (newVal !== this.newValue) {
 				this.state = this.value;
