@@ -1,19 +1,27 @@
 <template>
 	<div class="visualEditor" ref="visualEditor">
-		<EditorToolbar :editable="editable" :onClear="clear">
-			<span class="sepr" v-if="editable">
-				<button type="button" @click="$refs.blocks.undo()" :disabled="!canUndo" title="Revert last change"><i class="fas fa-undo-alt"></i></button>
-				<button type="button" @click="$refs.blocks.redo()" :disabled="!canRedo" title="Redo last reverted change"><i class="fas fa-redo-alt"></i></button>
-				<button type="button" @click="$refs.blocks.deleteSelected()" :disabled="!hasSelection" title="Delete selected elements"><i class="fas fa-trash"></i></button>
-			</span>
-			<span class="sepr" v-if="editable">
-				<button type="button" @click="addParameter" title="Add Parameter"><i class="fas fa-parking"></i></button>
-				<button type="button" v-if="supportsMath" :class="{highlightFormula: isMath}" @click="showExpressionModal" title="Insert/Edit formula"><i class="fas fa-square-root-alt"></i></button>
-			</span>
-			<button type="button" @click="$refs.blocks.toggleCompact()" :class="{compactMode: compactMode}" title="Compact Mode"><i class="fas fa-compress-arrows-alt"></i></button>
-			<button type="button" @click="$refs.blocks.perfectScale()" title="Scale to perfect size"><i class="fas fa-arrows-alt"></i></button>
-			<FullscreenButton :element="() => this.$refs.visualEditor" @changed="() => this.$refs.blocks.perfectScale()" />
-		</EditorToolbar>
+		<div class="sourceHeader">
+			<h3 v-if="title">{{ title }}</h3>
+			<div class="sourceToolbar">
+				<span class="sepr" v-if="editable">
+					<button type="button" @click="confirmClear" title="New script / Clear current script"><i class="fas fa-file"></i></button>
+					<slot name="file-toolbar"></slot>
+				</span>
+				<span class="sepr" v-if="editable">
+					<button type="button" @click="$refs.blocks.undo()" :disabled="!canUndo" title="Revert last change"><i class="fas fa-undo-alt"></i></button>
+					<button type="button" @click="$refs.blocks.redo()" :disabled="!canRedo" title="Redo last reverted change"><i class="fas fa-redo-alt"></i></button>
+					<button type="button" @click="$refs.blocks.deleteSelected()" :disabled="!hasSelection" title="Delete selected elements"><i class="fas fa-trash"></i></button>
+				</span>
+				<span class="sepr" v-if="editable">
+					<button type="button" @click="addParameter" title="Add Parameter"><i class="fas fa-parking"></i></button>
+					<button type="button" v-if="supportsMath" :class="{highlightFormula: isMath}" @click="showExpressionModal" title="Insert/Edit formula"><i class="fas fa-square-root-alt"></i></button>
+				</span>
+				<button type="button" @click="$refs.blocks.toggleCompact()" :class="{compactMode: compactMode}" title="Compact Mode"><i class="fas fa-compress-arrows-alt"></i></button>
+				<button type="button" @click="$refs.blocks.perfectScale()" title="Scale to perfect size"><i class="fas fa-arrows-alt"></i></button>
+				<FullscreenButton :element="() => this.$refs.visualEditor" @changed="() => this.$refs.blocks.perfectScale()" />
+				<slot name="toolbar"></slot>
+			</div>
+		</div>
 		<div class="editorSplitter">
 			<DiscoveryToolbar v-if="showDiscoveryToolbar && editable" class="discoveryToolbar" :onAddProcess="insertProcess" />
 			<div class="graphBuilder" @drop="onDrop($event)" @dragover="allowDrop($event)">
@@ -45,7 +53,6 @@
 <script>
 import Blocks from './blocks/Blocks.vue';
 import Utils from '../utils.js';
-import EditorToolbar from './EditorToolbar.vue';
 import DiscoveryToolbar from './DiscoveryToolbar.vue';
 import ParameterModal from './modals/ParameterModal.vue'; // Add a paremeter modal to each visual editor, otherwise we can't open a parameter modal over a parameter modal (e.g. edit the parameters of a callback)
 import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
@@ -56,7 +63,6 @@ export default {
 	mixins: [EventBusMixin],
 	components: {
 		Blocks,
-		EditorToolbar,
 		DiscoveryToolbar,
 		ParameterModal,
 		FullscreenButton,
@@ -80,6 +86,9 @@ export default {
 		showDiscoveryToolbar: {
 			type: Boolean,
 			default: false
+		},
+		title: {
+			type: String
 		}
 	},
 	computed: {
@@ -157,10 +166,17 @@ export default {
 			this.$refs.parameterModal.show(title, parameters, values, isEditable, saveCallback, null, processId, selectParameterName);
 		},
 
+		confirmClear() {
+			var confirmed = confirm("Do you really want to clear the existing model?");
+			if (confirmed) {
+				this.clear();
+			}
+		},
 		clear() {
 			if (this.$refs.blocks) {
 				this.$refs.blocks.clear();
 			}
+			this.commit(null);
 		},
 
 		async insertProcess(name, args = {}, x = null, y = null) {

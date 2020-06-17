@@ -1,19 +1,27 @@
 <template>
 	<div class="textEditor" :class="languageString">
-		<EditorToolbar :editable="editable" :onClear="clear">
-			<span class="sepr" v-if="editable">
-				<button type="button" @click="editor.undo()" :disabled="!canUndo" title="Revert last change"><i class="fas fa-undo-alt"></i></button>
-				<button type="button" @click="editor.redo()" :disabled="!canRedo" title="Redo last reverted change"><i class="fas fa-redo-alt"></i></button>
-			</span>
-			<FullscreenButton :element="$el" />
-		</EditorToolbar>
+		<div class="sourceHeader">
+			<h3 v-if="title">{{ title }}</h3>
+			<div class="sourceToolbar">
+				<span class="sepr" v-if="editable">
+					<button type="button" @click="confirmClear" title="New script / Clear current script"><i class="fas fa-file"></i></button>
+					<slot name="file-toolbar"></slot>
+				</span>
+				<span class="sepr" v-if="editable">
+					<button type="button" @click="editor.undo()" :disabled="!canUndo" title="Revert last change"><i class="fas fa-undo-alt"></i></button>
+					<button type="button" @click="editor.redo()" :disabled="!canRedo" title="Redo last reverted change"><i class="fas fa-redo-alt"></i></button>
+					<slot name="edit-toolbar"></slot>
+				</span>
+				<FullscreenButton :element="$el" />
+				<slot name="toolbar"></slot>
+			</div>
+		</div>
 		<div :id="id" class="sourceCodeEditor"></div>
 	</div>
 </template>
 
 <script>
 import Utils from '../utils.js';
-import EditorToolbar from './EditorToolbar.vue';
 import FullscreenButton from './FullscreenButton.vue';
 import { ProcessGraph } from '@openeo/js-processgraphs';
 
@@ -40,7 +48,6 @@ window.jsonlint = jsonlint;
 export default {
 	name: 'TextEditor',
 	components: {
-		EditorToolbar,
 		FullscreenButton
 	},
 	props: {
@@ -59,6 +66,9 @@ export default {
 		placeholder: {
 			type: String,
 			default: ""
+		},
+		title: {
+			type: String
 		}
 	},
 	computed: {
@@ -113,7 +123,6 @@ export default {
 		value() {
 			if (this.emitValue !== this.value) {
 				this.updateContent();
-				this.editor.refresh();
 				this.editor.clearHistory();
 			}
 		},
@@ -127,12 +136,7 @@ export default {
 		this.editor = CodeMirror(document.getElementById(this.id), this.editorOptions);
 		this.editor.setSize(null, "100%");
 		if (this.languageString === 'processgraph') {
-			this.editor.on("change", () => {
-				// Don't lint empty values
-				this.editor.setOption("lint", !!this.editor.getValue().trim());
-				// Update history state
-				this.updateHistoryState();
-			});
+			this.editor.on("change", () => this.updateHistoryState());
 		}
 		this.updateContent();
 
@@ -149,13 +153,22 @@ export default {
 		});
 	},
 	methods: {
-		clear() {
-			this.insert("");
+		confirmClear() {
+			var confirmed = confirm("Do you really want to clear the existing code?");
+			if (confirmed) {
+				this.insert("");
+				this.emit(null);
+			}
 		},
-		updateHistoryState() {
+		updateState() {
+			// Don't lint empty values
+			this.editor.setOption("lint", !!this.editor.getValue().trim());
+			// Update history state
 			let history = this.editor.getDoc().historySize();
 			this.canUndo = history.undo > 0;
 			this.canRedo = history.redo > 0;
+			// Refresh editor
+			this.editor.refresh();
 		},
 		commit() {
 			var value = this.editor.getValue();
@@ -167,7 +180,7 @@ export default {
 						var process = JSON.parse(value);
 						if (Utils.size(process) > 0) {
 							var pg = new ProcessGraph(process, this.processRegistry);
-							pg.parse();
+							pg.parse(true);
 							return this.emit(process);
 						}
 					}
@@ -209,7 +222,7 @@ export default {
 							this.insert(JSON.stringify(this.value, null, this.editorOptions.indentUnit));
 						}
 						else {
-							this.clear();
+							this.insert("");
 						}
 						break;
 					case 'json':
@@ -220,10 +233,10 @@ export default {
 				}
 			}
 			else {
-				this.clear();
+				this.insert("");
 			}
 			this.editor.getDoc().clearHistory();
-			this.updateHistoryState();
+			this.updateState();
 		}
 
 	}

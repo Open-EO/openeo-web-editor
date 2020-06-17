@@ -243,7 +243,7 @@ export default {
             return (this.$parent.supports('editParameters') && this.parameters.filter(p => p.isEditable()).length > 0 && this.type !== 'parameter');
         },
         allowsDelete() {
-            return (this.state.editable && this.type !== 'parameter');
+            return (this.state.editable && (this.type !== 'parameter' || this.spec.origin !== 'prop'));
         },
         allowsInfo() {
             if (this.collectionId) {

@@ -17,7 +17,11 @@
 				</div>
 				<hr class="separator" ref="separator0" @dblclick="centerSeparator($event, 0)" @mousedown="startMovingSeparator($event, 0)" />
 				<div id="workspace" ref="workspace">
-					<Editor ref="editor" class="mainEditor" id="main" :value="process" @input="setProcess" />
+					<Editor ref="editor" class="mainEditor" id="main" :value="process" @input="updateEditor" :title="contextTitle">
+						<template #file-toolbar>
+							<button type="button" v-show="contextTitle" @click="saveProcess" :title="'Save to ' + contextTitle"><i class="fas fa-save"></i></button>
+						</template>
+					</Editor>
 					<UserWorkspace class="userContent" v-if="isAuthenticated" />
 				</div>
 				<hr class="separator" ref="separator1" @dblclick="centerSeparator($event, 1)" @mousedown="startMovingSeparator($event, 1)" />
@@ -52,6 +56,7 @@ import ServiceInfoModal from './modals/ServiceInfoModal.vue';
 import ParameterModal from './modals/ParameterModal.vue';
 import SchemaModal from './modals/SchemaModal.vue';
 import DiscoveryToolbar from './DiscoveryToolbar.vue';
+import { ProcessParameter } from './blocks/processSchema';
 
 export default {
 	name: 'IDE',
@@ -95,9 +100,10 @@ export default {
 	},
 	computed: {
 		...Utils.mapState(['connection']),
+		...Utils.mapState('editor', ['context', 'process']),
 		...Utils.mapGetters(['title', 'isAuthenticated', 'apiVersion']),
-		...Utils.mapGetters('userProcesses', {getProcessById: 'getAllById'}),
-		...Utils.mapState('editor', ['process'])
+		...Utils.mapGetters('editor', ['contextTitle']),
+		...Utils.mapGetters('userProcesses', {getProcessById: 'getAllById'})
 	},
 	mounted() {
 		this.listen('showCollection', this.showCollectionInfo);
@@ -128,6 +134,17 @@ export default {
 		...Utils.mapActions(['describeAccount']),
 		...Utils.mapActions('userProcesses', {readUserProcess: 'read'}),
 		...Utils.mapMutations('editor', ['setContext', 'setProcess']),
+
+		saveProcess() {
+			this.emit('replaceProcess', this.context, this.process);
+		},
+
+		updateEditor(value) {
+			this.setProcess(value);
+			if (value === null) {
+				this.setContext(null);
+			}
+		},
 
 		editProcess(obj) {
 			this.setContext(obj);
@@ -239,12 +256,16 @@ export default {
 
 		showDataForm(title, fields, saveCallback = null, closeCallback = null) {
 			var editable = typeof saveCallback === 'function';
-			fields = fields.filter(f => f !== null);
 			var values = {};
+			var parameters = [];
 			for(let field of fields) {
+				if (field === null) {
+					continue;
+				}
+				parameters.push(new ProcessParameter(field));
 				values[field.name] = field.value;
 			}
-			this.$refs.parameterModal.show(title, fields, values, editable, saveCallback, closeCallback);
+			this.$refs.parameterModal.show(title, parameters, values, editable, saveCallback, closeCallback);
 		}
 
 	}

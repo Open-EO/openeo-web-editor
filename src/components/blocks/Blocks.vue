@@ -200,7 +200,9 @@ export default {
         document.addEventListener('mouseup', this.onDocumentMouseUpFn);
 
         this.importPgParameters(this.pgParameters, 'prop');
-        await this.import(this.value, { propagate: false, undoOnError: false });
+        if (!await this.import(this.value, { propagate: false, undoOnError: false })) {
+            await this.perfectScale();
+        }
         selectionChangeWatcher.bind(this)();
     },
     beforeDestroy() {
@@ -369,10 +371,11 @@ export default {
             return await this.startTransaction(async () => {
                 this.edges = [];
                 // Don't remove parameters injected by props (fixed callback parameters)
-                this.blocks = this.blocks.filter(b => b.type === 'parameter' && b.origin === 'prop');
+                this.blocks = this.blocks.filter(b => b.type === 'parameter' && b.spec.origin === 'prop');
                 this.nextBlockId = 1;
                 this.nextEdgeId = 1;
                 this.process = {};
+                return true;
             });
         },
 
@@ -594,7 +597,7 @@ export default {
             return await this.startTransaction(async () => {
                 var i = this.blocks.findIndex(b => b.id == block.id);
                 if (i < 0) {
-                    return;
+                    return false;
                 }
 
                 for (var edge of this.edges.slice(0)) {
@@ -608,6 +611,7 @@ export default {
                 }
 
                 this.$delete(this.blocks, i);
+                return true;
             });
         },
 
@@ -627,7 +631,7 @@ export default {
          */
         async deleteSelected() {
             if (this.selectedBlocks.length === 0 && this.selectedEdges.length === 0) {
-                return;
+                return false;
             }
 
             return await this.startTransaction(async () => {
@@ -640,6 +644,7 @@ export default {
                 for(var edge of this.selectedEdges.slice(0)) { // copy to avoid race condition
                     this.removeEdge(edge);
                 }
+                return true;
             });
         },
 
@@ -721,6 +726,7 @@ export default {
                 // Update result node
                 await this.$nextTick();
                 this.setResultNode(edge.parameter1.$parent, false);
+                return true;
             });
         },
 
@@ -789,12 +795,11 @@ export default {
         // - saveHistory: commit the changes to the history (default: true)
         // - propagate: emit the changes to the parent v-model (default: true)
         async startTransaction(fn, options = {}, ...args) {
-            let success = true;
-
+            let success;
             this.activeTransactions++;
 
             try {
-                await fn(args);
+                success = await fn(args);
             } catch (error) {
                 // If an error occured: show it and restore the last working state from history.
                 this.$emit('error', error, "Model is invalid");
@@ -827,8 +832,8 @@ export default {
                     this.process = process instanceof ProcessGraph ? process.toJSON() : process;
                 }
 
-                if (!Utils.isObject(process) || Utils.size(process.process_graph) === 0) {
-                    return;
+                if (!Utils.isObject(process)) {
+                    return false;
                 }
 
                 // Parse process 
@@ -841,7 +846,7 @@ export default {
                 else {
                     this.processGraph = new ProcessGraph(process, this.processRegistry);
                 }
-                this.processGraph.parse();
+                this.processGraph.parse(true);
 
                 this.importPgParameters(this.processGraph.getParameters(), 'pg', options.clear !== false);
 
@@ -854,6 +859,7 @@ export default {
 
                 // Update scale
                 await this.perfectScale();
+                return true;
             }, options);
         },
 
@@ -864,16 +870,18 @@ export default {
 
             // Remove existing parameters from the given origin
             if (clear) {
-                this.blocks = this.blocks.filter(b => b.type !== 'parameter' || b.origin !== origin);
+                this.blocks = this.blocks.filter(b => b.type !== 'parameter' || b.spec.origin !== origin);
             }
 
             let size = this.estimateBlockSize({}); // Estimate base size for an empty block
+            let position = [0,0];
             for(var i in params) {
                 let param = params[i];
-                let position = [
+                position = [
                     -size[0] - 20,
                     i * (size[1] + 20)
                 ];
+
                 this.addPgParameter(params[i], origin, position);
             }
         },
@@ -887,6 +895,7 @@ export default {
             if (typeof param.schema === 'undefined') {
                 param.schema = {};
             }
+            param.origin = origin;
             this.blocks.push(Vue.observable({
                 id: param.name,
                 type: 'parameter',
@@ -894,8 +903,7 @@ export default {
                     from_parameter: param.name,
                     position: Utils.ensurePoint(position, () => this.getNewBlockDefaultPosition(this.estimateBlockSize({})))
                 },
-                spec: param,
-                origin: origin
+                spec: param
             }));
         },
 
@@ -1011,7 +1019,7 @@ export default {
             var rect = this.$refs.div.getBoundingClientRect();
             var scaleA = rect.width/(xMax-xMin);
             var scaleB = rect.height/(yMax-yMin);
-            this.state.scale = Math.min(scaleA, scaleB);
+            this.state.scale = Math.min(scaleA, scaleB, 2); // Don't scale higher than 2x
             this.state.center = [
                 rect.width/2 - this.state.scale*(xMin+xMax)/2.0,
                 rect.height/2 - this.state.scale*(yMin+yMax)/2.0

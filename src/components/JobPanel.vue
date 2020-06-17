@@ -223,7 +223,7 @@ export default {
 		},
 		replaceProcess(job, process) {
 			if (job instanceof Job) {
-				if (this.isJobActive()) {
+				if (this.isJobActive(job)) {
 					Utils.error(this, "Can't change process while batch job is running.");
 				}
 				else {

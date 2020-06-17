@@ -55,7 +55,7 @@ export default storeFactory({
 				return true;
 			},
 			isMathProcess: (state, getters) => (process) => {
-				if (!Utils.isObject(process) || !Utils.isObject(process.process_graph)) {
+				if (!Utils.isObject(process) || Utils.size(process.process_graph) === 0) {
 					return null;
 				}
 				let unsupportedFuncs = Object.values(process.process_graph).filter(node => !getters.readableMathProcesses.includes(node.process_id));

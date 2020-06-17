@@ -1,10 +1,16 @@
 <template>
 	<Tabs class="editor" ref="tabs" id="customProcessContent" position="bottom">
 		<Tab id="visual" name="Visual Model" icon="fa-project-diagram" :selected="true" :allowShow="canSwitchView" @show="showModel">
-			<VisualEditor class="visualEditorTab" ref="graphBuilder" :editable="editable" :pgParameters="pgParameters" :value="modelValue" @input="commit" @error="onError" :id="id + '_visual'" :showDiscoveryToolbar="showDiscoveryToolbar" />
+			<VisualEditor class="visualEditorTab" ref="graphBuilder" :editable="editable" :pgParameters="pgParameters" :value="modelValue" @input="commit" @error="onError" :title="title" :id="id + '_visual'" :showDiscoveryToolbar="showDiscoveryToolbar">
+				<template #file-toolbar><slot name="file-toolbar"></slot></template>
+				<template #toolbar><slot name="toolbar"></slot></template>
+			</VisualEditor>
 		</Tab>
 		<Tab id="source" name="Code" icon="fa-code" :allowShow="canSwitchView" @show="showCode">
-			<TextEditor class="textEditorTab" ref="sourceEditor" :editable="editable" :value="codeValue" @input="commit" @error="onError" :id="id + '_text'" language="processgraph" />
+			<TextEditor class="textEditorTab" ref="sourceEditor" :editable="editable" :value="codeValue" @input="commit" @error="onError" :title="title" :id="id + '_text'" language="processgraph">
+				<template #file-toolbar><slot name="file-toolbar"></slot></template>
+				<template #toolbar><slot name="toolbar"></slot></template>
+			</TextEditor>
 		</Tab>
 	</Tabs>
 </template>
@@ -33,6 +39,9 @@ export default {
 		value: {
 			type: Object,
 			default: () => null
+		},
+		title: {
+			type: String
 		},
 		pgParameters: {
 			type: Array,
@@ -68,6 +77,7 @@ export default {
 		showCode() {
 			this.error = null;
 			this.codeValue = this.value;
+			this.$refs.sourceEditor.updateState();
 		},
 		commit(value) {
 			this.error = null;
@@ -100,6 +110,20 @@ export default {
 </script>
 
 <style>
+.sourceHeader {
+	padding: 5px;
+	border-bottom: 1px solid #ddd;
+	display: flex;
+	justify-content: flex-end;
+	background-color: #fff;
+}
+.sourceHeader h3 {
+	margin: auto 0;
+	flex-grow: 1;
+}
+.sourceToolbar {
+	text-align: right;
+}
 .textEditorTab.textEditor {
 	border: 0;
 }
