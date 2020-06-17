@@ -37,6 +37,7 @@
 		<JobInfoModal ref="jobModal" />
 		<ParameterModal ref="parameterModal" />
 		<SchemaModal ref="schemaModal" />
+		<UdfRuntimeModal ref="udfRuntimeModal" />
 	</div>
 </template>
 
@@ -55,6 +56,7 @@ import JobInfoModal from './modals/JobInfoModal.vue';
 import ServiceInfoModal from './modals/ServiceInfoModal.vue';
 import ParameterModal from './modals/ParameterModal.vue';
 import SchemaModal from './modals/SchemaModal.vue';
+import UdfRuntimeModal from './modals/UdfRuntimeModal.vue';
 import DiscoveryToolbar from './DiscoveryToolbar.vue';
 import { ProcessParameter } from './blocks/processSchema';
 
@@ -73,7 +75,8 @@ export default {
 		JobInfoModal,
 		ServiceInfoModal,
 		ParameterModal,
-		SchemaModal
+		SchemaModal,
+		UdfRuntimeModal
 	},
 	data() {
 		return {
@@ -111,6 +114,7 @@ export default {
 		this.listen('showJobInfo', this.showJobInfo);
 		this.listen('showProcessInfo', this.showProcessInfo);
 		this.listen('showServiceInfo', this.showServiceInfo);
+		this.listen('showUdfRuntimeInfo', this.showUdfRuntimeInfo);
 		this.listen('showSchema', this.showSchemaInfo);
 		this.listen('showDataForm', this.showDataForm);
 		this.listen('editProcess', this.editProcess);
@@ -212,6 +216,10 @@ export default {
 
 		showProcessInfo(process) {
 			this._showProcessInfo(process);
+		},
+
+		showUdfRuntimeInfo(runtimeId, runtimeData, runtimeVersion = null) {
+			this.$refs.udfRuntimeModal.show(runtimeId, runtimeData, runtimeVersion);
 		},
 
 		showSchemaInfo(name, schema, msg = null) {

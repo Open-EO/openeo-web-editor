@@ -32,16 +32,15 @@
 				<div class="noData" v-else-if="!processesCount">No processes found.</div>
 			</div>
 
-			<div :class="{ category: true, udfs: true, expanded: udfsExpanded }">
+			<div v-if="udfsCount" :class="{ category: true, udfs: true, expanded: udfsExpanded }">
 				<strong @click="toggle('udfs')" :title="'UDFs ('+udfsCount+')'"><span class="toggle">▸</span> UDF Runtimes</strong>
 				<div class="discovery-entity" v-for="(e, i) in udfs" v-show="udfsShow[i]" :key="e.id" :draggable="supportsRunUdf" @dragstart="onDrag($event, 'udf', e)">
-					<div class="discovery-info">
+					<div class="discovery-info" @click="showUdfInfo(e)">
 						<strong :title="e.id">{{ e.id }} {{ e.version }}</strong>
 					</div>
 					<button v-if="supportsRunUdf" class="discovery-button" type="button" @click="insertUdf(e)" title="Insert"><i class="fas fa-plus"></i></button>
 				</div>
-				<div class="noData" v-if="!udfsCount && searchTerm === ''">No UDFs runtimes available.</div>
-				<div class="noData" v-else-if="!udfsCount">No UDF runtimes found.</div>
+				<div class="noData" v-if="!udfsCount && searchTerm !== ''">No UDF runtimes found.</div>
 			</div>
 		</div>
 	</div>
@@ -197,6 +196,9 @@ export default {
 		},
 		showProcessInfo(process) {
 			this.emit('showProcessInfo', process);
+		},
+		showUdfInfo(runtime) {
+			this.emit('showUdfRuntimeInfo', runtime.id, this.udfRuntimes[runtime.id], runtime.version);
 		},
 		getNode(type, data) {
 			switch(type) {
