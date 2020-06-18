@@ -9,9 +9,7 @@
 			</header>
 			<main class="modal-content">
 				<slot name="main">
-					<div v-if="typeof html === 'string'" v-html="html"></div>
-					<div v-else-if="html !== null && typeof html === 'object'" v-html="html.innerHTML"></div>
-					<template v-else-if="list !== null">
+					<template v-if="list !== null">
 						<strong class="listEmpty" v-if="listCount == 0">Sorry, no data available.</strong>
 						<ul class="list" v-else>
 							<li v-for="(item, key) in listItems" :key="key" @click="doMainListAction(item, key)">
@@ -40,7 +38,6 @@ const getDefaultState = () => {
 	return {
 		title: 'Sorry, no message passed!',
 		message: null,
-		html: null,
 		list: null,
 		listActions: [],
 		shown: false,
@@ -138,12 +135,6 @@ export default {
 			this._show(title, onClose);
 		},
 
-		showHtml(title, html, onClose = null) {
-			this.reset();
-			this.html = html;
-			this._show(title, onClose);
-		},
-
 		showList(title, list, actions, onClose = null) {
 			this.reset();
 			this.list = list;
@@ -170,6 +161,7 @@ export default {
 			}
 			this.shown = false;
 			this.closeModal();
+			this.$emit('closed');
 			window.removeEventListener('keydown', this.escCloseListener);
 		},
 
