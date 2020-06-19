@@ -213,7 +213,7 @@ export default {
         },
         getCirclePosition() {
             var dim = Utils.domBoundingBox(this.$refs.circle);
-            var blocksDim = this.state.root.getDim();
+            var blocksDim = this.state.root.getDimensions();
             var x = (dim.offsetLeft-blocksDim.offsetLeft)+dim.width/2;
             var y = (dim.offsetTop-blocksDim.offsetTop)+dim.height/2;
             return [x, y];

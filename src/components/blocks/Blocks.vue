@@ -311,7 +311,7 @@ export default {
             this.state.scale *= deltaScale;
         },
         onMouseMove(event) {
-            var rect = this.getDim();
+            var rect = this.getDimensions();
             var mouseX = event.pageX - rect.offsetLeft;
             var mouseY = event.pageY - rect.offsetTop;
             this.state.mouse = [mouseX, mouseY];
@@ -363,7 +363,7 @@ export default {
             this.focus();
         },
 
-        getDim() {
+        getDimensions() {
             return Utils.domBoundingBox(this.$refs.div);
         },
 
@@ -461,7 +461,7 @@ export default {
         },
 
         getPositionForPageXY(x, y) {
-            var rect = this.getDim();
+            var rect = this.getDimensions();
             if (x !== null) {
                 x = (x - rect.offsetLeft - this.state.center[0]) / this.state.scale;
             }
@@ -514,7 +514,7 @@ export default {
         },
 
         getNewBlockDefaultPosition(blockSize) {
-            var rect = this.getDim();
+            var rect = this.getDimensions();
             var position = [
                 (-this.state.center[0] + rect.width/2)/this.state.scale - blockSize[0]/2 + this.newBlockOffset,
                 (-this.state.center[1] + rect.height/2)/this.state.scale - blockSize[1]/2 + this.newBlockOffset
@@ -526,6 +526,11 @@ export default {
         },
 
         estimateBlockSize(block) {
+            if (block.$el) {
+                let dim = block.$el.getDimensions();
+                return [dim.width / this.state.scale, dim.height / this.state.scale];
+            }
+
             // ToDo: Doesn't recognize that collections has one parameter less
             var inputs = Math.max(
                 Utils.isObject(block.value) ? Utils.size(block.value.arguments) : 0,
@@ -547,7 +552,7 @@ export default {
         },
 
         moveCenter(dX, dY, reset = false) {
-            var rect = this.getDim();
+            var rect = this.getDimensions();
             this.state.center = [
                 (reset ? rect.width/2 : this.state.center[0]) + dX,
                 (reset ? rect.height/2 : this.state.center[1]) + dY
@@ -1025,7 +1030,6 @@ export default {
             ];
             this.newBlockOffset = 0;
         }
-
     }
 };
 

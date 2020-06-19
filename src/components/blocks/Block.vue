@@ -354,6 +354,9 @@ export default {
             await this.$nextTick();
             return selected;
         },
+        getDimensions() {
+            return Utils.domBoundingBox(this.$refs.div);
+        },
         edgesChanged(parameter, edges, el) {
             parameter.setRefs(edges.map(edge => edge.parameter1.value));
         },
