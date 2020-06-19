@@ -374,7 +374,8 @@ export default {
         async addComment() {
             await this.select();
             this.comment = "";
-            this.$nextTick(() => this.$refs.commentField.focus());
+            await this.$nextTick();
+            this.$refs.commentField.focus();
         },
         updateComment(evt) {
             if (typeof evt.target.value === 'string' && evt.target.value.length > 0) {

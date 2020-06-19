@@ -20,7 +20,7 @@
                 :id="block.id" :type="block.type" :value="block.value" :spec="block.spec" :state="state" :selected.sync="block.selected"
                 @input="commit()"
                 @mounted="mountBlock" @unmounted="unmountBlock"
-                @move="startDragBlock" @moved="moveBlock" />
+                @move="startDragBlock" @moved="refreshEdges" />
         </div>
     </div>
 </template>
@@ -199,9 +199,9 @@ export default {
         this.onDocumentMouseUpFn = this.onDocumentMouseUp.bind(this)
         document.addEventListener('mouseup', this.onDocumentMouseUpFn);
 
-        this.importPgParameters(this.pgParameters, 'prop');
+        await this.importPgParameters(this.pgParameters, 'prop');
         if (!await this.import(this.value, { propagate: false, undoOnError: false })) {
-            await this.perfectScale();
+            this.perfectScale();
         }
         selectionChangeWatcher.bind(this)();
     },
@@ -230,7 +230,7 @@ export default {
                 }
             }
         },
-        moveBlock() {
+        refreshEdges() {
             for(let i in this.$refs.edges) {
                 this.$refs.edges[i].updatePositions();
             }
@@ -724,7 +724,6 @@ export default {
                 edge.parameter2.addEdge(edge);
 
                 // Update result node
-                await this.$nextTick();
                 this.setResultNode(edge.parameter1.$parent, false);
                 return true;
             });
@@ -762,10 +761,11 @@ export default {
         /**
          * Changing the compact mode
          */
-        toggleCompact() {
-            let enable = !this.state.compactMode;
-            this.state.compactMode = !!enable;
-            this.$emit('compactMode', enable);
+        async toggleCompact() {
+            this.state.compactMode = !this.state.compactMode;
+            this.$emit('compactMode', this.state.compactMode);
+            await this.$nextTick();
+            this.refreshEdges();
         },
 
         export(internal = false) {
@@ -848,22 +848,17 @@ export default {
                 }
                 this.processGraph.parse(true);
 
-                this.importPgParameters(this.processGraph.getParameters(), 'pg', options.clear !== false);
-
-                // Import nodes
-                this.importNodes(this.processGraph.getStartNodes());
-
-                // Import edges
-                await this.$nextTick();
+                await this.importPgParameters(this.processGraph.getParameters(), 'pg', options.clear !== false);
+                await this.importNodes(this.processGraph.getStartNodes());
                 await this.importEdges(this.processGraph);
 
-                // Update scale
-                await this.perfectScale();
+                this.perfectScale();
+
                 return true;
             }, options);
         },
 
-        importPgParameters(params, origin, clear = true) {
+        async importPgParameters(params, origin, clear = true) {
             if (!Array.isArray(params)) {
                 return;
             }
@@ -884,6 +879,7 @@ export default {
 
                 this.addPgParameter(params[i], origin, position);
             }
+            await this.$nextTick();
         },
 
         addPgParameter(param, origin = 'user', position = null) {
@@ -950,10 +946,11 @@ export default {
             }
         },
 
-        importNodes(nodes, position = [0,0], imported = []) {
+        async importNodes(nodes, position = [0,0], imported = []) {
             // Make sure to not directly change the array content
             let x = position[0];
             let y = position[1];
+            let isInitialCall = imported.length === 0;
             for(let i in nodes) {
                 // `node` is a Node class instance as defined by the js-processgraphs library
                 // `data` is the simple object that is defined by JSON process graphs
@@ -970,8 +967,12 @@ export default {
                 imported.push(node.id);
 
                 let size = this.estimateBlockSize(block);
-                this.importNodes(node.getNextNodes(), [data.position[0] + size[0] + 20, data.position[1]], imported);
+                await this.importNodes(node.getNextNodes(), [data.position[0] + size[0] + 20, data.position[1]], imported);
                 y = data.position[1] + size[1] + 20;
+            }
+            // Wait for all nodes being rendered
+            if (isInitialCall) {
+                await this.$nextTick();
             }
         },
 
@@ -989,9 +990,7 @@ export default {
         /**
          * Go to the perfect scale
          */
-        async perfectScale() {
-            await this.$nextTick();
-
+        perfectScale() {
             if (!this.$refs.div || this.blocks.length === 0) {
                 return;
             }
