@@ -75,14 +75,14 @@ export default new Vuex.Store({
 
 			var spatial_extent = null;
 			try {
-				spatial_extent = Utils.extentToBBox(collection[0].extent.spatial);
+				spatial_extent = Utils.extentToBBox(collection[0].extent.spatial.bbox[0]);
 			} catch (error) {
 				// Catch invalid responses from back-ends
 			}
 
 			var temporal_extent = null;
 			try {
-				temporal_extent = collection[0].extent.temporal;
+				temporal_extent = collection[0].extent.temporal.interval[0];
 			} catch (error) {
 				// Catch invalid responses from back-ends
 			}

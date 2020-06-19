@@ -36,6 +36,8 @@
 		<TextEditor class="fieldValue textarea" v-else-if="type === 'commonmark'" :id="name" :editable="editable" v-model="state" language="markdown" />
 		<!-- WKT / PROJ -->
 		<TextEditor class="fieldValue textarea" v-else-if="type === 'wkt2-definition' || type === 'proj-definition'" :id="name" :editable="editable" v-model="state" />
+		<!-- JSON -->
+		<TextEditor class="fieldValue textarea" v-else-if="type == 'json'" :id="name" :editable="editable" v-model="state" language="json" />
 		<!-- Boolean -->
 		<input class="fieldValue" v-else-if="type === 'boolean'" v-model="state" type="checkbox" :name="name" :disabled="!editable" />
 		<!-- Integer -->

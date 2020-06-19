@@ -19,7 +19,7 @@ export default class JsonSchema extends JsonSchemaValidator {
 	}
 
 	async validateBandName(data) {
-		throw "Not supported";
+		return true;
 	}
 
 	async validateEpsgCode(data) {
@@ -87,7 +87,12 @@ export default class JsonSchema extends JsonSchemaValidator {
 	}
 
 	async validateUdfRuntime(data) {
-		throw "Not supported";
+		if (data in this.store.state.udfRuntimes) {
+			return true;
+		}
+		throw new ajv.ValidationError([{
+			message: "UDF runtime '" + data + "' is not supported."
+		}]);
 	}
 
 	async validateUdfRuntimeVersion(data) {

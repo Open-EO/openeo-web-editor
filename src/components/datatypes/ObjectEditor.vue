@@ -15,7 +15,7 @@
 					<input v-if="isObject" v-model="e.key" type="text" :disabled="!editable"/>
 					<template v-else>{{ k }}</template>
 				</label>
-				<ParameterDataTypes :editable="editable" :parameter="schema.getElementSchema(e.key || k)" :isItem="true" v-model="e.value" />
+				<ParameterDataTypes :editable="editable" :parameter="elementSchema(k, e.key)" :isItem="true" v-model="e.value" />
 				<button v-if="editable" class="deleteBtn" type="button" @click="remove(k)"><i class="fas fa-trash"></i></button>
 				<button v-show="editable && !isObject" class="mover" type="button"><i class="fas fa-arrows-alt"></i></button>
 			</div>
@@ -82,7 +82,7 @@ export default {
 					this.elements = [];
 					if (value && typeof value === 'object') {
 						for(var key in value) {
-							this.addElem(value[key], key);
+							this.add(key, value[key]);
 						}
 					}
 				}
@@ -90,41 +90,24 @@ export default {
 		}
 	},
 	methods: {
-		addElem(value, key) {
+		elementSchema(index, key = null) {
+			return this.schema.getElementSchema(key || index);
+		},
+		add(key = null, value = undefined) {
 			let obj = {
-				id: String(key),
+				id: String(this.elements.length),
 				value: value
 			};
 			if (this.isObject) {
-				obj.key = key;
+				obj.key = key ? key : "unnamed" + this.elements.length;
+			}
+			if (typeof obj.value === 'undefined') {
+				obj.value = this.elementSchema(this.elements.length, obj.key).default;
 			}
 			this.elements.push(obj);
 		},
-		add() {
-			var defaultValue = null;
-			var itemType = this.schema.getElementSchema().nativeDataType();
-			if (itemType === 'string') {
-				defaultValue = "";
-			}
-			else if (itemType === 'number' || itemType === 'integer') {
-				defaultValue = 0;
-			}
-			else if (itemType === 'boolean') {
-				defaultValue = false;
-			}
-			else if (itemType === 'array') {
-				defaultValue = [];
-			}
-			else if (itemType === 'object') {
-				defaultValue = {};
-			}
-
-			this.addElem(defaultValue, "unnamed" + this.elements.length);
-			return false;
-		},
 		remove(k) {
 			this.elements.splice(k, 1);
-			return false;
 		}
 	}
 };

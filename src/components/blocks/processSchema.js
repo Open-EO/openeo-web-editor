@@ -51,8 +51,14 @@ class ProcessSchema {
 			this.schemas = [];
 		}
 		else {
-			this.schemas = JsonSchemaValidator.convertSchemaToArray(schema).map(s => new ProcessDataType(s, defaultValue, this));
+			this.schemas = JsonSchemaValidator.convertSchemaToArray(schema).map(s => new ProcessDataType(s, this, defaultValue));
+
+			let defaults = this.schemas.filter(s => typeof s.default() !== 'undefined');
+			if (defaults.length === 1) {
+				this.default = defaults[0].default();
+			}
 		}
+
 		this.refs = [];
 	}
 
@@ -122,7 +128,7 @@ class ProcessParameter extends ProcessSchema {
 
 class ProcessDataType {
 	
-	constructor(schema, defaultValue = undefined, parent = null) {
+	constructor(schema, parent = null, defaultValue = undefined) {
 		this.schema = schema;
 		if (typeof this.schema.default === 'undefined' && typeof defaultValue !== 'undefined') {
 			this.schema.default = defaultValue;
@@ -179,7 +185,7 @@ class ProcessDataType {
 	dataType(native = false) {
 		var type = this.schema.type || "any";
 		if (!native) {
-			type = this.schema.subtype || type;
+			type = this.schema.refId || this.schema.subtype || type;
 		}
 		return type;
 	}
@@ -198,6 +204,10 @@ class ProcessDataType {
 
 	getCallbackParameters() {
 		return this.schema.parameters;
+	}
+
+	group() {
+		return this.schema.group || 'Other';
 	}
 
 	title() {

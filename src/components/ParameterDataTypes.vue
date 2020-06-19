@@ -1,15 +1,17 @@
 <template>
-	<div class="fieldContainer" v-if="selectedType !== null">
-		<div class="dataTypeChooser" v-if="allowedSchemas.length > 1">
+	<div class="fieldContainer" v-if="selectedSchema">
+		<div class="dataTypeChooser" v-if="showDataTypeChooser">
 			<select name="dataType" :value="selectedType" @input="onSelectType" :disabled="!editable">
-				<option v-for="(schema, type) in allowedSchemas" :key="type" :value="type">{{ schema.title() }}</option>
+				<optgroup v-for="group in groupedallowedTypes" :key="group.name" :label="group.name">
+					<option v-for="(type, i) in group.types" :key="i" :value="type.dataType()">{{ type.title() }}</option>
+				</optgroup>
 			</select>
 		</div>
 		<div v-if="!isItem && selectedSchema.description()" class="description">
 			<i class="fas fa-info-circle"></i>
 			<Description :description="selectedSchema.description()" :compact="true" />
 		</div>
-		<ParameterDataType ref="editor" :editable="editable" :parameter="parameter" :schema="selectedSchema" v-model="state" :processId="processId" :context="context" @changeType="changeType" />
+		<ParameterDataType :editable="editable" :parameter="parameter" :schema="selectedSchema" v-model="state" :processId="processId" :context="context" @changeType="setSelected" />
 	</div>
 </template>
 
@@ -20,58 +22,68 @@ import ParameterDataType from './ParameterDataType.vue';
 import Description from '@openeo/vue-components/components/Description.vue';
 import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
 import { ProcessGraphNode } from '@openeo/js-processgraphs';
-import { ProcessParameter, ProcessDataType } from './blocks/processSchema.js';
+import { ProcessParameter, ProcessDataType, Process } from './blocks/processSchema.js';
 
 const API_TYPES = Utils.resolveJsonRefs(require('@openeo/js-processgraphs/assets/openeo-api/subtype-schemas.json')).definitions;
-
+const TYPE_GROUPS = [
+	'Basics',
+	'References',
+	'Spatial',
+	'Temporal',
+	'File and Folders',
+	'Resources',
+	'CRS',
+	'UDF',
+	'Other',
+];
 const now = () => new Date().toISOString().replace(/\.\d+/, '');
 const SUPPORTED_TYPES = [
 		// Native types
-		{type: 'null', default: null},
-		{type: 'string', default: ""},
-		{type: 'integer', default: 0},
-		{type: 'number', default: 0},
-		{type: 'boolean', default: false},
-	//	{type: 'array', subtype: 'labeled-array', title: 'Array with labels'}, // Can't be transfered between client and server, no JSON encoding available.
-		{type: 'array', default: []},
-		{type: 'object', default: {}},
+		{type: 'null', default: null, group: 'Basics'},
+		{type: 'string', default: "", group: 'Basics'},
+		{type: 'integer', default: 0, group: 'Basics'},
+		{type: 'number', default: 0, group: 'Basics'},
+		{type: 'boolean', default: false, group: 'Basics'},
+	//	{type: 'array', subtype: 'labeled-array', title: 'Array with labels', group: 'Basics'}, // Can't be transfered between client and server, no JSON encoding available.
+		{type: 'array', default: [], group: 'Basics'},
+		{type: 'object', default: {}, group: 'Basics'},
 
-		// temporal types
-		{type: 'string', subtype: 'date-time', format: 'date-time', title: 'Date and Time', default: () => now()},
-		{type: 'string', subtype: 'date', format: 'date', title: 'Date only', default: () => now().substring(0, 10)},
-		{type: 'string', subtype: 'time', format: 'time', title: 'Time only', default: () => now().substring(11)},
-	//	{type: 'string', subtype: 'year', title: 'Year only'}, ToDo: Implemented, but only available after rc.2, wait until release
-		{type: 'array', subtype: 'temporal-interval', title: "Temporal interval"},
-		{type: 'array', subtype: 'temporal-intervals', title: "Temporal intervals (multiple)", default: []},
+		{type: 'string', subtype: 'date-time', format: 'date-time', title: 'Date and Time', group: 'Temporal', default: () => now()},
+		{type: 'string', subtype: 'date', format: 'date', title: 'Date only', group: 'Temporal', default: () => now().substring(0, 10)},
+		{type: 'string', subtype: 'time', format: 'time', title: 'Time only', group: 'Temporal', default: () => now().substring(11)},
+	//	{type: 'string', subtype: 'year', title: 'Year only', group: 'Temporal'}, ToDo: Implemented, but only available after rc.2, wait until release
+		{type: 'array', subtype: 'temporal-interval', title: "Temporal interval", group: 'Temporal'},
+		{type: 'array', subtype: 'temporal-intervals', title: "Temporal intervals (multiple)", group: 'Temporal', default: []},
 
-		// Other types
-		{type: 'string', subtype: 'band-name', title: 'Band'},
-		{type: 'object', subtype: 'bounding-box', title: 'Bounding Box'},
-		{type: 'string', subtype: 'collection-id', title: 'Collection'},
-		{type: 'object', subtype: 'geojson', title: 'GeoJSON'},
-		{type: 'string', subtype: 'job-id', title: 'Batch Job'},
+		{type: 'object', subtype: 'geojson', title: 'GeoJSON', group: 'Spatial'},
+		{type: 'object', subtype: 'bounding-box', title: 'Bounding Box', group: 'Spatial'},
+
+		{type: 'string', subtype: 'band-name', title: 'Band', group: 'Resources'},
+		{type: 'string', subtype: 'collection-id', title: 'Collection', group: 'Resources'},
+		{type: 'string', subtype: 'job-id', title: 'Batch Job', group: 'Resources'},
+
+		{type: 'string', subtype: 'udf-code', title: 'UDF Source Code', group: 'UDF', default: ""},
+		{type: 'string', subtype: 'udf-runtime', title: 'UDF Runtime', group: 'UDF'},
+		{type: 'string', subtype: 'udf-runtime-version', title: 'UDF Runtime Version', group: 'UDF', any: false},
+
+		{type: 'integer', subtype: 'epsg-code', title: 'EPSG Code (CRS)', group: 'CRS'},
+		{type: 'string', subtype: 'proj-definition', title: 'PROJ defintiion (CRS)', group: 'CRS', default: ""},
+		{type: 'string', subtype: 'wkt2-definition', title: 'WKT2 defintiion (CRS)', group: 'CRS', default: ""},
+
+		{type: 'array', subtype: 'file-path', title: 'File path', group: 'File and Folders'},
+		{type: 'array', subtype: 'file-paths', title: 'File paths (multiple)', group: 'File and Folders', default: []},
+		{type: 'string', subtype: 'uri', format: 'uri', title: 'URI / URL', group: 'File and Folders'},
+		{type: 'string', subtype: 'output-format', title: 'Export file format', group: 'File and Folders'},
+		{type: 'object', subtype: 'output-format-options', title: 'Export file format parameters', group: 'File and Folders', any: false},
+		{type: 'string', subtype: 'input-format', title: 'Import file format', group: 'File and Folders'},
+		{type: 'object', subtype: 'input-format-options', title: 'Import file format parameters', group: 'File and Folders', any: false},
+
 	//	{type: 'array', subtype: 'kernel', title: 'Kernel'},
 		{type: 'object', subtype: 'process-graph', title: 'Custom Process'},
-		{type: 'string', subtype: 'uri', format: 'uri', title: 'URI / URL'},
+		{subtype: 'json', title: 'JSON'},
 
-		{type: 'array', subtype: 'file-path', title: 'File path'},
-		{type: 'array', subtype: 'file-paths', title: 'File paths (multiple)', default: []},
-
-		{type: 'string', subtype: 'udf-code', title: 'UDF Source Code', default: ""},
-		{type: 'string', subtype: 'udf-runtime', title: 'UDF Runtime'},
-		{type: 'string', subtype: 'udf-runtime-version', title: 'UDF Runtime Version'},
-
-		{type: 'integer', subtype: 'epsg-code', title: 'EPSG Code (CRS)'},
-		{type: 'string', subtype: 'proj-definition', title: 'PROJ defintiion (CRS)', default: ""},
-		{type: 'string', subtype: 'wkt2-definition', title: 'WKT2 defintiion (CRS)', default: ""},
-
-		{type: 'string', subtype: 'output-format', title: 'Export file format'},
-	//	{type: 'object', subtype: 'output-format-options', title: 'Export file format parameters'},
-		{type: 'string', subtype: 'input-format', title: 'Import file format'},
-	//	{type: 'object', subtype: 'input-format-options', title: 'Import file format parameters'},
-
-	//	{type: 'object', subtype: 'raster-cube'},
-	//	{type: 'object', subtype: 'vector-cube'},
+//		{type: 'object', subtype: 'raster-cube'},
+//		{type: 'object', subtype: 'vector-cube'},
 ];
 
 export default {
@@ -100,80 +112,109 @@ export default {
 	},
 	data() {
 		return {
-			created: false,
 			state: typeof this.value === 'undefined' ? this.parameter.default : this.value,
 			selectedType: null,
+			selectedSchema: null,
 			jsonSchemaValidator: JsonSchema.create(this.$store)
 		};
 	},
 	async created() {
-		await this.detectSelectedType();
-		this.created = true;
+		await this.detectType();
 	},
 	computed: {
 		refSchemas() {
-			return this.parameter.getRefs()
-				.map(r => {
-					if (r.from_node) {
-						return new ProcessDataType({
-							type: 'object',
-							isRef: 'from_node',
-							from_node: r.from_node,
-							title: 'Output of #' + r.from_node,
-							required: ["from_node"],
-							properties: {
-								from_node: {
-									type: "string",
-									const: r.from_node
-								}
-							},
-							default: r,
-							additionalProperties: false
-						});
-					}
-					else if (r.from_parameter) {
-						return new ProcessDataType({
-							type: 'object',
-							isRef: 'from_parameter',
-							from_parameter: r.from_parameter,
-							title: 'Value of process parameter "' + r.from_parameter + '"',
-							required: ["from_parameter"],
-							properties: {
-								from_parameter: {
-									type: "string",
-									const: r.from_parameter
-								}
-							},
-							default: r,
-							additionalProperties: false
-						});
-					}
-					else {
-						return null;
-					}
-				})
-				.filter(r => r !== null);
+			let refs = {};
+			for(let r of this.parameter.getRefs()) {
+				let type;
+				if (r.from_node) {
+					name = 'from_node:' + r.from_node;
+					refs[name] = new ProcessDataType({
+						type: 'object',
+						group: 'References',
+						refId: name,
+						isRef: 'from_node',
+						from_node: r.from_node,
+						title: 'Output of #' + r.from_node,
+						required: ["from_node"],
+						properties: {
+							from_node: {
+								type: "string",
+								const: r.from_node
+							}
+						},
+						default: r,
+						additionalProperties: false
+					});
+				}
+				else if (r.from_parameter) {
+					name = 'from_parameter:' + r.from_parameter;
+					refs[name] = new ProcessDataType({
+						type: 'object',
+						group: 'References',
+						refId: name,
+						isRef: 'from_parameter',
+						from_parameter: r.from_parameter,
+						title: 'Value of process parameter "' + r.from_parameter + '"',
+						required: ["from_parameter"],
+						properties: {
+							from_parameter: {
+								type: "string",
+								const: r.from_parameter
+							}
+						},
+						default: r,
+						additionalProperties: false
+					});
+				}
+			}
+			return refs;
 		},
-		allowedSchemas() {
-			var type = this.parameter.dataType();
-			if (type === 'any') {
-				return this.refSchemas.concat(this.supportedTypes);
+		showDataTypeChooser() {
+			return Utils.size(this.allowedTypes) >= 2;
+		},
+		allowedTypes() {
+			if (this.parameter.dataType() === 'any') {
+				return Object.assign({}, this.supportedTypes, this.refSchemas);
 			}
 			else {
-				return this.parameter.schemas.concat(this.refSchemas);
+				let types = {};
+				for(let type of this.parameter.schemas) {
+					let name = type.dataType();
+					types[name] = type;
+				}
+				return Object.assign(types, this.refSchemas);
 			}
 		},
 		supportedTypes() {
-			return SUPPORTED_TYPES.map(s => {
+			let map = {};
+			for(let s of SUPPORTED_TYPES) {
+				if (s.any === false) {
+					continue;
+				}
 				let name = s.subtype || s.type;
-				return new ProcessDataType(
-					Object.assign({}, API_TYPES[name], s),
-					this.parameter
-				)
-			});
+				let schema = Object.assign({}, API_TYPES[name], s);
+				map[name] = new ProcessDataType(schema, this.parameter);
+			}
+			return map;
 		},
-		selectedSchema() {
-			return this.allowedSchemas[this.selectedType];
+		groupedallowedTypes() {
+			let grouped = {};
+			for(let type in this.allowedTypes) {
+				let schema = this.allowedTypes[type];
+				let group = schema.group();
+				if (!Array.isArray(grouped[group])) {
+					grouped[group] = [schema];
+				}
+				else {
+					grouped[group].push(schema);
+				}
+			}
+			return TYPE_GROUPS
+				.map(group => ({
+					name: group,
+					types: grouped[group] || []
+				}))
+				.filter(group => group.types.length !== 0);
 		}
 	},
 	watch: {
@@ -183,82 +224,95 @@ export default {
 			}
 		},
 		state(value) {
-			if (this.created) {
-				this.$emit('input', value);
-			}
+			this.$emit('input', value);
 		},
-		selectedSchema(schema) {
-			if (this.created) {
-				this.$emit('schemaSelected', schema);
-			}
+		selectedType(type) {
+			this.$emit('schemaSelected', this.supportedTypes[type]);
 		}
 	},
 	methods: {
-		async detectSelectedType() {
-			if (this.allowedSchemas.length > 1) {
+		/**
+		 * Returns the indices of provided JSON Schemas that the provided values matches against.
+		 * 
+		 * @param {Array} types - Array of JSON schemas
+		 * @param {*} value - A value
+		 * @return {string[]} - Returns matching indices (as strings!).
+		 */
+		async getTypeForValue(types, value) {
+			var subTypes = [];
+			var nativeTypes = [];
+			for(var type of types) {
 				try {
-					let types = await this.jsonSchemaValidator.getTypeForValue(this.allowedSchemas.map(s => s.schema), this.state);
-					switch(types.length) {
-						case 0:
-							this.guessType();
-							break;
-						case 1:
-							this.setSelectedType(types[0]);
-							break;
-						default:
-							let typeNames = types.map(t => this.allowedSchemas[t].dataType()).sort();
-							// Ignore if number/integer was detected as they always overlap and number always works
-							let numerics = typeNames.length === 2 && typeNames[0] === 'integer' && typeNames[1] === 'number';
-							if (!Utils.isRef(this.state) && !numerics) {
-								console.warn("A parameter is ambiguous. Potential types: " + typeNames.join(', ') + ". Value: " + JSON.stringify(this.state));
-							}
-							this.setSelectedType(types[0]);
+					var errors = await this.jsonSchemaValidator.validateValue(value, type.schema);
+					if (errors.length > 0) {
+						continue;
 					}
-				}
-				catch(error) {
-					console.warn(error);
-					this.guessType();
-				}
+					let dataType = type.dataType();
+					if (dataType === type.nativeDataType()) {
+						nativeTypes.push(dataType);
+					}
+					else {
+						subTypes.push(dataType);
+					}
+				} catch (error) {}
+			}
+			return subTypes.length === 0 ? nativeTypes : subTypes;
+		},
+		async detectType() {
+			let keys = Object.keys(this.allowedTypes);
+			let valueUndefined = typeof this.state === 'undefined';
+			if (keys.length === 0) {
+				await this.setSelected('json');
+			}
+			else if (keys.length === 1) {
+				await this.setSelected(keys[0], valueUndefined);
+			}
+			else if (valueUndefined) {
+				let nonNullKeys = keys.filter(t => t !== 'null');
+				await this.setSelected(nonNullKeys[0], true);
 			}
 			else {
-				this.setSelectedType(0);
+				let types = await this.getTypeForValue(Object.values(this.allowedTypes), this.state);
+				if (types.length === 0) {
+					await this.setSelected('json');
+				}
+				else if (types.length === 1) {
+					await this.setSelected(types[0]);
+				}
+				else {
+					types.sort();
+					// Ignore if number/integer was detected as they always overlap and number always works
+					let numerics = types.length === 2 && types[0] === 'integer' && types[1] === 'number';
+					if (!Utils.isRef(this.state) && !numerics) {
+						console.warn("A parameter is ambiguous. Potential types: " + types.join(', ') + ". Value: " + JSON.stringify(this.state));
+					}
+					await this.setSelected(types[0]);
+				}
 			}
 		},
 		async onSelectType(evt) {
-			let selectedSchema = this.allowedSchemas[evt.target.value];
-			let defaultValue = selectedSchema.default();
-			try {
-				if ((await this.jsonSchemaValidator.validateValue(this.state, this.selectedSchema)).length > 0) {
+			await this.setSelected(evt.target.value, true);
+		},
+		async setSelected(type, setDefaultValue = false) {
+			if (type instanceof ProcessDataType) {
+				this.selectedSchema = type;
+				this.selectedType = type.dataType();
+			}
+			else {
+				this.selectedSchema = this.allowedTypes[type] ? this.allowedTypes[type] : this.supportedTypes[type];
+				this.selectedType = type;
+			}
+			if (setDefaultValue) {
+				let defaultValue = this.selectedSchema.default();
+				try {
+					if (typeof this.state === 'undefined' || (await this.jsonSchemaValidator.validateValue(this.state, this.selectedSchema)).length > 0) {
+						this.state = defaultValue;
+					}
+				}
+				catch (error) {
 					this.state = defaultValue;
 				}
 			}
-			catch (error) {
-				this.state = defaultValue;
-			}
-			this.setSelectedType(evt.target.value);
-		},
-		changeType(type) {
-			for(var i in this.allowedSchemas) {
-				let schema = this.allowedSchemas[i];
-				if (schema.dataType() === type) {
-					this.setSelectedType(i);
-					return;
-				}
-			}
-		},
-		setSelectedType(type) {
-			this.selectedType = String(type);
-		},
-		guessType() {
-			// Try to set null as default
-			for(var i in this.allowedSchemas) {
-				if (this.allowedSchemas[i].isNull()) {
-					this.setSelectedType(i);
-					return;
-				}
-			}
-			// Otherwise set first type in list
-			this.setSelectedType(0);
 		}
 	}
 };

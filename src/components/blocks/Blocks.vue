@@ -1019,7 +1019,7 @@ export default {
             var rect = this.$refs.div.getBoundingClientRect();
             var scaleA = rect.width/(xMax-xMin);
             var scaleB = rect.height/(yMax-yMin);
-            this.state.scale = Math.min(scaleA, scaleB, 2); // Don't scale higher than 2x
+            this.state.scale = Math.min(scaleA, scaleB, 1.5); // Don't scale higher than 1.5
             this.state.center = [
                 rect.width/2 - this.state.scale*(xMin+xMax)/2.0,
                 rect.height/2 - this.state.scale*(yMin+yMax)/2.0

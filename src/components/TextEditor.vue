@@ -136,7 +136,7 @@ export default {
 		this.editor = CodeMirror(document.getElementById(this.id), this.editorOptions);
 		this.editor.setSize(null, "100%");
 		if (this.languageString === 'processgraph') {
-			this.editor.on("change", () => this.updateHistoryState());
+			this.editor.on("change", () => this.updateState());
 		}
 		this.updateContent();
 
