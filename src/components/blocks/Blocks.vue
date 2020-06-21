@@ -417,7 +417,7 @@ export default {
             var element = this.history[index];
             if (element) {
                 this.historyPointer = index;
-                this.import(element, { saveHistory: false, undoOnError: false });
+                this.import(element, { saveHistory: false, undoOnError: false, perfectScale: false });
                 this.$emit('historyChanged', this.history, this.historyPointer);
             }
         },
@@ -830,6 +830,7 @@ export default {
         // Options may contain:
         // - all from startTransaction()
         // - clear: Clear the model builder before import (default: true)
+        // - perfectScale: Apply perfect scale after import (default: true)
         async import(process, options = {}) {
             return await this.startTransaction(async () => {
                 // clear screen...
@@ -858,7 +859,9 @@ export default {
                 await this.importNodes(this.processGraph.getStartNodes());
                 await this.importEdges(this.processGraph);
 
-                this.perfectScale();
+                if (options.perfectScale !== false) {
+                    this.perfectScale();
+                }
 
                 return true;
             }, options);
