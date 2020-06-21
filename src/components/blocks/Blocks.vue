@@ -59,6 +59,7 @@ const getDefaultState = function(blocks) {
         linkTo: null // Array
     });
 };
+const MARGIN = 20;
 
 const selectionChangeWatcher = function (newVal, oldVal) {
     if (!Array.isArray(newVal) || !Array.isArray(oldVal) || newVal.length !== oldVal.length || !newVal.every((value,i) => value.id === oldVal[i].id)) {
@@ -496,7 +497,7 @@ export default {
                 spec: process || {}
             };
 
-            var size = this.estimateBlockSize(block);
+            var size = this.getBlockSize(block);
             block.value.position = Utils.ensurePoint(block.value.position, () => this.getNewBlockDefaultPosition(size));
 
             // If there's already a result node, remove the flag here
@@ -525,7 +526,7 @@ export default {
             return position;
         },
 
-        estimateBlockSize(block) {
+        getBlockSize(block) {
             if (block.$el) {
                 let dim = block.$el.getDimensions();
                 return [dim.width / this.state.scale, dim.height / this.state.scale];
@@ -546,7 +547,7 @@ export default {
             }
 
             var commentHeight = (Utils.isObject(block.value) && typeof block.value.description === 'string') ? 40 : 0;
-            var height = 20 + inputs * 15 + commentHeight;
+            var height = MARGIN + inputs * 15 + commentHeight;
 
             return [width, height];
         },
@@ -873,13 +874,13 @@ export default {
                 this.blocks = this.blocks.filter(b => b.type !== 'parameter' || b.spec.origin !== origin);
             }
 
-            let size = this.estimateBlockSize({}); // Estimate base size for an empty block
+            let size = this.getBlockSize({}); // Estimate base size for an empty block
             let position = [0,0];
             for(var i in params) {
                 let param = params[i];
                 position = [
-                    -size[0] - 20,
-                    i * (size[1] + 20)
+                    -size[0] - MARGIN,
+                    i * (size[1] + MARGIN)
                 ];
 
                 this.addPgParameter(params[i], origin, position);
@@ -902,7 +903,7 @@ export default {
                 type: 'parameter',
                 value: {
                     from_parameter: param.name,
-                    position: Utils.ensurePoint(position, () => this.getNewBlockDefaultPosition(this.estimateBlockSize({})))
+                    position: Utils.ensurePoint(position, () => this.getNewBlockDefaultPosition(this.getBlockSize({})))
                 },
                 spec: param
             }));
@@ -951,18 +952,19 @@ export default {
             }
         },
 
-        async importNodes(nodes, position = [0,0], imported = []) {
-            // Make sure to not directly change the array content
-            let x = position[0];
-            let y = position[1];
+        async importNodes(nodes, x = 0, y = 0, imported = []) {
             let isInitialCall = imported.length === 0;
-            for(let i in nodes) {
+            let nextNodes = [];
+            let maxX = 0;
+            for(let node of nodes) {
                 // `node` is a Node class instance as defined by the js-processgraphs library
                 // `data` is the simple object that is defined by JSON process graphs
                 // `block` is the representation used by the Block component to render the block
-                let node = nodes[i];
-                if (imported.includes(node.id)) {
-                    continue; // Node has already been added
+
+                // To get a better layout, only add the block once all previous nodes are added
+                if (imported.includes(node.id) || node.getPreviousNodes().filter(prev => !imported.includes(prev.id)).length) {
+                    y += MARGIN / 2; // add a small offset so that lines going through a box are easier to see
+                    continue;
                 }
 
                 let data = typeof node.toJSON === 'function' ? node.toJSON() : node;
@@ -971,9 +973,14 @@ export default {
                 let block = this.addBlock(data, node.id);
                 imported.push(node.id);
 
-                let size = this.estimateBlockSize(block);
-                await this.importNodes(node.getNextNodes(), [data.position[0] + size[0] + 20, data.position[1]], imported);
-                y = data.position[1] + size[1] + 20;
+                let size = this.getBlockSize(block);
+                maxX = Math.max(maxX, data.position[0] + size[0]);
+                y = data.position[1] + size[1] + MARGIN;
+
+                nextNodes = nextNodes.concat(node.getNextNodes());
+            }
+            if (nextNodes.length) {
+                await this.importNodes(nextNodes, maxX + MARGIN, 0, imported);
             }
             // Wait for all nodes being rendered
             if (isInitialCall) {
@@ -1005,7 +1012,7 @@ export default {
 
             for (let k in this.blocks) {
                 let block = this.blocks[k];
-                let size = this.estimateBlockSize(block);
+                let size = this.getBlockSize(block);
                 let pos = Utils.ensurePoint(block.value.position);
                 if (xMin == null) {
                     xMin = pos[0]-15
