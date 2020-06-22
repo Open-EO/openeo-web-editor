@@ -144,9 +144,6 @@ export default {
             }
         },
         // Visualizations
-        height() {
-            return 20 + this.parameters.length * 15;
-        },
         width() {
             if (this.parameters.length > 0) {
                 return this.state.compactMode ? 110 : 200;
@@ -355,7 +352,11 @@ export default {
             return selected;
         },
         getDimensions() {
-            return Utils.domBoundingBox(this.$refs.div);
+            let dim = Utils.domBoundingBox(this.$refs.div);
+            var blocksDim = this.$parent.getDimensions();
+            dim.x = dim.offsetLeft-blocksDim.offsetLeft;
+            dim.y = dim.offsetTop-blocksDim.offsetTop;
+            return dim;
         },
         edgesChanged(parameter, edges, el) {
             parameter.setRefs(edges.map(edge => edge.parameter1.value));

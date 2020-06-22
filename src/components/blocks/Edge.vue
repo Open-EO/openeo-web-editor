@@ -108,6 +108,7 @@ export default {
         updatePositions() {
             this.position1 = this.parameter1.getCirclePosition();
             this.position2 = this.parameter2.getCirclePosition();
+            this.$emit('position', this.position1, this.position2);
         },
         getLineStyle(lineWidth, selected = false, dashed = false) {
             let dashLength = 2 * this.state.scale;

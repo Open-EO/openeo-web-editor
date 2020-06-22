@@ -12,8 +12,10 @@
             <Edge v-for="edge in edges" ref="edges" :key="edge.id"
                 v-bind="edge" :state="state"
                 :parameter1="edge.parameter1"
-                :parameter2="edge.parameter2" />
+                :parameter2="edge.parameter2"
+                @position="edge.position1 = arguments[0]; edge.position2 = arguments[1]" />
             <line v-if="linkingLine" v-bind="linkingLine" />
+            <rect v-if="selectRect" v-bind="selectRect" />
         </svg>
         <div class="blocks">
             <Block v-for="block in blocks" :key="block.type + block.id"
@@ -31,6 +33,8 @@ import Edge from './Edge.vue';
 import Utils from '../../utils.js';
 import { JsonSchemaValidator, ProcessGraph, ProcessRegistry } from '@openeo/js-processgraphs';
 import Vue from 'vue';
+import boxIntersectsBox from 'intersects/box-box';
+import boxIntersectsLine from 'intersects/box-line';
 
 /*
 Events:
@@ -51,7 +55,8 @@ const getDefaultState = function(blocks) {
         root: blocks,
         editable: false,
         compactMode: false,
-        moving: null, // Is the user dragging the view ?
+        moving: null, // Is the user dragging the view?
+        selecting: null, // Is the user multi-selecting?
         center: [0,0],
         mouse: [0,0],
         scale: 1.3,
@@ -129,6 +134,20 @@ export default {
         };
     },
     computed: {
+        selectRect() {
+            if (!this.state.selecting) {
+                return null;
+            }
+            return {
+                x: Math.min(this.state.mouse[0], this.state.selecting[0]),
+                y: Math.min(this.state.mouse[1], this.state.selecting[1]),
+                width: Math.abs(this.state.mouse[0] - this.state.selecting[0]),
+                height: Math.abs(this.state.mouse[1] - this.state.selecting[1]),
+                'stroke': 'rgba(0,0,0,0.8)',
+                'stroke-width': 1,
+                'fill': 'rgba(0,0,0,0.05)'
+            };
+        },
         linkingLine() {
             if (this.state.linkFrom) {
                 var position = this.state.linkFrom.getCirclePosition();
@@ -272,11 +291,30 @@ export default {
                 this.state.linkFrom = null;
             }
         },
+        multiSelect() {
+            let box = this.selectRect;
+            this.blocks
+                .filter(b => {
+                    if (Array.isArray(b.value.position) && b.$el) {
+                        let pos = b.$el.getDimensions();
+                        return boxIntersectsBox(box.x, box.y, box.width, box.height, pos.x, pos.y, pos.width, pos.height);
+                    }
+                    return false;
+                })
+                .map(b => b.selected = true);
+            this.edges
+                .filter(e => Array.isArray(e.position1) && Array.isArray(e.position2) && boxIntersectsLine(box.x, box.y, box.width, box.height, e.position1[0], e.position1[1], e.position2[0], e.position2[1]))
+                .map(e => e.selected = true);
+        },
         async onDocumentMouseUp(event) {
             if (this.selectedSideEdge) {
                 this.selectEdge(this.selectedSideEdge, null, null, null); // Reset selectedParameter / selectedPosition, but don't change selected state.
             }
-            if (this.state.moving && (event.which == 2 || event.which == 1)) {
+            if (this.state.selecting) {
+                this.multiSelect();
+                this.state.selecting = null;
+            }
+            if (this.state.moving) {
                 this.state.moving = null;
             }
             if (this.state.editable && this.state.linkFrom) {
@@ -333,32 +371,35 @@ export default {
             }
         },
         onMouseDown(event) {
-            this.unselectAll(event);
-
             let sideSelected = null;
-            for (var k in this.$refs.edges) {
-                var edge = this.$refs.edges[k];
-                var collide = edge.collide(this.state.mouse[0], this.state.mouse[1]);
-                if (collide != false) {
-                    if (this.selectedEdges.length === 0) {
-                        if (collide < 0.3) {
-                            sideSelected = edge.parameter2;
+
+            if (event.which == 1 && event.shiftKey) {
+                this.state.selecting = this.state.mouse;
+            }
+            else if (event.which == 1) {
+                this.unselectAll(event);
+
+                for (var k in this.$refs.edges) {
+                    var edge = this.$refs.edges[k];
+                    var collide = edge.collide(this.state.mouse[0], this.state.mouse[1]);
+                    if (collide != false) {
+                        if (this.selectedEdges.length === 0) {
+                            if (collide < 0.3) {
+                                sideSelected = edge.parameter2;
+                            }
+                            else if (collide > 0.7) {
+                                sideSelected = edge.parameter1;
+                            }
                         }
-                        else if (collide > 0.7) {
-                            sideSelected = edge.parameter1;
-                        }
+                        this.selectEdge(k, true, event, sideSelected);
+                        event.preventDefault();
+                        break;
                     }
-                    this.selectEdge(k, true, event, sideSelected);
-                    event.preventDefault();
-                    break;
                 }
             }
-            
-            if (event.which == 2 || (event.which == 1 && !sideSelected)) {
+
+            if (event.which == 2 || (event.which == 1 && !sideSelected && !event.shiftKey)) {
                 this.state.moving = this.state.mouse;
-            }
-            else if (event.which == 1 && event.shiftKey) {
-                // Multiselect by drag&drop
             }
 
             this.focus();

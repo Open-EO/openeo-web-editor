@@ -45,6 +45,7 @@
     "codemirror": "^5.47.0",
     "content-type": "^1.0.4",
     "core-js": "^2.6.9",
+    "intersects": "^2.7.2",
     "jsonlint-mod": "^1.7.5",
     "ol": "^5.3.3",
     "ol-ext": "^3.1.4",
