@@ -894,7 +894,8 @@ export default {
                 else {
                     this.processGraph = new ProcessGraph(process, this.processRegistry);
                 }
-                this.processGraph.parse(true);
+                this.processGraph.allowEmpty();
+                this.processGraph.parse();
 
                 await this.importPgParameters(this.processGraph.getParameters(), 'pg', options.clear !== false);
                 await this.importNodes(this.processGraph.getStartNodes());

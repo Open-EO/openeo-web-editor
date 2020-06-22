@@ -180,7 +180,8 @@ export default {
 						var process = JSON.parse(value);
 						if (Utils.size(process) > 0) {
 							var pg = new ProcessGraph(process, this.processRegistry);
-							pg.parse(true);
+							pg.allowEmpty();
+							pg.parse();
 							return this.emit(process);
 						}
 					}

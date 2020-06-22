@@ -38,9 +38,9 @@
     "build": "npm run build:epsg && vue-cli-service build --report"
   },
   "dependencies": {
-    "@openeo/js-client": "Open-EO/openeo-js-client#development",
-    "@openeo/js-processgraphs": "Open-EO/openeo-js-processgraphs#dev",
-    "@openeo/vue-components": "Open-EO/openeo-vue-components#dev",
+    "@openeo/js-client": "^1.0.0-beta.2",
+    "@openeo/js-processgraphs": "^1.0.0-beta.2",
+    "@openeo/vue-components": "^1.0.0-beta.6",
     "ajv": "^6.10.0",
     "codemirror": "^5.47.0",
     "content-type": "^1.0.4",
