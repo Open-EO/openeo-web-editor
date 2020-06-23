@@ -684,7 +684,9 @@ export default {
             return await this.startTransaction(async () => {
                 // Remove the selected blocks and its edges
                 for(var block of this.selectedBlocks.slice(0)) { // copy to avoid race condition
-                    this.removeBlock(block);
+                    if (block.$el.allowsDelete) {
+                        this.removeBlock(block);
+                    }
                 }
 
                 // Removes the selected edges

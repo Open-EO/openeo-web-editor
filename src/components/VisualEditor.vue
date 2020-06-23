@@ -40,7 +40,7 @@
 					@showSchema="showSchemaModal"
 					@editParameters="openParameterEditor"
 					@compactMode="compact => this.compactMode = compact"
-					@selectionChanged="(b, e) => this.hasSelection = (b.length || e.length)"
+					@selectionChanged="selectionChanged"
 					@historyChanged="historyChanged"
 					/>
 			</div>
@@ -120,6 +120,10 @@ export default {
 
 		errorHandler(message, title = null) {
 			Utils.exception(this, message, title)
+		},
+
+		selectionChanged(blocks, edges) {
+			this.hasSelection = Boolean(blocks.filter(block => block.$el.allowsDelete).length || edges.length);
 		},
 
 		historyChanged(history, index) {
