@@ -39,7 +39,7 @@ const TYPE_GROUPS = [
 const now = () => new Date().toISOString().replace(/\.\d+/, '');
 const SUPPORTED_TYPES = [
 		// Native types
-		{type: 'null', default: null, group: 'Basics'},
+		{type: 'null', const: null, group: 'Basics'},
 		{type: 'string', default: "", group: 'Basics'},
 		{type: 'integer', default: 0, group: 'Basics'},
 		{type: 'number', default: 0, group: 'Basics'},
@@ -142,7 +142,7 @@ export default {
 								const: r.from_node
 							}
 						},
-						default: r,
+						const: r,
 						additionalProperties: false
 					});
 				}
@@ -162,7 +162,7 @@ export default {
 								const: r.from_parameter
 							}
 						},
-						default: r,
+						const: r,
 						additionalProperties: false
 					});
 				}
@@ -293,7 +293,7 @@ export default {
 		async onSelectType(evt) {
 			await this.setSelected(evt.target.value, true);
 		},
-		async setSelected(type, setDefaultValue = false) {
+		async setSelected(type, setValue = false) {
 			if (type instanceof ProcessDataType) {
 				this.selectedSchema = type;
 				this.selectedType = type.dataType();
@@ -302,15 +302,30 @@ export default {
 				this.selectedSchema = this.allowedTypes[type] ? this.allowedTypes[type] : this.supportedTypes[type];
 				this.selectedType = type;
 			}
-			if (setDefaultValue) {
-				let defaultValue = this.selectedSchema.default();
-				try {
-					if (typeof this.state === 'undefined' || (await this.jsonSchemaValidator.validateValue(this.state, this.selectedSchema)).length > 0) {
+			if (setValue) {
+				// Special handling for null as it doesn't have an actual input element
+				if (this.selectedSchema.isNull()) {
+					this.state = null;
+				}
+				// Set const value
+				else if (typeof this.selectedSchema.const !== 'undefined') {
+					this.state = this.selectedSchema.const;
+				}
+				// Set single enum value
+				else if (this.selectedSchema.isEnum() && this.getEnumChoices().length === 1) {
+					this.state = this.getEnumChoices()[0];
+				}
+				// Set value from default value
+				else {
+					let defaultValue = this.selectedSchema.default();
+					try {
+						if (typeof this.state === 'undefined' || (await this.jsonSchemaValidator.validateValue(this.state, this.selectedSchema)).length > 0) {
+							this.state = defaultValue;
+						}
+					}
+					catch (error) {
 						this.state = defaultValue;
 					}
-				}
-				catch (error) {
-					this.state = defaultValue;
 				}
 			}
 		}
