@@ -34,6 +34,20 @@ var TapDigit = {
     }
 };
 
+const SUP_MAPPING = {
+    '⁰': 0,
+    '¹': 1,
+    '²': 2,
+    '³': 3,
+    '⁴': 4,
+    '⁵': 5,
+    '⁶': 6,
+    '⁷': 7,
+    '⁸': 8,
+    '⁹': 9
+};
+const SUP_STRING = Object.keys(SUP_MAPPING).join('');
+
 TapDigit.Lexer = function () {
     var expression = '',
         length = 0,
@@ -91,7 +105,7 @@ TapDigit.Lexer = function () {
 
     function scanOperator() {
         var ch = peekNextChar();
-        if ('+-*/()^,'.indexOf(ch) >= 0) {
+        if (('+-*/()^,' + SUP_STRING).indexOf(ch) >= 0) {
             return createToken(T.Operator, getNextChar());
         }
         return undefined;
@@ -249,7 +263,7 @@ TapDigit.Parser = function () {
     function matchOp(token, op) {
         return (typeof token !== 'undefined') &&
             token.type === T.Operator &&
-            token.value === op;
+            op.includes(token.value);
     }
 
     // ArgumentList := Expression |
@@ -277,9 +291,9 @@ TapDigit.Parser = function () {
     // FunctionCall ::= Identifier '(' ')' ||
     //                  Identifier '(' ArgumentList ')'
     function parseFunctionCall(name) {
-        var token, args = [];
+        var args = [];
 
-        token = lexer.next();
+        var token = lexer.next();
         if (!matchOp(token, '(')) {
             throw new SyntaxError('Expecting ( in a function call "' + name + '"');
         }
@@ -307,10 +321,8 @@ TapDigit.Parser = function () {
     //             '(' Expression ')' |
     //             FunctionCall
     function parsePrimary() {
-        var token, expr;
-
-        token = lexer.peek();
-
+        var expr;
+        var token = lexer.peek();
         if (typeof token === 'undefined') {
             throw new SyntaxError('Unexpected termination of expression');
         }
@@ -351,10 +363,9 @@ TapDigit.Parser = function () {
     // Unary ::= Primary |
     //           '-' Unary
     function parseUnary() {
-        var token, expr;
-
-        token = lexer.peek();
-        if (matchOp(token, '-') || matchOp(token, '+')) {
+        var expr;
+        var token = lexer.peek();
+        if (matchOp(token, '-+')) {
             token = lexer.next();
             expr = parseUnary();
             return {
@@ -368,20 +379,26 @@ TapDigit.Parser = function () {
         return parsePrimary();
     }
 
+    function parseSuperscript(ch) {
+        if (typeof SUP_MAPPING[ch] === 'number') {
+            return {'Number': SUP_MAPPING[ch]};
+        }
+        return null;
+    }
+
     // Power ::= Unary |
     //           Power '^' Unary |
+    //           Power⁰¹²³⁴⁵⁶⁷⁸⁹
     function parsePower() {
-        var expr, token;
-
-        expr = parseUnary();
-        token = lexer.peek();
-        while (matchOp(token, '^')) {
+        var expr = parseUnary();
+        var token = lexer.peek();
+        while (matchOp(token, '^' + SUP_STRING)) {
             token = lexer.next();
             expr = {
                 'Binary': {
-                    operator: token.value,
+                    operator: '^',
                     left: expr,
-                    right: parseUnary()
+                    right: token.value !== '^' ? parseSuperscript(token.value) : parseUnary()
                 }
             };
             token = lexer.peek();
@@ -390,20 +407,18 @@ TapDigit.Parser = function () {
     }
 
     // Multiplicative ::= Power |
-    //                    Multiplicative '*' Unary |
-    //                    Multiplicative '/' Unary |
+    //                    Multiplicative '*' Power |
+    //                    Multiplicative '/' Power |
     function parseMultiplicative() {
-        var expr, token;
-
-        expr = parsePower();
-        token = lexer.peek();
-        while (matchOp(token, '*') || matchOp(token, '/')) {
+        var expr = parsePower();
+        var token = lexer.peek();
+        while (matchOp(token, '*/')) {
             token = lexer.next();
             expr = {
                 'Binary': {
                     operator: token.value,
                     left: expr,
-                    right: parseUnary()
+                    right: parsePower()
                 }
             };
             token = lexer.peek();
@@ -415,11 +430,9 @@ TapDigit.Parser = function () {
     //              Additive '+' Multiplicative |
     //              Additive '-' Multiplicative
     function parseAdditive() {
-        var expr, token;
-
-        expr = parseMultiplicative();
-        token = lexer.peek();
-        while (matchOp(token, '+') || matchOp(token, '-')) {
+        var expr = parseMultiplicative();
+        var token = lexer.peek();
+        while (matchOp(token, '+-')) {
             token = lexer.next();
             expr = {
                 'Binary': {
@@ -439,12 +452,9 @@ TapDigit.Parser = function () {
     }
 
     function parse(expression) {
-        var expr, token;
-
         lexer.reset(expression);
-        expr = parseExpression();
-
-        token = lexer.next();
+        var expr = parseExpression();
+        var token = lexer.next();
         if (typeof token !== 'undefined') {
             throw new SyntaxError('Unexpected token ' + token.value);
         }
