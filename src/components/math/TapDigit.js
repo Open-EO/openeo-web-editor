@@ -91,7 +91,7 @@ TapDigit.Lexer = function () {
 
     function scanOperator() {
         var ch = peekNextChar();
-        if ('+-*/()^%=;,'.indexOf(ch) >= 0) {
+        if ('+-*/()^,'.indexOf(ch) >= 0) {
             return createToken(T.Operator, getNextChar());
         }
         return undefined;
@@ -304,7 +304,7 @@ TapDigit.Parser = function () {
 
     // Primary ::= Identifier |
     //             Number |
-    //             '(' Assignment ')' |
+    //             '(' Expression ')' |
     //             FunctionCall
     function parsePrimary() {
         var token, expr;
@@ -335,7 +335,7 @@ TapDigit.Parser = function () {
 
         if (matchOp(token, '(')) {
             lexer.next();
-            expr = parseAssignment();
+            expr = parseExpression();
             token = lexer.next();
             if (!matchOp(token, ')')) {
                 throw new SyntaxError('Expecting )');
@@ -368,13 +368,34 @@ TapDigit.Parser = function () {
         return parsePrimary();
     }
 
-    // Multiplicative ::= Unary |
-    //                    Multiplicative '*' Unary |
-    //                    Multiplicative '/' Unary
-    function parseMultiplicative() {
+    // Power ::= Unary |
+    //           Power '^' Unary |
+    function parsePower() {
         var expr, token;
 
         expr = parseUnary();
+        token = lexer.peek();
+        while (matchOp(token, '^')) {
+            token = lexer.next();
+            expr = {
+                'Binary': {
+                    operator: token.value,
+                    left: expr,
+                    right: parseUnary()
+                }
+            };
+            token = lexer.peek();
+        }
+        return expr;
+    }
+
+    // Multiplicative ::= Power |
+    //                    Multiplicative '*' Unary |
+    //                    Multiplicative '/' Unary |
+    function parseMultiplicative() {
+        var expr, token;
+
+        expr = parsePower();
         token = lexer.peek();
         while (matchOp(token, '*') || matchOp(token, '/')) {
             token = lexer.next();
@@ -412,33 +433,9 @@ TapDigit.Parser = function () {
         return expr;
     }
 
-    // Assignment ::= Identifier '=' Assignment |
-    //                Additive
-    function parseAssignment() {
-        var token, expr;
-
-        expr = parseAdditive();
-
-        if (typeof expr !== 'undefined' && expr.Identifier) {
-            token = lexer.peek();
-            if (matchOp(token, '=')) {
-                lexer.next();
-                return {
-                    'Assignment': {
-                        name: expr,
-                        value: parseAssignment()
-                    }
-                };
-            }
-            return expr;
-        }
-
-        return expr;
-    }
-
-    // Expression ::= Assignment
+    // Expression ::= Additive
     function parseExpression() {
-        return parseAssignment();
+        return parseAdditive();
     }
 
     function parse(expression) {

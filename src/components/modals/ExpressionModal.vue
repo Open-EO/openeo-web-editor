@@ -267,8 +267,6 @@ export default {
 		parseTree(tree) {
 			let key = Object.keys(tree)[0]; // There's never more than one property so no loop required
 			switch(key) {
-				case 'Assignment':
-					throw new Error('Assignments are not supported.');
 				case 'Number':
 					return parseFloat(tree.Number);
 				case 'Identifier':
@@ -352,15 +350,24 @@ export default {
 		},
 		addOperatorProcess(operator, left, right) {
 			if (typeof this.operatorMapping[operator] !== 'undefined') {
-				return this.addProcess(this.operatorMapping[operator], {x: left, y: right});
+				let process = this.processRegistry.get(this.operatorMapping[operator]);
+				let args = {};
+				if (!process || !Array.isArray(process.parameters) || process.parameters.length < 2) {
+					throw new Error("Process for operator " + operator + " must have at least two parameters");
+				}
+				args[process.parameters[0].name || 'x'] = left;
+				args[process.parameters[1].name || 'y'] = right;
+				return this.addProcess(process, args);
 			}
 			else {
 				throw new Error('Operator ' + operator + ' not supported.');
 			}
 		},
-		addProcess(name, args) {
-			// Get process
-			let process = this.processRegistry.get(name);
+		addProcess(process, args) {
+			if (typeof process === 'string') {
+				process = this.processRegistry.get(process);
+			}
+
 			if (!process) {
 				throw new Error("Process not available: " + name);
 			}
@@ -382,7 +389,7 @@ export default {
 			// Add node to result with unique id
 			let nodeId = Utils.getUniqueId();
 			let node = {
-				process_id: name,
+				process_id: process.id,
 				arguments: args
 			};
 			this.result[nodeId] = node;
