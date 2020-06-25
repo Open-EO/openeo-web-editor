@@ -20,7 +20,7 @@ export default class JsonSchema extends JsonSchemaValidator {
 	}
 
 	async validateBandName(data) {
-		return true;
+		return data.length > 0;
 	}
 
 	async validateEpsgCode(data) {
