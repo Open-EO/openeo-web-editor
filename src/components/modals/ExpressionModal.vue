@@ -119,12 +119,14 @@ export default {
 				console.info(error);
 			}
 
-			// Add all array_element calls for labels to the list so that we don't get duplicate array_element calls
-			this.arrayElements = {};
-			for(let id in this.processGraph) {
-				let node = this.processGraph[id];
-				if (node.process_id === 'array_element' && Utils.isObject(node.arguments) && node.arguments.label) {
-					this.arrayElements[node.arguments.label] = node;
+			if(!this.replace) {
+				// If not replacing: Add all array_element calls for labels to the list so that we don't get duplicate array_element calls
+				this.arrayElements = {};
+				for(let id in this.processGraph) {
+					let node = this.processGraph[id];
+					if (node.process_id === 'array_element' && Utils.isObject(node.arguments) && node.arguments.label) {
+						this.arrayElements[node.arguments.label] = {from_node: node.id};
+					}
 				}
 			}
 		},
@@ -321,7 +323,7 @@ export default {
 					return { from_node: nodeId };
 				}
 			}
-			// Array labels
+			// Array labels / indices
 			if (this.supportsArrayElement && typeof value === 'string' && value.startsWith('$')) {
 				let ref = value.substring(1);
 				if (!(ref in this.arrayElements)) {

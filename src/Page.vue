@@ -189,6 +189,11 @@ button:disabled i {
 .status[data-value="error"] {
 	color: red;
 }
+tt, code {
+	color: maroon;
+	display: inline-block;
+	padding: 0 0.1em 0 0.3em;
+}
 
 .vue-component h2 {
 	font-size: 1.75em;

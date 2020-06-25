@@ -1,12 +1,16 @@
 <template>
 	<div class="fieldEditorContainer">
 		<!-- Result Node -->
-		<template v-if="isResult || type === 'raster-cube' || type === 'vector-cube'">
+		<template v-if="isResult">
 			<div class="fieldValue externalData fromNode">
 				<span>Output of <tt>#{{ state.from_node }}</tt></span>
 			</div>
 			<button type="button" v-if="nativeParameterType === 'array'" @click="convertToArray()"><i class="fas fa-list"></i> Convert to array</button>
 		</template>
+		<div v-else-if="type === 'raster-cube' || type === 'vector-cube'" class="fieldValue description">
+			<i class="fas fa-exclamation-circle"></i>
+			This parameter can only be set by creating a connection between an "Output" / "Result" and this parameter in the Visual Model.
+		</div>
 		<!-- Process Parameter -->
 		<template v-else-if="isPgParameter">
 			<div class="fieldValue externalData fromArgument">
@@ -15,7 +19,7 @@
 			<button type="button" v-if="nativeParameterType === 'array'" @click="convertToArray()"><i class="fas fa-list"></i> Convert to array</button>
 		</template>
 		<!-- Null -->
-		<div class="description" v-else-if="type === 'null'"><i class="fas fa-info-circle"></i> This is set to&nbsp;<strong><tt>null</tt></strong>, which is usually used as placeholder for no-data values or a default value.</div>
+		<div class="description" v-else-if="type === 'null'"><i class="fas fa-info-circle"></i> This is set to <strong><tt>null</tt></strong>, which is usually used as placeholder for no-data values or a default value.</div>
 		<!-- Select Boxes (collection id, job id, epsg code, in/output format, service type, billing plan, enums) -->
 		<SelectBox v-else-if="isSelection" v-model="state" :key="type" :type="type" :editable="editable" :schema="schema" :context="dependency"></SelectBox>
 		<!-- Temporal (date, time, date-time, temporal-interval) -->
@@ -202,7 +206,7 @@ export default {
 			}
 			for(let name in this.context.schemas) {
 				let schema = this.context.schemas[name];
-				if (schema.dataType() === dataType) {
+				if (Utils.isObject(schema) && schema.dataType() === dataType) {
 					return this.context.values[name];
 				}
 			}

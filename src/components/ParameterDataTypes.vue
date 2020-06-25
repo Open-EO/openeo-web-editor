@@ -333,17 +333,17 @@ export default {
 };
 </script>
 
-<style scoped>
-.description {
+<style>
+.fieldContainer .description {
 	display: flex;
 	align-items: center;
 	font-size: 0.9em;
 	margin-bottom: 10px;
 }
-.description .fas {
+.fieldContainer .description .fas {
 	margin-right: 0.5em;
 }
-.dataTypeChooser {
+.fieldContainer .dataTypeChooser {
 	margin-bottom: 10px;
 }
 </style>

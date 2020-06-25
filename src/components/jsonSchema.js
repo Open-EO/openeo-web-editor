@@ -1,5 +1,6 @@
 import { JsonSchemaValidator } from '@openeo/js-processgraphs';
 import ajv from 'ajv';
+import { Versions } from '@openeo/js-commons';
 
 var instance = null;
 
@@ -96,7 +97,13 @@ export default class JsonSchema extends JsonSchemaValidator {
 	}
 
 	async validateUdfRuntimeVersion(data) {
-		throw "Not supported";
+		// Can't completely check yet whether it's a valid version as I don't know which udf runtime it's for, but for now can check that it's a valid version number
+		if (Versions.validate(data)) {
+			return true;
+		}
+		throw new ajv.ValidationError([{
+			message: "UDF runtime version '" + data + "' is not a valid version number."
+		}]);
 	}
 
 }
