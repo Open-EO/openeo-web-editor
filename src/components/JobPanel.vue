@@ -251,12 +251,12 @@ export default {
 		},
 		queueJob(job) {
 			this.queue({data: job})
-				.then(updatedJob => Utils.ok(this, 'Job "' + this.getTitle(updatedJob) + '" successfully queued.'))
+				.then(updatedJob => Utils.ok(this, 'Job "' + Utils.getResourceTitle(updatedJob) + '" successfully queued.'))
 				.catch(error => Utils.exception(this, error, 'Failed to queue job "' + Utils.getResourceTitle(job) + '"'));
 		},
 		cancelJob(job) {
 			this.cancel({data: job})
-				.then(updatedJob => Utils.ok(this, 'Job "' + this.getTitle(updatedJob) + '" successfully canceled.'))
+				.then(updatedJob => Utils.ok(this, 'Job "' + Utils.getResourceTitle(updatedJob) + '" successfully canceled.'))
 				.catch(error => Utils.exception(this, error, 'Failed to cancel job "' + Utils.getResourceTitle(job) + '"'));
 		},
 		viewResults(job) {			
