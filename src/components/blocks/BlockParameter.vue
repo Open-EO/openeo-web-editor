@@ -189,12 +189,9 @@ export default {
         },
     },
     watch: {
-        edges: {
-            immediate: true,
-            handler() {
-                this.updateEdgeStatus();
-                this.$emit('edgesChanged', this.edges, this);
-            }
+        edges() {
+            this.updateEdgeStatus();
+            this.$emit('edgesChanged', this.edges, this);
         },
         value: {
             immediate: true,
