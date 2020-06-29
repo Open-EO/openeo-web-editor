@@ -17,7 +17,8 @@ export default {
 	data() {
 		return {
 			isFullscreen: false,
-			keyDownFn: null
+			keyDownFn: null,
+			oldZIndex: 'auto'
 		};
 	},
 	mounted() {
@@ -33,7 +34,11 @@ export default {
 			el.removeEventListener('keydown', this.keyDownFn);
 		}
     },
+    computed: {
+		...Utils.mapState('editor', ['hightestModalZIndex'])
+	},
 	methods: {
+		...Utils.mapMutations('editor', ['openModal', 'closeModal']),
 		onkeyDown(e) {
 			// ToDo: This is very bugged and needs some attention
 			if(e.key === "F11" || (this.isFullscreen && e.key === "Escape")) {
@@ -58,10 +63,17 @@ export default {
 			if (!this.isFullscreen) {
 				this.isFullscreen = true;
 				el.classList.add('fullscreen');
+				// Handle z-index to properly show above modals etc.
+				this.openModal();
+				this.oldZIndex = el.style.zIndex;
+				el.style.zIndex = this.hightestModalZIndex;
 			}
 			else {
 				this.isFullscreen = false;
 				el.classList.remove('fullscreen');
+				// Revert z-index changes
+				el.style.zIndex = this.oldZIndex;
+				this.closeModal();
 			}
 
 			this.$emit('changed', this.isFullscreen);
@@ -77,7 +89,6 @@ export default {
 	left: 0 !important;
 	width: 100% !important;
 	height: 100% !important;
-	z-index: 9990 !important; /* Snotify has 9999 and is intentionally above the fullscreen */
 	background-color: white;
 	overflow: auto;
 }
