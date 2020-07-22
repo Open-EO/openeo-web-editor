@@ -3,8 +3,8 @@
 		<template #main>
 			<div class="docgen">
 				<Collection :collectionData="collection" :version="version">
-					<template slot="collection-spatial-extent">
-						<MapViewer id="collectionMap" :show="showMap" :extent="bbox"></MapViewer>
+					<template slot="collection-spatial-extents" slot-scope="p">
+						<MapViewer id="collectionMap" :show="showMap" :extents="p.extents"></MapViewer>
 					</template>
 				</Collection>
 			</div>

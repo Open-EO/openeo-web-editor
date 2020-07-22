@@ -22,7 +22,7 @@ export default {
 	name: 'MapViewer',
 	mixins: [MapMixin],
 	props: {
-		extent: { // WGS84: west, south, east, north
+		extents: { // Array of Array (WGS84: west, south, east, north)
 			type: Array,
 			default: () => null
 		},
@@ -43,11 +43,14 @@ export default {
 	},
 	methods: {
 		renderMap() {
-			this.createMap(!this.extent);
+			let showExtents = Array.isArray(this.extents) && this.extents.length > 0;
+			this.createMap(!showExtents);
 
-			if (this.extent) {
-				var bbox = Utils.extentToBBox(this.extent);
-				this.addRectangle(bbox.west, bbox.east, bbox.north, bbox.south);
+			if (showExtents) {
+				for(let extent of this.extents) {
+					var bbox = Utils.extentToBBox(extent);
+					this.addRectangle(bbox.west, bbox.east, bbox.north, bbox.south);
+				}
 			}
 
 			if (Utils.isObject(this.geoJson)) {
