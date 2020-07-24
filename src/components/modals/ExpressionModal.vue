@@ -3,7 +3,8 @@
 		<template #main>
 			<div class="content">
 				<TextEditor ref="editor" id="input" class="editor" v-model="input" language="math" placeholder="e.g. x * 2.5 / (x - y)" @drop="onDrop($event)" @dragover="allowDrop($event)" />
-				<div class="description"><i  class="fas fa-info-circle"></i> Above you can insert a mathematical formula and it will be converted to openEO code for you.
+				<div class="description">
+					<p><i  class="fas fa-info-circle"></i> Above you can insert a mathematical formula and it will be converted to openEO code for you.</p>
 					<p><strong>Operators</strong>:<br />
 						<kbd v-for="op in operators" :key="op.op" :title="op.title" @click="emit('showProcess', op.processId)" class="click" draggable="true" @dragstart="onDrag($event, 'operators', op.op)">{{ op.op }}</kbd>
 					</p>
@@ -412,6 +413,12 @@ export default {
 }
 .description {
 	margin-top: 1rem;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+}
+.description p {
+	margin: 0.5em 0;
 }
 .editor {
 	width: 100%;
