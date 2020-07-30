@@ -24,7 +24,7 @@ import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
 import { ProcessGraphNode } from '@openeo/js-processgraphs';
 import { ProcessParameter, ProcessDataType, Process } from './blocks/processSchema.js';
 
-const API_TYPES = Utils.resolveJsonRefs(require('@openeo/js-processgraphs/assets/openeo-api/subtype-schemas.json')).definitions;
+const API_TYPES = Utils.resolveJsonRefs(require('@openeo/js-processgraphs/assets/subtype-schemas.json')).definitions;
 const TYPE_GROUPS = [
 	'Basics',
 	'References',
