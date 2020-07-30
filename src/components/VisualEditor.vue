@@ -18,12 +18,12 @@
 				</span>
 				<button type="button" @click="$refs.blocks.toggleCompact()" :class="{compactMode: compactMode}" title="Compact Mode"><i class="fas fa-compress-arrows-alt"></i></button>
 				<button type="button" @click="$refs.blocks.perfectScale()" title="Scale to perfect size"><i class="fas fa-arrows-alt"></i></button>
-				<FullscreenButton :element="() => this.$refs.visualEditor" @changed="() => this.$refs.blocks.perfectScale()" />
+				<FullscreenButton :element="() => this.$refs.visualEditor" @changed="enabled => {this.$refs.blocks.perfectScale(); isFullScreen = enabled}" />
 				<slot name="toolbar"></slot>
 			</div>
 		</div>
 		<div class="editorSplitter">
-			<DiscoveryToolbar v-if="showDiscoveryToolbar && editable" class="discoveryToolbar" :onAddProcess="insertProcess" />
+			<DiscoveryToolbar v-if="(showDiscoveryToolbar || isFullScreen) && editable" class="discoveryToolbar" :onAddProcess="insertProcess" />
 			<div class="graphBuilder" @drop="onDrop($event)" @dragover="allowDrop($event)">
 				<Blocks
 					ref="blocks"
@@ -103,7 +103,8 @@ export default {
 			canRedo: false,
 			compactMode: false,
 			hasSelection: false,
-			isMath: false
+			isMath: false,
+			isFullScreen: false
 		};
 	},
 	watch: {
