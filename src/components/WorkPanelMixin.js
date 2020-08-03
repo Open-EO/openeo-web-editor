@@ -36,13 +36,14 @@ export default (namespace, singular, plural) => {
 				this.stopSyncTimer();
 			},
 			startSyncTimer() {
-				if (this.supportsList) {
+				if (this.supportsList && this.syncTimer === null) {
 					this.syncTimer = setInterval(this.updateData, this.getSyncInterval()*1000);
 				}
 			},
 			stopSyncTimer() {
 				if (this.syncTimer !== null) {
 					clearInterval(this.syncTimer);
+					this.syncTimer = null;
 				}
 			},
 			getSyncInterval() {

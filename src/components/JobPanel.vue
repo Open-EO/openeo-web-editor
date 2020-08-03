@@ -14,6 +14,7 @@
 			<button title="Cancel processing" @click="cancelJob(p.row)" v-show="supports('stopJob') && isJobActive(p.row)"><i class="fas fa-stop-circle"></i></button>
 			<button title="Download" @click="downloadResults(p.row)" v-show="supports('downloadResults') && hasResults(p.row)"><i class="fas fa-download"></i></button>
 			<button title="View results" @click="viewResults(p.row, true)" v-show="supports('downloadResults') && hasResults(p.row)"><i class="fas fa-eye"></i></button>
+			<button title="View logs" @click="showLogs(p.row)" v-show="supports('debugJob')"><i class="fas fa-bug"></i></button>
 		</template>
 	</DataTable>
 </template>
@@ -209,6 +210,10 @@ export default {
 					else if (old.status !== 'error' && updated.status === 'error') {
 						Utils.error(this, 'Job "' + Utils.getResourceTitle(updated) + '" has stopped due to an error or timeout.');
 					}
+
+					if (old.status !== updated.status) {
+						this.emit('jobStatusUpdated', updated, old);
+					}
 				});
 			}
 		},
@@ -220,6 +225,9 @@ export default {
 			job.estimateJob()
 				.then(estimate => this.emit('showModal', 'Job Estimate', estimate))
 				.catch(error => Utils.exception(this, error, "Loading estimate failed"));
+		},
+		showLogs(job) {
+			this.emit('viewLogs', job);
 		},
 		replaceProcess(job, process) {
 			if (job instanceof Job) {

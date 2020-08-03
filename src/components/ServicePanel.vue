@@ -16,6 +16,7 @@
 			<button title="Edit process" @click="showInEditor(p.row)" v-show="supportsRead"><i class="fas fa-project-diagram"></i></button>
 			<button title="Delete" @click="deleteService(p.row)" v-show="supportsDelete"><i class="fas fa-trash"></i></button>
 			<button v-show="p.row.enabled && isMapServiceSupported(p.row.type)" title="View on map" @click="viewService(p.row)"><i class="fas fa-map"></i></button>
+			<button title="View logs" @click="showLogs(p.row)" v-show="supports('debugService')"><i class="fas fa-bug"></i></button>
 		</template>
 	</DataTable>
 </template>
@@ -30,10 +31,6 @@ import { Service } from '@openeo/js-client';
 export default {
 	name: 'ServicePanel',
 	mixins: [WorkPanelMixin('services', 'web service', 'web services'), EventBusMixin],
-	computed: {
-		...Utils.mapState(['serviceTypes']),
-		...Utils.mapGetters(['supportsBilling', 'supportsBillingPlans'])
-	},
 	data() {
 		return {
 			columns: {
@@ -69,7 +66,9 @@ export default {
 		};
 	},
 	computed: {
-		...Utils.mapState('editor', ['process'])
+		...Utils.mapState('editor', ['process']),
+		...Utils.mapState(['serviceTypes']),
+		...Utils.mapGetters(['supports', 'supportsBilling', 'supportsBillingPlans'])
 	},
 	mounted() {
 		this.listen('replaceProcess', this.replaceProcess);
@@ -83,6 +82,9 @@ export default {
 		},
 		showInEditor(service) {
 			this.refreshElement(service, updatedService => this.emit('editProcess', updatedService));
+		},
+		showLogs(service) {
+			this.emit('viewLogs', service);
 		},
 		serviceCreated(service) {
 			var buttons = [];

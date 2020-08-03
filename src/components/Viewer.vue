@@ -1,6 +1,6 @@
 <template>
 	<Tabs id="viewerContent" ref="tabs">
-		<template #default="{ tabs }">
+		<template #default>
 			<Tab id="mapView" name="Map" icon="fa-map" :selected="true">
 				<template #default="{ tab }">
 					<MapViewer id="mapCanvas" ref="mapViewer" :show="tab.active" :center="[50.1725, 9.15]" :zoom="6" />
@@ -8,7 +8,8 @@
 			</Tab>
 		</template>
 		<template #dynamic="{ tab }">
-			<ImageViewer v-if="tab.icon === 'fa-image'" :data="tab.data" />
+			<LogViewer v-if="tab.icon === 'fa-bug'" :data="tab.data" />
+			<ImageViewer v-else-if="tab.icon === 'fa-image'" :data="tab.data" />
 			<DataViewer v-else :data="tab.data" />
 		</template>
 	</Tabs>
@@ -21,6 +22,7 @@ import Tabs from '@openeo/vue-components/components/Tabs.vue';
 import Tab from '@openeo/vue-components/components/Tab.vue';
 import DataViewer from './DataViewer.vue';
 import ImageViewer from './ImageViewer.vue';
+import LogViewer from './LogViewer.vue';
 import MapViewer from './MapViewer.vue'
 import contentType from 'content-type';
 
@@ -32,6 +34,7 @@ export default {
 		Tabs,
 		DataViewer,
 		ImageViewer,
+		LogViewer,
 		MapViewer
 	},
 	mounted() {
@@ -41,6 +44,7 @@ export default {
 		this.listen('viewSyncResult', this.showSyncResults);
 		this.listen('viewJobResults', this.showJobResults);
 		this.listen('viewWebService', this.showWebService);
+		this.listen('viewLogs', this.showLogs);
 		this.listen('removeWebService', this.removeWebService);
 	},
 	data() {
@@ -71,6 +75,24 @@ export default {
 			for(var key in item.assets) {
 				var asset = item.assets[key];
 				this.showViewer(asset, this.makeTitle(key, job.id, true));
+			}
+		},
+		showLogs(resource) {
+			this.$refs.tabs.addTab(
+				Utils.getResourceTitle(resource, true),
+				"fa-bug", resource, null, true, true,
+				tab => this.onShow(tab),
+				tab => this.onHide(tab)
+			);
+		},
+		onShow(tab) {
+			if (tab.$children.length && typeof tab.$children[0].onShow === 'function') {
+				tab.$children[0].onShow();
+			}
+		},
+		onHide(tab) {
+			if (tab.$children.length && typeof tab.$children[0].onHide === 'function') {
+				tab.$children[0].onHide();
 			}
 		},
 		uniqueTitle(title) {
