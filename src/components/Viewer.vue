@@ -68,7 +68,13 @@ export default {
 		},
 		showSyncResults(pg) {
 			this.connection.computeResult(pg)
-				.then(data => this.showViewer(data))
+				.then(result => {
+					console.log(result);
+					if (Array.isArray(result.logs) && result.logs.length > 0) {
+						this.showLogs(result.logs);
+					}
+					this.showViewer(result.data);
+				})
 				.catch(error => Utils.exception(this, error, 'Computation failed'));
 		},
 		showJobResults(item, job) {
@@ -78,9 +84,9 @@ export default {
 			}
 		},
 		showLogs(resource) {
+			let title = Array.isArray(resource) ? 'Logs' : Utils.getResourceTitle(resource, true);
 			this.$refs.tabs.addTab(
-				Utils.getResourceTitle(resource, true),
-				"fa-bug", resource, null, true, true,
+				title, "fa-bug", resource, null, true, true,
 				tab => this.onShow(tab),
 				tab => this.onHide(tab)
 			);

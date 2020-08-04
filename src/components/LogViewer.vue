@@ -20,8 +20,8 @@ export default {
 	name: 'LogViewer',
 	mixins: [EventBusMixin],
 	props: {
-		data: { // => JS Client Job Object
-			type: Object,
+		data: { // => JS Client Job Object or Log Entries
+			type: Object | Array,
 			required: true
 		}
 	},
@@ -32,6 +32,7 @@ export default {
 		};
 	},
 	computed: {
+		...Utils.mapState(['connection']),
 		isJob() {
 			return Utils.isObject(this.data) && typeof this.data.debugJob === 'function';
 		},
@@ -95,16 +96,17 @@ export default {
 			}
 		},
 		async loadNext() {
-			if (!this.logIterator) {
-				this.logs = [];
-				return;
+			if (this.logIterator) {
+				let logs = await this.logIterator.nextLogs();
+				if (!Array.isArray(this.logs)) {
+					this.logs = [];
+				}
+				for(let log of logs) {
+					this.logs.push(log);
+				}
 			}
-			let logs = await this.logIterator.nextLogs();
-			if (!Array.isArray(this.logs)) {
-				this.logs = [];
-			}
-			for(let log of logs) {
-				this.logs.push(log);
+			else if(Array.isArray(this.data) && !this.logs) {
+				this.logs = this.data;
 			}
 		}
 	}
@@ -112,12 +114,7 @@ export default {
 </script>
 
 <style scoped>
-.error {
-	color: rgb(128, 0, 0);
-}
-.warning {
-	color: rgb(128, 83, 0);
-}
+/* .warning / .error are defined in Page.vue */
 .info {
 	color: black;
 }
