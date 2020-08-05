@@ -46,11 +46,13 @@ class Process {
 
 class ProcessSchema {
 	
-	constructor(schema, defaultValue = undefined) {
+	constructor(schema = null, defaultValue = undefined) {
 		if (!Utils.isObject(schema) && !Array.isArray(schema)) {
+			this.unspecified = true;
 			this.schemas = [];
 		}
 		else {
+			this.unspecified = false;
 			this.schemas = JsonSchemaValidator.convertSchemaToArray(schema).map(s => new ProcessDataType(s, this, defaultValue));
 
 			let defaults = this.schemas.filter(s => typeof s.default() !== 'undefined');
@@ -67,7 +69,7 @@ class ProcessSchema {
 	}
 
 	isEditable() {
-		return this.schemas.filter(s => s.isEditable() && !s.isNull()).length > 0;
+		return this.unspecified || this.schemas.filter(s => s.isEditable() && !s.isNull()).length > 0;
 	}
 
 	is(type) {

@@ -280,15 +280,12 @@ export default {
 
 @keyframes glowing {
   0% {
-    background-color: green;
     box-shadow: 0 0 3px green;
   }
   50% {
-    background-color: green;
     box-shadow: 0 0 10px green;
   }
   100% {
-    background-color: green;
     box-shadow: 0 0 3px green;
   }
 }

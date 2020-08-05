@@ -312,8 +312,8 @@ export default {
 					this.state = this.selectedSchema.const;
 				}
 				// Set single enum value
-				else if (this.selectedSchema.isEnum() && this.getEnumChoices().length === 1) {
-					this.state = this.getEnumChoices()[0];
+				else if (this.selectedSchema.isEnum() && this.selectedSchema.getEnumChoices().length === 1) {
+					this.state = this.selectedSchema.getEnumChoices()[0];
 				}
 				// Set value from default value
 				else {

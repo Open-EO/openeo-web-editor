@@ -2,6 +2,9 @@
     <div :id="'block' + this.id" ref="div" :class="containerClasses" @mousedown.prevent.stop.left="onMouseDown($event)" :style="styles">
         <div class="blockTitle" @mousedown.prevent.stop.left="emitDrag($event)">
             <span class="titleText" :title="plainTitle">
+                <span v-show="invalid" class="invalid" title="Process or Collection not supported!">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </span>
                 {{ name }}
                 <span v-if="showId" class="blockId">#{{ id }}</span>
             </span>
@@ -75,7 +78,7 @@ export default {
         },
         spec: {
             type: Object,
-            default: () => ({})
+            default: () => null
         },
         state: {
             type: Object,
@@ -117,6 +120,11 @@ export default {
             set(value) {
                 if (!Utils.isObject(this.data.arguments)) {
                     this.data.arguments = {};
+                }
+                for(let key in this.data.arguments) {
+                    if (typeof value[key] === 'undefined' && (!this.hasParametersDefined || this.spec.parameters.findIndex(p => p.name === key) === -1)) {
+                        this.$emit('parameterRemoved', this, key);
+                    }
                 }
                 this.$set(this.data, 'arguments', value);
                 this.commit();
@@ -204,6 +212,9 @@ export default {
             if (this.selected) {
                 classes.push('block_selected');
             }
+            if (this.invalid) {
+                classes.push('block_invalid');
+            }
 
             if (this.state.compactMode) {
                 classes.push('compact');
@@ -224,9 +235,41 @@ export default {
 
             return classes;
         },
+        invalid() {
+            if (this.type !== 'process' || !this.$parent.hasProcesses) {
+                // We can only check processes for validity
+                // Also, don't check for validity if no processes to validate against are given
+                return false;
+            }
+            else if (!this.processId) {
+                return true;
+            }
+
+            // Check that the process exists
+            if (!this.spec) {
+                return true;
+            }
+
+            // Check that the collection exists
+            if (this.processId === 'load_collection' && !Utils.isRef(this.args.id)) {
+                for(let collection of this.$parent.collections) {
+                    if (this.args.id === collection.id) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            return false;
+        },
         processId() {
             if (this.type === 'process') {
-                return this.value.process_id || this.spec.id;
+                if (this.value.process_id) {
+                    return this.value.process_id;
+                }
+                else if (Utils.isObject(this.spec) && this.spec.id) {
+                    return this.spec.id;
+                }
             }
             return null;
         },
@@ -240,14 +283,14 @@ export default {
             return (this.$parent.supports('editParameters') && this.parameters.filter(p => p.isEditable()).length > 0 && this.type !== 'parameter');
         },
         allowsDelete() {
-            return (this.state.editable && this.spec.origin !== 'prop');
+            return (this.state.editable && (!this.spec || (Utils.isObject(this.spec) && this.spec.origin !== 'prop')));
         },
         allowsInfo() {
             if (this.collectionId) {
                 return this.$parent.supports('showCollection');
             }
             else if (this.type === 'parameter') {
-                return this.$parent.supports('showSchema');
+                return Utils.isObject(this.spec) && this.$parent.supports('showSchema');
             }
             else {
                 return this.$parent.supports('showProcess');
@@ -263,24 +306,27 @@ export default {
             return (this.type !== 'parameter');
         },
         // Parameters and related
+        hasParametersDefined() {
+            return Boolean(Utils.isObject(this.spec) && Array.isArray(this.spec.parameters) && this.spec.parameters.length > 0);
+        },
         parameters() {
-            if (Utils.isObject(this.spec) && Array.isArray(this.spec.parameters) && this.spec.parameters.length > 0) {
-                return this.spec.parameters.map(p => new ProcessParameter(p));
+            let names = [];
+            let parameters = [];
+            if (this.hasParametersDefined) {
+                parameters = this.spec.parameters.map(p => new ProcessParameter(p));
+                names = parameters.map(p => p.name);
             }
-            else if (Utils.size(this.args) > 0) {
-                let parameters = [];
+            if (Utils.size(this.args) > 0) {
                 for(var key in this.args) {
-                    parameters.push(new ProcessParameter({
-                        name: key,
-                        description: '',
-                        schema: {}
-                    }));
+                    if (!names.includes(key)) {
+                        parameters.push(new ProcessParameter({
+                            name: key,
+                            description: ''
+                        }));
+                    }
                 }
-                return parameters;
             }
-            else {
-                return [];
-            }
+            return parameters;
         },
         fields() {
             var fields = {};
@@ -292,11 +338,13 @@ export default {
         },
         output() {
             var spec = {};
-            if (this.type === 'parameter') {
-                spec = this.spec;
-            }
-            else if (Utils.isObject(this.spec) && Utils.isObject(this.spec.returns)) {
-                spec = this.spec.returns;
+            if (Utils.isObject(this.spec)) {
+                if (this.type === 'parameter') {
+                    spec = this.spec;
+                }
+                else if (Utils.isObject(this.spec.returns)) {
+                    spec = this.spec.returns;
+                }
             }
             var output = {
                 name: "output",
@@ -522,7 +570,6 @@ export default {
 .block_collection {
     border:2px solid #6B8DAF;
 }
-
 .block_collection .blockTitle {
     background-color:#A3B7CC;
 }
@@ -530,17 +577,22 @@ export default {
 .block_argument {
     border:2px solid #B28C6B;
 }
-
 .block_argument .blockTitle {
     background-color:#CCB7A3;
 }
 
 .block_selected {
-    border:2px solid #0a0 !important; /* important  is used to override the styles for block_collection and block_argument above */
+    border:2px solid #0a0 !important; /* important is used to override the styles for block_collection and block_argument above */
 }
-
 .block_selected .blockTitle {
     background-color:#0c0 !important;
+}
+
+.block_invalid {
+    border:2px solid #ff0000 !important; /* important is used to override the styles for block_selected above */
+}
+.invalid {
+    color: red;
 }
 
 .inout {

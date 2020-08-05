@@ -20,7 +20,7 @@
         <div class="blocks">
             <Block v-for="block in blocks" :key="block.type + block.id"
                 :id="block.id" :type="block.type" :value="block.value" :spec="block.spec" :state="state" :selected.sync="block.selected"
-                @input="commit()"
+                @input="commit()" @parameterRemoved="parameterRemoved"
                 @mounted="mountBlock" @unmounted="unmountBlock"
                 @move="startDragBlock" @moved="refreshEdges" />
         </div>
@@ -170,6 +170,9 @@ export default {
                 return new ProcessRegistry(this.processes);
             }
         },
+        hasProcesses() {
+            return this.processRegistry.count() > 0;
+        },
         processBlocks() {
             return this.blocks.filter(b => b.type === 'process');
         },
@@ -234,6 +237,13 @@ export default {
         },
         unmountBlock(node) {
             this.setBlockElement(node, null);
+        },
+        parameterRemoved(block, parameterName) {
+            for(let edge of this.edges) {
+                if(edge.parameter2.$parent === block && edge.parameter2.name === parameterName) {
+                    this.removeEdge(edge);
+                }
+            }
         },
         setBlockElement(node, setTo) {
             for(var block of this.blocks) {
@@ -413,7 +423,7 @@ export default {
             return await this.startTransaction(async () => {
                 this.edges = [];
                 // Don't remove parameters injected by props (fixed callback parameters)
-                this.blocks = this.blocks.filter(b => b.type === 'parameter' && b.spec.origin === 'prop');
+                this.blocks = this.blocks.filter(b => b.type === 'parameter' && Utils.isObject(b.spec) && b.spec.origin === 'prop');
                 this.nextBlockId = 1;
                 this.nextEdgeId = 1;
                 this.process = {};
@@ -522,21 +532,15 @@ export default {
         },
 
         addBlock(node, id = null) {
-            let process = {};
-            if (this.processRegistry) {
-                process = this.processRegistry.get(node.process_id);
-            }
-            else {
-                process = {};
-            }
-
             var block = {
                 id: String(this.incrementId(id)),
                 type: 'process',
                 selected: false,
-                value: typeof node.toJSON === 'function' ? node.toJSON() : node,
-                spec: process || {}
+                value: typeof node.toJSON === 'function' ? node.toJSON() : node
             };
+            if (this.processRegistry) {
+                block.spec = this.processRegistry.get(node.process_id);
+            }
 
             var size = this.getBlockSize(block);
             block.value.position = Utils.ensurePoint(block.value.position, () => this.getNewBlockDefaultPosition(size));
@@ -749,7 +753,7 @@ export default {
                 throw 'You can not create a loop';
             }
             // Check type compatibility
-            if (!JsonSchemaValidator.isSchemaCompatible(edge.parameter2.schema, edge.parameter1.schema, false, true)) {
+            if (!JsonSchemaValidator.isSchemaCompatible(edge.parameter2.schema || {}, edge.parameter1.schema || {}, false, true)) {
                 throw 'Incoming data type is not compatible for parameter "' + edge.parameter2.name + '"';
             }
             // Check whether the data type allows multiple input edges

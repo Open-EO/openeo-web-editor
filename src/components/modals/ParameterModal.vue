@@ -11,6 +11,7 @@
 						</div>
 					</label>
 					<ParameterDataTypes :ref="param.name" :editable="editable" :parameter="param" v-model="values[param.name]" :processId="processId" :context="context" @schemaSelected="updateType(param, $event)" />
+					<button v-if="param.unspecified" title="Delete unspecified parameter" class="deleteBtn" type="button" @click="deleteParam(k)"><i class="fas fa-trash"></i></button>
 				</div>
 				<!-- We need a hidden submit button in the form tags to allow submiting the form via keyboard (enter key) -->
 				<button type="submit" style="display:none"></button>
@@ -58,6 +59,12 @@ export default {
 		}
 	},
 	methods: {
+		deleteParam(key) {
+			let name = this.editableFields[key].name;
+			this.$delete(this.editableFields, key);
+			this.$delete(this.schemas, name);
+			this.$delete(this.values, name);
+		},
 		updateType(parameter, schema) {
 			this.$set(this.schemas, parameter.name, schema);
 		},
@@ -110,6 +117,9 @@ export default {
 <style scoped>
 .footer {
 	text-align: right;
+}
+.deleteBtn {
+	margin-left: 10px;
 }
 </style>
 

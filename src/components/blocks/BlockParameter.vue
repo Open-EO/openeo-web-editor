@@ -2,6 +2,9 @@
     <div :class="classes" v-on="listeners">
         <div v-if="!output" ref="circle" :class="circleClasses" v-on="circleListeners"></div>
         <span class="text">
+            <span v-show="unspecified" class="unspecified" title="Parameter is likely unsupported!">
+                <i class="fas fa-exclamation-triangle"></i>
+            </span>
             {{ displayLabel }}<template v-if="displayValue.length">: </template>
             <span v-html="displayValue"></span>
         </span>
@@ -41,7 +44,7 @@ export default {
         value: {},
         schema: {
             type: Object | Array,
-            default: {}
+            default: null
         },
         label: {
             type: String
@@ -121,6 +124,9 @@ export default {
                 'field_' + this.name,
                 (this.hasValue || this.optional || this.output || this.getEdgeCount() > 0) ? 'hasValue' : 'noValue'
             ];
+        },
+        unspecified() {
+            return !this.$parent.invalid && this.state.root.hasProcesses && this.schemas.unspecified;
         },
         circleClasses() {
             var classes = ['circle'];
@@ -496,6 +502,10 @@ export default {
 }
 .connector.noValue {
     color: red;
+}
+.unspecified {
+    color: red;
+    margin-left: 2px;
 }
 .scale_xs .connector .text {
     display: none;
