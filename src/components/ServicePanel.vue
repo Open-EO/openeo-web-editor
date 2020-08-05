@@ -195,9 +195,9 @@ export default {
 		},
 		createServiceFromScript() {
 			var fields = [
-				this.getServiceTypeField(),
 				this.getTitleField(),
 				this.getDescriptionField(),
+				this.getServiceTypeField(),
 				this.getEnabledField(),
 				this.supportsBillingPlans ? this.getBillingPlanField() : null,
 				this.supportsBilling ? this.getBudgetField() : null,

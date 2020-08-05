@@ -112,9 +112,18 @@ ul, ol {
 
 button, input[type="submit"], input[type="reset"] {
 	margin: 1px;
+    background-color: #eee;
 }
-input, textarea, select, datalist {
-	border: 1px solid #ccc;
+input, textarea, select, datalist, button {
+	border: 1px solid #aaa;
+	border-radius: 2px;
+	padding: 2px 6px;
+}
+input:hover, textarea:hover, select:hover, datalist:hover, button:hover {
+	border-color: #000;
+}
+input:hover:disabled, textarea:hover:disabled, select:hover:disabled, datalist:hover:disabled, button:hover:disabled {
+	border-color: #aaa;
 }
 button:focus, input:focus, textarea:focus, select:focus, datalist:focus, .multiselect:focus-within {
     outline: none;

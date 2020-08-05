@@ -69,7 +69,6 @@ export default {
 		showSyncResults(pg) {
 			this.connection.computeResult(pg)
 				.then(result => {
-					console.log(result);
 					if (Array.isArray(result.logs) && result.logs.length > 0) {
 						this.showLogs(result.logs);
 					}

@@ -2,7 +2,7 @@
 	<div id="FilePanel" @dragenter="dropZoneInfo(true)" @dragleave="dropZoneInfo(false)" @drop="uploadFiles($event)" @dragover="allowDrop($event)">
 		<div class="dropZone" v-show="showUploadDropHint">To upload files, drop them here.</div>
 		<div v-show="supportsCreate" class="addFile">
-			<input type="file" name="uploadUserFile" id="uploadUserFile" @change="uploadFiles" multiple>
+			<input type="file" name="uploadUserFile" class="uploadUserFile" ref="uploadUserFile" @change="uploadFiles" multiple>
 		</div>
 		<div class="percent"><div class="used" :class="{error: uploadErrored}" :style="'width: ' + this.uploadProgress + '%; opacity: ' + this.uploadFadeOut"></div></div>
 		<DataTable ref="table" :data="data" :columns="columns">
@@ -119,7 +119,7 @@ export default {
 				});
 		},
 		finishAllUploads() {
-			document.getElementById('uploadUserFile').value = '';
+			this.$refs.uploadUserFile.value = '';
 			var t = setInterval(() => {
 				this.uploadFadeOut -= 0.05;
 				if (this.uploadFadeOut < 0) {
@@ -184,8 +184,9 @@ export default {
 #FilePanel td.size, #FilePanel td.modified {
 	text-align: right;
 }
-#uploadUserFile {
+.uploadUserFile {
 	flex-grow: 1;
+	border: 0;
 }
 #FilePanel .percent {
 	background-color: #eee;

@@ -259,7 +259,6 @@ export default {
     padding-left: 1.9em;
     z-index: 1;
 	display: inline-block;
-	border: 1px solid #ccc;
 	box-sizing: content-box;
 	background-color: #fff;
 	width: calc(100% - 2.2em);

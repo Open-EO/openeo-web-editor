@@ -149,6 +149,15 @@ export default {
 			this.zIndex = this.hightestModalZIndex;
 			window.addEventListener('keydown', this.escCloseListener);
 			this.shown = true;
+			this.$nextTick(() => {
+				if (!this.$refs.container) {
+					return;
+				}
+				let firstElement = this.$refs.container.querySelector('form input:not([type="hidden"]):not([disabled]), form button:not([disabled]), form textarea:not([disabled]), form select:not([disabled]), form datalist:not([disabled])');
+				if (firstElement) {
+					firstElement.focus();
+				}
+			});
 		},
 
 		reset() {
