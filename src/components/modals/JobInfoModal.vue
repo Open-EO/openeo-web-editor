@@ -18,17 +18,6 @@
 						<span class="number" v-if="job.progress <= 50">{{ progress }}</span>
 					</div>
 				</div></div>
-				<!-- ToDo: Show logs -->
-				<!-- <div class="tabular" v-if="job.error"><label>Error(s):</label> <div class="value">
-					<div class="errorMessage">{{ job.error.message }}</div>
-					<div class="errorLinks" v-if="Array.isArray(job.error.links)">
-						<LinkList :links="job.error.links" heading="Further information:" />
-					</div>
-					<div class="errorInternals">
-						Code: <code>{{job.error.code}}</code>
-						<span class="sepl" v-if="job.error.id">ID: <code>{{ job.error.id }}</code></span>
-					</div>
-				</div></div> -->
 			</section>
 
 			<section class="vue-component billing" v-if="job.plan || job.costs || job.budget">
@@ -56,7 +45,6 @@
 import Utils from '../../utils';
 import Modal from './Modal.vue';
 import Description from '@openeo/vue-components/components/Description.vue';
-import LinkList from '@openeo/vue-components/components/LinkList.vue';
 import Editor from '../Editor.vue';
 
 export default {
@@ -64,7 +52,6 @@ export default {
 	components: {
 		Description,
 		Editor,
-		LinkList,
 		Modal
 	},
 	computed: {
