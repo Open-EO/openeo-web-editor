@@ -40,12 +40,12 @@
 
 <script>
 import Modal from './Modal.vue';
-import TapDigit from '../math/TapDigit.js'
 import Utils from '../../utils.js';
 import TextEditor from '../TextEditor.vue';
 import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
 import { Process } from '../blocks/processSchema.js';
 import { ProcessGraph } from '@openeo/js-processgraphs';
+import { Formula } from '@openeo/js-client';
 
 export default {
 	name: 'ExpressionModal',
@@ -56,7 +56,6 @@ export default {
 	},
 	data() {
 		return {
-			parser: new TapDigit.Parser(),
 			input: '',
 			pgParameters: [],
 			arrayElements: {},
@@ -252,7 +251,8 @@ export default {
 
 			try {
 				this.result = {};
-				let res = this.parseTree(this.parser.parse(this.input));
+				let formula = new Formula(this.input);
+				let res = this.parseTree(formula.tree);
 				if (!Utils.isObject(res) || !res.from_node) {
 					throw new Error('Invalid formula specified.');
 				}
