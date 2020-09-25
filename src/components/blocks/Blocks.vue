@@ -903,7 +903,7 @@ export default {
                 this.processGraph.allowEmpty();
                 this.processGraph.parse();
 
-                await this.importPgParameters(this.processGraph.getParameters(), 'pg', options.clear !== false);
+                await this.importPgParameters(this.processGraph.getProcessParameters(), 'pg', options.clear !== false);
                 await this.importNodes(this.processGraph.getStartNodes());
                 await this.importEdges(this.processGraph);
 
@@ -969,13 +969,13 @@ export default {
             for(var node of Object.values(nodes)) {
                 var args = node.getArgumentNames();
                 for(let i in args) {
-                    var val = node.getRawArgumentValue(args[i]);
+                    var val = node.getRawArgument(args[i]);
                     switch(node.getArgumentType(args[i])) {
                         case 'result':
-                            await this.addEdgeByNames(pg.getNode(val).id, "output", node.id, args[i], false);
+                            await this.addEdgeByNames(pg.getNode(val.from_node).id, "output", node.id, args[i], false);
                             break;
                         case 'parameter':
-                            await this.addEdgeByNames(val, "output", node.id, args[i], false);
+                            await this.addEdgeByNames(val.from_parameter, "output", node.id, args[i], false);
                             break;
                         case 'object':
                         case 'array':
