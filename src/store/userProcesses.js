@@ -58,8 +58,8 @@ export default storeFactory({
 				if (!Utils.isObject(process) || Utils.size(process.process_graph) === 0) {
 					return null;
 				}
-				let unsupportedFuncs = Object.values(process.process_graph).filter(node => !getters.readableMathProcesses.includes(node.process_id));
-				if (unsupportedFuncs.length) {
+				let unsupportedFuncs = Object.values(process.process_graph).find(node => !getters.readableMathProcesses.includes(node.process_id));
+				if (unsupportedFuncs !== undefined) {
 					return false;
 				}
 				return true;

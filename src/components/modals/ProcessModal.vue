@@ -2,7 +2,7 @@
 	<Modal ref="modal" :minWidth="minWidth">
 		<template #main>
 			<div class="docgen">
-				<!-- ToDo: Implement processReferenceBuilder -->
+				<!-- ToDo: Implement processUrl -->
 				<Process :processData="process" :version="version" :provideDownload="false"></Process>
 				<!-- ToDo: Remove process graph view once implemented in Vue components -->
 				<!-- ToDo: Show info (badge?) that process is custom -->

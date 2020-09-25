@@ -243,9 +243,9 @@ export default {
 						value = value.toUpperCase();
 						break;
 				}
-				let selectedOptions = this.selectOptions.filter(o => o.id === value);
-				if (selectedOptions.length > 0) {
-					this.selected = selectedOptions[0];
+				let selectedOption = this.selectOptions.find(o => o.id === value);
+				if (selectedOption !== undefined) {
+					this.selected = selectedOption;
 				}
 			}
 		},

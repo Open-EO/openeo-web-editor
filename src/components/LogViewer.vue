@@ -53,7 +53,7 @@ export default {
 		ObjectTree
 	},
 	props: {
-		data: { // => JS Client Job Object or Log Entries
+		data: { // => JS Client Job/Service Object or Log Entries
 			type: Object | Array,
 			required: true
 		}

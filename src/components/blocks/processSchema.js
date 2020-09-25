@@ -1,5 +1,5 @@
-import { JsonSchemaValidator } from '@openeo/js-processgraphs';
 import Utils from '../../utils.js';
+import { ProcessUtils } from '@openeo/js-commons';
 
 class Process {
 
@@ -53,7 +53,7 @@ class ProcessSchema {
 		}
 		else {
 			this.unspecified = false;
-			this.schemas = JsonSchemaValidator.convertSchemaToArray(schema).map(s => new ProcessDataType(s, this, defaultValue));
+			this.schemas = ProcessUtils.normalizeJsonSchema(schema, true).map(s => new ProcessDataType(s, this, defaultValue));
 
 			let defaults = this.schemas.filter(s => typeof s.default() !== 'undefined');
 			if (defaults.length === 1) {
@@ -143,32 +143,7 @@ class ProcessDataType {
 	}
 
 	getElementSchema(key = null) {
-		let element = {};
-		if (this.schema.type === 'array') {
-			if (Utils.isObject(this.schema.items)) {
-				// Array with one schema for all items: https://json-schema.org/understanding-json-schema/reference/array.html#id5
-				element = this.schema.items;
-			}
-			else if (Array.isArray(this.schema.items)) {
-				// Tuple validation: https://json-schema.org/understanding-json-schema/reference/array.html#id6
-				if (Utils.isObject(this.schema.items[key])) {
-					element = this.schema.items[key];
-				}
-				else if (Utils.isObject(this.schema.additionalItems)) {
-					element = this.schema.additionalItems;
-				}
-			}
-		}
-		else if (this.schema.type === 'object') {
-			if (Utils.isObject(this.schema.properties) && Utils.isObject(this.schema.properties[key])) {
-				element = this.schema.properties[key];
-			}
-			else if (Utils.isObject(this.schema.additionalProperties)) {
-				element = this.schema.additionalProperties;
-			}
-			// ToDo: No support for patternProperties yet
-		}
-
+		let element = ProcessUtils.getElementJsonSchema(this.schema, key);
 		let schema = new ProcessSchema(element);
 		if (this.parent instanceof ProcessSchema) {
 			schema.setRefs(this.parent.getRefs());

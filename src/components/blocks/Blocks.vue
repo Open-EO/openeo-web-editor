@@ -1013,7 +1013,7 @@ export default {
                 // `block` is the representation used by the Block component to render the block
 
                 // To get a better layout, only add the block once all previous nodes are added
-                if (imported.includes(node.id) || node.getPreviousNodes().filter(prev => !imported.includes(prev.id)).length) {
+                if (imported.includes(node.id) || node.getPreviousNodes().find(prev => !imported.includes(prev.id)) !== undefined) {
                     y += MARGIN / 2; // add a small offset so that lines going through a box are easier to see
                     continue;
                 }
