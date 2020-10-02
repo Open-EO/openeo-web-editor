@@ -2,7 +2,8 @@
   "name": "@openeo/web-editor",
   "version": "0.5.0-rc.2",
   "apiVersions": [
-    "1.0.0-rc.2"
+    "1.0.0-rc.2",
+    "1.0.0"
   ],
   "author": "openEO Consortium",
   "contributors": [
