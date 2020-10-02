@@ -230,7 +230,7 @@ export default {
             return this.schemas.toJSON();
         },
         setValue(value) {
-            if (this.schemas.nativeDataType() == 'boolean') {
+            if (this.schemas.nativeDataType() == 'boolean0' && !Utils.isRef(value)) {
                 value = !!value;
             }
             this.$emit('input', value);
