@@ -988,7 +988,8 @@ export default {
 
         async importEdgeDeep(val, pg, node, args, i) {
             for(let k in val) {
-                if(val[k] && typeof val[k] === "object"){
+                // k !== 'process_graph' prevents importing sub process graphs like in load_collection, see #118
+                if(val[k] && typeof val[k] === "object" && k !== 'process_graph') {
                     await this.importEdgeDeep(val[k], pg, node, args, i);
                 }
                 else if (!Utils.isRef(val)) {
