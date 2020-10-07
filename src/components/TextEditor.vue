@@ -238,7 +238,15 @@ export default {
 			}
 			this.editor.getDoc().clearHistory();
 			this.updateState();
-		}
+		},
+
+		insertProcess(node) {
+			try {
+				this.insert(JSON.stringify(node, null, 2), false);
+			} catch(error) {
+				Utils.exception(this, error);
+			}
+		},
 
 	}
 }

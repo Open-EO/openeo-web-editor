@@ -154,8 +154,8 @@ export default {
 			this.setContext(obj);
 		},
 
-		insertProcess(id, args = {}) {
-			this.$refs.editor.insertProcess(id, args);
+		insertProcess(node) {
+			this.$refs.editor.insertProcess(node);
 		},
 
 		startMovingSeparator(evt, id) {

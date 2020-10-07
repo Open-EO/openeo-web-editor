@@ -69,6 +69,9 @@ export default {
 			error: null
 		};
 	},
+	computed: {
+		...Utils.mapGetters('userProcesses', {getProcessById: 'getAllById'})
+	},
 	methods: {
 		showModel() {
 			this.error = null;
@@ -94,8 +97,18 @@ export default {
 				return this.$refs.graphBuilder;
 			}
 		},
-		insertProcess(id, args = {}) {
-			this.activeEditor().insertProcess(id, args);
+		async insertProcess(node) {
+			try {
+				// Fully load or update custom process
+				let process = this.getProcessById(node.process_id);
+				if (process != null && !process.native) {
+					await this.readUserProcess({data: process});
+				}
+				// Add process to editor
+				this.activeEditor().insertProcess(node);
+			} catch(error) {
+				Utils.exception(this, error);
+			}
 		},
 		canSwitchView() {
 			if (this.editable && this.error !== null) {

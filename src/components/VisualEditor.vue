@@ -94,7 +94,6 @@ export default {
 	computed: {
 		...Utils.mapState(['collections']),
 		...Utils.mapGetters(['processRegistry', 'collectionDefaults']),
-		...Utils.mapGetters('userProcesses', {getProcessById: 'getAllById'}),
 		...Utils.mapGetters('userProcesses', ['supportsMath', 'isMathProcess'])
 	},
 	data() {
@@ -141,7 +140,7 @@ export default {
 			if (json) {
 				event.preventDefault();
 				let node = JSON.parse(json);
-				this.insertProcess(node.process_id, node.arguments, event.pageX, event.pageY);
+				this.insertProcess(node, event.pageX, event.pageY);
 			}
 		},
 
@@ -184,16 +183,10 @@ export default {
 			this.commit(null);
 		},
 
-		async insertProcess(name, args = {}, x = null, y = null) {
+		insertProcess(node, x = null, y = null) {
 			try {
-				// Fully load or update custom process
-				let process = this.getProcessById(name);
-				if (process != null && !process.native) {
-					await this.readUserProcess({data: process});
-				}
-				// Insert process
 				var pos = this.$refs.blocks.getPositionForPageXY(x, y);
-				this.$refs.blocks.addProcess(name, args, pos);
+				this.$refs.blocks.addProcess(node.process_id, node.arguments, pos);
 			} catch(error) {
 				Utils.exception(this, error);
 			}

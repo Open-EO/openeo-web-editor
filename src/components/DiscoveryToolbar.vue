@@ -221,15 +221,15 @@ export default {
 		},
 		insertCollection(collection) {
 			let node = this.getNode('collection', collection);
-			this.onAddProcess(node.process_id, node.arguments);
+			this.onAddProcess(node);
 		},
 		insertProcess(process) {
 			let node = this.getNode('process', process);
-			this.onAddProcess(node.process_id, node.arguments);
+			this.onAddProcess(node);
 		},
 		insertUdf(udf) {
 			let node = this.getNode('udf', udf);
-			this.onAddProcess(node.process_id, node.arguments);
+			this.onAddProcess(node);
 		}
 	}
 }
