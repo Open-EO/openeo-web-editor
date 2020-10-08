@@ -25,6 +25,7 @@ import ImageViewer from './ImageViewer.vue';
 import LogViewer from './LogViewer.vue';
 import MapViewer from './MapViewer.vue'
 import contentType from 'content-type';
+import { OpenEO } from '@openeo/js-client';
 
 export default {
 	name: 'Viewer',
@@ -121,7 +122,7 @@ export default {
 				return title;
 			}
 		},
-		showViewer(meta, title = null) {
+		async showViewer(meta, title = null) {
 			var data = {};
 			if (Utils.isObject(meta) && typeof meta.href === 'string' && typeof meta.type === 'string') {
 				data.type = meta.type;
@@ -147,22 +148,35 @@ export default {
 				case 'image/gif':
 					this.$refs.tabs.addTab(this.makeTitle(title, "Image"), "fa-image", data, null, true, true);
 					break;
-				case 'image/tiff':
-					if (data.url && data.parameters.application === 'geotiff') {
-						this.showMapViewer();
-						this.$refs.mapViewer.updateGeoTiffLayer(data.url, this.makeTitle(title, "GeoTiff"));
-					}
-					else {
-						Utils.error(this, 'Sorry, TIFF as blob not supported by the viewer.');
-					}
-					break;
 				case 'application/json':
 				case 'text/plain':
 				case 'text/html':
 					this.$refs.tabs.addTab(this.makeTitle(title, "Data"), "fa-database", data, null, true, true);
 					break;
+				case 'image/tiff':
+					if (data.url && data.parameters.application === 'geotiff') {
+						this.showMapViewer();
+						this.$refs.mapViewer.updateGeoTiffLayer(data.url, this.makeTitle(title, "GeoTiff"));
+						break;
+					}
+					// else: Default behavior
 				default:
-					Utils.error(this, 'Sorry, content type not supported by the viewer.');
+					if (data.blob instanceof Blob) {
+						OpenEO.Environment.saveToFile(data.blob);
+						break;
+					}
+					else if (data.url) {
+						try {
+							let response = await this.connection._get(data.url, "", "blob");
+							if (response.data instanceof Blob) {
+								OpenEO.Environment.saveToFile(response.data);
+								break;
+							}
+						} catch (error) {
+							console.error(error);
+						}
+					}
+					Utils.error(this, 'Sorry, content type not supported by the viewer and can\'t be downloaded.');
 			}
 		}
 	}
