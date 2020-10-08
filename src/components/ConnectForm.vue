@@ -314,9 +314,12 @@ export default {
 					);
 				}
 			} catch(error) {
-				console.log(error);
 				if (authType === 'basic') {
 					Utils.error(this, 'Sorry, credentials are wrong.');
+				}
+				// Special case: Handle oidc-client-js
+				else if (authType === 'oidc' && error.name === 'ErrorResponse' && typeof error.error_description === 'string') {
+					Utils.error(this, error.error_description.replace(/\+/g, ' '));
 				}
 				else {
 					Utils.exception(this, error);
