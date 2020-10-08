@@ -51,7 +51,7 @@ const SUPPORTED_TYPES = [
 		{type: 'string', subtype: 'date-time', format: 'date-time', title: 'Date and Time', group: 'Temporal', default: () => now()},
 		{type: 'string', subtype: 'date', format: 'date', title: 'Date only', group: 'Temporal', default: () => now().substring(0, 10)},
 		{type: 'string', subtype: 'time', format: 'time', title: 'Time only', group: 'Temporal', default: () => now().substring(11)},
-	//	{type: 'string', subtype: 'year', title: 'Year only', group: 'Temporal'}, ToDo: Implemented, but only available after rc.2, wait until release
+		{type: 'string', subtype: 'year', title: 'Year only', group: 'Temporal'},
 		{type: 'array', subtype: 'temporal-interval', title: "Temporal interval", group: 'Temporal'},
 		{type: 'array', subtype: 'temporal-intervals', title: "Temporal intervals (multiple)", group: 'Temporal', default: []},
 
