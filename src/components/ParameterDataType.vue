@@ -29,7 +29,7 @@
 		<!-- GeoJSON -->
 		<MapGeoJsonEditor v-else-if="type === 'geojson'" v-model="state" :key="type" :id="name + '_geojson'" :editable="editable" class="geoJsonEditor"></MapGeoJsonEditor>
 		<!-- Process Editor -->
-		<Editor v-else-if="type === 'process-graph'" class="callbackEditor" :id="name" :editable="editable" :pgParameters="schema.getCallbackParameters()" :showDiscoveryToolbar="true" v-model="state" />
+		<Editor v-else-if="type === 'process-graph'" class="callbackEditor" :id="name" :editable="editable" :pgParameters="schema.getCallbackParameters()" :showDiscoveryToolbar="true" v-model="state" :defaultValue="editorDefaultValue" />
 		<!-- Output format options -->
 		<FileFormatOptionsEditor v-else-if="type === 'output-format-options' || type === 'input-format-options'" ref="fileFormatOptionsEditor" :type="type" v-model="state" :format="dependency"></FileFormatOptionsEditor>
 		<!-- Budget -->
@@ -113,6 +113,17 @@ export default {
 		},
 		nativeParameterType() {
 			return this.parameter.nativeDataType();
+		},
+		editorDefaultValue() {
+			if (this.type === 'process-graph') {
+				if (typeof this.schema.schema.default !== 'undefined') {
+					return this.schema.schema.default;
+				}
+				else if (this.schema.parent.isNullable()) {
+					return null;
+				}
+			}
+			return undefined;
 		},
 		isTemporal() {
 			return (this.type === 'date' || this.type === 'time' || this.type === 'date-time' || this.type === 'temporal-interval' || this.type === 'year');

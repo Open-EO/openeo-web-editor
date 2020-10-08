@@ -89,7 +89,8 @@ export default {
 		},
 		title: {
 			type: String
-		}
+		},
+		defaultValue: {}
 	},
 	computed: {
 		...Utils.mapState(['collections']),
@@ -115,6 +116,10 @@ export default {
 		...Utils.mapActions('userProcesses', {readUserProcess: 'read'}),
 
 		commit(value) {
+			// Fix #115: Return the default value/null if no nodes are given
+			if (typeof this.defaultValue !== 'undefined' && Utils.isObject(value) && Utils.size(value.process_graph) === 0) {
+				value = this.defaultValue;
+			}
 			this.$emit('input', value);
 		},
 
