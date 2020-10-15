@@ -116,10 +116,10 @@ export default {
 		},
 		editorDefaultValue() {
 			if (this.type === 'process-graph') {
-				if (typeof this.schema.schema.default !== 'undefined') {
-					return this.schema.schema.default;
+				if (typeof this.parameter.default !== 'undefined') {
+					return this.parameter.default;
 				}
-				else if (this.schema.parent.isNullable()) {
+				else if (this.parameter.nullable()) {
 					return null;
 				}
 			}
