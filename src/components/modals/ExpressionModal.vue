@@ -173,7 +173,6 @@ export default {
 			let operator = this.reverseOperatorMapping[node.process_id];
 			let process = this.processRegistry.get(node.process_id);
 			let isArrayData = (typeof this.arrayOperatorMapping[node.process_id] !== 'undefined');
-			let parameterNames = (process.parameters || []).map(p => p.name);
 
 			let convertValue = value => {
 				if (Utils.isObject(value)) {
@@ -198,18 +197,22 @@ export default {
 
 			// Create the list of arguments
 			let argList = [];
-			for(let name of parameterNames) {
-				let value = convertValue(node.getRawArgument(name));
+			let params = Array.isArray(process.parameters) ? process.parameters : [];
+			for(let parameter of process.parameters) {
+				let value = convertValue(node.getRawArgument(parameter.name));
 
-				if (isArrayData && Array.isArray(value) && name === 'data') {
+				if (isArrayData && Array.isArray(value) && parameter.name === 'data') {
 					argList = value.map(v => convertValue(v));
 					break;
 				}
 				else if(typeof value !== 'undefined') {
 					argList.push(value);
 				}
+				else if(typeof parameter.default !== 'undefined') {
+					argList.push(parameter.default);
+				}
 				else {
-					throw new Error('Argument missing');
+					throw new Error('Argument for parameter "' + parameter.name + '" missing');
 				}
 			}
 			 
