@@ -113,15 +113,16 @@ export default {
 			this.replace = false;
 			this.pgParameters = pgParameters;
 			this.processGraph = Utils.isObject(process) && Utils.isObject(process.process_graph) ? process.process_graph : {};
+
 			try {
 				this.importFormula(process);
 			} catch (error) {
 				console.info(error);
 			}
 
+			this.arrayElements = {};
 			if(!this.replace) {
 				// If not replacing: Add all array_element calls for labels to the list so that we don't get duplicate array_element calls
-				this.arrayElements = {};
 				for(let id in this.processGraph) {
 					let node = this.processGraph[id];
 					if (node.process_id === 'array_element' && Utils.isObject(node.arguments) && node.arguments.label) {
