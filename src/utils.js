@@ -66,6 +66,44 @@ class Utils extends VueUtils {
 		return url; 
 	}
 
+	static makeFileName(filename, type) {
+		if (filename.includes('.') || typeof type !== 'string') {
+			return filename;
+		}
+		if (!type.includes('/')) {
+			return filename + '.' + type;
+		}
+
+		let ext = null;
+		switch(type.toLowerCase()) {
+			case 'application/json':
+			case 'application/zip':
+			case 'image/png':
+			case 'image/jpg':
+			case 'image/jpeg':
+			case 'image/gif':
+			case 'image/tiff':
+			case 'text/csv':
+			case 'text/html':
+				ext = type.split('/')[1];
+				break;
+			case 'text/plain':
+				ext = 'txt';
+				break;
+			case 'application/netcdf':
+			case 'application/x-netcdf':
+				ext = 'nc'
+				break;
+		}
+
+		if (ext !== null) {
+			return filename + '.' + ext;
+		}
+		else {
+			return filename;
+		}
+	}
+
 	static formatDateTime(value) {
 		if (!value) {
 			return ''; 

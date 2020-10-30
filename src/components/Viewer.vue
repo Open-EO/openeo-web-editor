@@ -162,14 +162,15 @@ export default {
 					// else: Default behavior
 				default:
 					if (data.blob instanceof Blob) {
-						OpenEO.Environment.saveToFile(data.blob);
+						OpenEO.Environment.saveToFile(data.blob, Utils.makeFileName("result", data.type));
 						break;
 					}
 					else if (data.url) {
 						try {
 							let response = await this.connection._get(data.url, "", "blob");
+							let filename = Utils.getFileNameFromURL(data.url);
 							if (response.data instanceof Blob) {
-								OpenEO.Environment.saveToFile(response.data);
+								OpenEO.Environment.saveToFile(response.data, Utils.makeFileName(filename, data.type));
 								break;
 							}
 						} catch (error) {
