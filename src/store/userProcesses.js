@@ -69,17 +69,11 @@ export default storeFactory({
 						.concat(['array_element']);
 			}
 		},
-		actions: {
-		},
 		mutations: {
 			data(state, data) {
 				state.userProcesses = data
 					.filter(p => (typeof p.id === 'string'))
 					.sort(Utils.sortById);
-	
-				for(let key in state.userProcesses) {
-					Vue.set(state.index, state.userProcesses[key].id, key);
-				}
 			}
 		}
 	}

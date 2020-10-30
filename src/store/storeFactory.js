@@ -7,7 +7,6 @@ export default ({namespace, listFn, createFn, updateFn, deleteFn, readFn, readFn
 	const getDefaultState = () => {
 		let data = {};
 		data[namespace] = [];
-		data.index = {};
 		return data;
 	};
 	let definition = {
@@ -20,8 +19,8 @@ export default ({namespace, listFn, createFn, updateFn, deleteFn, readFn, readFn
 			supportsDelete: (state, getters, rootState, rootGetters) => rootGetters.supports(deleteFn),
 			supportsRead: (state, getters, rootState, rootGetters) => rootGetters.supports(readFn),
 			getById: (state) => (id) => {
-				let index = state.index[id];
-				return index >= 0 ? state[namespace][index] : null;
+				let data = state[namespace].find(x => x[primaryKey] === id);
+				return typeof data !== 'undefined' ? data : null;
 			}
 		},
 		actions: {
@@ -89,27 +88,22 @@ export default ({namespace, listFn, createFn, updateFn, deleteFn, readFn, readFn
 			// ToDo: Use Vue.observable on all JS client objects?
 			data(state, data) {
 				state[namespace] = data.map(d => Vue.observable(d));
-				for(let key in data) {
-					Vue.set(state.index, data[key][primaryKey], key);
-				}
 			},
 			upsert(state, data) {
 				let id = data[primaryKey];
-				let index = state.index[id];
+				let index = state[namespace].findIndex(x => x[primaryKey] === id);
 				let observableData = Vue.observable(data);
 				if (index >= 0) {
 					Vue.set(state[namespace], index, observableData);
 				}
 				else {
-					Vue.set(state.index, id, state[namespace].length);
 					state[namespace].push(observableData);
 				}
 			},
 			delete(state, data) {
 				let id = data[primaryKey];
-				let index = state.index[id];
+				let index = state[namespace].findIndex(x => x[primaryKey] === id);
 				if (index >= 0) {
-					Vue.delete(state.index, id);
 					Vue.delete(state[namespace], index);
 				}
 			},
