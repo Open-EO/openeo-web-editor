@@ -57,7 +57,7 @@ export default (namespace, singular, plural) => {
 							callback(updated, old);
 						}
 					})
-					.catch(error => Utils.exception(this, error, "Sorry, couldn't load " + singular + "."));
+					.catch(error => Utils.exception(this, error, "Load " + singular + " error"));
 			},
 			updateData() {
 				var table = this.getTable();

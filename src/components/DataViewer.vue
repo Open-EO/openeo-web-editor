@@ -70,7 +70,7 @@ export default {
 			else if (data.url) {
 				this.connection.download(data.url, false)
 					.then(response => this.processData(response.data))
-					.catch(error => Utils.exception(this, error, "Sorry, can't download file."));
+					.catch(error => Utils.exception(this, error, "Download File Error"));
 			}
 			else {
 				this.error('Sorry, internal data format not supported.');

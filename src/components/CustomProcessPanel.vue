@@ -136,7 +136,7 @@ export default {
 		},
 		addProcess(process) {
 			this.create({parameters: [process.id, process]})
-				.catch(error => Utils.exception(this, error, 'Storing custom process failed.'));
+				.catch(error => Utils.exception(this, error, 'Store Process Error: ' + process.id));
 		},
 		processInfo(process) {
 			this.emit('showProcessInfo', process);
@@ -157,11 +157,11 @@ export default {
 		},
 		updateMetadata(process, data) {
 			this.update({data: process, parameters: this.normalize(process, data)})
-				.catch(error => Utils.exception(this, error, "Updating process graph failed"));
+				.catch(error => Utils.exception(this, error, "Update Process Error: " + process.id));
 		},
 		deleteProcess(process) {
 			this.delete({data: process})
-				.catch(error => Utils.exception(this, error, 'Deleting process graph failed'));
+				.catch(error => Utils.exception(this, error, 'Delete Process Error: ' + process.id));
 		}
 	}
 }

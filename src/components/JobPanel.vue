@@ -181,7 +181,7 @@ export default {
 			data = this.normalizeToDefaultData(data);
 			this.create({parameters: [process, data.title, data.description, data.plan, data.budget]})
 				.then(job => this.jobCreated(job))
-				.catch(error => Utils.exception(this, error, 'Sorry, could not create a batch job.'));
+				.catch(error => Utils.exception(this, error, 'Create Job Error: ' + (data.title ?? '')));
 		},
 		createJobFromScript() {
 			var fields = [
@@ -194,7 +194,7 @@ export default {
 		},
 		deleteJob(job) {
 			this.delete({data: job})
-				.catch(error => Utils.exception(this, error, 'Sorry, could not delete job.'));
+				.catch(error => Utils.exception(this, error, 'Delete Job Error: ' + Utils.getResourceTitle(job)));
 		},
 		executeWatchers() {
 			for(var i in this.watchers) {
@@ -224,7 +224,7 @@ export default {
 			// Doesn't need to go through job store as it doesn't change job-related data
 			job.estimateJob()
 				.then(estimate => this.emit('showModal', 'Job Estimate', estimate))
-				.catch(error => Utils.exception(this, error, "Loading estimate failed"));
+				.catch(error => Utils.exception(this, error, "Load Estimate Error: " + Utils.getResourceTitle(job)));
 		},
 		showLogs(job) {
 			this.emit('viewLogs', job);
@@ -255,17 +255,17 @@ export default {
 		},
 		updateJob(job, parameters) {
 			this.update({data: job, parameters: this.normalizeToDefaultData(parameters)})
-				.catch(error => Utils.exception(this, error, 'Failed to update job "' + Utils.getResourceTitle(job) + '"'));
+				.catch(error => Utils.exception(this, error, 'Update Job Error: ' + Utils.getResourceTitle(job)));
 		},
 		queueJob(job) {
 			this.queue({data: job})
 				.then(updatedJob => Utils.ok(this, 'Job "' + Utils.getResourceTitle(updatedJob) + '" successfully queued.'))
-				.catch(error => Utils.exception(this, error, 'Failed to queue job "' + Utils.getResourceTitle(job) + '"'));
+				.catch(error => Utils.exception(this, error, 'Queue Job Error: ' + Utils.getResourceTitle(job)));
 		},
 		cancelJob(job) {
 			this.cancel({data: job})
 				.then(updatedJob => Utils.ok(this, 'Job "' + Utils.getResourceTitle(updatedJob) + '" successfully canceled.'))
-				.catch(error => Utils.exception(this, error, 'Failed to cancel job "' + Utils.getResourceTitle(job) + '"'));
+				.catch(error => Utils.exception(this, error, 'Cancel Job Error: ' + Utils.getResourceTitle(job)));
 		},
 		viewResults(job) {			
 			Utils.info(this, 'Data requested. Please wait...');

@@ -115,7 +115,7 @@ export default {
 					Utils.ok(this, 'File upload completed.', file.name);
 				}).catch(error => {
 					console.error(error);
-					Utils.exception(this, error, file.name);
+					Utils.exception(this, error, "Upload File Error: " + file.name);
 				});
 		},
 		finishAllUploads() {
@@ -135,7 +135,7 @@ export default {
 		},
 		deleteFile(file) {
 			this.delete({data: file})
-				.catch(error => Utils.exception(this, error, 'Sorry, could not delete file.'));
+				.catch(error => Utils.exception(this, error, 'Delete File Error: ' + file.path));
 		}
 	}
 }

@@ -75,7 +75,7 @@ export default {
 					}
 					this.showViewer(result.data);
 				})
-				.catch(error => Utils.exception(this, error, 'Computation failed'));
+				.catch(error => Utils.exception(this, error, 'Run Now Error'));
 		},
 		showJobResults(item, job) {
 			for(var key in item.assets) {

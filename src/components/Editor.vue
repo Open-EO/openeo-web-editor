@@ -113,7 +113,7 @@ export default {
 		},
 		canSwitchView() {
 			if (this.editable && this.error !== null) {
-				Utils.exception(this, this.error, 'Process invalid');
+				Utils.exception(this, this.error, 'Process Invalid Error');
 				return false;
 			}
 			return true;

@@ -191,7 +191,7 @@ export default {
 			data = this.normalizeToDefaultData(data);
 			this.create({parameters: [script, data.type, data.title, data.description, data.enabled, data.configuration, data.plan, data.budget]})
 				.then(service => this.serviceCreated(service))
-				.catch(error => Utils.exception(this, error, 'Creating service failed'));
+				.catch(error => Utils.exception(this, error, 'Create Service Error: ' + (data.title ?? '')));
 		},
 		createServiceFromScript() {
 			var fields = [
@@ -236,12 +236,12 @@ export default {
 		},
 		updateService(service, parameters) {
 			this.update({data: service, parameters: this.normalizeToDefaultData(parameters)})
-				.catch(error => Utils.exception(this, error, "Updating service failed"));
+				.catch(error => Utils.exception(this, error, "Update Service Error: " + Utils.getResourceTitle(service)));
 		},
 		deleteService(service) {
 			this.delete({data: service})
 				.then(() => this.emit('removeWebService', service.id))
-				.catch(error => Utils.exception(this, error, 'Sorry, could not delete service.'));
+				.catch(error => Utils.exception(this, error, 'Delete Service Error: ' + Utils.getResourceTitle(service)));
 		},
 		viewService(service) {
 			Utils.info(this, 'Requesting tiles from server. Please wait...');

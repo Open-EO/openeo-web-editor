@@ -235,7 +235,7 @@ export default {
 			if (!process.native) {
 				this.readUserProcess({data: process})
 					.then(updated => this._showProcessInfoModal(updated.toJSON()))
-					.catch(error => Utils.exception(this, error, "Sorry, couldn't fully load custom process."));
+					.catch(error => Utils.exception(this, error, "Load Process Error: " + process.id));
 			}
 			else {
 				this._showProcessInfoModal(process);
