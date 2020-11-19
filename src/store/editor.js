@@ -16,9 +16,6 @@ const getDefaultState = () => {
 export default {
 	namespaced: true,
 	state: getDefaultState(),
-	getters: {
-		contextTitle: (state) => state.context !== null ? Utils.getResourceTitle(state.context, true) : ''
-	},
 	actions: {
 		async loadEpsgCodes(cx) {
 			if (cx.state.epsgCodes.length === 0) {
