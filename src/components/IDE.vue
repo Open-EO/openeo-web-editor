@@ -19,7 +19,7 @@
 				<div id="workspace" ref="workspace">
 					<Editor ref="editor" class="mainEditor" id="main" :value="process" @input="updateEditor" :title="contextTitle">
 						<template #file-toolbar>
-							<button type="button" v-show="contextTitle" @click="saveProcess" :title="'Save to ' + contextTitle"><i class="fas fa-save"></i></button>
+							<button type="button" v-show="saveSupported" @click="saveProcess" :title="'Save to ' + contextTitle"><i class="fas fa-save"></i></button>
 						</template>
 					</Editor>
 					<UserWorkspace class="userContent" v-if="isAuthenticated" />
@@ -59,6 +59,7 @@ import SchemaModal from './modals/SchemaModal.vue';
 import UdfRuntimeModal from './modals/UdfRuntimeModal.vue';
 import DiscoveryToolbar from './DiscoveryToolbar.vue';
 import { ProcessParameter } from './blocks/processSchema';
+import { Job, Service, UserProcess } from '@openeo/js-client';
 
 export default {
 	name: 'IDE',
@@ -105,8 +106,19 @@ export default {
 		...Utils.mapState(['connection']),
 		...Utils.mapState('editor', ['context', 'process']),
 		...Utils.mapGetters(['title', 'isAuthenticated', 'apiVersion']),
-		...Utils.mapGetters('editor', ['contextTitle']),
-		...Utils.mapGetters('userProcesses', {getProcessById: 'getAllById'})
+		...Utils.mapGetters('jobs', {supportsJobUpdate: 'supportsUpdate'}),
+		...Utils.mapGetters('services', {supportsServiceUpdate: 'supportsUpdate'}),
+		...Utils.mapGetters('userProcesses', {getProcessById: 'getAllById', supportsUserProcessUpdate: 'supportsUpdate'}),
+		contextTitle() {
+			return this.context !== null ? Utils.getResourceTitle(this.context, true) : ''
+		},
+		saveSupported() {
+			return this.context !== null && (
+				(this.context instanceof Job && this.supportsJobUpdate) ||
+				(this.context instanceof Service && this.supportsServiceUpdate) ||
+				(this.context instanceof UserProcess && this.supportsUserProcessUpdate)
+			);
+		}
 	},
 	mounted() {
 		this.listen('showCollection', this.showCollectionInfo);
