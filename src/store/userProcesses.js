@@ -1,7 +1,6 @@
 import storeFactory from './storeFactory';
 import Utils from '../utils';
 import { Process } from '../components/blocks/processSchema.js';
-import Vue from 'vue';
 import { Formula } from '@openeo/js-client';
 
 export default storeFactory({
