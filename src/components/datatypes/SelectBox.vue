@@ -1,5 +1,8 @@
 <template>
-	<MultiSelect v-model="selected" :key="type" ref="htmlElement" label="label" track-by="id" :multiple="multiple" :options="selectOptions" :allowEmpty="false" :preselectFirst="preselect" :disabled="!editable" :deselectLabel="deselectLabel" :taggable="taggable" :tagPlaceholder="tagPlaceholder" @tag="addValue"></MultiSelect>
+	<div class="select-container">
+		<MultiSelect v-model="selected" :key="type" ref="htmlElement" label="label" track-by="id" :multiple="multiple" :options="selectOptions" :allowEmpty="false" :preselectFirst="preselect" :disabled="!editable" :deselectLabel="deselectLabel" :taggable="taggable" :tagPlaceholder="tagPlaceholder" @tag="addValue"></MultiSelect>
+		<button v-if="showDetails" type="button" title="Details" @click="$emit('onDetails')"><i class="fas fa-info"></i></button>
+	</div>
 </template>
 
 <script>
@@ -31,9 +34,26 @@ export default {
 		context: {}
 	},
 	computed: {
+		...Utils.mapGetters(['collectionDefaults']),
 		selectOptions() {
 			let state = [];
 			switch(this.type) {
+				case 'band-name':
+					let collection = this.$store.state.collections.find(c => c.id == this.context);
+					if (Utils.isObject(collection)) {
+						try {
+							state = collection.summaries['eo:bands'].map(band => band.name);
+						} catch (error) {}
+						if (state.length === 0 && Utils.isObject(collection['cube:dimensions'])) {
+							try {
+								let bandDimension = Object.values(collection['cube:dimensions']).find(d => d.type === 'bands');
+								if (bandDimension && Array.isArray(bandDimension.values)) {
+									state = bandDimension.values;
+								}
+							} catch (error) { console.log(error);}
+						}
+					}
+					break;
 				case 'collection-id':
 					state = this.$store.state.collections;
 					break;
@@ -116,6 +136,7 @@ export default {
 						}
 					}
 					return years;
+				case 'band-name':
 				case 'udf-runtime':
 				case 'udf-runtime-version':
 					return state.map(val => this.e(val));
@@ -130,6 +151,9 @@ export default {
 						return [];
 					}
 			}
+		},
+		showDetails() {
+			return (this.type === 'collection-id');
 		},
 		deselectLabel() {
 			return this.multiple ? 'Press enter to remove' : '';
@@ -197,10 +221,14 @@ export default {
 					this.selected = null;
 					this.preselectFirst();
 					break;
+				case 'band-name':
+					this.describeCollection(this.context);
+					break;
 			}
 		}
 	},
 	methods: {
+		...Utils.mapActions(['describeCollection']),
 		...Utils.mapActions('editor', ['loadEpsgCodes']),
 		e(val) {
 			return {
@@ -215,6 +243,10 @@ export default {
 				if (this.preselect) {
 					this.preselectFirst();
 				}
+			}
+			else if (this.type === 'band-name') {
+				await this.describeCollection(this.context);
+				this.setSelected();
 			}
 			else {
 				this.setSelected();
@@ -260,3 +292,16 @@ export default {
 </script>
 
 <style src="vue-multiselect/dist/vue-multiselect.min.css"></style>
+
+<style scoped>
+.select-container {
+	display: flex;
+	flex-grow: 1;
+}
+.select-container > div {
+	flex-grow: 1;
+}
+.select-container > button {
+	margin-left: 10px;
+}
+</style>

@@ -142,7 +142,7 @@ export default {
 		}
 	},
 	methods: {
-		...Utils.mapActions(['describeAccount']),
+		...Utils.mapActions(['describeAccount', 'describeCollection']),
 		...Utils.mapActions('userProcesses', {readUserProcess: 'read'}),
 		...Utils.mapMutations('editor', ['setContext', 'setProcess']),
 
@@ -212,7 +212,7 @@ export default {
 		},
 
 		showCollectionInfo(id) {
-			this.connection.describeCollection(id)
+			this.describeCollection(id)
 				.then(info => this.$refs.collectionModal.show(info, this.apiVersion))
 				.catch(error => Utils.error(this, "Sorry, can't load collection details for " + id + "."));
 		},

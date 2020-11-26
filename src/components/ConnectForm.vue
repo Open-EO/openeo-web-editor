@@ -270,7 +270,7 @@ export default {
 
 			this.loading = true;
 			try {
-				if (await this.connect({url: this.serverUrl})) {
+				if (await this.connect(this.serverUrl)) {
 					this.addServer(this.serverUrl);
 					if (!programmatically) {
 						window.history.pushState({reset: true, serverUrl: this.serverUrl, autoConnect: true}, "", ".?server=" + this.serverUrl);

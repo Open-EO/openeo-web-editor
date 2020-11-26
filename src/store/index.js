@@ -68,37 +68,27 @@ export default new Vuex.Store({
 			return registry;
 		},
 		collectionDefaults: (state) => (id) => {
-			var collection = state.collections.filter(c => c.id === id);
-			if (collection.length === 0) {
+			var collection = state.collections.find(c => c.id === id);
+			if (!Utils.isObject(collection)) {
 				return {};
 			}
 
 			var spatial_extent = null;
 			try {
-				spatial_extent = Utils.extentToBBox(collection[0].extent.spatial.bbox[0]);
-			} catch (error) {
-				// Catch invalid responses from back-ends
-			}
+				spatial_extent = Utils.extentToBBox(collection.extent.spatial.bbox[0]);
+			} catch (error) {}
 
 			var temporal_extent = null;
 			try {
-				temporal_extent = collection[0].extent.temporal.interval[0];
-			} catch (error) {
-				// Catch invalid responses from back-ends
-			}
+				temporal_extent = collection.extent.temporal.interval[0];
+			} catch (error) {}
 	
 			var bands = null;
-			try {
-				bands = collection[0].summaries['eo:bands'].map(band => band.name);
-			} catch (error) {
-				// Catch invalid responses from back-ends
-			}
-
 			return {id, spatial_extent, temporal_extent, bands};
 		},
 	},
 	actions: {
-		async connect(cx, {url}) {
+		async connect(cx, url) {
 			await cx.dispatch('logout');
 
 			// Connect and request capabilities
@@ -203,6 +193,15 @@ export default new Vuex.Store({
 			}
 		},
 
+		async describeCollection(cx, id) {
+			let collection = cx.state.collections.find(c => c.id === id);
+			if (!collection || !collection._loaded) {
+				collection = await cx.state.connection.describeCollection(id);
+				cx.commit('fillCollection', collection);
+			}
+			return collection;
+		},
+
 		async logout(cx) {
 			if (cx.getters.isAuthenticated) {
 				// Logout (mostly for OIDC)
@@ -256,6 +255,13 @@ export default new Vuex.Store({
 				.map(p => Object.assign(p, {native: true}))
 				.filter(p => (typeof p.id === 'string'))
 				.sort(Utils.sortById);
+		},
+		fillCollection(state, data) {
+			let index = state.collections.findIndex(c => c.id === data.id);
+			if (index !== -1) {
+				data._loaded = true;
+				Vue.set(state.collections, index, data);
+			}
 		},
 		collections(state, data) {
 			state.collections = data.collections

@@ -21,7 +21,7 @@
 		<!-- Null -->
 		<div class="description" v-else-if="type === 'null'"><i class="fas fa-info-circle"></i> This is set to <strong><tt>null</tt></strong>, which is usually used as placeholder for no-data values or a default value.</div>
 		<!-- Select Boxes (collection id, job id, epsg code, in/output format, service type, billing plan, enums) -->
-		<SelectBox v-else-if="isSelection" v-model="state" :key="type" :type="type" :editable="editable" :schema="schema" :context="dependency"></SelectBox>
+		<SelectBox v-else-if="isSelection" v-model="state" :key="type" :type="type" :editable="editable" :schema="schema" :context="dependency" @onDetails="onSelectDetails"></SelectBox>
 		<!-- Temporal (date, time, date-time, temporal-interval) -->
 		<TemporalPicker v-else-if="isTemporal" v-model="state" :key="type" :type="type" :editable="editable"></TemporalPicker>
 		<!-- Bounding Box -->
@@ -51,7 +51,7 @@
 		<!-- URL -->
 		<input class="fieldValue" v-else-if="type === 'url' || type === 'uri'" v-model="state" type="url" :name="name" :disabled="!editable" />
 		<!-- Objects / Arrays -->
-		<ObjectEditor  v-else-if="nativeType === 'object' || nativeType === 'array'" :editable="editable" :parameter="parameter" :schema="schema" :isObject="nativeType === 'object'" v-model="state" />
+		<ObjectEditor  v-else-if="nativeType === 'object' || nativeType === 'array'" :editable="editable" :parameter="parameter" :schema="schema" :isObject="nativeType === 'object'" v-model="state" :context="context" />
 		<!-- String and all other -->
 		<input class="fieldValue" v-else v-model="state" type="text" :name="name" :disabled="!editable" />
 	</div>
@@ -142,6 +142,8 @@ export default {
 				case 'udf-runtime':
 				case 'udf-runtime-version':
 					return true;
+				case 'band-name':
+					return !!this.dependency;
 				default:
 					return this.schema.isEnum();
 			}
@@ -195,6 +197,8 @@ export default {
 				case 'udf-runtime-version':
 				case 'udf-code':
 					return this.getValueFromOtherParameterByDataType('udf-runtime');
+				case 'band-name':
+					return this.getValueFromOtherParameterByDataType('collection-id');
 				default:
 					return undefined;
 			}
@@ -227,6 +231,11 @@ export default {
 			this.state = [this.state];
 			this.$emit('input', this.state);
 			this.$emit('changeType', 'array');
+		},
+		onSelectDetails() {
+			if (this.type === 'collection-id') {
+				this.emit('showCollection', this.state);
+			}
 		}
 	}
 };

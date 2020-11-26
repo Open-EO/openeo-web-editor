@@ -94,7 +94,7 @@ export default {
 	},
 	computed: {
 		...Utils.mapState(['collections']),
-		...Utils.mapGetters(['processRegistry', 'collectionDefaults']),
+		...Utils.mapGetters(['processRegistry']),
 		...Utils.mapGetters('userProcesses', ['supportsMath', 'isMathProcess'])
 	},
 	data() {
