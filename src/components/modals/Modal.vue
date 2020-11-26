@@ -1,6 +1,6 @@
 <template>
 	<div class="modal" ref="modal" v-if="shown" @mousedown="possiblyClose" :style="{'z-index': zIndex}">
-		<div ref="container" class="modal-container" :style="{'min-width': minWidth, 'max-width': maxWidth}">
+		<div ref="container" class="modal-container" :style="{'min-width': minWidth, 'max-width': maxWidth, 'min-height': minHeight}">
 			<header class="modal-header" @mousedown.prevent.stop="startMove">
 				<slot name="header">
 					<h2>{{ title }}</h2>
@@ -65,6 +65,10 @@ export default {
 		maxWidth: {
 			type: String,
 			default: "85%"
+		},
+		minHeight: {
+			type: String,
+			default: "auto"
 		}
 	},
 	data() {

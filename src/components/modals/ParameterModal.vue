@@ -1,5 +1,5 @@
 <template>
-	<Modal ref="__modal" minWidth="60%" maxWidth="90%">
+	<Modal ref="__modal" minWidth="60%" maxWidth="90%" minHeight="75%">
 		<template #main>
 			<p v-if="editableFields.length === 0">No editable parameters available.</p>
 			<form v-else id="parameterModal" @submit.prevent="save">
