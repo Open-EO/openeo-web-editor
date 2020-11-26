@@ -32,7 +32,7 @@
 				<div class="noData" v-else-if="!processesCount">No processes found.</div>
 			</div>
 
-			<div v-if="udfsCount" :class="{ category: true, udfs: true, expanded: udfsExpanded }">
+			<div v-if="udfsShow.length > 0" :class="{ category: true, udfs: true, expanded: udfsExpanded }">
 				<strong @click="toggle('udfs')" :title="'UDFs ('+udfsCount+')'"><span class="toggle">▸</span> UDF Runtimes</strong>
 				<div class="discovery-entity" v-for="(e, i) in udfs" v-show="udfsShow[i]" :key="e.id" :draggable="supportsRunUdf" @dragstart="onDrag($event, 'udf', e)">
 					<div class="discovery-info" @click="showUdfInfo(e)">
