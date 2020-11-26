@@ -105,11 +105,19 @@ class Utils extends VueUtils {
 	}
 
 	static formatDateTime(value) {
-		if (!value) {
+		if (typeof value !== 'string' || value.length === 0) {
 			return ''; 
 		}
 		let date = new Date(value); 
 		return date.toISOString().replace('T', ' ').replace('Z', '').substring(0, 19); 
+	}
+
+	static formatFileSize(value) {
+		if (typeof value !== 'number') {
+			return '';
+		}
+		var i = value == 0 ? 0 : Math.floor( Math.log(value) / Math.log(1024) );
+		return ( value / Math.pow(1024, i) ).toFixed(2) * 1 + ' ' + ['B', 'kB', 'MB', 'GB', 'TB'][i]
 	}
 
 	static replaceParam(url, paramName, paramValue) {

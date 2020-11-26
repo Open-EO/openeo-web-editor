@@ -70,9 +70,6 @@ export default {
 	data() {
 		return getDefaultState();
 	},
-	mounted() {
-		this.listen('showModal', this.showModal);
-	},
     computed: {
 		...Utils.mapState('editor', ['hightestModalZIndex']),
 		listCount() {

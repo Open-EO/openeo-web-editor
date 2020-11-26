@@ -223,8 +223,8 @@ export default {
 		estimateJob(job) {
 			// Doesn't need to go through job store as it doesn't change job-related data
 			job.estimateJob()
-				.then(estimate => this.emit('showModal', 'Job Estimate', estimate))
-				.catch(error => Utils.exception(this, error, "Load Estimate Error: " + Utils.getResourceTitle(job)));
+				.then(estimate => this.emit('showJobEstimate', job.getAll(), estimate))
+				.catch(error => Utils.exception(this, error, "Job Estimate Error: " + Utils.getResourceTitle(job)));
 		},
 		showLogs(job) {
 			this.emit('viewLogs', job);

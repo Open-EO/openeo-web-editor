@@ -39,6 +39,7 @@
     "build": "npm run build:epsg && npx vue-cli-service build --report"
   },
   "dependencies": {
+    "@musement/iso-duration": "0.0.10",
     "@openeo/js-client": "^1.0.1",
     "@openeo/js-commons": "^1.2.0",
     "@openeo/js-processgraphs": "^1.0.0-beta.6",

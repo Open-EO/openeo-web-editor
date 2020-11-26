@@ -278,11 +278,7 @@ export default {
 			return value;
 		},
 		formatFileSize(value, col) {
-			if (typeof value !== 'number') {
-				return '';
-			}
-			var i = value == 0 ? 0 : Math.floor( Math.log(value) / Math.log(1024) );
-			return ( value / Math.pow(1024, i) ).toFixed(2) * 1 + ' ' + ['B', 'kB', 'MB', 'GB', 'TB'][i];
+			return Utils.formatFileSize(value);
 		},
 		formatDateTime(value, col) {
 			return Utils.formatDateTime(value);

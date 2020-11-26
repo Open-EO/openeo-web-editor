@@ -38,6 +38,7 @@
 		<ParameterModal ref="parameterModal" />
 		<SchemaModal ref="schemaModal" />
 		<UdfRuntimeModal ref="udfRuntimeModal" />
+		<JobEstimateModal ref="jobEstimateModal" />
 	</div>
 </template>
 
@@ -49,14 +50,6 @@ import UserMenu from './UserMenu.vue';
 import UserWorkspace from './UserWorkspace.vue';
 import Viewer from './Viewer.vue';
 import Editor from './Editor.vue';
-import CollectionModal from './modals/CollectionModal.vue';
-import ProcessModal from './modals/ProcessModal.vue';
-import ServerInfoModal from './modals/ServerInfoModal.vue';
-import JobInfoModal from './modals/JobInfoModal.vue';
-import ServiceInfoModal from './modals/ServiceInfoModal.vue';
-import ParameterModal from './modals/ParameterModal.vue';
-import SchemaModal from './modals/SchemaModal.vue';
-import UdfRuntimeModal from './modals/UdfRuntimeModal.vue';
 import DiscoveryToolbar from './DiscoveryToolbar.vue';
 import { ProcessParameter } from './blocks/processSchema';
 import { Job, Service, UserProcess } from '@openeo/js-client';
@@ -70,14 +63,15 @@ export default {
 		Viewer,
 		UserMenu,
 		UserWorkspace,
-		CollectionModal,
-		ProcessModal,
-		ServerInfoModal,
-		JobInfoModal,
-		ServiceInfoModal,
-		ParameterModal,
-		SchemaModal,
-		UdfRuntimeModal
+		CollectionModal: () => import('./modals/CollectionModal.vue'),
+		ProcessModal: () => import('./modals/ProcessModal.vue'),
+		ServerInfoModal: () => import('./modals/ServerInfoModal.vue'),
+		JobInfoModal: () => import('./modals/JobInfoModal.vue'),
+		JobEstimateModal: () => import('./modals/JobEstimateModal.vue'),
+		ServiceInfoModal: () => import('./modals/ServiceInfoModal.vue'),
+		ParameterModal: () => import('./modals/ParameterModal.vue'),
+		SchemaModal: () => import('./modals/SchemaModal.vue'),
+		UdfRuntimeModal: () => import('./modals/UdfRuntimeModal.vue'),
 	},
 	data() {
 		return {
@@ -124,6 +118,7 @@ export default {
 		this.listen('showCollection', this.showCollectionInfo);
 		this.listen('showProcess', this.showProcessInfoById);
 		this.listen('showJobInfo', this.showJobInfo);
+		this.listen('showJobEstimate', this.showJobEstimate);
 		this.listen('showProcessInfo', this.showProcessInfo);
 		this.listen('showServiceInfo', this.showServiceInfo);
 		this.listen('showUdfRuntimeInfo', this.showUdfRuntimeInfo);
@@ -264,6 +259,10 @@ export default {
 
 		showJobInfo(job) {
 			this.$refs.jobModal.show(job);
+		},
+
+		showJobEstimate(job, estimate) {
+			this.$refs.jobEstimateModal.show(job, estimate);
 		},
 
 		showServerInfo() {
