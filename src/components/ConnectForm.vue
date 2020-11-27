@@ -175,7 +175,7 @@ export default {
 			loading: false,
 			version: Package.version,
 			message: Config.loginMessage,
-			redirectUrl: window.location.toString().split('?')[0]
+			redirectUrl: window.location.toString().split('#')[0].split('?')[0] // Remove fragment and query from redirect_url, they' conflict with the fragment appended by the Implicit Flow and the query appended by the Authorization Code Flow
 		};
 	},
 	async created() {
@@ -301,7 +301,8 @@ export default {
 				}
 				else if (authType === 'oidc') {
 					var options = {
-						automaticSilentRenew: true
+						automaticSilentRenew: true,
+						response_type: 'code' // Use Authorization Code Flow instead of Implicit Flow, https://github.com/Open-EO/openeo-js-client/issues/39
 					};
 					await provider.login(this.clientId, this.redirectUrl, options);
 				}
