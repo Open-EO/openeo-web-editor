@@ -9,6 +9,7 @@ export default {
 	snotifyDefaults: {
 		timeout: 5000,
 		titleMaxLength: 30,
+		bodyMaxLength: 120,
 		showProgressBar: true,
 		closeOnClick: true,
 		pauseOnHover: true
