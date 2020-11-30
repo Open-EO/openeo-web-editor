@@ -202,6 +202,9 @@ export default {
 			this.$emit('input', value);
 		},
 		insert(text, replace = true) {
+			if (typeof text !== 'string') {
+				text = String(text);
+			}
 			if (replace) {
 				// Only update if it has really changed
 				const cmValue = this.editor.getValue();
