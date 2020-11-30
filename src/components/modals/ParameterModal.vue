@@ -98,17 +98,32 @@ export default {
 
 			// ToDo: It's a bit hacky to have a fixed timeout set to allow the element to be available for scrolling => improve?!
 			setTimeout(() => {
-				let component = this.componentforParameter(this.selectParameter);
+				let component;
+				if (this.selectParameter) {
+					component = this.componentforParameter(this.selectParameter);
+				}
+				else if (this.editableFields.length > 0) {
+					component = this.componentforParameter(this.editableFields[0].name);
+				}
 				if (component) {
-					component.$el.scrollIntoView();
+					if (this.selectParameter) {
+						component.$el.scrollIntoView();
+					}
+					this.focusInput(component);
 				}
 			}, 100);
 		},
 		componentforParameter(name) {
-			if (this.selectParameter && Array.isArray(this.$refs[this.selectParameter]) && this.$refs[this.selectParameter][0]) {
-				return this.$refs[this.selectParameter][0];
+			if (name && Array.isArray(this.$refs[name]) && this.$refs[name][0]) {
+				return this.$refs[name][0];
 			}
 			return null;
+		},
+		focusInput(component) {
+			let firstElement = component.$el.querySelector('input:not([type="hidden"]):not([disabled]):not([class~="multiselect__input"]), button:not([disabled]), textarea:not([disabled]), select:not([disabled]), datalist:not([disabled])');
+			if (firstElement) {
+				firstElement.focus();
+			}
 		}
 	}
 };
