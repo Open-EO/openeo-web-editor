@@ -1,6 +1,6 @@
 {
   "name": "@openeo/web-editor",
-  "version": "0.6.0-alpha.1",
+  "version": "0.6.0-beta.1",
   "apiVersions": [
     "1.0.0-rc.2",
     "1.0.0",
@@ -41,7 +41,7 @@
   },
   "dependencies": {
     "@musement/iso-duration": "0.0.10",
-    "@openeo/js-client": "^1.0.1",
+    "@openeo/js-client": "^1.0.2",
     "@openeo/js-commons": "^1.2.0",
     "@openeo/js-processgraphs": "^1.0.0-beta.6",
     "@openeo/vue-components": "^1.0.0-rc.4",

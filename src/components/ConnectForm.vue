@@ -193,7 +193,9 @@ export default {
 		try {
 			await OidcProvider.signinCallback();
 		} catch (error) {
-			Utils.exception(this, error);
+			if (error instanceof Error && error.message !== "No state in response") {
+				Utils.exception(this, error);
+			}
 		}
 	},
 	mounted() {

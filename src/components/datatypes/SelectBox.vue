@@ -1,6 +1,6 @@
 <template>
 	<div class="select-container">
-		<MultiSelect v-model="selected" :key="type" ref="htmlElement" label="label" track-by="id" :multiple="multiple" :options="selectOptions" :allowEmpty="false" :preselectFirst="preselect" :disabled="!editable" :deselectLabel="deselectLabel" :taggable="taggable" :tagPlaceholder="tagPlaceholder" @tag="addValue"></MultiSelect>
+		<MultiSelect v-if="loaded" v-model="selected" :key="type" ref="htmlElement" label="label" track-by="id" :multiple="multiple" :options="selectOptions" :allowEmpty="false" :preselectFirst="preselect" :disabled="!editable" :deselectLabel="deselectLabel" :taggable="taggable" :tagPlaceholder="tagPlaceholder" @tag="addValue"></MultiSelect>
 		<button v-if="showDetails" type="button" title="Details" @click="$emit('onDetails')"><i class="fas fa-info"></i></button>
 	</div>
 </template>
@@ -50,7 +50,7 @@ export default {
 								if (bandDimension && Array.isArray(bandDimension.values)) {
 									state = bandDimension.values;
 								}
-							} catch (error) { console.log(error);}
+							} catch (error) {}
 						}
 					}
 					break;
@@ -178,7 +178,8 @@ export default {
 	},
 	data() {
 		return {
-			selected: null
+			selected: null,
+			loaded: false
 		};
 	},
 	created() {
@@ -222,7 +223,8 @@ export default {
 					this.preselectFirst();
 					break;
 				case 'band-name':
-					this.describeCollection(this.context);
+					this.selected = null;
+					this.loadData();
 					break;
 			}
 		}
@@ -237,12 +239,10 @@ export default {
 			};
 		},
 		async loadData() {
+			this.loaded = false;
 			if (this.type === 'epsg-code') {
 				await this.loadEpsgCodes();
 				this.setSelected();
-				if (this.preselect) {
-					this.preselectFirst();
-				}
 			}
 			else if (this.type === 'band-name') {
 				await this.describeCollection(this.context);
@@ -251,16 +251,16 @@ export default {
 			else {
 				this.setSelected();
 			}
+			this.loaded = true;
 		},
-		preselectFirst() {
+		async preselectFirst() {
+			await this.$nextTick();
 			// Preselect first element if nothing else is set.
-			this.$nextTick(() => {
-				let elem = this.$refs.htmlElement;
-				// Code inspired from mounted() method in vue-multiselect's multiselectMixin.js
-				if (elem.preselectFirst && Array.isArray(elem.filteredOptions) && elem.filteredOptions.length) {
-					elem.select(elem.filteredOptions[0]);
-				}
-			});
+			let elem = this.$refs.htmlElement;
+			// Code inspired from mounted() method in vue-multiselect's multiselectMixin.js
+			if (elem.preselectFirst && Array.isArray(elem.filteredOptions) && elem.filteredOptions.length) {
+				elem.select(elem.filteredOptions[0]);
+			}
 		},
 		setSelected() {
 			let value = this.value;
