@@ -42,7 +42,7 @@
 import Modal from './Modal.vue';
 import Utils from '../../utils.js';
 import TextEditor from '../TextEditor.vue';
-import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
+import EventBusMixin from '../EventBusMixin.vue';
 import { Process } from '../blocks/processSchema.js';
 import { ProcessGraph } from '@openeo/js-processgraphs';
 import { Formula } from '@openeo/js-client';

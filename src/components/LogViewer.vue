@@ -39,7 +39,7 @@
 
 <script>
 import Utils from '../utils.js';
-import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
+import EventBusMixin from './EventBusMixin.vue';
 import LinkList from '@openeo/vue-components/components/LinkList.vue';
 import MultiSelect from 'vue-multiselect';
 import ObjectTree from '@openeo/vue-components/components/ObjectTree.vue';

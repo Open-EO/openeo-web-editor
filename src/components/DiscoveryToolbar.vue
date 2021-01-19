@@ -48,7 +48,7 @@
 
 <script>
 import Config from '../../config.js';
-import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
+import EventBusMixin from './EventBusMixin.vue';
 import Utils from '../utils.js';
 import { ProcessGraph } from '@openeo/js-client';
 

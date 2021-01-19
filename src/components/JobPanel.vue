@@ -20,7 +20,7 @@
 </template>
 
 <script>
-import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
+import EventBusMixin from './EventBusMixin.vue';
 import WorkPanelMixin from './WorkPanelMixin';
 import Utils from '../utils.js';
 import { Job } from '@openeo/js-client';

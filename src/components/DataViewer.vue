@@ -8,7 +8,7 @@
 </template>
 
 <script>
-import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
+import EventBusMixin from './EventBusMixin.vue';
 import ObjectTree from '@openeo/vue-components/components/ObjectTree.vue';
 import Utils from '../utils.js';
 
