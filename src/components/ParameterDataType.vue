@@ -59,7 +59,7 @@
 
 <script>
 import { ProcessGraph } from '@openeo/js-processgraphs';
-import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
+import EventBusMixin from './EventBusMixin.vue';
 
 import ObjectEditor from './datatypes/ObjectEditor.vue';
 import Budget from './datatypes/Budget.vue';

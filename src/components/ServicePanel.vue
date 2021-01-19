@@ -23,7 +23,7 @@
 
 <script>
 import Config from '../../config';
-import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
+import EventBusMixin from './EventBusMixin.vue';
 import WorkPanelMixin from './WorkPanelMixin';
 import Utils from '../utils';
 import { Service } from '@openeo/js-client';

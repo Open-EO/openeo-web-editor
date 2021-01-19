@@ -11,7 +11,7 @@
 </template>
 
 <script>
-import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
+import EventBusMixin from './components/EventBusMixin.vue';
 import Utils from './utils';
 import ConnectForm from './components/ConnectForm.vue';
 import Modal from './components/modals/Modal.vue';

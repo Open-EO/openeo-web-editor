@@ -94,7 +94,7 @@
 <script>
 import Package from '../../package.json';
 import Config from '../../config.js';
-import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
+import EventBusMixin from './EventBusMixin.vue';
 import Tabs from '@openeo/vue-components/components/Tabs.vue';
 import Tab from '@openeo/vue-components/components/Tab.vue';
 import TermsOfServiceConsent from './TermsOfServiceConsent.vue';

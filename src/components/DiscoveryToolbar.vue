@@ -48,7 +48,7 @@
 
 <script>
 import Config from '../../config.js';
-import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
+import EventBusMixin from './EventBusMixin.vue';
 import Utils from '../utils.js';
 import { ProcessGraph } from '@openeo/js-client';
 
@@ -65,6 +65,7 @@ export default {
 		return {
 			searchTerm: '',
 			collectionsExpanded: false,
+			collectionIdHash: null,
 			processesExpanded: false,
 			udfsExpanded: false,
 			collectionsShow: [],
@@ -76,29 +77,40 @@ export default {
 			timeout: null
 		};
 	},
-	created() {
-		this.filter('processes');
-		this.filter('collections');
-		this.filter('udfs');
-	},
 	watch: {
-		processes() {
-			if (!Array.isArray(this.processes)) {
-				return;
+		processes: {
+			immediate: true,
+			handler() {
+				if (!Array.isArray(this.processes)) {
+					return;
+				}
+				this.filter('processes');
 			}
-			this.filter('processes');
 		},
-		collections() {
-			if (!Array.isArray(this.collections)) {
-				return;
+		collections: {
+			immediate: true,
+			handler() {
+				if (!Array.isArray(this.collections)) {
+					return;
+				}
+				// Opening the Collection modal requests the full collection from the server
+				// and submits a new version using fillCollection in the data store.
+				// This leads to a re-render/re-filtering although usually not required.
+				// Compare whether the IDs have been changed and only filter again once the 
+				// list of collection IDs have changed.
+				let newCollectionIdHash = this.collections.map(c => c.id).join('#');
+				if (this.collectionIdHash === newCollectionIdHash) {
+					return;
+				}
+				this.collectionIdHash = newCollectionIdHash;
+				this.filter('collections');
 			}
-			this.filter('collections');
 		},
-		udfRuntimes() {
-			if (!Array.isArray(this.udfRuntimes)) {
-				return;
+		udfs: {
+			immediate: true,
+			handler() {
+				this.filter('udfs');
 			}
-			this.filter('udfs');
 		},
 		searchTerm() {
 			if (this.timeout !== null) {
@@ -118,10 +130,10 @@ export default {
 		...Utils.mapGetters(['supports', 'collectionDefaults']),
 		...Utils.mapGetters('userProcesses', {getProcessById: 'getAllById'}),
 		supportsLoadCollection() {
-			return this.getProcessById('load_collection');
+			return !!this.getProcessById('load_collection');
 		},
 		supportsRunUdf() {
-			return this.getProcessById('run_udf');
+			return !!this.getProcessById('run_udf');
 		},
 		processes() {
 			return this.predefinedProcesses.concat(this.userProcesses).sort(Utils.sortById);

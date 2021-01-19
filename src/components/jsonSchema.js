@@ -16,7 +16,7 @@ export default class JsonSchema extends JsonSchemaValidator {
 	constructor(store) {
 		super();
 		this.store = store;
-		this.setFileFormats(this.store.state.fileFormats.data);
+		this.setFileFormats(this.store.getters.fileFormats);
 	}
 
 	async validateBandName(data) {

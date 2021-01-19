@@ -55,7 +55,7 @@ import Blocks from './blocks/Blocks.vue';
 import Utils from '../utils.js';
 import DiscoveryToolbar from './DiscoveryToolbar.vue';
 import ParameterModal from './modals/ParameterModal.vue'; // Add a paremeter modal to each visual editor, otherwise we can't open a parameter modal over a parameter modal (e.g. edit the parameters of a callback)
-import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
+import EventBusMixin from './EventBusMixin.vue';
 import FullscreenButton from './FullscreenButton.vue';
 
 export default {

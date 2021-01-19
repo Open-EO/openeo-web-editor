@@ -1,7 +1,7 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
 
-import { OpenEO } from '@openeo/js-client';
+import { OpenEO, FileTypes } from '@openeo/js-client';
 import { ProcessRegistry } from '@openeo/js-processgraphs';
 import Utils from '../utils.js';
 // Sub-modules
@@ -62,6 +62,7 @@ export default new Vuex.Store({
 		supportsBilling: (state) => state.connection !== null && state.connection.capabilities().currency() !== null,
 		supportsBillingPlans: (state) => state.connection !== null && state.connection.capabilities().currency() !== null && state.connection.capabilities().listPlans().length > 0,
 		apiVersion: (state) => state.connection !== null ? state.connection.capabilities().apiVersion() : null,
+		fileFormats: (state) => state.fileFormats instanceof FileTypes ? state.fileFormats.toJSON() : {input: {}, output: {}},
 		processRegistry: (state) => {
 			var registry = new ProcessRegistry(state.predefinedProcesses);
 			registry.addAll(state.userProcesses.userProcesses);
