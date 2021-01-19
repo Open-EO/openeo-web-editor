@@ -1,6 +1,6 @@
 
 import Config from '../config';
-import { Utils as VueUtils } from '@openeo/vue-components';
+import VueUtils from '@openeo/vue-components/utils';
 import { Job, Service, UserProcess } from '@openeo/js-client';
 import { mapState, mapActions, mapMutations, mapGetters } from 'vuex';
 

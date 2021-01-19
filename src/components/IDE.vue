@@ -225,8 +225,8 @@ export default {
 			this._showProcessInfo(process);
 		},
 
-		showUdfRuntimeInfo(runtimeId, runtimeData, runtimeVersion = null) {
-			this.$refs.udfRuntimeModal.show(runtimeId, runtimeData, runtimeVersion);
+		showUdfRuntimeInfo(id, data, version = null) {
+			this.$refs.udfRuntimeModal.show(id, data, version);
 		},
 
 		showSchemaInfo(name, schema, msg = null) {

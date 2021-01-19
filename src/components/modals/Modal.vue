@@ -11,7 +11,7 @@
 				<slot name="main">
 					<template v-if="list !== null">
 						<strong class="listEmpty" v-if="listCount == 0">Sorry, no data available.</strong>
-						<ul class="list" v-else>
+						<ul class="modal-list" v-else>
 							<li v-for="(item, key) in listItems" :key="key" @click="doMainListAction(item, key)">
 								<strong>{{ Array.isArray(listItems) ? item : key }}</strong>
 								<button type="button" v-for="action in otherListActions" :key="action.icon" :title="action.title" @click.prevent.stop="doListAction(item, key, action.callback)">
@@ -265,17 +265,17 @@ export default {
     color: red;
 }
 
-.modal .list {
+.modal .modal-list {
 	list-style-type: none;
 	margin: 0;
 	padding: 0;
 	border: 1px solid #ccc;
 }
 
-.modal .list li:first-of-type {
+.modal .modal-list li:first-of-type {
 	border: 0;
 }
-.modal .list li {
+.modal .modal-list li {
 	cursor: pointer;
 	display: block;
 	border-top: 1px solid #ccc;
@@ -284,11 +284,11 @@ export default {
 	display: flex;
 	align-items: center;
 }
-.modal .list li:hover {
+.modal .modal-list li:hover {
 	color: black;
 	background-color: #eee;
 }
-.modal .list li strong {
+.modal .modal-list li strong {
 	flex-grow: 1;
 	font-weight: normal;
 }

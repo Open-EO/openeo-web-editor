@@ -3,7 +3,7 @@
 		<template #main>
 			<div class="docgen">
 				<!-- ToDo: Implement processUrl -->
-				<Process :processData="process" :version="version" :provideDownload="false"></Process>
+				<Process :process="process" :provideDownload="false"></Process>
 				<!-- ToDo: Remove process graph view once implemented in Vue components -->
 				<!-- ToDo: Show info (badge?) that process is custom -->
 				<section class="process-graph" v-if="process.process_graph">
