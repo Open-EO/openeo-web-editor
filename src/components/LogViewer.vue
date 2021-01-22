@@ -54,7 +54,7 @@ export default {
 	},
 	props: {
 		data: { // => JS Client Job/Service Object or Log Entries
-			type: Object | Array,
+			type: [Object, Array],
 			required: true
 		}
 	},

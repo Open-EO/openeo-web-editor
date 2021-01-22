@@ -16,7 +16,7 @@ export default {
 		// Array is always in WGS84 with the following elements: 0 => west, 1 => south, 2 => east, 3 => north
 		// Object is an bbox object as defined by the openEO API (with west, south, east, north properties).
 		value: {
-			type: Object | Array,
+			type: [Object, Array],
 			default: () => null
 		}
 	},

@@ -16,7 +16,7 @@ export default {
 	},
 	props: {
 		value: {
-			type: String | Number
+			type: [String, Number]
 		},
 		type: {
 			type: String
@@ -26,7 +26,7 @@ export default {
 			default: true
 		},
 		options: {
-			type: Array | Object
+			type: [Array, Object]
 		},
 		schema: {
 			type: Object

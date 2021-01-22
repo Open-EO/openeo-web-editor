@@ -12,7 +12,7 @@ import Utils from '../utils.js';
 export default {
 	name: 'FullscreenButton',
 	props: {
-		element: Object | Function | String
+		element: [Object, Function, String]
 	},
 	data() {
 		return {
