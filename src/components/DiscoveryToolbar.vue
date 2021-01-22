@@ -1,47 +1,42 @@
 <template>
 	<div class="discovery-toolbar">
-        <div class="search-box">
-            <span class="icon">🔎</span>
-            <input type="search" v-model="searchTerm" placeholder="Search" title="Search in collections and processes" />
-        </div>
+		<SearchBox v-model="searchTerm" />
 		<div class="search-results">
-			<div :class="{ category: true, collections: true, expanded: collectionsExpanded }">
-				<strong @click="toggle('collections')" :title="'Collections ('+collectionsCount+')'"><span class="toggle">▸</span> Collections</strong>
-				<div class="discovery-entity" v-for="(e, i) in collections" v-show="collectionsShow[i]" :key="e.id" :draggable="supportsLoadCollection" @dragstart="onDrag($event, 'collection', e)">
-					<div class="discovery-info" @click="showCollectionInfo(e.id)">
-						<strong :title="e.id">{{ e.id }}</strong>
-						<small v-if="e.title" :title="e.title">{{ e.title }}</small>
+			<Collections class="category" :collections="collections" :searchTerm="searchTerm" :offerDetails="false" :collapsed="true">
+				<template #summary="{ item }">
+					<div class="discovery-entity" :draggable="supportsLoadCollection" @dragstart="onDrag($event, 'collection', item)">
+						<div class="discovery-info" @click="showCollectionInfo(item.id)">
+							<strong :title="item.id">{{ item.id }}</strong>
+							<small v-if="item.title" :title="item.title">{{ item.title }}</small>
+						</div>
+						<button v-if="supportsLoadCollection" class="discovery-button" type="button" @click="insertCollection(item)" title="Insert"><i class="fas fa-plus"></i></button>
 					</div>
-					<button v-if="supportsLoadCollection" class="discovery-button" type="button" @click="insertCollection(e)" title="Insert"><i class="fas fa-plus"></i></button>
-				</div>
-				<div class="noData" v-if="!collectionsCount && searchTerm === ''">No collections available.</div>
-				<div class="noData" v-else-if="!collectionsCount">No collections found.</div>
-			</div>
+				</template>
+			</Collections>
 
-			<div :class="{ category: true, processes: true, expanded: processesExpanded }">
-				<strong @click="toggle('processes')" :title="'Processes ('+processesCount+')'"><span class="toggle">▸</span> Processes</strong>
-				<div class="discovery-entity" v-for="(e, i) in processes" v-show="processesShow[i]" :key="e.id" draggable="true" @dragstart="onDrag($event, 'process', e)">
-					<div class="discovery-info" @click="showProcessInfo(e)">
-						<i v-if="!e.native" class="custom-process fas fa-xs fa-sitemap" title="Custom Process"></i>
-						<strong :title="e.id">{{ e.id }}</strong>
-						<small v-if="e.summary" :title="e.summary">{{ e.summary }}</small>
+			<Processes class="category" :processes="processes" :searchTerm="searchTerm" :offerDetails="false" :collapsed="true">
+				<template #summary="{ item }">
+					<div class="discovery-entity" draggable="true" @dragstart="onDrag($event, 'process', item)">
+						<div class="discovery-info" @click="showProcessInfo(item)">
+							<i v-if="!item.native" class="custom-process fas fa-xs fa-sitemap" title="Custom Process"></i>
+							<strong :title="item.id">{{ item.id }}</strong>
+							<small v-if="item.summary" :title="item.summary">{{ item.summary }}</small>
+						</div>
+						<button class="discovery-button" type="button" @click="insertProcess(e)" title="Insert"><i class="fas fa-plus"></i></button>
 					</div>
-					<button class="discovery-button" type="button" @click="insertProcess(e)" title="Insert"><i class="fas fa-plus"></i></button>
-				</div>
-				<div class="noData" v-if="!processesCount && searchTerm === ''">No processes available.</div>
-				<div class="noData" v-else-if="!processesCount">No processes found.</div>
-			</div>
+				</template>
+			</Processes>
 
-			<div v-if="udfsShow.length > 0" :class="{ category: true, udfs: true, expanded: udfsExpanded }">
-				<strong @click="toggle('udfs')" :title="'UDFs ('+udfsCount+')'"><span class="toggle">▸</span> UDF Runtimes</strong>
-				<div class="discovery-entity" v-for="(e, i) in udfs" v-show="udfsShow[i]" :key="e.id" :draggable="supportsRunUdf" @dragstart="onDrag($event, 'udf', e)">
-					<div class="discovery-info" @click="showUdfInfo(e)">
-						<strong :title="e.id">{{ e.id }} {{ e.version }}</strong>
+			<UdfRuntimes class="category" :runtimes="udfRuntimes" :searchTerm="searchTerm" :offerDetails="false" :collapsed="true">
+				<template #summary="{ item }">
+					<div class="discovery-entity" :draggable="supportsRunUdf" @dragstart="onDrag($event, 'udf', item)">
+						<div class="discovery-info" @click="showUdfInfo(item)">
+							<strong :title="item.id">{{ item.id }} {{ item.version }}</strong>
+						</div>
+						<button v-if="supportsRunUdf" class="discovery-button" type="button" @click="insertUdf(item)" title="Insert"><i class="fas fa-plus"></i></button>
 					</div>
-					<button v-if="supportsRunUdf" class="discovery-button" type="button" @click="insertUdf(e)" title="Insert"><i class="fas fa-plus"></i></button>
-				</div>
-				<div class="noData" v-if="!udfsCount && searchTerm !== ''">No UDF runtimes found.</div>
-			</div>
+				</template>
+			</UdfRuntimes>
 		</div>
 	</div>
 </template>
@@ -51,10 +46,20 @@ import Config from '../../config.js';
 import EventBusMixin from './EventBusMixin.vue';
 import Utils from '../utils.js';
 import { ProcessGraph } from '@openeo/js-client';
+import Collections from '@openeo/vue-components/components/Collections.vue';
+import Processes from '@openeo/vue-components/components/Processes.vue';
+import SearchBox from '@openeo/vue-components/components/SearchBox.vue';
+import UdfRuntimes from '@openeo/vue-components/components/UdfRuntimes.vue';
 
 export default {
 	name: 'DiscoveryToolbar',
 	mixins: [EventBusMixin],
+	components: {
+		Collections,
+		Processes,
+		SearchBox,
+		UdfRuntimes
+	},
 	props: {
 		onAddProcess: {
 			type: Function,
@@ -63,66 +68,8 @@ export default {
 	},
 	data() {
 		return {
-			searchTerm: '',
-			collectionsExpanded: false,
-			collectionIdHash: null,
-			processesExpanded: false,
-			udfsExpanded: false,
-			collectionsShow: [],
-			processesShow: [],
-			udfsShow: [],
-			collectionsCount: 0,
-			processesCount: 0,
-			udfCount: 0,
-			timeout: null
+			searchTerm: ''
 		};
-	},
-	watch: {
-		processes: {
-			immediate: true,
-			handler() {
-				if (!Array.isArray(this.processes)) {
-					return;
-				}
-				this.filter('processes');
-			}
-		},
-		collections: {
-			immediate: true,
-			handler() {
-				if (!Array.isArray(this.collections)) {
-					return;
-				}
-				// Opening the Collection modal requests the full collection from the server
-				// and submits a new version using fillCollection in the data store.
-				// This leads to a re-render/re-filtering although usually not required.
-				// Compare whether the IDs have been changed and only filter again once the 
-				// list of collection IDs have changed.
-				let newCollectionIdHash = this.collections.map(c => c.id).join('#');
-				if (this.collectionIdHash === newCollectionIdHash) {
-					return;
-				}
-				this.collectionIdHash = newCollectionIdHash;
-				this.filter('collections');
-			}
-		},
-		udfs: {
-			immediate: true,
-			handler() {
-				this.filter('udfs');
-			}
-		},
-		searchTerm() {
-			if (this.timeout !== null) {
-				clearTimeout(this.timeout);
-			}
-			this.timeout = setTimeout(() => {
-				this.timeout = null;
-				this.filter('processes');
-				this.filter('collections');
-				this.filter('udfs');
-			}, 500);
-		}
 	},
 	computed: {
 		...Utils.mapState(['predefinedProcesses', 'collections', 'udfRuntimes']),
@@ -136,70 +83,14 @@ export default {
 			return !!this.getProcessById('run_udf');
 		},
 		processes() {
-			return this.predefinedProcesses.concat(this.userProcesses).sort(Utils.sortById);
-		},
-		udfs() {
-			let udfs = [];
-			for(let runtime in this.udfRuntimes) {
-				let language = {
-					id: runtime,
-					title: this.udfRuntimes[runtime].title || runtime
-				};
-				for (let version in this.udfRuntimes[runtime].versions) {
-					udfs.push(Object.assign({}, language, {version}));
-				}
-			}
-			return udfs;
+			return this.predefinedProcesses.concat(this.userProcesses);
 		}
 	},
 	methods: {
-		async filterArrayAsync(arr, callback) {
-			const fail = Symbol();
-			return (await Promise.all(arr.map(async item => (await callback(item)) ? item : fail))).filter(i=>i!==fail);
-		},
 		onDrag(event, type, data) {
 			let node = this.getNode(type, data);
 			event.dataTransfer.setData("application/openeo-node", JSON.stringify(node));
 			event.dataTransfer.setData("text/plain", JSON.stringify(node, null, 2));
-		},
-		filter(type) {
-			var count = 0;
-			var show = [];
-			var expand = false;
-			var term = this.searchTerm.toLowerCase();
-			if (this.searchTerm) {
-				show = this[type].map(e => {
-					var matches = this.filterFn(e, term);
-					if (matches) {
-						count++;
-					}
-					return matches;
-				});
-				expand = true;
-			}
-			else {
-				show = this[type].map(() => true);
-				count = this[type].length;
-			}
-			this[type + 'Show'] = show;
-			this[type + 'Count'] = count;
-			this.toggle(type, expand);
-		},
-		filterFn(e, term) {
-			if (e.id.toLowerCase().includes(term)) {
-				return true;
-			}
-			if (typeof e.summary === 'string' && e.summary.toLowerCase().includes(term)) {
-				return true;
-			}
-			if (typeof e.title === 'string' && e.title.toLowerCase().includes(term)) {
-				return true;
-			}
-			return false;
-		},
-		toggle(type, expand = null) {
-			var key = type + 'Expanded';
-			this[key] = expand === null ? !this[key] : expand;
 		},
 		showCollectionInfo(id) {
 			if (this.supports('listCollections')) {
@@ -247,6 +138,28 @@ export default {
 }
 </script>
 
+<style>
+.search-results h2.heading {
+	font-size: 1em;
+	border: 0;
+	margin: 0;
+	padding: 0;
+	margin-bottom: 0.5em;
+}
+.search-results .vue-component.searchable-list ul.list > li > summary:before {
+	content: '';
+	margin-left: 0;
+	float: none;
+}
+.search-results .vue-component.searchable-list ul.list > li > summary {
+	margin: 0;
+	line-height: inherit;
+}
+.search-results .vue-component.searchable-list ul.list > li {
+	margin-bottom: 0;
+}
+</style>
+
 <style scoped>
 .discovery-toolbar {
 	width: 100%;
@@ -254,36 +167,6 @@ export default {
 	display: flex;
 	flex-direction: column;
 	overflow: hidden; /* to hide .search-box .icon */
-}
-
-.search-box {
-    margin: 5px;
-    position: relative;
-}
-.search-box input, .search-box .icon {
-	height: 1.5em;
-	font-size: 1em;
-	margin: 0;
-}
-
-.search-box input {
-    padding: 0.25em 0.3em;
-    padding-left: 1.9em;
-    z-index: 1;
-	display: inline-block;
-	box-sizing: content-box;
-	background-color: #fff;
-	width: calc(100% - 2.2em);
-}
-.search-box .icon {
-    user-select: none;
-    margin-top: 0.3em;
-    margin-left: 0.3em;
-    width: 1em;
-    z-index: 2;
-    position: absolute;
-    top: 0;
-    left: 0;
 }
 
 .search-results {
@@ -299,20 +182,8 @@ export default {
 	overflow: hidden;
 	white-space: nowrap;
 }
-.category strong .toggle {
-	display: inline-block;
-}
-.category.expanded strong .toggle {
-	transform: rotate(90deg);
-}
-.discovery-entity, .noData {
-	display: none;
-}
-.category.expanded .noData {
-	display: block;
-	margin: 0.25em 0;
-}
-.category.expanded .discovery-entity {
+
+.discovery-entity {
 	display: flex;
 	margin: 0.25em 0;
 	border: 1px solid #ddd;
