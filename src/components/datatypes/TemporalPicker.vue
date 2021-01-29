@@ -20,7 +20,7 @@ export default {
 	},
 	props: {
 		value: {
-			type: String | Array
+			type: [String, Array]
 		},
 		type: {
 			type: String

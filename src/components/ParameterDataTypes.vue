@@ -20,7 +20,7 @@ import Utils from '../utils.js';
 import JsonSchema from './jsonSchema.js';
 import ParameterDataType from './ParameterDataType.vue';
 import Description from '@openeo/vue-components/components/Description.vue';
-import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
+import EventBusMixin from './EventBusMixin.vue';
 import { ProcessGraphNode } from '@openeo/js-processgraphs';
 import { ProcessParameter, ProcessDataType, Process } from './blocks/processSchema.js';
 

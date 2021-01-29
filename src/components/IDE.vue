@@ -44,7 +44,7 @@
 
 <script>
 import Package from '../../package.json';
-import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
+import EventBusMixin from './EventBusMixin.vue';
 import Utils from '../utils.js';
 import UserMenu from './UserMenu.vue';
 import UserWorkspace from './UserWorkspace.vue';
@@ -225,8 +225,8 @@ export default {
 			this._showProcessInfo(process);
 		},
 
-		showUdfRuntimeInfo(runtimeId, runtimeData, runtimeVersion = null) {
-			this.$refs.udfRuntimeModal.show(runtimeId, runtimeData, runtimeVersion);
+		showUdfRuntimeInfo(id, data, version = null) {
+			this.$refs.udfRuntimeModal.show(id, data, version);
 		},
 
 		showSchemaInfo(name, schema, msg = null) {

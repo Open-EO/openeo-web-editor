@@ -97,7 +97,7 @@ export default {
             default: () => []
         },
         processes: {
-            type: Array | Object,
+            type: [Array, Object],
             default: () => []
         },
         pgParameters: {

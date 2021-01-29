@@ -43,7 +43,7 @@ export default {
         default: {},
         value: {},
         schema: {
-            type: Object | Array,
+            type: [Object, Array],
             default: null
         },
         label: {

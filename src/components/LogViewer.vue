@@ -39,7 +39,7 @@
 
 <script>
 import Utils from '../utils.js';
-import EventBusMixin from '@openeo/vue-components/components/EventBusMixin.vue';
+import EventBusMixin from './EventBusMixin.vue';
 import LinkList from '@openeo/vue-components/components/LinkList.vue';
 import MultiSelect from 'vue-multiselect';
 import ObjectTree from '@openeo/vue-components/components/ObjectTree.vue';
@@ -54,7 +54,7 @@ export default {
 	},
 	props: {
 		data: { // => JS Client Job/Service Object or Log Entries
-			type: Object | Array,
+			type: [Object, Array],
 			required: true
 		}
 	},
