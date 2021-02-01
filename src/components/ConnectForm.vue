@@ -43,7 +43,7 @@
 								</div>
 								<div class="row help">
 									<i class="fas fa-exclamation-circle"></i>
-									<span>You need to specify the <em>Client ID</em> provided to you by the provider. You need to allow the <a :href="redirectUrl" target="_blank" :title="redirectUrl">URL of this service</a> as redirect URL with the authentication service.</span>
+									<span>You need to specify the <em>Client ID</em> provided to you by the provider. You need to allow the <a :href="oidcRedirectUrl" target="_blank" :title="oidcRedirectUrl">URL of this service</a> as redirect URL with the authentication service.</span>
 								</div>
 								<div class="row bottom">
 									<TermsOfServiceConsent />
@@ -99,7 +99,7 @@ import Tabs from '@openeo/vue-components/components/Tabs.vue';
 import Tab from '@openeo/vue-components/components/Tab.vue';
 import TermsOfServiceConsent from './TermsOfServiceConsent.vue';
 import Utils from '../utils.js';
-import { OpenEO, BasicProvider, OidcProvider } from '@openeo/js-client';
+import { OidcProvider } from '@openeo/js-client';
 
 export default {
 	name: 'ConnectForm',
@@ -175,7 +175,13 @@ export default {
 			loading: false,
 			version: Package.version,
 			message: Config.loginMessage,
-			redirectUrl: window.location.toString().split('?')[0]
+			oidcOptions: {
+				automaticSilentRenew: true,
+				// Use Authorization Code Flow instead of Implicit Flow, https://github.com/Open-EO/openeo-js-client/issues/39
+				response_type: 'code'
+			},
+			// Remove fragment and query from redirect_url, they' conflict with the fragment appended by the Implicit Flow and the query appended by the Authorization Code Flow
+			oidcRedirectUrl: window.location.toString().split('#')[0].split('?')[0]
 		};
 	},
 	async created() {
@@ -191,7 +197,7 @@ export default {
 		// Do this after the other initial work as the await delays execution and makes mounted run before created sometimes.
 		OidcProvider.setUiMethod('popup');
 		try {
-			await OidcProvider.signinCallback();
+			await OidcProvider.signinCallback(null, this.oidcOptions);
 		} catch (error) {
 			if (error instanceof Error && error.message !== "No state in response") {
 				Utils.exception(this, error);
@@ -302,10 +308,7 @@ export default {
 					await provider.login(this.username, this.password);
 				}
 				else if (authType === 'oidc') {
-					var options = {
-						automaticSilentRenew: true
-					};
-					await provider.login(this.clientId, this.redirectUrl, options);
+					await provider.login(this.clientId, this.oidcRedirectUrl, this.oidcOptions);
 				}
 				else { // noauth/discovery
 					window.history.pushState({reset: true, serverUrl: this.serverUrl, autoConnect: true, skipLogin: true}, "", ".?server=" + this.serverUrl + "&discover=1");
