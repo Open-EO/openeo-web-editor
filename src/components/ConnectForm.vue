@@ -99,7 +99,7 @@ import Tabs from '@openeo/vue-components/components/Tabs.vue';
 import Tab from '@openeo/vue-components/components/Tab.vue';
 import TermsOfServiceConsent from './TermsOfServiceConsent.vue';
 import Utils from '../utils.js';
-import { OpenEO, BasicProvider, OidcProvider } from '@openeo/js-client';
+import { OidcProvider } from '@openeo/js-client';
 
 export default {
 	name: 'ConnectForm',
