@@ -107,6 +107,8 @@ export default {
     },
     data() {
         return {
+            isMounted: false,
+
             // Current offset for block that are generated without specific coordinates so that not all block occur on the same position
             newBlockOffset: 0,
 
@@ -194,6 +196,11 @@ export default {
             this.importPgParameters(value, 'prop');
         },
         async value(value) {
+            // Only run if component has been mounted
+            if (!this.isMounted) {
+                return;
+            }
+
             // Only import when user changes data (i.e. not a BlocksProcess exported from export())
             if (!(value instanceof BlocksProcess)) {
                 this.process = value;
@@ -227,6 +234,8 @@ export default {
             this.perfectScale();
         }
         selectionChangeWatcher.bind(this)();
+
+        this.mounted = true;
     },
     beforeDestroy() {
         document.removeEventListener('mouseup', this.onDocumentMouseUpFn);

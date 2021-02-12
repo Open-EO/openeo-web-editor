@@ -213,7 +213,7 @@ export default {
 
 		showCollectionInfo(id) {
 			this.describeCollection(id)
-				.then(info => this.$refs.collectionModal.show(info, this.apiVersion))
+				.then(info => this.$refs.collectionModal.show(info))
 				.catch(error => Utils.error(this, "Sorry, can't load collection details for " + id + "."));
 		},
 
@@ -250,7 +250,7 @@ export default {
 		},
 
 		_showProcessInfoModal(process) {
-			this.$refs.processModal.show(process, this.apiVersion);
+			this.$refs.processModal.show(process);
 		},
 
 		showServiceInfo(service) {

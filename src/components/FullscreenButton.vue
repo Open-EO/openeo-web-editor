@@ -11,9 +11,9 @@ import Utils from '../utils.js';
 // ToDo: Add key listeners for F11(?) and ESC (closing)
 export default {
 	name: 'FullscreenButton',
-	props: {
-		element: [Object, Function, String]
-	},
+	props: [
+		"element"
+	],
 	data() {
 		return {
 			isFullscreen: false,

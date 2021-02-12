@@ -54,13 +54,8 @@ export default {
 		defaultValue: {}
 	},
 	watch: {
-		value(value, oldValue) {
-			if (this.$refs.tabs.getActiveTabId() === 'source') {
-				this.showCode();
-			}
-			else {
-				this.showModel();
-			}
+		value() {
+			this.updateTab();
 		}
 	},
 	data() {
@@ -69,6 +64,9 @@ export default {
 			codeValue: null,
 			error: null
 		};
+	},
+	mounted() {
+		this.updateTab();
 	},
 	computed: {
 		...Utils.mapGetters('userProcesses', {getProcessById: 'getAllById'})
@@ -82,6 +80,14 @@ export default {
 			this.error = null;
 			this.codeValue = this.value;
 			this.$refs.sourceEditor.updateState();
+		},
+		updateTab() {
+			if (this.$refs.tabs.getActiveTabId() === 'source') {
+				this.showCode();
+			}
+			else {
+				this.showModel();
+			}
 		},
 		commit(value) {
 			this.error = null;

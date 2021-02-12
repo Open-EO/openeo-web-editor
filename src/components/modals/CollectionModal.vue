@@ -41,8 +41,7 @@ export default {
 		}
 	},
 	methods: {
-		show(collection, version) {
-			this.version = version;
+		show(collection) {
 			this.collection = collection;
 			this.$refs.modal.show(collection.id);
 			this.$nextTick(() => {

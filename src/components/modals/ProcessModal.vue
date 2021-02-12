@@ -31,7 +31,6 @@ export default {
 	},
 	data() {
 		return {
-			version: null,
 			process: null
 		};
 	},
@@ -46,8 +45,7 @@ export default {
 		}
 	},
 	methods: {
-		show(process, version) {
-			this.version = version;
+		show(process) {
 			if (process instanceof ProcessGraph || process instanceof UserProcess) {
 				this.process = process.toJSON();
 			}
