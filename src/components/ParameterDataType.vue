@@ -44,10 +44,8 @@
 		<TextEditor class="fieldValue textarea" v-else-if="type == 'json'" :id="name" :editable="editable" v-model="state" language="json" />
 		<!-- Boolean -->
 		<input class="fieldValue" v-else-if="type === 'boolean'" v-model="state" type="checkbox" :name="name" :disabled="!editable" />
-		<!-- Integer -->
-		<input class="fieldValue" v-else-if="type === 'integer'" v-model.number="state" type="number" :min="numericMin" :max="numericMax" :step="1" :name="name" :disabled="!editable" />
-		<!-- Number -->
-		<input class="fieldValue" v-else-if="type === 'number'" v-model.number="state" type="number" :min="numericMin" :max="numericMax" :step="0.01" :name="name" :disabled="!editable" />
+		<!-- Integer / Number -->
+		<input class="fieldValue" v-else-if="type === 'integer'" v-model.number="state" type="number" :min="numericMin" :max="numericMax" :step="numericStep" :name="name" :disabled="!editable" />
 		<!-- URL -->
 		<input class="fieldValue" v-else-if="type === 'url' || type === 'uri'" v-model="state" type="url" :name="name" :disabled="!editable" />
 		<!-- Objects / Arrays -->
@@ -168,6 +166,17 @@ export default {
 				return this.schema.maximum;
 			}
 			return ""; // Empty seems to be the default for the input element
+		},
+		numbericStep() {
+			if (typeof this.schema.multipleOf === 'number') {
+				return this.schema.multipleOf;
+			}
+			else if (this.type === 'integer') {
+				return 1;
+			}
+			else {
+				return 'any';
+			}
 		},
 		newValue() {
 			if (this.type === 'number') {
