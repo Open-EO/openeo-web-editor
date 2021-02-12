@@ -4,12 +4,15 @@ A web-based editor for interactive usage of the openEO API.
 The Web Editor currently **supports openEO API versions v1.0.x** (including 1.0.0-rc.2).
 
 ## Getting Started
-You can use the online **[demo](https://open-eo.github.io/openeo-web-editor/demo/)** or build the files yourself and deploy them to any web host.
+The most recent stable version is always available at [editor.openeo.org](https://editor.openeo.org).
+There's also a (potentially unstable) [demo](https://open-eo.github.io/openeo-web-editor/demo/) of the development version with all the newest features.
+
+You can also build the files yourself and deploy them to any web host:
 
 1. Install [Node.js](https://nodejs.org/)
 2. Clone or download this repository.
 3. Open a command line window and go to the directory which contains the cloned/downloaded web editor files.
-4. Optionally: Configure the web editor by editing `config.js`  to suit your needs.
+4. Configure the web editor by editing `config.js`  to suit your needs.
 6. Install the dependencies by executing `npm install` on the command line
 7. 
     * Development: Run the development server by executing `npm run serve`.

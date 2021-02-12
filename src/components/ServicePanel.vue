@@ -191,7 +191,7 @@ export default {
 			data = this.normalizeToDefaultData(data);
 			this.create({parameters: [script, data.type, data.title, data.description, data.enabled, data.configuration, data.plan, data.budget]})
 				.then(service => this.serviceCreated(service))
-				.catch(error => Utils.exception(this, error, 'Create Service Error: ' + (data.title ?? '')));
+				.catch(error => Utils.exception(this, error, 'Create Service Error: ' + (data.title || '')));
 		},
 		createServiceFromScript() {
 			var fields = [

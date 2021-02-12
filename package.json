@@ -44,7 +44,7 @@
     "@openeo/js-client": "^1.0.3",
     "@openeo/js-commons": "^1.2.0",
     "@openeo/js-processgraphs": "^1.0.0-beta.6",
-    "@openeo/vue-components": "^2.0.0-rc.2",
+    "@openeo/vue-components": "^2.0.0-rc.3",
     "ajv": "^6.12.6",
     "codemirror": "^5.58.2",
     "content-type": "^1.0.4",

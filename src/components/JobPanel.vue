@@ -181,7 +181,7 @@ export default {
 			data = this.normalizeToDefaultData(data);
 			this.create({parameters: [process, data.title, data.description, data.plan, data.budget]})
 				.then(job => this.jobCreated(job))
-				.catch(error => Utils.exception(this, error, 'Create Job Error: ' + (data.title ?? '')));
+				.catch(error => Utils.exception(this, error, 'Create Job Error: ' + (data.title || '')));
 		},
 		createJobFromScript() {
 			var fields = [

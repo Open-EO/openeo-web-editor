@@ -1,0 +1,26 @@
+name: Web Editor Demo Deployment
+on:
+  push:
+    branches:
+      - dev
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [14.x]
+    env:
+      CLIENT_URL: /openeo-web-editor/demo/
+    steps:
+      - uses: actions/setup-node@v1
+      - uses: actions/checkout@v2
+      - run: npm install
+      - run: npm run build
+      - uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: dist
+          destination_dir: demo
+          exclude_assets: 'report.html'
+          user_name: 'openEO CI'
+          user_email: openeo.ci@uni-muenster.de
