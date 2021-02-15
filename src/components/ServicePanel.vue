@@ -3,14 +3,14 @@
 		<template slot="toolbar">
 			<button title="Add new service" @click="createServiceFromScript()" v-show="supportsCreate"><i class="fas fa-plus"></i> Create</button>
 		</template>
-		<template slot="enabled" slot-scope="p">
+		<template #enabled="p">
 			<span class="boolean">
 				<span v-show="p.row.enabled === true"><i class="fas fa-check-circle"></i></span>
 				<span v-show="p.row.enabled === false"><i class="fas fa-times-circle"></i></span>
 				<span v-show="typeof p.row.enabled !== 'boolean'"><i class="fas fa-question-circle"></i></span>
 			</span>
 		</template>
-		<template slot="actions" slot-scope="p">
+		<template #actions="p">
 			<button title="Details" @click="serviceInfo(p.row)" v-show="supportsRead"><i class="fas fa-info"></i></button>
 			<button title="Edit metadata" @click="editMetadata(p.row)" v-show="supportsUpdate"><i class="fas fa-edit"></i></button>
 			<button title="Edit process" @click="showInEditor(p.row)" v-show="supportsRead"><i class="fas fa-project-diagram"></i></button>

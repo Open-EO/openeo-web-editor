@@ -6,7 +6,7 @@
 		</div>
 		<div class="percent"><div class="used" :class="{error: uploadErrored}" :style="'width: ' + this.uploadProgress + '%; opacity: ' + this.uploadFadeOut"></div></div>
 		<DataTable ref="table" :data="data" :columns="columns">
-			<template slot="actions" slot-scope="p">
+			<template #actions="p">
 				<button title="Download" @click="downloadFile(p.row)" v-show="supportsRead"><i class="fas fa-download"></i></button>
 				<button title="Delete" @click="deleteFile(p.row)" v-show="supportsDelete"><i class="fas fa-trash"></i></button>
 			</template>

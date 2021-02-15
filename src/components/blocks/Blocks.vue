@@ -235,7 +235,7 @@ export default {
         }
         selectionChangeWatcher.bind(this)();
 
-        this.mounted = true;
+        this.isMounted = true;
     },
     beforeDestroy() {
         document.removeEventListener('mouseup', this.onDocumentMouseUpFn);

@@ -2,8 +2,8 @@
 	<Modal ref="modal">
 		<template #main>
 			<div class="docgen">
-				<Collection :collection="collection">
-					<template slot="spatial-extents" slot-scope="p">
+				<Collection :data="collection">
+					<template #spatial-extents="p">
 						<MapViewer id="collectionMap" :show="showMap" :extents="p.extents"></MapViewer>
 					</template>
 				</Collection>

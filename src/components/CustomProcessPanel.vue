@@ -3,7 +3,7 @@
 		<template slot="toolbar">
 			<button title="Add new custom process" @click="addProcessFromScript" v-show="supportsCreate"><i class="fas fa-plus"></i> Add</button>
 		</template>
-		<template slot="actions" slot-scope="p">
+		<template #actions="p">
 			<button title="Details" @click="processInfo(p.row)" v-show="supportsRead"><i class="fas fa-info"></i></button>
 			<!-- ToDo: Align with 1.0, move edit metadata to visual model editor -->
 			<button title="Edit metadata" @click="editMetadata(p.row)" v-show="supportsUpdate"><i class="fas fa-edit"></i></button>

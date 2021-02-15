@@ -257,8 +257,8 @@ export default {
 			this.$refs.serviceModal.show(service);
 		},
 
-		showJobInfo(job) {
-			this.$refs.jobModal.show(job);
+		showJobInfo(job, result = null) {
+			this.$refs.jobModal.show(job, result);
 		},
 
 		showJobEstimate(job, estimate) {

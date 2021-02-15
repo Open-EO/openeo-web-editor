@@ -4,7 +4,7 @@
 			<button title="Add new job for batch processing" @click="createJobFromScript()" v-show="supportsCreate"><i class="fas fa-plus"></i> Create</button>
 			<button title="Run process and view results synchronously" @click="executeProcess" v-show="supports('computeResult')"><i class="fas fa-play"></i> Run now</button>
 		</template>
-		<template slot="actions" slot-scope="p">
+		<template #actions="p">
 			<button title="Details" @click="showJobInfo(p.row)" v-show="supportsRead"><i class="fas fa-info"></i></button>
 			<button title="Estimate" @click="estimateJob(p.row)" v-show="supports('estimateJob')"><i class="fas fa-file-invoice-dollar"></i></button>
 			<button title="Edit metadata" @click="editMetadata(p.row)" v-show="supportsUpdate && isJobInactive(p.row)"><i class="fas fa-edit"></i></button>
@@ -218,7 +218,17 @@ export default {
 			}
 		},
 		showJobInfo(job) {
-			this.refreshElement(job, updatedJob => this.emit('showJobInfo', updatedJob.getAll()));
+			this.refreshElement(job, async (updatedJob) => {
+				let result = null;
+				if (updatedJob.status === 'finished') {
+					try {
+						result = await updatedJob.getResultsAsStac();
+					} catch (error) {
+						Utils.exception(this, error, "Load Results Error: " + Utils.getResourceTitle(updatedJob));
+					}
+				}
+				this.emit('showJobInfo', updatedJob.getAll(), result);
+			});
 		},
 		estimateJob(job) {
 			// Doesn't need to go through job store as it doesn't change job-related data
@@ -271,18 +281,18 @@ export default {
 			Utils.info(this, 'Data requested. Please wait...');
 
 			// Doesn't need to go through job store as it doesn't change job-related data
-			job.getResultsAsItem().then(item => {
-				if(Utils.size(item.assets) == 0) {
+			job.getResultsAsStac().then(stac => {
+				if(Utils.size(stac.assets) == 0) {
 					Utils.error(this, 'No results available for job "' + Utils.getResourceTitle(job) + '".');
 					return;
 				}
 
-				this.emit('viewJobResults', item, job);
+				this.emit('viewJobResults', stac, job);
 			});
 		},
 		downloadResults(job) {	
 			// Doesn't need to go through job store as it doesn't change job-related data
-			job.getResultsAsItem().then(item => {
+			job.getResultsAsStac().then(item => {
 				if(Utils.size(item.assets) == 0) {
 					Utils.error(this, 'No results available for job "' + Utils.getResourceTitle(job) + '".');
 					return;
