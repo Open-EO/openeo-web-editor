@@ -1,16 +1,14 @@
 <template>
-	<div class="dataTable" :id="id">
-		<div class="dataTableMenu">
-			<div class="dataTableToolbar">
+	<div class="data-table" :id="id">
+		<div class="menu">
+			<div class="toolbar">
 				<slot name="toolbar"></slot>
 			</div>
-			<div class="dataTableFilter" v-if="data.length > 0">
-				<i class="fas fa-search filter-icon"></i>
-				<input type="text" placeholder="Search term" v-model="filterValue">
-				<button type="button" @click="clearFilter" :disabled="!hasFilter"><i class="fas fa-times-circle"></i></button>
+			<div class="filter" v-if="hasData">
+				<SearchBox v-model="filterValue" :compact="true" />
 			</div>
 		</div>
-		<table v-if="data.length > 0">
+		<table v-if="hasData">
 			<tr>
 				<th v-for="(col, id) in columns" v-show="!col.hide" :key="id" :class="thClasses(id)" @click="enableSort(id)" :title="thTitle(id)">{{ col.name }}</th>
 			</tr>
@@ -32,19 +30,26 @@
 					</slot>
 				</td>
 			</tr>
-			<tr v-if="data.length > 0 && view.length == 0" class="noSearchResults">
+			<tr v-if="hasData && view.length == 0" class="no-results">
 				<td :colspan="columnCount">Sorry, no element matches your search criteria.</td>
 			</tr>
 		</table>
-		<div class="noDataMessage" v-else>{{ noDataMessage }}</div>
+		<div class="no-data" v-else>{{ noDataMessage }}</div>
+		<div class="footer">
+			<slot name="footer"></slot>
+		</div>
 	</div>
 </template>
 
 <script>
 import Utils from '../utils.js';
+import SearchBox from '@openeo/vue-components/components/SearchBox.vue';
 
 export default {
 	name: 'DataTable',
+	components: {
+		SearchBox
+	},
 	props: {
 		id: String,
 		columns: Object,
@@ -89,6 +94,9 @@ export default {
 	computed: {
 		columnCount() {
 			return Object.keys(this.columns).length;
+		},
+		hasData() {
+			return this.data.length > 0;
 		},
 		hasFilter() {
 			return (typeof this.filterValue === 'string' && this.filterValue.length > 0) ? true : false;
@@ -291,37 +299,37 @@ export default {
 </script>
 
 <style>
-.dataTable .filter-icon {
+.data-table .filter-icon {
 	margin-right: 3px;
 }
-.dataTable th {
+.data-table th {
 	text-align: left !important;
 }
-.dataTable th.sortable {
+.data-table th.sortable {
 	cursor: pointer;
 }
-.dataTable th.sortable:hover {
+.data-table th.sortable:hover {
 	cursor: pointer;
 	background-color: #eee;
 }
-.dataTable th.sort-asc:after, .dataTable th.sortable:after {
+.data-table th.sort-asc:after, .data-table th.sortable:after {
 	visibility: hidden;
 	font-family: "Font Awesome 5 Free";
 	margin-left: 5px;
 	font-weight: 900;
 	content: "\f0de";
 }
-.dataTable th.sort-asc:after, .dataTable th.sortable:hover:after {
+.data-table th.sort-asc:after, .data-table th.sortable:hover:after {
 	visibility: visible;
 }
-.dataTable th.sort-desc:after {
+.data-table th.sort-desc:after {
 	visibility: visible;
 	font-family: "Font Awesome 5 Free";
 	margin-left: 5px;
 	font-weight: 900;
 	content: "\f0dd";
 }
-.dataTable th.sort-asc:hover:after, .dataTable th.sort-desc:hover:after {
+.data-table th.sort-asc:hover:after, .data-table th.sort-desc:hover:after {
 	visibility: visible;
 	font-family: "Font Awesome 5 Free";
 	margin-left: 5px;
@@ -329,18 +337,22 @@ export default {
 	content: "\f0dc";
 }
 
-.dataTable .noSearchResults td {
+.data-table .no-results td {
 	text-align: center;
 }
-.dataTableFilter {
-	flex-grow: 1;
-	text-align: right;
-}
-.dataTableMenu {
+.data-table .menu {
 	margin-bottom: 5px;
 	display: flex;
+	justify-content: space-between;
 }
-.dataTableFilter .edit {
+.data-table .filter {
+	flex-grow: 1;
+	text-align: right;
+	padding-left: 1em;
+	min-width: 4em;
+	max-width: 20em;
+}
+.data-table .filter .edit {
 	cursor: pointer;
 }
 </style>
