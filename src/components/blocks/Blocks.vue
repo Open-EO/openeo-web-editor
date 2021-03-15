@@ -369,24 +369,28 @@ export default {
             this.state.scale *= deltaScale;
         },
         onMouseMove(event) {
-            var rect = this.getDimensions();
-            var mouseX = event.pageX - rect.offsetLeft;
-            var mouseY = event.pageY - rect.offsetTop;
-            this.state.mouse = [mouseX, mouseY];
+            try {
+                var rect = this.getDimensions(); // This sometimes fails in web editor if the ref is not defined anymore after logout
+                var mouseX = event.pageX - rect.offsetLeft;
+                var mouseY = event.pageY - rect.offsetTop;
+                this.state.mouse = [mouseX, mouseY];
 
-            if (this.state.editable && this.selectedSideEdge) {
-                var origin = this.selectedSideEdge.selectedPosition;
-                var distance = Math.sqrt(Math.pow(mouseX-origin[0], 2)+Math.pow(mouseY-origin[1], 2));
-                if (distance > 10) {
-                    this.link(this.selectedSideEdge.selectedParameter);
-                    this.removeEdge(this.selectedSideEdge);
-                    this.commit();
+                if (this.state.editable && this.selectedSideEdge) {
+                    var origin = this.selectedSideEdge.selectedPosition;
+                    var distance = Math.sqrt(Math.pow(mouseX-origin[0], 2)+Math.pow(mouseY-origin[1], 2));
+                    if (distance > 10) {
+                        this.link(this.selectedSideEdge.selectedParameter);
+                        this.removeEdge(this.selectedSideEdge);
+                        this.commit();
+                    }
                 }
-            }
 
-            if (this.state.moving) {
-                this.moveCenter((mouseX-this.state.moving[0]), (mouseY-this.state.moving[1]));
-                this.state.moving = this.state.mouse;
+                if (this.state.moving) {
+                    this.moveCenter((mouseX-this.state.moving[0]), (mouseY-this.state.moving[1]));
+                    this.state.moving = this.state.mouse;
+                }
+            } catch (error) {
+                console.log(error);
             }
         },
         onMouseDown(event) {
