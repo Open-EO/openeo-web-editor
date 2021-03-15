@@ -1,14 +1,7 @@
 <template>
-	<DataTable ref="table" :data="data" :columns="columns" id="ServicePanel">
+	<DataTable ref="table" :data="data" :columns="columns" class="ServicePanel">
 		<template slot="toolbar">
 			<button title="Add new service" @click="createServiceFromScript()" v-show="supportsCreate"><i class="fas fa-plus"></i> Create</button>
-		</template>
-		<template #enabled="p">
-			<span class="boolean">
-				<span v-show="p.row.enabled === true"><i class="fas fa-check-circle"></i></span>
-				<span v-show="p.row.enabled === false"><i class="fas fa-times-circle"></i></span>
-				<span v-show="typeof p.row.enabled !== 'boolean'"><i class="fas fa-question-circle"></i></span>
-			</span>
 		</template>
 		<template #actions="p">
 			<button title="Details" @click="serviceInfo(p.row)" v-show="supportsRead"><i class="fas fa-info"></i></button>
@@ -46,7 +39,7 @@ export default {
 				},
 				type: {
 					name: 'Type',
-					format: "UpperCase",
+					format: value => typeof value === 'string' ? value.toUpperCase() : value,
 				},
 				enabled: {
 					name: 'Enabled',
@@ -54,7 +47,7 @@ export default {
 				},
 				created: {
 					name: 'Submitted',
-					format: 'DateTime',
+					format: 'Timestamp',
 					sort: 'desc'
 				},
 				actions: {
@@ -252,21 +245,13 @@ export default {
 </script>
 
 <style>
-#ServicePanel .id {
-	width: 35%;
-}
-#ServicePanel .type {
-	width: 10%;
-	text-align: center;
-}
-#ServicePanel .enabled {
-	width: 10%;
-	text-align: center;
-}
-#ServicePanel .created {
-	width: 20%;
-}
-#ServicePanel .actions {
+.ServicePanel .title {
 	width: 25%;
+}
+.ServicePanel .type {
+	text-align: center;
+}
+.ServicePanel .enabled {
+	text-align: center;
 }
 </style>

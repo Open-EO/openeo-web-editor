@@ -1,5 +1,5 @@
 <template>
-	<DataTable ref="table" :data="data" :columns="columns" id="JobPanel">
+	<DataTable ref="table" :data="data" :columns="columns" class="JobPanel">
 		<template slot="toolbar">
 			<button title="Add new job for batch processing" @click="createJobFromScript()" v-show="supportsCreate"><i class="fas fa-plus"></i> Create</button>
 			<button title="Run process and view results synchronously" @click="executeProcess" v-show="supports('computeResult')"><i class="fas fa-play"></i> Run now</button>
@@ -49,12 +49,12 @@ export default {
 				},
 				created: {
 					name: 'Submitted',
-					format: 'DateTime',
+					format: 'Timestamp',
 					sort: 'desc'
 				},
 				updated: {
 					name: 'Last update',
-					format: 'DateTime'
+					format: 'Timestamp'
 				},
 				actions: {
 					name: 'Actions',
@@ -337,22 +337,10 @@ export default {
 </script>
 
 <style>
-#JobPanel .job_id {
-	width: 20%;
+.JobPanel .title {
+	width: 25%;
 }
-#JobPanel .status {
-	width: 10%;
-}
-#JobPanel .created {
-	width: 18%;
-}
-#JobPanel .updated {
-	width: 18%;
-}
-#JobPanel .consumed_credits {
-	width: 5%;
-}
-#JobPanel td.consumed_credits, #JobPanel td.updated, #JobPanel td.created {
+.JobPanel .consumed_credits, .JobPanel .updated, .JobPanel .created {
 	text-align: right;
 }
 </style>

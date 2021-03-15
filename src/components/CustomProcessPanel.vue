@@ -1,5 +1,5 @@
 <template>
-	<DataTable ref="table" :data="data" :columns="columns" id="CustomProcessPanel">
+	<DataTable ref="table" :data="data" :columns="columns" class="CustomProcessPanel">
 		<template slot="toolbar">
 			<button title="Add new custom process" @click="addProcessFromScript" v-show="supportsCreate"><i class="fas fa-plus"></i> Add</button>
 		</template>
@@ -31,8 +31,7 @@ export default {
 					sort: 'asc'
 				},
 				summary: {
-					name: 'Summary',
-					edit: this.updateSummary
+					name: 'Summary'
 				},
 				actions: {
 					name: 'Actions',
@@ -152,9 +151,6 @@ export default {
 				this.updateMetadata(process, newProcess)
 			}
 		},
-		updateSummary(process, newTitle) {
-			this.updateMetadata(process, {title: newTitle});
-		},
 		updateMetadata(process, data) {
 			this.update({data: process, parameters: this.normalize(process, data)})
 				.catch(error => Utils.exception(this, error, "Update Process Error: " + process.id));
@@ -166,3 +162,9 @@ export default {
 	}
 }
 </script>
+
+<style>
+.CustomProcessPanel .id {
+	width: 25%;
+}
+</style>

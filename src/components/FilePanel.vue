@@ -37,7 +37,7 @@ export default {
 				},
 				modified: {
 					name: 'Last modified',
-					format: 'DateTime'
+					format: 'Timestamp'
 				},
 				actions: {
 					name: 'Actions',
@@ -174,12 +174,6 @@ export default {
 }
 #FilePanel td.path {
 	word-break: break-all;
-}
-#FilePanel .size {
-	width: 10%;
-}
-#FilePanel .modified {
-	width: 20%;
 }
 #FilePanel td.size, #FilePanel td.modified {
 	text-align: right;

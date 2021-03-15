@@ -1,4 +1,4 @@
-import DataTable from './DataTable.vue';
+import DataTable from '@openeo/vue-components/components/DataTable.vue';
 import Utils from '../utils.js';
 
 export default (namespace, singular, plural) => {
