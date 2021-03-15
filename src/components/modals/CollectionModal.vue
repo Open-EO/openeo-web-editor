@@ -39,7 +39,6 @@ export default {
 	},
 	data() {
 		return {
-			version: null,
 			collection: null,
 			showMap: false,
 			items: [],
@@ -49,6 +48,7 @@ export default {
 	},
 	computed: {
 		...Utils.mapState(['connection']),
+		...Utils.mapGetters(['supports']),
 		bbox() {
 			try {
 				return this.collection.extent.spatial.bbox[0];
@@ -91,13 +91,18 @@ export default {
 		},
 		async show(collection) {
 			this.collection = collection;
+			this.items = [];
+			this.itemsPage = 0;
+			this.itemsIterator = null;
 			this.$refs.modal.show(collection.id);
 			this.$nextTick(() => {
 				this.showMap = true;
 			});
-			await this.nextItems();
-			// Always request a page in advance so that we know whether a next page is available.
-			this.nextItems();
+			if (this.supports('listCollectionItems')) {
+				await this.nextItems();
+				// Always request a page in advance so that we know whether a next page is available.
+				this.nextItems();
+			}
 		}
 	}
 }

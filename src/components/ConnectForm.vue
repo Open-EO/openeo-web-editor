@@ -117,7 +117,7 @@ export default {
 	},
 	computed: {
 		...Utils.mapState(['connectionError', 'discoveryErrors', 'authProviders']),
-		...Utils.mapGetters(['isConnected', 'isDiscovered', 'isAuthenticated', 'title', 'supports']),
+		...Utils.mapGetters(['isConnected', 'isDiscovered', 'isAuthenticated', 'title']),
 		...Utils.mapState('editor', ['storedServers']),
 		isLocal() {
 			return Boolean(
