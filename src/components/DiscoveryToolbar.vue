@@ -37,16 +37,27 @@
 					</div>
 				</template>
 			</UdfRuntimes>
+
+			<FileFormats class="category" :formats="fileFormats" :showInput="false" heading="Export File Formats" :searchTerm="searchTerm" :offerDetails="false" :collapsed="true">
+				<template #summary="{ item }">
+					<div class="discovery-entity" :draggable="supportsSaveResult" @dragstart="onDrag($event, 'fileformat', item)">
+						<div class="discovery-info" @click="showFileFormatInfo(item)">
+							<strong :title="item.name">{{ item.name }}</strong>
+							<small v-if="item.title" :title="item.title">{{ item.title }}</small>
+						</div>
+						<button v-if="supportsSaveResult" class="discovery-button" type="button" @click="insertFileFormat(item)" title="Insert"><i class="fas fa-plus"></i></button>
+					</div>
+				</template>
+			</FileFormats>
 		</div>
 	</div>
 </template>
 
 <script>
-import Config from '../../config.js';
 import EventBusMixin from './EventBusMixin.vue';
 import Utils from '../utils.js';
-import { ProcessGraph } from '@openeo/js-client';
 import Collections from '@openeo/vue-components/components/Collections.vue';
+import FileFormats from '@openeo/vue-components/components/FileFormats.vue';
 import Processes from '@openeo/vue-components/components/Processes.vue';
 import SearchBox from '@openeo/vue-components/components/SearchBox.vue';
 import UdfRuntimes from '@openeo/vue-components/components/UdfRuntimes.vue';
@@ -56,6 +67,7 @@ export default {
 	mixins: [EventBusMixin],
 	components: {
 		Collections,
+		FileFormats,
 		Processes,
 		SearchBox,
 		UdfRuntimes
@@ -74,13 +86,16 @@ export default {
 	computed: {
 		...Utils.mapState(['predefinedProcesses', 'collections', 'udfRuntimes']),
 		...Utils.mapState('userProcesses', ['userProcesses']),
-		...Utils.mapGetters(['supports', 'collectionDefaults']),
+		...Utils.mapGetters(['supports', 'collectionDefaults', 'fileFormats']),
 		...Utils.mapGetters('userProcesses', {getProcessById: 'getAllById'}),
 		supportsLoadCollection() {
 			return !!this.getProcessById('load_collection');
 		},
 		supportsRunUdf() {
 			return !!this.getProcessById('run_udf');
+		},
+		supportsSaveResult() {
+			return !!this.getProcessById('save_result');
 		},
 		processes() {
 			return this.predefinedProcesses.concat(this.userProcesses);
@@ -103,6 +118,9 @@ export default {
 		showUdfInfo(runtime) {
 			this.emit('showUdfRuntimeInfo', runtime.id, this.udfRuntimes[runtime.id], runtime.version);
 		},
+		showFileFormatInfo(format) {
+			this.emit('showFileFormatInfo', format.name, this.fileFormats.output[format.name], "output");
+		},
 		getNode(type, data) {
 			switch(type) {
 				case 'collection':
@@ -120,6 +138,11 @@ export default {
 						process_id: 'run_udf',
 						arguments: {runtime: data.id, version: data.version}
 					};
+				case 'fileformat':
+					return {
+						process_id: 'save_result',
+						arguments: {format: data.name, options: {}}
+					};
 			}
 		},
 		insertCollection(collection) {
@@ -132,6 +155,10 @@ export default {
 		},
 		insertUdf(udf) {
 			let node = this.getNode('udf', udf);
+			this.onAddProcess(node);
+		},
+		insertFileFormat(format) {
+			let node = this.getNode('fileformat', format);
 			this.onAddProcess(node);
 		}
 	}
