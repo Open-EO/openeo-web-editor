@@ -8,7 +8,7 @@
 				<li v-for="log in logs" :key="log.id" v-show="levelsShown.includes(log.level)" :class="{[log.level]: true, expanded: log.expanded}">
 					<summary>
 						<span class="toggle" @click="toggle(log)">▸</span>
-						<span class="log-message">{{ log.message }}</span>
+						<span class="log-message" @click="!log.expanded && toggle(log)">{{ log.message }}</span>
 					</summary>
 					<ul class="details" v-if="log.expanded">
 						<li>ID: {{ log.id }}</li>
@@ -189,11 +189,13 @@ summary .log-message {
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
+	cursor: pointer;
 }
 .expanded summary .log-message {
 	white-space: normal;
 	overflow: unset;
 	text-overflow: unset;
+	cursor: inherit;
 }
 .details {
 	margin: 0.5em 0 1em 1.6em;
@@ -214,6 +216,7 @@ summary .log-message {
 	width: 0.6em;
 	height: 1em;
 	margin: 0 0.5em;
+	cursor: pointer;
 }
 .expanded .toggle {
 	top: 1em;
