@@ -30,21 +30,23 @@
 				</form>
 				<div v-else-if="this.showLoginForm" class="login">
 					<h3>Log in to {{ title }}</h3>
-					<Tabs id="credentials" ref="providers" :pills="true">
+					<Tabs id="credentials" ref="providers" :pills="true" :pillsMultiline="true" @selected="providerSelected">
 						<template #dynamic="{ tab }">
 							<form @submit.prevent="initDiscovery(tab.data)">
 								<div class="row help" v-if="tab.data && tab.data.description">
 									<i class="fas fa-info-circle"></i>
 									<span>{{ tab.data.description }}</span>
 								</div>
-								<div class="row">
-									<label for="password">Client ID:</label>
-									<textarea class="input" v-model.trim="clientId" required="required" />
-								</div>
-								<div class="row help">
-									<i class="fas fa-exclamation-circle"></i>
-									<span>You need to specify the <em>Client ID</em> provided to you by the provider. You need to allow the <a :href="oidcRedirectUrl" target="_blank" :title="oidcRedirectUrl">URL of this service</a> as redirect URL with the authentication service.</span>
-								</div>
+								<template v-if="!defaultClientId">
+									<div class="row">
+										<label for="password">Client ID:</label>
+										<textarea class="input" v-model.trim="userClientId" required="required" />
+									</div>
+									<div class="row help">
+										<i class="fas fa-exclamation-circle"></i>
+										<span>You need to specify the <em>Client ID</em> provided to you by the provider. You need to allow the <a :href="oidcOptions.redirect_uri" target="_blank" :title="oidcOptions.redirect_uri">URL of this service</a> as redirect URL with the authentication service.</span>
+									</div>
+								</template>
 								<div class="row bottom">
 									<TermsOfServiceConsent />
 									<button type="submit" class="connectBtn" :class="{loading: loading}"><i class="fas fa-spinner fa-spin fa-lg"></i><i class="fab fa-openid"></i> Log in with {{ tab.name }}</button>
@@ -136,7 +138,10 @@ export default {
 			return null;
 		},
 		oidcProviders() {
-			return this.authProviders.filter(obj => obj.getType() === 'oidc');
+			return this.authProviders.filter(obj => obj.getType() === 'oidc').map(obj => {
+				obj.setGrant(this.oidcGrant);
+				return obj;
+			});
 		},
 		basicProvider() {
 			var basic = this.authProviders.filter(obj => obj.getType() === 'basic');
@@ -150,6 +155,20 @@ export default {
 		},
 		showLoginForm() {
 			return !this.showConnectForm && !this.isDiscovered && !this.skipLogin;
+		},
+		defaultClientId() {
+			if (this.provider && this.provider.getType() === 'oidc') {
+				return this.provider.getDefaultClientId(this.oidcOptions.grant, this.oidcOptions.redirect_uri);
+			}
+			return null;
+		},
+		clientId() {
+			if (this.userClientId) {
+				return this.userClientId;
+			}
+			else {
+				return this.defaultClientId;
+			}
 		}
 	},
 	watch: {
@@ -171,17 +190,17 @@ export default {
 			autoConnect: false,
 			username: '',
 			password: '',
-			clientId: '',
+			userClientId: '',
+			provider: null,
 			loading: false,
 			version: Package.version,
 			message: Config.loginMessage,
+			oidcGrant: 'authorization_code+pkce',
 			oidcOptions: {
 				automaticSilentRenew: true,
-				// Use Authorization Code Flow instead of Implicit Flow, https://github.com/Open-EO/openeo-js-client/issues/39
-				response_type: 'code'
-			},
-			// Remove fragment and query from redirect_url, they' conflict with the fragment appended by the Implicit Flow and the query appended by the Authorization Code Flow
-			oidcRedirectUrl: window.location.toString().split('#')[0].split('?')[0]
+				// Remove fragment and query from redirect_url, they' conflict with the fragment appended by the Implicit Flow and the query appended by the Authorization Code Flow
+				redirect_uri: window.location.toString().split('#')[0].split('?')[0]
+			}
 		};
 	},
 	async created() {
@@ -260,6 +279,10 @@ export default {
 			this.$nextTick(() => this.$refs.providers.resetActiveTab(true));
 		},
 
+		providerSelected(tab) {
+			this.provider = tab.data;
+		},
+
 		async submitForm() {
 			if (!this.isConnected) {
 				this.initConnection(this.skipLogin, false);
@@ -308,7 +331,7 @@ export default {
 					await provider.login(this.username, this.password);
 				}
 				else if (authType === 'oidc') {
-					await provider.login(this.clientId, this.oidcRedirectUrl, this.oidcOptions);
+					await provider.login(this.clientId, this.oidcOptions.redirect_uri, this.oidcOptions);
 				}
 				else { // noauth/discovery
 					window.history.pushState({reset: true, serverUrl: this.serverUrl, autoConnect: true, skipLogin: true}, "", ".?server=" + this.serverUrl + "&discover=1");
