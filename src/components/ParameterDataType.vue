@@ -167,7 +167,7 @@ export default {
 			}
 			return ""; // Empty seems to be the default for the input element
 		},
-		numbericStep() {
+		numericStep() {
 			if (typeof this.schema.multipleOf === 'number') {
 				return this.schema.multipleOf;
 			}
