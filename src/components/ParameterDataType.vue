@@ -180,7 +180,7 @@ export default {
 		},
 		newValue() {
 			if (this.type === 'number') {
-				return Number.isNaN(this.state) ? null : this.state;
+				return Number.isNaN(this.state) ? null : Number.parseFloat(this.state);
 			}
 			else if (this.type === 'integer') {
 				var num = Number.parseInt(this.state);
@@ -219,7 +219,7 @@ export default {
 				this.state = this.value;
 			}
 		},
-		async newValue(newVal, oldVal) {
+		async newValue(newVal) {
 			this.$emit('input', newVal);
 		}
 	},
