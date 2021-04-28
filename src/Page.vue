@@ -17,7 +17,6 @@ import ConnectForm from './components/ConnectForm.vue';
 import Modal from './components/modals/Modal.vue';
 import WebEditorModal from './components/modals/WebEditorModal.vue';
 import axios from 'axios';
-import Vue from 'vue';
 
 // Making axios available globally for the OpenEO JS client
 window.axios = axios;

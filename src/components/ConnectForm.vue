@@ -180,8 +180,11 @@ export default {
 				// Use Authorization Code Flow instead of Implicit Flow, https://github.com/Open-EO/openeo-js-client/issues/39
 				response_type: 'code'
 			},
-			// Remove fragment and query from redirect_url, they' conflict with the fragment appended by the Implicit Flow and the query appended by the Authorization Code Flow
-			oidcRedirectUrl: window.location.toString().split('#')[0].split('?')[0]
+			// Remove fragment, query and trailing slash from redirect_url.
+			// The fragment conflicts with the fragment appended by the Implicit Flow and
+			// the query conflicts with the query appended by the Authorization Code Flow.
+			// The trailing slash is removed for consistency.
+			oidcRedirectUrl: window.location.toString().split('#')[0].split('?')[0].replace(/\/$/, '')
 		};
 	},
 	async created() {
