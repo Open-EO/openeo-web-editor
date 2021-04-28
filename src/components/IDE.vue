@@ -116,6 +116,14 @@ export default {
 			);
 		}
 	},
+	async created() {
+		try {
+			await this.loadInitialProcess();
+		} catch (error) {
+			Utils.exception(this, error, "Loading process failed");
+		}
+
+	},
 	mounted() {
 		this.listen('showCollection', this.showCollectionInfo);
 		this.listen('showProcess', this.showProcessInfoById);
@@ -147,6 +155,7 @@ export default {
 	methods: {
 		...Utils.mapActions(['describeAccount', 'describeCollection']),
 		...Utils.mapActions('userProcesses', {readUserProcess: 'read'}),
+		...Utils.mapActions('editor', ['loadInitialProcess']),
 		...Utils.mapMutations('editor', ['setContext', 'setProcess']),
 
 		saveProcess() {

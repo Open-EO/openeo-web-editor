@@ -18,6 +18,16 @@ You can also build the files yourself and deploy them to any web host:
     * Development: Run the development server by executing `npm run serve`.
     * Deployment: Build the project by executing `npm run build`. Afterwards upload the content of the `dist` folder to your server.
 
+### Query Parameters
+
+You can use some query parameters to set initial state to the Editor.
+
+* `server`: Set a openEO back-end to connect to by default, e.g. `https://earthengine.openeo.org`
+* `discover`: If you want to skip authentication and just show the capabiltiies of the back-end, simply set to `1`
+* `process`: Loads a process from a URL and shows it in the Model Builder.
+
+Example: <https://editor.openeo.org?server=https://earthengine.openeo.org&discover=1&process=https://raw.githubusercontent.com/Open-EO/openeo-earthengine-driver/master/tests/data/sample-processgraph.json>
+
 ## Built With
 * [Vue.js](https://vuejs.org/) and some plugins - UI framework
 * [OpenLayers](http://openlayers.org/) and multiple extensions - Map visualization
