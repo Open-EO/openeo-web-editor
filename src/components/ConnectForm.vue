@@ -178,7 +178,8 @@ export default {
 			oidcOptions: {
 				automaticSilentRenew: true,
 				// Use Authorization Code Flow instead of Implicit Flow, https://github.com/Open-EO/openeo-js-client/issues/39
-				response_type: 'code'
+				response_type: 'code',
+				popupWindowFeatures: 'location=no,toolbar=no,width=750,height=550,left=50,top=50'
 			},
 			// Remove fragment, query and trailing slash from redirect_url.
 			// The fragment conflicts with the fragment appended by the Implicit Flow and
