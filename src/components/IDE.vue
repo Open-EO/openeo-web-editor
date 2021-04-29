@@ -38,6 +38,7 @@
 		<ParameterModal ref="parameterModal" />
 		<SchemaModal ref="schemaModal" />
 		<UdfRuntimeModal ref="udfRuntimeModal" />
+		<FileFormatModal ref="fileFormatModal" />
 		<JobEstimateModal ref="jobEstimateModal" />
 	</div>
 </template>
@@ -71,6 +72,7 @@ export default {
 		ServiceInfoModal: () => import('./modals/ServiceInfoModal.vue'),
 		ParameterModal: () => import('./modals/ParameterModal.vue'),
 		SchemaModal: () => import('./modals/SchemaModal.vue'),
+		FileFormatModal: () => import('./modals/FileFormatModal.vue'),
 		UdfRuntimeModal: () => import('./modals/UdfRuntimeModal.vue'),
 	},
 	data() {
@@ -114,6 +116,14 @@ export default {
 			);
 		}
 	},
+	async created() {
+		try {
+			await this.loadInitialProcess();
+		} catch (error) {
+			Utils.exception(this, error, "Loading process failed");
+		}
+
+	},
 	mounted() {
 		this.listen('showCollection', this.showCollectionInfo);
 		this.listen('showProcess', this.showProcessInfoById);
@@ -122,6 +132,7 @@ export default {
 		this.listen('showProcessInfo', this.showProcessInfo);
 		this.listen('showServiceInfo', this.showServiceInfo);
 		this.listen('showUdfRuntimeInfo', this.showUdfRuntimeInfo);
+		this.listen('showFileFormatInfo', this.showFileFormatInfo);
 		this.listen('showSchema', this.showSchemaInfo);
 		this.listen('showDataForm', this.showDataForm);
 		this.listen('editProcess', this.editProcess);
@@ -144,6 +155,7 @@ export default {
 	methods: {
 		...Utils.mapActions(['describeAccount', 'describeCollection']),
 		...Utils.mapActions('userProcesses', {readUserProcess: 'read'}),
+		...Utils.mapActions('editor', ['loadInitialProcess']),
 		...Utils.mapMutations('editor', ['setContext', 'setProcess']),
 
 		saveProcess() {
@@ -227,6 +239,10 @@ export default {
 
 		showUdfRuntimeInfo(id, data, version = null) {
 			this.$refs.udfRuntimeModal.show(id, data, version);
+		},
+
+		showFileFormatInfo(id, format, type) {
+			this.$refs.fileFormatModal.show(id, format, type);
 		},
 
 		showSchemaInfo(name, schema, msg = null) {

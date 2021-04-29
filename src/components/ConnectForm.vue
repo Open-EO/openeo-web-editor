@@ -44,7 +44,7 @@
 									</div>
 									<div class="row help">
 										<i class="fas fa-exclamation-circle"></i>
-										<span>You need to specify the <em>Client ID</em> provided to you by the provider. You need to allow the <a :href="oidcOptions.redirect_uri" target="_blank" :title="oidcOptions.redirect_uri">URL of this service</a> as redirect URL with the authentication service.</span>
+										<span>You need to specify the <em>Client ID</em> provided to you by the provider. You need to allow the <a :href="oidcRedirectUrl" target="_blank" :title="oidcRedirectUrl">URL of this service</a> as redirect URL with the authentication service.</span>
 									</div>
 								</template>
 								<div class="row bottom">
@@ -138,29 +138,16 @@ export default {
 			return null;
 		},
 		oidcProviders() {
-			return this.authProviders.filter(obj => obj.getType() === 'oidc').map(obj => {
-				obj.setGrant(this.oidcGrant);
-				return obj;
-			});
+			return this.authProviders.filter(obj => obj.getType() === 'oidc');
 		},
 		basicProvider() {
-			var basic = this.authProviders.filter(obj => obj.getType() === 'basic');
-			if (basic.length > 0) {
-				return basic[0];
-			}
-			return null;
+			return this.authProviders.find(obj => obj.getType() === 'basic') || null;
 		},
 		showConnectForm() {
 			return !this.isConnected || this.skipLogin;
 		},
 		showLoginForm() {
 			return !this.showConnectForm && !this.isDiscovered && !this.skipLogin;
-		},
-		defaultClientId() {
-			if (this.provider && this.provider.getType() === 'oidc') {
-				return this.provider.getDefaultClientId(this.oidcOptions.grant, this.oidcOptions.redirect_uri);
-			}
-			return null;
 		},
 		clientId() {
 			if (this.userClientId) {
@@ -190,17 +177,21 @@ export default {
 			autoConnect: false,
 			username: '',
 			password: '',
-			userClientId: '',
 			provider: null,
 			loading: false,
 			version: Package.version,
 			message: Config.loginMessage,
-			oidcGrant: 'authorization_code+pkce',
+			userClientId: '',
+			defaultClientId: '',
 			oidcOptions: {
 				automaticSilentRenew: true,
-				// Remove fragment and query from redirect_url, they' conflict with the fragment appended by the Implicit Flow and the query appended by the Authorization Code Flow
-				redirect_uri: window.location.toString().split('#')[0].split('?')[0]
-			}
+				popupWindowFeatures: 'location=no,toolbar=no,width=750,height=550,left=50,top=50'
+			},
+			// Remove fragment, query and trailing slash from redirect_url.
+			// The fragment conflicts with the fragment appended by the Implicit Flow and
+			// the query conflicts with the query appended by the Authorization Code Flow.
+			// The trailing slash is removed for consistency.
+			oidcRedirectUrl: window.location.toString().split('#')[0].split('?')[0].replace(/\/$/, '')
 		};
 	},
 	async created() {
@@ -215,6 +206,11 @@ export default {
 
 		// Do this after the other initial work as the await delays execution and makes mounted run before created sometimes.
 		OidcProvider.setUiMethod('popup');
+		// Make authorization_code the default grant. The JS client 1.0 still uses implicit as default.
+		OidcProvider.setSupportedGrants([
+			'authorization_code+pkce',
+			'implicit'
+		]);
 		try {
 			await OidcProvider.signinCallback(null, this.oidcOptions);
 		} catch (error) {
@@ -281,6 +277,12 @@ export default {
 
 		providerSelected(tab) {
 			this.provider = tab.data;
+			if (this.provider.getType() === 'oidc') {
+				this.defaultClientId = this.provider.detectDefaultClient(this.oidcRedirectUrl);
+			}
+			else {
+				this.defaultClientId = null;
+			}
 		},
 
 		async submitForm() {
@@ -331,7 +333,7 @@ export default {
 					await provider.login(this.username, this.password);
 				}
 				else if (authType === 'oidc') {
-					await provider.login(this.clientId, this.oidcOptions.redirect_uri, this.oidcOptions);
+					await provider.login(this.clientId, this.oidcRedirectUrl, this.oidcOptions);
 				}
 				else { // noauth/discovery
 					window.history.pushState({reset: true, serverUrl: this.serverUrl, autoConnect: true, skipLogin: true}, "", ".?server=" + this.serverUrl + "&discover=1");

@@ -4,7 +4,6 @@
 
 <script>
 import MapMixin from '../MapMixin.vue';
-import Utils from '../../utils.js';
 
 import AreaSelect from '../openlayers/areaselect';
 

@@ -21,8 +21,7 @@ import JsonSchema from './jsonSchema.js';
 import ParameterDataType from './ParameterDataType.vue';
 import Description from '@openeo/vue-components/components/Description.vue';
 import EventBusMixin from './EventBusMixin.vue';
-import { ProcessGraphNode } from '@openeo/js-processgraphs';
-import { ProcessParameter, ProcessDataType, Process } from './blocks/processSchema.js';
+import { ProcessParameter, ProcessDataType } from './blocks/processSchema.js';
 
 const API_TYPES = Utils.resolveJsonRefs(require('@openeo/js-processgraphs/assets/subtype-schemas.json')).definitions;
 const TYPE_GROUPS = [

@@ -1,21 +1,23 @@
 import Utils from '../utils';
 import { Job, Service, UserProcess } from '@openeo/js-client';
+import { ProcessGraph } from '@openeo/js-processgraphs';
 
 const serverStorage = "serverUrls";
 
-const getDefaultState = () => {
+const getDefaultState = importFromQuery => {
 	return {
 		storedServers: JSON.parse(localStorage.getItem(serverStorage) || "[]"),
 		context: null,
 		process: null,
 		hightestModalZIndex: 1000,
-		epsgCodes: []
+		epsgCodes: [],
+		initialProcessUrl: importFromQuery ? Utils.param('process') : null
 	};
 };
 
 export default {
 	namespaced: true,
-	state: getDefaultState(),
+	state: getDefaultState(true),
 	actions: {
 		async loadEpsgCodes(cx) {
 			if (cx.state.epsgCodes.length === 0) {
@@ -23,6 +25,17 @@ export default {
 				cx.commit('epsgCodes', res.default);
 			}
 		},
+		async loadInitialProcess(cx) {
+			if(!Utils.isUrl(cx.state.initialProcessUrl)) {
+				return;
+			}
+			let response = await axios(cx.state.initialProcessUrl);
+			if (Utils.isObject(response.data)) {
+				var pg = new ProcessGraph(response.data);
+				pg.parse();
+				cx.commit('setProcess', response.data);
+			}
+		}
 	},
 	mutations: {
 		openModal(state) {
