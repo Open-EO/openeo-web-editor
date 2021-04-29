@@ -40,8 +40,8 @@
     "build": "npm run build:epsg && npx vue-cli-service build --report"
   },
   "dependencies": {
-    "@musement/iso-duration": "0.0.10",
-    "@openeo/js-client": "Open-EO/openeo-js-client#oidc-default-client",
+    "@musement/iso-duration": "^1.0.0",
+    "@openeo/js-client": "^1.3.1",
     "@openeo/js-commons": "^1.2.0",
     "@openeo/js-processgraphs": "^1.0.0",
     "@openeo/vue-components": "Open-EO/openeo-vue-components#dev",
