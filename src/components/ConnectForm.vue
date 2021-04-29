@@ -30,21 +30,23 @@
 				</form>
 				<div v-else-if="this.showLoginForm" class="login">
 					<h3>Log in to {{ title }}</h3>
-					<Tabs id="credentials" ref="providers" :pills="true">
+					<Tabs id="credentials" ref="providers" :pills="true" :pillsMultiline="true" @selected="providerSelected">
 						<template #dynamic="{ tab }">
 							<form @submit.prevent="initDiscovery(tab.data)">
 								<div class="row help" v-if="tab.data && tab.data.description">
 									<i class="fas fa-info-circle"></i>
 									<span>{{ tab.data.description }}</span>
 								</div>
-								<div class="row">
-									<label for="password">Client ID:</label>
-									<textarea class="input" v-model.trim="clientId" required="required" />
-								</div>
-								<div class="row help">
-									<i class="fas fa-exclamation-circle"></i>
-									<span>You need to specify the <em>Client ID</em> provided to you by the provider. You need to allow the <a :href="oidcRedirectUrl" target="_blank" :title="oidcRedirectUrl">URL of this service</a> as redirect URL with the authentication service.</span>
-								</div>
+								<template v-if="!defaultClientId">
+									<div class="row">
+										<label for="password">Client ID:</label>
+										<textarea class="input" v-model.trim="userClientId" required="required" />
+									</div>
+									<div class="row help">
+										<i class="fas fa-exclamation-circle"></i>
+										<span>You need to specify the <em>Client ID</em> provided to you by the provider. You need to allow the <a :href="oidcRedirectUrl" target="_blank" :title="oidcRedirectUrl">URL of this service</a> as redirect URL with the authentication service.</span>
+									</div>
+								</template>
 								<div class="row bottom">
 									<TermsOfServiceConsent />
 									<button type="submit" class="connectBtn" :class="{loading: loading}"><i class="fas fa-spinner fa-spin fa-lg"></i><i class="fab fa-openid"></i> Log in with {{ tab.name }}</button>
@@ -139,17 +141,21 @@ export default {
 			return this.authProviders.filter(obj => obj.getType() === 'oidc');
 		},
 		basicProvider() {
-			var basic = this.authProviders.filter(obj => obj.getType() === 'basic');
-			if (basic.length > 0) {
-				return basic[0];
-			}
-			return null;
+			return this.authProviders.find(obj => obj.getType() === 'basic') || null;
 		},
 		showConnectForm() {
 			return !this.isConnected || this.skipLogin;
 		},
 		showLoginForm() {
 			return !this.showConnectForm && !this.isDiscovered && !this.skipLogin;
+		},
+		clientId() {
+			if (this.userClientId) {
+				return this.userClientId;
+			}
+			else {
+				return this.defaultClientId;
+			}
 		}
 	},
 	watch: {
@@ -171,14 +177,14 @@ export default {
 			autoConnect: false,
 			username: '',
 			password: '',
-			clientId: '',
+			provider: null,
 			loading: false,
 			version: Package.version,
 			message: Config.loginMessage,
+			userClientId: '',
+			defaultClientId: '',
 			oidcOptions: {
 				automaticSilentRenew: true,
-				// Use Authorization Code Flow instead of Implicit Flow, https://github.com/Open-EO/openeo-js-client/issues/39
-				response_type: 'code',
 				popupWindowFeatures: 'location=no,toolbar=no,width=750,height=550,left=50,top=50'
 			},
 			// Remove fragment, query and trailing slash from redirect_url.
@@ -200,6 +206,11 @@ export default {
 
 		// Do this after the other initial work as the await delays execution and makes mounted run before created sometimes.
 		OidcProvider.setUiMethod('popup');
+		// Make authorization_code the default grant. The JS client 1.0 still uses implicit as default.
+		OidcProvider.setSupportedGrants([
+			'authorization_code+pkce',
+			'implicit'
+		]);
 		try {
 			await OidcProvider.signinCallback(null, this.oidcOptions);
 		} catch (error) {
@@ -262,6 +273,16 @@ export default {
 			}
 			this.$refs.providers.addTab('No credentials', null, null, "noauth", false, false);
 			this.$nextTick(() => this.$refs.providers.resetActiveTab(true));
+		},
+
+		providerSelected(tab) {
+			this.provider = tab.data;
+			if (this.provider.getType() === 'oidc') {
+				this.defaultClientId = this.provider.detectDefaultClient(this.oidcRedirectUrl);
+			}
+			else {
+				this.defaultClientId = null;
+			}
 		},
 
 		async submitForm() {
