@@ -277,7 +277,7 @@ export default {
 
 		providerSelected(tab) {
 			this.provider = tab.data;
-			if (this.provider.getType() === 'oidc') {
+			if (this.provider && this.provider.getType() === 'oidc') {
 				this.defaultClientId = this.provider.detectDefaultClient(this.oidcRedirectUrl);
 			}
 			else {
