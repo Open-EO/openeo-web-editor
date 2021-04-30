@@ -1,6 +1,6 @@
 <template>
 	<div id="wrapper">
-		<div id="ide" @mouseup="stopMovingSeparator($event)" @mousemove="moveSeparator($event)">
+		<div id="ide" :class="{discovery: !showEditor}" @mouseup="stopMovingSeparator($event)" @mousemove="moveSeparator($event)">
 			<header class="navbar">
 				<div class="logo">
 					<img src="../assets/logo.png" alt="openEO" />
@@ -16,15 +16,15 @@
 					<DiscoveryToolbar class="toolbar" :onAddProcess="insertProcess" />
 				</div>
 				<hr class="separator" ref="separator0" @dblclick="centerSeparator($event, 0)" @mousedown="startMovingSeparator($event, 0)" />
-				<div id="workspace" ref="workspace">
+				<div v-if="showEditor" id="workspace" ref="workspace">
 					<Editor ref="editor" class="mainEditor" id="main" :value="process" @input="updateEditor" :title="contextTitle">
 						<template #file-toolbar>
 							<button type="button" v-show="saveSupported" @click="saveProcess" :title="'Save to ' + contextTitle"><i class="fas fa-save"></i></button>
 						</template>
 					</Editor>
-					<UserWorkspace class="userContent" v-if="isAuthenticated" />
+					<UserWorkspace v-if="isAuthenticated" class="userContent" />
 				</div>
-				<hr class="separator" ref="separator1" @dblclick="centerSeparator($event, 1)" @mousedown="startMovingSeparator($event, 1)" />
+				<hr v-if="showEditor" class="separator" ref="separator1" @dblclick="centerSeparator($event, 1)" @mousedown="startMovingSeparator($event, 1)" />
 				<div id="viewer" ref="viewer">
 					<Viewer />
 				</div>
@@ -79,20 +79,6 @@ export default {
 		return {
 			moving: false,
 			movingOffset: 0,
-			separators: [
-				{
-					left: 'discovery',
-					right: 'workspace',
-					anchor: 'left',
-					width: '20%'
-				},
-				{
-					left: 'workspace',
-					right: 'viewer',
-					anchor: 'right',
-					width: '30%'
-				}
-			],
 			version: Package.version,
 			resizeListener: null,
 			userInfoUpdater: null
@@ -105,6 +91,37 @@ export default {
 		...Utils.mapGetters('jobs', {supportsJobUpdate: 'supportsUpdate'}),
 		...Utils.mapGetters('services', {supportsServiceUpdate: 'supportsUpdate'}),
 		...Utils.mapGetters('userProcesses', {getProcessById: 'getAllById', supportsUserProcessUpdate: 'supportsUpdate'}),
+		showEditor() {
+			return (this.isAuthenticated || Utils.isObject(this.process));
+		},
+		separators() {
+			if (this.showEditor) {
+				return [
+					{
+						left: 'discovery',
+						right: 'workspace',
+						anchor: 'left',
+						width: '20%'
+					},
+					{
+						left: 'workspace',
+						right: 'viewer',
+						anchor: 'right',
+						width: '30%'
+					}
+				]
+			}
+			else {
+				return [
+					{
+						left: 'discovery',
+						right: 'viewer',
+						anchor: 'left',
+						width: '25%'
+					}
+				]
+			}
+		},
 		contextTitle() {
 			return this.context !== null ? Utils.getResourceTitle(this.context, true) : ''
 		},
@@ -115,14 +132,6 @@ export default {
 				(this.context instanceof UserProcess && this.supportsUserProcessUpdate)
 			);
 		}
-	},
-	async created() {
-		try {
-			await this.loadInitialProcess();
-		} catch (error) {
-			Utils.exception(this, error, "Loading process failed");
-		}
-
 	},
 	mounted() {
 		this.listen('showCollection', this.showCollectionInfo);
@@ -155,7 +164,6 @@ export default {
 	methods: {
 		...Utils.mapActions(['describeAccount', 'describeCollection']),
 		...Utils.mapActions('userProcesses', {readUserProcess: 'read'}),
-		...Utils.mapActions('editor', ['loadInitialProcess']),
 		...Utils.mapMutations('editor', ['setContext', 'setProcess']),
 
 		saveProcess() {
@@ -339,7 +347,10 @@ export default {
 }
 #viewer {
 	min-width: 200px;
-	width: 25%;
+	width: 20%;
+}
+.discovery #viewer {
+	flex-grow: 1;
 }
 .mainEditor, .userContent {
 	height: calc(50% - 1em);

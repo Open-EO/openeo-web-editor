@@ -229,6 +229,7 @@ export default {
 	},
 	methods: {
 		...Utils.mapActions(['connect', 'discover', 'logout']),
+		...Utils.mapActions('editor', ['loadInitialProcess']),
 		...Utils.mapMutations(['reset']),
 		...Utils.mapMutations('editor', ['addServer', 'removeServer']),
 
@@ -361,6 +362,12 @@ export default {
 			await this.discover();
 			for(var error of this.discoveryErrors) {
 				Utils.exception(this, error);
+			}
+
+			try {
+				await this.loadInitialProcess();
+			} catch (error) {
+				Utils.exception(this, error, "Loading process failed");
 			}
 
 			this.loading = false;
