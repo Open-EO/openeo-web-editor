@@ -48,6 +48,8 @@ export default {
 		this.listen('viewWebService', this.showWebService);
 		this.listen('viewLogs', this.showLogs);
 		this.listen('removeWebService', this.removeWebService);
+
+		this.listen('showCollectionPreview', this.showCollectionPreview);
 	},
 	data() {
 		return {
@@ -58,6 +60,9 @@ export default {
 		...Utils.mapState(['connection'])
 	},
 	methods: {
+		showCollectionPreview(collection) {
+			this.$refs.mapViewer.addCollection(collection);
+		},
 		showWebService(service) {
 			this.showMapViewer();
 			this.$refs.mapViewer.showWebService(service);

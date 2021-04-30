@@ -14,9 +14,14 @@ import TileJSON from 'ol/source/TileJSON';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import XYZ from 'ol/source/XYZ';
+import WMTSCapabilities from 'ol/format/WMTSCapabilities';
+import WMTS, {optionsFromCapabilities} from 'ol/source/WMTS';
 
 import 'ol-ext/control/Swipe.css';
 import Swipe from 'ol-ext/control/Swipe';
+
+import 'ol-ext/control/Timeline.css';
+import Timeline from 'ol-ext/control/Timeline';
 
 export default {
 	name: 'MapViewer',
@@ -34,6 +39,7 @@ export default {
 	data() {
 		return {
 			userLayers: {},
+			WMTSCapabilities: {},
 			swipe: {
 				control: null,
 				left: null,
@@ -90,6 +96,8 @@ export default {
 				case 'xyz':
 					this.updateXYZLayer(service);
 					break;
+				case 'wmts':
+					this.updateWMTSLayer(service);
 				default:
 					Utils.error(this, 'Sorry, the service type is not supported by the map.');
 			}
@@ -148,22 +156,152 @@ export default {
 			// ToDo: Implement full/native GTiff support
 		},
 
-		updateXYZLayer(service) {
+		addCollection(collection) {
+			this.addWMTSLayerFromCollection(collection);
+			// ToDo: Add XYZ support
+		},
+
+		addWMTSLayerFromCollection(collection) {
+			let wmtsLink = collection.links.find(link => link.rel === 'wmts');
+			if (!wmtsLink) {
+				Utils.error(this, 'No visualizations found for collection');
+			}
+			let layers = [];
+			if (wmtsLink['wmts:layer']) {
+				layers.push(wmtsLink['wmts:layer']);
+			}
+			this.updateWMTSLayer({
+				id: collection.id,
+				url: wmtsLink.href,
+				title: collection.title || collection.id
+			}, layers);
+		},
+
+		getWMTSTimes(capabilities, layerId) {
+			const layers = capabilities['Contents']['Layer'];
+			let layer = layers.find(l => l.Identifier == layerId);
+			if (!layer || !layer.Dimension) {
+				return [];
+			}
+			let timeDimension = layer.Dimension.find(d => d.Identifier === 'TIME');
+			if (!timeDimension) {
+				return [];
+			}
+			return timeDimension.Value.sort();
+		},
+
+		async updateWMTSLayer(service, layers = [], time = undefined, prefix = "Service") {
+			if (typeof this.userLayers[service.id] === 'undefined') {
+				if (!this.WMTSCapabilities[service.url]) {
+					let url = new URL(service.url);
+					url.searchParams.set('service', 'wmts');
+					url.searchParams.set('request', 'GetCapabilities');
+					let response = await axios.get(url.toString(), { responseType: 'text' });
+					var parser = new WMTSCapabilities();
+					this.WMTSCapabilities[service.url] = parser.read(response.data);
+				}
+
+				let capabilities = this.WMTSCapabilities[service.url];
+				let minDate = null;
+				let maxDate = null;
+				let defaultDate = null;
+				let source = null;
+				for(let layer of layers) {
+					let options = optionsFromCapabilities(capabilities, {
+						layer,
+						matrixSet: 'EPSG:3857'
+					});
+					if (!defaultDate) {
+						defaultDate = new Date(options.dimensions.TIME);
+					}
+
+					let times = this.getWMTSTimes(capabilities, layer);
+					if (times.length) {
+						let min = new Date(times[0]);
+						let max = new Date(times[times.length -1]);
+						if (!minDate || min < minDate) {
+							minDate = min;
+						}
+						if (!maxDate || max > maxDate) {
+							maxDate = max;
+						}
+					}
+					if (time) {
+						if (!Utils.isObject(options.dimensions)) {
+							options.dimensions = {};
+						}
+						options.dimensions.time = time;
+					}
+					source = new WMTS(options);
+					var mapLayer = new TileLayer({
+						source: this.trackTileProgress(source),
+						title: Utils.getResourceTitle(service, prefix)
+					});
+					this.addLayerToMap(service.id + layer, mapLayer);
+				}
+
+				if (minDate && maxDate) {
+					var tline = new Timeline({
+						className: 'ol-pointer',
+						graduation: 'day',
+						minDate: minDate,
+						maxDate: maxDate
+					});
+					let run;
+					tline.on('scroll', function(e) {
+						if (!e.date || e.date > maxDate || e.date < minDate) {
+							return;
+						}
+						if (run) {
+							window.clearTimeout(run);
+						}
+						run = window.setTimeout(() => {
+							try {
+								let date = e.date.toISOString().substr(0, 10);
+								source.updateDimensions({
+									TIME: date
+								});
+								let btns = document.getElementsByClassName('timeline-date-label');
+								btns[0].innerText = date;
+								btns[0].disabled = true;
+							} catch (error) {
+								console.log(error.message);
+							}
+							run = null;
+						}, 500);
+					});
+					this.map.addControl(tline);
+					tline.addButton ({
+						className: 'timeline-date-label',
+						title: 'Date shown',
+						html: 'No date'
+					});
+					tline.setDate(defaultDate); 
+				}
+			}
+			else {
+				for(let layer of layers) {
+					this.userLayers[service.id + layer].getSource().updateDimensions({
+						TIME: time
+					});
+				}
+			}
+		},
+
+		updateXYZLayer(service, prefix = "Service") {
 			var id = service.id;
-			var url = service.url;
-			var title = Utils.getResourceTitle(service, "Service") + " (XYZ)";
 			if (typeof this.userLayers[id] === 'undefined') {
 				var layer = new TileLayer({
 					source: this.trackTileProgress(new XYZ({
-						url: url
+						url: service.url
 					})),
-					title: title
+					title: Utils.getResourceTitle(service, prefix)
 				});
 				this.addLayerToMap(id, layer);
 			}
 			else {
 				// Replace/add a query parameter with a unique ID so that OpenLayers doesn't load tiles from cache
-				var newUrl = Utils.replaceParam(url, '__editorSessionId', new Date().getTime());
+				var newUrl = Utils.replaceParam(service.url, '__editorSessionId', new Date().getTime());
 				// Make sure { and } are not url-encoded
 				newUrl = newUrl.replace(/%7B/g, '{').replace(/%7D/g, '}');
 				// Set new URL to reload tiles
