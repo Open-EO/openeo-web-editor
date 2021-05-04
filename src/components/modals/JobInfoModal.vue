@@ -1,13 +1,6 @@
 <template>
 	<Modal ref="modal" minWidth="85%">
 		<template #main>
-			<section class="vue-component basedata">
-				<div class="tabular">
-					<label>ID:</label>
-					<code class="value">{{ job.id }}</code>
-				</div>
-			</section>
-
 			<Job :job="job" :currency="currency">
 				<template #process-graph>
 					<Editor :value="job.process" :editable="false" class="infoViewer" id="jobPgViewer" />
