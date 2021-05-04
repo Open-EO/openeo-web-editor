@@ -18,8 +18,8 @@
 			<section class="vue-component billing" v-if="service.plan || service.costs || service.budget">
 				<h3>Billing</h3>
 				<div class="tabular" v-if="service.plan"><label>Billing plan:</label> <span class="value">{{ service.plan }}</span></div>
-				<div class="tabular" v-if="service.costs"><label>Costs:</label> <span class="value">{{ formatCurrency(service.costs) }}</span></div>
-				<div class="tabular" v-if="service.budget"><label>Budget:</label> <span class="value">{{ formatCurrency(service.budget) }}</span></div>
+				<div class="tabular" v-if="costs"><label>Costs:</label> <span class="value">{{ costs }}</span></div>
+				<div class="tabular" v-if="budget"><label>Budget:</label> <span class="value">{{ budget }}</span></div>
 			</section>
 
 			<section class="vue-component description" v-if="service.description">
@@ -75,7 +75,7 @@ export default {
 		ObjectTree
 	},
 	computed: {
-		...Utils.mapGetters(['formatCurrency']),
+		...Utils.mapGetters(['currency']),
 		hasAttributes() {
 			return Utils.size(this.service.attributes) > 0;
 		},
@@ -95,6 +95,12 @@ export default {
 		},
 		displayTitle() {
 			return "Web Service: " + (this.service.title || this.type + " #" + this.service.id);
+		},
+		budget() {
+			return Utils.formatBudget(this.service.budget, this.currency);
+		},
+		costs() {
+			return Utils.formatCurrency(this.service.costs, this.currency);
 		}
 	},
 	data() {

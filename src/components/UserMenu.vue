@@ -6,7 +6,7 @@
 			</div>
 			<div class="data">
 				<span class="name nowrap"><i class="fas fa-user"></i> {{ userName }}</span>
-				<span v-if="hasBudget" class="credits nowrap"><i class="fas fa-dollar-sign fa-fw"></i> {{ budget }}</span>
+				<span v-if="budget" class="credits nowrap"><i class="fas fa-dollar-sign fa-fw"></i> {{ budget }}</span>
 				<span v-if="hasStorage" class="storage nowrap"><i class="fas fa-database fa-fw"></i> {{ storageUsedPercent }}% used</span>
 			</div>
 		</div>
@@ -36,28 +36,15 @@ export default {
 	name: 'UserMenu',
 	computed: {
 		...Utils.mapState(['userInfo']),
-		...Utils.mapGetters(['formatCurrency']),
+		...Utils.mapGetters(['currency']),
 		links() {
 			return Utils.friendlyLinks(this.userInfo.links);
-		},
-		hasBudget() {
-			return this.userInfo.budget === null || (typeof this.userInfo.budget === 'number' && this.userInfo.budget >= 0);
 		},
 		hasStorage() {
 			return Utils.isObject(this.userInfo.storage) && typeof this.userInfo.storage.quota === 'number' && typeof this.userInfo.storage.free === 'number';
 		},
 		budget() {
-			if (this.hasBudget) {
-				if (this.userInfo.budget === null) {
-					return "Unlimited";
-				}
-				else {
-					return this.formatCurrency(this.userInfo.budget);
-				}
-			}
-			else {
-				return "N/A";
-			}
+			return Utils.formatBudget(this.userInfo.budget, this.currency);
 		},
 		userName() {
 			if (typeof this.userInfo.name === 'string') {

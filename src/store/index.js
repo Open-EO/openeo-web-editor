@@ -49,12 +49,12 @@ export default new Vuex.Store({
 		},
 		capabilities: (state) => state.connection !== null ? state.connection.capabilities() : null,
 		supports: (state) => (feature) => state.connection !== null && state.connection.capabilities() !== null && state.connection.capabilities().hasFeature(feature),
-		formatCurrency: (state) => (amount) => {
+		currency: (state) => {
 			var currency = '';
 			if (state.connection && state.connection.capabilities().currency() !== null) {
-				currency = ' ' + state.connection.capabilities().currency();
+				currency = state.connection.capabilities().currency();
 			}
-			return amount + currency;
+			return currency;
 		},
 		isConnected: (state) => state.connection !== null && state.connection.capabilities() !== null,
 		isDiscovered: (state) => state.connection !== null && state.discoveryCompleted,

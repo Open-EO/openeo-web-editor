@@ -43,7 +43,7 @@ export default {
 		Modal
 	},
 	computed: {
-		...Utils.mapGetters(['formatCurrency']),
+		...Utils.mapGetters(['currency']),
 		downloadsIncluded() {
 			if (this.estimate.downloads_included === 0) {
 				return "None";
@@ -65,7 +65,7 @@ export default {
 		},
 		costs() {
 			if (typeof this.estimate.costs === 'number') {
-				return this.formatCurrency(this.estimate.costs);
+				return Utils.formatCurrency(this.estimate.costs, this.currency);
 			}
 			else {
 				return 'n/a';

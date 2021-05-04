@@ -46,6 +46,7 @@
     "@openeo/js-commons": "^1.2.0",
     "@openeo/js-processgraphs": "^1.0.0",
     "@openeo/vue-components": "Open-EO/openeo-vue-components#dev",
+    "@radiantearth/stac-fields": "^1.0.0-beta.6",
     "ajv": "^6.12.6",
     "axios": "^0.21.1",
     "codemirror": "^5.58.2",
