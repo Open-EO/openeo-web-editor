@@ -3,7 +3,6 @@ import Config from '../config';
 import VueUtils from '@openeo/vue-components/utils';
 import { Job, Service, UserProcess } from '@openeo/js-client';
 import { mapState, mapActions, mapMutations, mapGetters } from 'vuex';
-import { Formatters } from '@radiantearth/stac-fields';
 
 class Utils extends VueUtils {
 
@@ -103,14 +102,6 @@ class Utils extends VueUtils {
 		else {
 			return filename;
 		}
-	}
-
-	static formatDateTime(value) {
-		return Formatters.formatTimestamp(value);
-	}
-
-	static formatFileSize(value) {
-		return Formatters.formatFileSize(value);
 	}
 
 	static replaceParam(url, paramName, paramValue) {

@@ -83,7 +83,7 @@ export default {
 			return Utils.size(this.service.configuration) > 0;
 		},
 		created() {
-			return Utils.formatDateTime(this.service.created);
+			return Utils.formatTimestamp(this.service.created);
 		},
 		type() {
 			if (typeof this.service.type === 'string') {
