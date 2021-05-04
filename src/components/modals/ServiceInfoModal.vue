@@ -44,7 +44,7 @@ export default {
 </script>
 
 <style>
-.vue-component h2 {
+.vue-component.service h2 {
 	display: none;
 }
 </style>

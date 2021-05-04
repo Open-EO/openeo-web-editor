@@ -81,7 +81,7 @@ export default {
 </script>
 
 <style>
-.vue-component h2 {
+.vue-component.job h2 {
 	display: none;
 }
 .result .vue-component h3 {

@@ -49,7 +49,7 @@ export default {
 </script>
 
 <style>
-.vue-component h2 {
+.vue-component.estimate h2 {
 	display: none;
 }
 </style>
