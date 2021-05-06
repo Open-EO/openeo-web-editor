@@ -171,8 +171,8 @@ export default {
 		showExpressionModal() {
 			this.$refs.expressionModal.show(this.value, this.$refs.blocks.getPgParameters());
 		},
-		openParameterEditor(parameters, values, title = "Edit", isEditable = true, selectParameterName = null, saveCallback = null, processId = null) {
-			this.$refs.parameterModal.show(title, parameters, values, isEditable, saveCallback, null, processId, selectParameterName);
+		openParameterEditor(parameters, values, title = "Edit", isEditable = true, selectParameterName = null, saveCallback = null, processId = null, parent = null) {
+			this.$refs.parameterModal.show(title, parameters, values, isEditable, saveCallback, null, processId, selectParameterName, parent);
 		},
 
 		confirmClear() {

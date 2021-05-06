@@ -36,7 +36,6 @@
 
 <script>
 import BlockParameter from './BlockParameter.vue';
-import { ProcessGraph } from '@openeo/js-processgraphs';
 import Utils from '../../utils.js';
 import { ProcessParameter } from './processSchema';
 import Vue from 'vue';
@@ -185,7 +184,6 @@ export default {
                 default:
                     return this.id;
             }
-            return name;
         },
         outputLabel() {
             if (this.result) {
@@ -410,7 +408,7 @@ export default {
             parameter.setRefs(edges.map(edge => edge.parameter1.value));
         },
         showParameters(parameterName = null) {
-            this.$parent.$emit('editParameters', this.parameters.filter(p => p.isEditable()), this.args, this.plainTitle, this.state.editable, parameterName, data => this.args = data, this.processId);
+            this.$parent.$emit('editParameters', this.parameters.filter(p => p.isEditable()), this.args, this.plainTitle, this.state.editable, parameterName, data => this.args = data, this.processId, this.$parent);
         },
         showInfo() {
             if(this.collectionId) {

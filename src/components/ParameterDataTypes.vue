@@ -11,7 +11,7 @@
 			<i class="fas fa-info-circle"></i>
 			<Description :description="selectedSchema.description()" :compact="true" />
 		</div>
-		<ParameterDataType :editable="editable" :parameter="parameter" :schema="selectedSchema" v-model="state" :processId="processId" :context="context" @changeType="setSelected" />
+		<ParameterDataType :editable="editable" :parameter="parameter" :schema="selectedSchema" v-model="state" :processId="processId" :context="context" @changeType="setSelected" :parent="parent" />
 	</div>
 </template>
 
@@ -107,7 +107,8 @@ export default {
 			type: Boolean,
 			default: false
 		},
-		context: {}
+		context: {},
+		parent: {}
 	},
 	data() {
 		return {
@@ -124,7 +125,7 @@ export default {
 		refSchemas() {
 			let refs = {};
 			for(let r of this.parameter.getRefs()) {
-				let type;
+				let name;
 				if (r.from_node) {
 					name = 'from_node:' + r.from_node;
 					refs[name] = new ProcessDataType({

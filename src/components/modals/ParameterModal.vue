@@ -10,7 +10,7 @@
 							<Description :description="param.description" />
 						</div>
 					</label>
-					<ParameterDataTypes :ref="param.name" :editable="editable" :parameter="param" v-model="values[param.name]" :processId="processId" :context="context" @schemaSelected="updateType(param, $event)" />
+					<ParameterDataTypes :ref="param.name" :editable="editable" :parameter="param" v-model="values[param.name]" :processId="processId" :context="context" @schemaSelected="updateType(param, $event)" :parent="parent" />
 					<button v-if="param.unspecified" title="Delete unspecified parameter" class="deleteBtn" type="button" @click="deleteParam(k)"><i class="fas fa-trash"></i></button>
 				</div>
 				<!-- We need a hidden submit button in the form tags to allow submiting the form via keyboard (enter key) -->
@@ -46,7 +46,8 @@ export default {
 			editable: true,
 			selectParameter: null,
 			saveCallback: null,
-			processId: null
+			processId: null,
+			parent: null
 		};
 	},
 	computed: {
@@ -86,7 +87,7 @@ export default {
 				Utils.exception(this, error);
 			}
 		},
-		show(title, editableFields, values, editable = true, saveCallback = null, closeCallback = null, processId = null, selectParameter = null) {
+		show(title, editableFields, values, editable = true, saveCallback = null, closeCallback = null, processId = null, selectParameter = null, parent = null) {
 			this.editableFields = editableFields;
 			this.values = Utils.deepClone(values);
 			this.schemas = {};
@@ -94,6 +95,7 @@ export default {
 			this.saveCallback = saveCallback;
 			this.processId = processId;
 			this.selectParameter = selectParameter;
+			this.parent = parent;
 			this.$refs.__modal.show(title, closeCallback);
 
 			// ToDo: It's a bit hacky to have a fixed timeout set to allow the element to be available for scrolling => improve?!

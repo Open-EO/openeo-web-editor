@@ -31,7 +31,7 @@
 import Block from './Block.vue';
 import Edge from './Edge.vue';
 import Utils from '../../utils.js';
-import { JsonSchemaValidator, ProcessGraph, ProcessRegistry } from '@openeo/js-processgraphs';
+import { JsonSchemaValidator, ProcessGraph, ProcessRegistry, Utils as PgUtils } from '@openeo/js-processgraphs';
 import Vue from 'vue';
 import boxIntersectsBox from 'intersects/box-box';
 import boxIntersectsLine from 'intersects/box-line';
@@ -44,7 +44,7 @@ Emits:
 - showProcess(id): Show process by id
 - showCollection(id): Show collection by id
 - showSchema(name, schema): Show JSON schema
-- editParameters(parameters, values, title = "Edit", isEditable = true, selectParameterName = null, saveCallback(data) = null, processId = null): Show the parameter editor
+- editParameters(parameters, values, title = "Edit", isEditable = true, selectParameterName = null, saveCallback(data) = null, processId = null, parentBlocks = null): Show the parameter editor
 - compactMode(enable): Informs about the current state of compact mode.
 - input(value) - The value has been updated
 - historyChanged(history, undoIndex = null, redoIndex = null) - The history has been changed
@@ -653,11 +653,41 @@ export default {
             edge.parameter2.eraseEdge(edge);
             this.$delete(this.edges, this.edges.indexOf(edge));
         },
+
+        hiddenParameterRefs(block, parameterName) {
+            if (block.type !== 'process') {
+                return null;
+            }
+            for (let param in block.value.arguments) {
+                let value = block.value.arguments[param];
+                if (Utils.isObject(value) && Utils.isObject(value.process_graph)) {
+                    let refs = PgUtils.getRefs(value, true, true);
+                    if (refs.find(r => r.from_parameter === parameterName)) {
+                        return param;
+                    }
+                }
+            }
+            return null;
+        },
             
         /**
          * Remove a block
          */
         async removeBlock(block) {
+            // Check if the parameter for this block is used in child processes (callbacks).
+            // Then don't delete, but give error instead.
+            if (block.type === 'parameter') {
+                let param = null;
+                let conflictBlock = this.blocks.find(sub => {
+                    param = this.hiddenParameterRefs(sub, block.id);
+                    return (param !== null);
+                });
+                if (conflictBlock) {
+                    throw new Error(`Parameter is still used in '#${conflictBlock.id}', parameter '${param}'. Only unused parameters can be deleted.`);
+                }
+            }
+
+            // now start deleting the block
             return await this.startTransaction(async () => {
                 var i = this.blocks.findIndex(b => b.id == block.id);
                 if (i < 0) {
@@ -941,7 +971,6 @@ export default {
             let size = this.getBlockSize({}); // Estimate base size for an empty block
             let position = [0,0];
             for(var i in params) {
-                let param = params[i];
                 position = [
                     -size[0] - MARGIN,
                     i * (size[1] + MARGIN)
