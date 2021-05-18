@@ -15,7 +15,7 @@ You can also build the files yourself and deploy them to any web host:
 4. Configure the web editor by editing `config.js`  to suit your needs.
 6. Install the dependencies by executing `npm install` on the command line
 7. 
-    * Development: Run the development server by executing `npm run serve`.
+    * Development: Run the development server by executing `npm start`.
     * Deployment: Build the project by executing `npm run build`. Afterwards upload the content of the `dist` folder to your server.
 
 ### Query Parameters

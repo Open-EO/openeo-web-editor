@@ -37,7 +37,7 @@
   },
   "scripts": {
     "build:epsg": "node src/build-epsg.js",
-    "serve": "npm run build:epsg && npx vue-cli-service serve",
+    "start": "npm run build:epsg && npx vue-cli-service serve",
     "build": "npm run build:epsg && npx vue-cli-service build --report"
   },
   "dependencies": {
