@@ -3,6 +3,7 @@ import Config from '../config';
 import VueUtils from '@openeo/vue-components/utils';
 import { Job, Service, UserProcess } from '@openeo/js-client';
 import { mapState, mapActions, mapMutations, mapGetters } from 'vuex';
+import contentType from 'content-type';
 
 class Utils extends VueUtils {
 
@@ -49,7 +50,7 @@ class Utils extends VueUtils {
 	static blobToText(blob, callback) {
 		var reader = new FileReader(); 
 		reader.onload = callback; 
-		reader.readAsText(blob); 
+		reader.readAsText(blob.blob); 
 	}
 
 	static isChildOfModal(that) {
@@ -75,26 +76,30 @@ class Utils extends VueUtils {
 		}
 
 		let ext = null;
-		switch(type.toLowerCase()) {
-			case 'application/json':
-			case 'application/zip':
-			case 'image/png':
-			case 'image/jpg':
-			case 'image/jpeg':
-			case 'image/gif':
-			case 'image/tiff':
-			case 'text/csv':
-			case 'text/html':
-				ext = type.split('/')[1];
-				break;
-			case 'text/plain':
-				ext = 'txt';
-				break;
-			case 'application/netcdf':
-			case 'application/x-netcdf':
-				ext = 'nc'
-				break;
-		}
+		try {
+			let mime = contentType.parse(type);
+			switch(mime.type.toLowerCase()) {
+				case 'application/json':
+				case 'application/zip':
+				case 'image/png':
+				case 'image/jpg':
+				case 'image/jpeg':
+				case 'image/gif':
+				case 'image/tiff':
+				case 'text/csv':
+				case 'text/html':
+					ext = type.split('/')[1];
+					break;
+				case 'text/plain':
+					ext = 'txt';
+					break;
+				case 'application/netcdf':
+				case 'application/x-netcdf':
+					ext = 'nc'
+					break;
+			}
+
+		} catch (error) {}
 
 		if (ext !== null) {
 			return filename + '.' + ext;

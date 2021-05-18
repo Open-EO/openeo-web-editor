@@ -156,7 +156,12 @@ export default {
 				Utils.error(this, "Sorry, can't detect content type.");
 			}
 
-			Object.assign(data, contentType.parse(data.type));
+			try {
+				let mime = contentType.parse(data.type);
+				data.type = mime.type;
+				data.parameters = mime.parameters;
+			} catch (error) {}
+
 			switch(data.type) {
 				case 'image/png':
 				case 'image/jpg':
@@ -166,7 +171,7 @@ export default {
 					break;
 				case 'application/json':
 				case 'text/plain':
-				case 'text/html':
+				case 'text/csv':
 					this.$refs.tabs.addTab(this.makeTitle(title, "Data"), "fa-database", data, null, true, true);
 					break;
 				case 'image/tiff':
