@@ -7,7 +7,7 @@ export default {
 
 	// Defaults for notifications
 	snotifyDefaults: {
-		timeout: 5000,
+		timeout: 10000,
 		titleMaxLength: 30,
 		bodyMaxLength: 120,
 		showProgressBar: true,
