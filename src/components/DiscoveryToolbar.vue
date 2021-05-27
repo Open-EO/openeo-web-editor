@@ -2,7 +2,7 @@
 	<div class="discovery-toolbar">
 		<SearchBox v-model="searchTerm" />
 		<div class="search-results">
-			<Collections class="category" :collections="collections" :searchTerm="searchTerm" :offerDetails="false" :collapsed="true">
+			<Collections class="category" :collections="collections" :searchTerm="searchTerm" :offerDetails="false" :collapsed="collapsed">
 				<template #summary="{ item }">
 					<div class="discovery-entity" :draggable="supportsLoadCollection" @dragstart="onDrag($event, 'collection', item)">
 						<div class="discovery-info" @click="showCollectionInfo(item.id)">
@@ -14,7 +14,7 @@
 				</template>
 			</Collections>
 
-			<Processes class="category" :processes="processes" :searchTerm="searchTerm" :offerDetails="false" :collapsed="true">
+			<Processes class="category" :processes="processes" :searchTerm="searchTerm" :offerDetails="false" :collapsed="collapsed">
 				<template #summary="{ item }">
 					<div class="discovery-entity" draggable="true" @dragstart="onDrag($event, 'process', item)">
 						<div class="discovery-info" @click="showProcessInfo(item)">
@@ -27,7 +27,7 @@
 				</template>
 			</Processes>
 
-			<UdfRuntimes class="category" :runtimes="udfRuntimes" :searchTerm="searchTerm" :offerDetails="false" :collapsed="true">
+			<UdfRuntimes v-if="hasUdfRuntimes" class="category" :runtimes="udfRuntimes" :searchTerm="searchTerm" :offerDetails="false" :collapsed="collapsed">
 				<template #summary="{ item }">
 					<div class="discovery-entity" :draggable="supportsRunUdf" @dragstart="onDrag($event, 'udf', item)">
 						<div class="discovery-info" @click="showUdfInfo(item)">
@@ -38,7 +38,7 @@
 				</template>
 			</UdfRuntimes>
 
-			<FileFormats class="category" :formats="fileFormats" :showInput="false" heading="Export File Formats" :searchTerm="searchTerm" :offerDetails="false" :collapsed="true">
+			<FileFormats class="category" :formats="fileFormats" :showInput="false" heading="Export File Formats" :searchTerm="searchTerm" :offerDetails="false" :collapsed="collapsed">
 				<template #summary="{ item }">
 					<div class="discovery-entity" :draggable="supportsSaveResult" @dragstart="onDrag($event, 'fileformat', item)">
 						<div class="discovery-info" @click="showFileFormatInfo(item)">
@@ -80,7 +80,8 @@ export default {
 	},
 	data() {
 		return {
-			searchTerm: ''
+			searchTerm: '',
+			collapsed: true
 		};
 	},
 	computed: {
@@ -97,8 +98,21 @@ export default {
 		supportsSaveResult() {
 			return !!this.getProcessById('save_result');
 		},
+		hasUdfRuntimes() {
+			return Utils.size(this.udfRuntimes);
+		},
 		processes() {
 			return this.predefinedProcesses.concat(this.userProcesses);
+		}
+	},
+	watch: {
+		searchTerm(newVal, oldVal) {
+			if (!newVal && oldVal) {
+				this.collapsed = true;
+			}
+			else if (newVal && !oldVal) {
+				this.collapsed = false;
+			}
 		}
 	},
 	methods: {
