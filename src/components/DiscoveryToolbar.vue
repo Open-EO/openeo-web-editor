@@ -28,12 +28,13 @@
 			</Processes>
 
 			<UdfRuntimes v-if="hasUdfRuntimes" class="category" :runtimes="udfRuntimes" :searchTerm="searchTerm" :offerDetails="false" :collapsed="collapsed">
-				<template #summary="{ item }">
-					<div class="discovery-entity" :draggable="supportsRunUdf" @dragstart="onDrag($event, 'udf', item)">
-						<div class="discovery-info" @click="showUdfInfo(item)">
-							<strong :title="item.id">{{ item.id }} {{ item.version }}</strong>
+				<template #summary="{ summary, item }">
+					<div class="discovery-entity" :draggable="supportsRunUdf" @dragstart="onDrag($event, 'udf', {runtime: summary.identifier, version: item.default})">
+						<div class="discovery-info" @click="showUdfInfo(summary.identifier, item)">
+							<strong :title="summary.identifier">{{ summary.identifier }} ({{ item.default }})</strong>
+							<small v-if="summary.summary" :title="summary.summary">{{ summary.summary }}</small>
 						</div>
-						<button v-if="supportsRunUdf" class="discovery-button" type="button" @click="insertUdf(item)" title="Insert"><i class="fas fa-plus"></i></button>
+						<button v-if="supportsRunUdf" class="discovery-button" type="button" @click="insertUdf(summary.identifier, item.default)" title="Insert"><i class="fas fa-plus"></i></button>
 					</div>
 				</template>
 			</UdfRuntimes>
@@ -129,8 +130,9 @@ export default {
 		showProcessInfo(process) {
 			this.emit('showProcessInfo', process);
 		},
-		showUdfInfo(runtime) {
-			this.emit('showUdfRuntimeInfo', runtime.id, this.udfRuntimes[runtime.id], runtime.version);
+		showUdfInfo(id, runtime) {
+
+			this.emit('showUdfRuntimeInfo', id, runtime, runtime.default);
 		},
 		showFileFormatInfo(format) {
 			this.emit('showFileFormatInfo', format.name, this.fileFormats.output[format.name], "output");
@@ -150,7 +152,7 @@ export default {
 				case 'udf':
 					return {
 						process_id: 'run_udf',
-						arguments: {runtime: data.id, version: data.version}
+						arguments: data
 					};
 				case 'fileformat':
 					return {
@@ -167,8 +169,8 @@ export default {
 			let node = this.getNode('process', process);
 			this.onAddProcess(node);
 		},
-		insertUdf(udf) {
-			let node = this.getNode('udf', udf);
+		insertUdf(runtime, version) {
+			let node = this.getNode('udf', {runtime, version});
 			this.onAddProcess(node);
 		},
 		insertFileFormat(format) {
