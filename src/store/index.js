@@ -81,7 +81,13 @@ export default new Vuex.Store({
 
 			var temporal_extent = null;
 			try {
-				temporal_extent = collection.extent.temporal.interval[0];
+				// Only supports temporal ranges with start and end date.
+				// All other temporal extents will be unbounded for now.
+				// ToDo: Support open date ranges: https://github.com/mengxiong10/vue2-datepicker/issues/612
+				temporal_extent = collection.extent.temporal.interval[0].filter(date => date !== null);
+				if (temporal_extent.length !== 2) {
+					temporal_extent = null;
+				}
 			} catch (error) {}
 	
 			var bands = null;

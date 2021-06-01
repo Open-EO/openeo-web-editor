@@ -1,6 +1,6 @@
 <template>
 	<div class="datatypeEditor fieldValue temporalPicker">
-		<!-- ToDo: Support open date ranges, probably by using two separate date pickers -->
+		<!-- ToDo: Support open date ranges: https://github.com/mengxiong10/vue2-datepicker/issues/612 -->
 		<DatePicker :key="type" v-model="dateTimes" :disabled ="!editable" :range="range" :placeholder="label" :format="formatUi" :type="pickerType" :showSecond="false" :value-type="formatApi"></DatePicker>
 	</div>
 </template>
