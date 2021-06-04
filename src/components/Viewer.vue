@@ -26,8 +26,6 @@ import LogViewer from './LogViewer.vue';
 import MapViewer from './MapViewer.vue'
 import contentType from 'content-type';
 import { OpenEO } from '@openeo/js-client';
-import Config from '../../config';
-
 export default {
 	name: 'Viewer',
 	mixins: [EventBusMixin],
@@ -78,7 +76,7 @@ export default {
 				})
 				.catch(error => {
 					let title = "Processing Error";
-					if (typeof error.message === 'string' && error.message.length > Config.snotifyDefaults.bodyMaxLength) {
+					if (typeof error.message === 'string' && error.message.length > this.$config.snotifyDefaults.bodyMaxLength) {
 						this.showLogs([{
 							id: error.id || "unknown",
 							code: error.code || undefined,

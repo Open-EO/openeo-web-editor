@@ -95,7 +95,6 @@
 
 <script>
 import Package from '../../package.json';
-import Config from '../../config.js';
 import EventBusMixin from './EventBusMixin.vue';
 import Tabs from '@openeo/vue-components/components/Tabs.vue';
 import Tab from '@openeo/vue-components/components/Tab.vue';
@@ -129,7 +128,7 @@ export default {
 			);
 		},
 		httpsUrl() {
-			if (Config.showHttpWarning && !this.isLocal && window.location.protocol === 'http:') {
+			if (this.$config.showHttpWarning && !this.isLocal && window.location.protocol === 'http:') {
 				return window.location.toString()
 					.replace(/^http:/i, 'https:')
 					.replace(/([\?&]server=http)(:|%3A)/, '$1s$2');
@@ -172,15 +171,15 @@ export default {
 	},
 	data() {
 		return {
-			serverUrl: Config.serverUrl,
-			allowOtherServers: !Config.serverUrl,
+			serverUrl: this.$config.serverUrl,
+			allowOtherServers: !this.$config.serverUrl,
 			autoConnect: false,
 			username: '',
 			password: '',
 			provider: null,
 			loading: false,
 			version: Package.version,
-			message: Config.loginMessage,
+			message: this.$config.loginMessage,
 			userClientId: '',
 			defaultClientId: '',
 			oidcOptions: {

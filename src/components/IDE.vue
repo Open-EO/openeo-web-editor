@@ -140,7 +140,7 @@ export default {
 		this.resizeListener = (event) => this.emit('windowResized', event);
 		window.addEventListener('resize', this.resizeListener);
 		if (this.isAuthenticated) {
-			this.userInfoUpdater = setInterval(this.describeAccount, 2*60*1000); // Refresh user data every 2 minutes
+			this.userInfoUpdater = setInterval(this.describeAccount, this.$config.dataRefreshInterval*60*1000); // Refresh user data every x minutes
 		}
 		this.emit('title', this.title);
 	},

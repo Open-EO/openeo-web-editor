@@ -16,6 +16,8 @@ Vue.config.errorHandler = function (err, vm, info) {
 	}
 };
 
+Vue.prototype.$config = Config;
+
 for(var name in filters) {
 	Vue.filter(name, filters[name]);
 }

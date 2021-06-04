@@ -1,5 +1,3 @@
-
-import Config from '../config';
 import VueUtils from '@openeo/vue-components/utils';
 import { Job, Service, UserProcess } from '@openeo/js-client';
 import { mapState, mapActions, mapMutations, mapGetters } from 'vuex';
@@ -43,23 +41,23 @@ class Utils extends VueUtils {
 			closeOnClick: false, 
 			buttons
 		}; 
-		vm.$snotify.error(message, title, Object.assign({}, Config.snotifyDefaults, typeDefaults)); 
+		vm.$snotify.error(message, title, Object.assign({}, vm.$config.snotifyDefaults, typeDefaults)); 
 	} 
 	static error(vm, message, title = null) {
-		vm.$snotify.error(message, title, Config.snotifyDefaults); 
+		vm.$snotify.error(message, title, vm.$config.snotifyDefaults); 
 	} 
 	static info(vm, message, title = null) {
-		vm.$snotify.info(message, title, Config.snotifyDefaults); 
+		vm.$snotify.info(message, title, vm.$config.snotifyDefaults); 
 	} 
 	static ok(vm, message, title = null) {
-		vm.$snotify.success(message, title, Config.snotifyDefaults); 
+		vm.$snotify.success(message, title, vm.$config.snotifyDefaults); 
 	}
 	static confirm(vm, message, buttons = []) {
 		var typeDefaults =  {
 			closeOnClick: false, 
 			buttons: buttons
 		}; 
-		vm.$snotify.confirm(message, null, Object.assign({}, Config.snotifyDefaults, typeDefaults)); 
+		vm.$snotify.confirm(message, null, Object.assign({}, vm.$config.snotifyDefaults, typeDefaults)); 
 	}
 
 	static blobToText(blob, callback) {
