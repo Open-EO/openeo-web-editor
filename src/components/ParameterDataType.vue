@@ -45,7 +45,7 @@
 		<!-- Boolean -->
 		<input class="fieldValue" v-else-if="type === 'boolean'" v-model="state" type="checkbox" :name="name" :disabled="!editable" />
 		<!-- Integer / Number -->
-		<input class="fieldValue" v-else-if="type === 'integer'" v-model.number="state" type="number" :min="numericMin" :max="numericMax" :step="numericStep" :name="name" :disabled="!editable" />
+		<input class="fieldValue" v-else-if="type === 'integer' || type === 'number'" v-model.number="state" type="number" :min="numericMin" :max="numericMax" :step="numericStep" :name="name" :disabled="!editable" />
 		<!-- URL -->
 		<input class="fieldValue" v-else-if="type === 'url' || type === 'uri'" v-model="state" type="url" :name="name" :disabled="!editable" />
 		<!-- Objects / Arrays -->
@@ -180,7 +180,8 @@ export default {
 		},
 		newValue() {
 			if (this.type === 'number') {
-				return Number.isNaN(this.state) ? null : Number.parseFloat(this.state);
+				var num = Number.parseFloat(this.state);
+				return Number.isNaN(num) ? null : num;
 			}
 			else if (this.type === 'integer') {
 				var num = Number.parseInt(this.state);
