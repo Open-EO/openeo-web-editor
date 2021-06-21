@@ -273,7 +273,7 @@ export default {
 			let key = Object.keys(tree)[0]; // There's never more than one property so no loop required
 			switch(key) {
 				case 'Number':
-					return parseFloat(tree.Number);
+					return Number.parseFloat(tree.Number);
 				case 'Identifier':
 					return this.getRef(tree.Identifier);
 				case 'Expression':
@@ -337,7 +337,7 @@ export default {
 						}
 					};
 					if (ref.match(/^\d+$/)) {
-						args.index = parseInt(ref, 10);
+						args.index = Number.parseInt(ref, 10);
 					}
 					else {
 						args.label = ref;

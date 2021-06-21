@@ -105,7 +105,7 @@ export default {
 				case 'epsg-code':
 					for(let key in state) {
 						data.push({
-							id: parseInt(key, 10),
+							id: Number.parseInt(key, 10),
 							label: key + ": " + state[key]
 						});
 					}

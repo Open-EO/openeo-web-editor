@@ -1087,8 +1087,9 @@ export default {
                 id = this.nextBlockId;
                 this.nextBlockId++;
             }
-            else if (!isNaN(parseInt(id))) {
-                this.nextBlockId = Math.max(this.nextBlockId, parseInt(id)+1);
+            let int = Number.parseInt(id);
+            if (!Number.isNaN(int)) {
+                this.nextBlockId = Math.max(this.nextBlockId, int+1);
             }
             return id;
         },
