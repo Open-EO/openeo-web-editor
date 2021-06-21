@@ -2,9 +2,14 @@
 	<div class="fieldContainer" v-if="selectedSchema">
 		<div class="dataTypeChooser" v-if="showDataTypeChooser">
 			<select name="dataType" :value="selectedType" @input="onSelectType" :disabled="!editable">
-				<optgroup v-for="group in groupedallowedTypes" :key="group.name" :label="group.name">
-					<option v-for="(type, i) in group.types" :key="i" :value="type.dataType()">{{ type.title() }}</option>
-				</optgroup>
+				<template v-if="groupedAllowedTypes.length > 1">
+					<optgroup v-for="group in groupedAllowedTypes" :key="group.name" :label="group.name">
+						<option v-for="type in group.types" :key="type.dataType()" :value="type.dataType()">{{ type | dataTypeTitle }}</option>
+					</optgroup>
+				</template>
+				<template v-else>
+					<option v-for="type in groupedAllowedTypes[0].types" :key="type.dataType()" :value="type.dataType()">{{ type | dataTypeTitle }}</option>
+				</template>
 			</select>
 		</div>
 		<div v-if="!isItem && selectedSchema.description()" class="description">
@@ -36,6 +41,14 @@ const TYPE_GROUPS = [
 	'Other',
 ];
 const now = () => new Date().toISOString().replace(/\.\d+/, '');
+const NATIVE_TYPES = [
+	'string',
+	'integer',
+	'number',
+	'boolean',
+	'array',
+	'object'
+];
 const SUPPORTED_TYPES = [
 		// Native types
 		{type: 'null', const: null, group: 'Basics'},
@@ -114,9 +127,23 @@ export default {
 		return {
 			state: typeof this.value === 'undefined' ? this.parameter.default : this.value,
 			selectedType: null,
+			selectedNativeType: null,
 			selectedSchema: null,
 			jsonSchemaValidator: JsonSchema.create(this.$store)
 		};
+	},
+	filters: {
+		dataTypeTitle(type) {
+			// Set a human-readable title if none is set
+			if (type.schema && !type.schema.title) {
+				let supportedType = SUPPORTED_TYPES.find(st => st.subtype === type.schema.subtype || st.type === type.schema.type);
+				if (supportedType && supportedType.title) {
+					return supportedType.title;
+				}
+			}
+
+			return type.title();
+		}
 	},
 	async created() {
 		await this.detectType();
@@ -197,7 +224,7 @@ export default {
 			}
 			return map;
 		},
-		groupedallowedTypes() {
+		groupedAllowedTypes() {
 			let grouped = {};
 			for(let type in this.allowedTypes) {
 				let schema = this.allowedTypes[type];
@@ -239,24 +266,17 @@ export default {
 		 * @return {string[]} - Returns matching indices (as strings!).
 		 */
 		async getTypeForValue(types, value) {
-			var subTypes = [];
-			var nativeTypes = [];
+			var validTypes = [];
 			for(var type of types) {
 				try {
 					var errors = await this.jsonSchemaValidator.validateValue(value, type.schema);
 					if (errors.length > 0) {
 						continue;
 					}
-					let dataType = type.dataType();
-					if (dataType === type.nativeDataType()) {
-						nativeTypes.push(dataType);
-					}
-					else {
-						subTypes.push(dataType);
-					}
+					validTypes.push(type.dataType());
 				} catch (error) {}
 			}
-			return subTypes.length === 0 ? nativeTypes : subTypes;
+			return validTypes;
 		},
 		async detectType() {
 			let keys = Object.keys(this.allowedTypes);
@@ -280,13 +300,19 @@ export default {
 					await this.setSelected(types[0]);
 				}
 				else {
-					types.sort();
-					// Ignore if number/integer was detected as they always overlap and number always works
-					let numerics = types.length === 2 && types[0] === 'integer' && types[1] === 'number';
-					if (!Utils.isRef(this.state) && !numerics) {
+					// If integer and number are both valid options, always choose number
+					if (types.includes('integer') && types.includes('number')) {
+						// Remove integer as they overlap and number always works
+						types = types.filter(type => type !== 'integer');
+					}
+
+					if (!Utils.isRef(this.state) && types.length > 1) {
 						console.warn("A parameter is ambiguous. Potential types: " + types.join(', ') + ". Value: " + JSON.stringify(this.state));
 					}
-					await this.setSelected(types[0]);
+		
+					// If multiple types have been detected and a native one is included, fall back to the native one
+					let index = types.findIndex(type => NATIVE_TYPES.includes(type)) || 0;
+					await this.setSelected(types[index]);
 				}
 			}
 		},
@@ -294,15 +320,37 @@ export default {
 			await this.setSelected(evt.target.value, true);
 		},
 		async setSelected(type, setValue = false) {
+			let nativeType = type;
 			if (type instanceof ProcessDataType) {
 				this.selectedSchema = type;
 				this.selectedType = type.dataType();
+				nativeType = type.nativeDataType();
 			}
 			else {
 				this.selectedSchema = this.allowedTypes[type] ? this.allowedTypes[type] : this.supportedTypes[type];
 				this.selectedType = type;
 			}
+
 			if (setValue) {
+				// Convert string to numbers and vice versa
+				if (typeof this.state === 'number' && nativeType === 'string') {
+					this.state = String(this.state);
+				}
+				else if (typeof this.state === 'string' && nativeType === 'integer') {
+					if (this.state.match(/^([+-]?\d+)$/)) {
+						let num = Number.parseInt(this.state, 10);
+						if (!Number.isNaN(num)) {
+							this.state = num;
+						}
+					}
+				}
+				else if (typeof this.state === 'string' && nativeType === 'number') {
+					let num = Number.parseFloat(this.state);
+					if (!Number.isNaN(num)) {
+						this.state = num;
+					}
+				}
+
 				// Special handling for null as it doesn't have an actual input element
 				if (this.selectedSchema.isNull()) {
 					this.state = null;
