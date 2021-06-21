@@ -1,7 +1,10 @@
 <template>
 	<div class="select-container">
-		<MultiSelect v-if="loaded" v-model="selected" :key="type" ref="htmlElement" label="label" track-by="id" :multiple="multiple" :options="selectOptions" :allowEmpty="false" :preselectFirst="preselect" :disabled="!editable" :deselectLabel="deselectLabel" :taggable="taggable" :tagPlaceholder="tagPlaceholder" @tag="addValue"></MultiSelect>
-		<button v-if="showDetails" type="button" title="Details" @click="$emit('onDetails')"><i class="fas fa-info"></i></button>
+		<template v-if="loaded">
+			<MultiSelect v-model="selected" :key="type" ref="htmlElement" label="label" track-by="id" :multiple="multiple" :options="selectOptions" :allowEmpty="false" :preselectFirst="preselect" :disabled="!editable" :deselectLabel="deselectLabel" :taggable="taggable" :tagPlaceholder="tagPlaceholder" @tag="addValue"></MultiSelect>
+			<button v-if="showDetails" type="button" title="Details" @click="$emit('onDetails')"><i class="fas fa-info"></i></button>
+		</template>
+		<div class="loading" v-else><i class="fas fa-spinner fa-spin"></i> Loading options...</div>
 	</div>
 </template>
 
@@ -102,7 +105,7 @@ export default {
 				case 'epsg-code':
 					for(let key in state) {
 						data.push({
-							id: key,
+							id: parseInt(key, 10),
 							label: key + ": " + state[key]
 						});
 					}
@@ -232,6 +235,7 @@ export default {
 	methods: {
 		...Utils.mapActions(['describeCollection']),
 		...Utils.mapActions('editor', ['loadEpsgCodes']),
+		// Convert a value to a option object for MultiSelect
 		e(val) {
 			return {
 				id: val,
@@ -242,15 +246,11 @@ export default {
 			this.loaded = false;
 			if (this.type === 'epsg-code') {
 				await this.loadEpsgCodes();
-				this.setSelected();
 			}
 			else if (this.type === 'band-name') {
 				await this.describeCollection(this.context);
-				this.setSelected();
 			}
-			else {
-				this.setSelected();
-			}
+			this.initSelection();
 			this.loaded = true;
 		},
 		async preselectFirst() {
@@ -262,17 +262,19 @@ export default {
 				elem.select(elem.filteredOptions[0]);
 			}
 		},
-		setSelected() {
+		initSelection() {
 			let value = this.value;
 			if (this.multiple && Array.isArray(value)) {
 				this.selected = this.selectOptions.filter(o => value.includes(o.id));
 			}
-			else if (typeof value === 'string') {
+			else {
 				switch(this.type) {
 					case 'input-format':
 					case 'output-format':
 					case 'service-type':
-						value = value.toUpperCase();
+						if (typeof value === 'string') {
+							value = value.toUpperCase();
+						}
 						break;
 				}
 				let selectedOption = this.selectOptions.find(o => o.id === value);
