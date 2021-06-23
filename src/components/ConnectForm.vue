@@ -33,14 +33,14 @@
 					<Tabs id="credentials" ref="providers" :pills="true" :pillsMultiline="true" @selected="providerSelected">
 						<template #dynamic="{ tab }">
 							<form @submit.prevent="initDiscovery(tab.data)">
-								<div class="row help" v-if="tab.data && tab.data.description">
+								<div class="row help" v-if="tab.data.description">
 									<i class="fas fa-info-circle"></i>
 									<span>{{ tab.data.description }}</span>
 								</div>
 								<template v-if="!tab.data.defaultClient">
 									<div class="row">
 										<label for="password">Client ID:</label>
-										<textarea class="input" v-model.trim="oidcClientId" required="required" />
+										<input type="text" class="input" v-model.trim="oidcClientId" required="required" />
 									</div>
 									<div class="row help">
 										<i class="fas fa-exclamation-circle"></i>
