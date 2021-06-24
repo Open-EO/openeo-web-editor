@@ -175,7 +175,8 @@ export default {
 			oidcClientId: '',
 			oidcOptions: {
 				automaticSilentRenew: true,
-				popupWindowFeatures: 'location=no,toolbar=no,width=750,height=550,left=50,top=50'
+				popupWindowFeatures: 'location=no,toolbar=no,width=750,height=550,left=50,top=50',
+				accessTokenExpiringNotificationTime: 120
 			},
 			oidcRedirectUrl: OidcProvider.redirectUrl
 		};
@@ -312,6 +313,15 @@ export default {
 						this.provider.setClientId(this.oidcClientId);
 					}
 					await provider.login(this.oidcOptions);
+					provider.addListener('AccessTokenExpiring', () => {
+						Utils.warn(this, "User session expires in two minutes");
+					});
+					provider.addListener('AccessTokenExpired', () => {
+						Utils.warn(this, "User session expired, please login again.");
+					});
+					provider.addListener('SilentRenewError', () => {
+						Utils.warn(this, "Renewing the user session failed, you'll be logged out in a minute.");
+					});
 				}
 				else { // noauth/discovery
 					window.history.pushState({reset: true, serverUrl: this.serverUrl, autoConnect: true, skipLogin: true}, "", ".?server=" + this.serverUrl + "&discover=1");
