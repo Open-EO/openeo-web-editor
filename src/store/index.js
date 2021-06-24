@@ -17,6 +17,7 @@ const getDefaultState = () => {
 	return {
 		connection: null,
 		discoveryCompleted: false,
+		isAuthenticated: false,
 		userInfo: {},
 		connectionError: null,
 		discoveryErrors: [],
@@ -58,7 +59,6 @@ export default new Vuex.Store({
 		},
 		isConnected: (state) => state.connection !== null && state.connection.capabilities() !== null,
 		isDiscovered: (state) => state.connection !== null && state.discoveryCompleted,
-		isAuthenticated: (state) => state.connection !== null && state.connection.isAuthenticated(),
 		supportsBilling: (state) => state.connection !== null && state.connection.capabilities().currency() !== null,
 		supportsBillingPlans: (state) => state.connection !== null && state.connection.capabilities().currency() !== null && state.connection.capabilities().listPlans().length > 0,
 		apiVersion: (state) => state.connection !== null ? state.connection.capabilities().apiVersion() : null,
@@ -118,6 +118,8 @@ export default new Vuex.Store({
 				cx.commit('setConnectionError', error);
 				return false;
 			}
+
+			connection.on('authProviderChanged', provider => cx.commit('authenticated', provider !== null));
 
 			// Only commit the connection change after requesting the auth providers
 			// as this indicates that the connection procedure has finished.
@@ -189,14 +191,12 @@ export default new Vuex.Store({
 
 		// Request user account info
 		async describeAccount(cx) {
-			if (cx.getters.supports('describeAccount') && cx.getters.isAuthenticated) {
+			if (cx.getters.supports('describeAccount') && cx.state.isAuthenticated) {
 				var response = await cx.state.connection.describeAccount();
 				cx.commit('userInfo', response);
 			}
 			else {
-				cx.commit('userInfo', {
-					user_id: 'Guest'
-				});
+				cx.commit('userInfo');
 			}
 		},
 
@@ -210,7 +210,7 @@ export default new Vuex.Store({
 		},
 
 		async logout(cx) {
-			if (cx.getters.isAuthenticated) {
+			if (cx.state.isAuthenticated) {
 				// Logout (mostly for OIDC)
 				var authProvider = cx.state.connection.getAuthProvider();
 				if (authProvider !== null) {
@@ -236,7 +236,7 @@ export default new Vuex.Store({
 			state.authProviders = authProviders;
 		},
 		userInfo(state, info) {
-			state.userInfo = info;
+			state.userInfo = Utils.isObject(info) ? info : {};
 		},
 		fileFormats(state, fileFormats) {
 			state.fileFormats = fileFormats;
@@ -280,6 +280,12 @@ export default new Vuex.Store({
 		},
 		addDiscoveryError(state, error) {
 			state.discoveryErrors.push(error);
+		},
+		authenticated(state, isAuthenticated) {
+			state.isAuthenticated = isAuthenticated;
+			if (!isAuthenticated) {
+				state.userInfo = {};
+			}
 		},
 		reset(state) {
 			Object.assign(state, getDefaultState());
