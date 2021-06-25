@@ -152,8 +152,9 @@ export default {
         },
         // Visualizations
         width() {
+            // ToDo: Sizes also defined in Blocks.getBlockSize() - define only in one place!
             if (this.parameters.length > 0) {
-                return this.state.compactMode ? 110 : 200;
+                return this.state.compactMode ? 110 : 220;
             }
             else {
                 return this.state.compactMode ? 60 : 110;
@@ -193,7 +194,7 @@ export default {
                 return "Process Parameter";
             }
             else {
-                return "Output";
+                return "";
             }
         },
         containerClasses() {
@@ -599,6 +600,9 @@ export default {
 
 .inputs {
     flex-grow: 1;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .editComment {
     padding: 0.3em 0.2em;

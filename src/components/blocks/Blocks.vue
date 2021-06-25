@@ -598,7 +598,7 @@ export default {
 
             var width;
             if (inputs > 0) {
-                width = this.state.compactMode ? 110 : 200;
+                width = this.state.compactMode ? 110 : 220;
             }
             else {
                 width = this.state.compactMode ? 60 : 110;
