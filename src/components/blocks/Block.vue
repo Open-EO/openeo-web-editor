@@ -390,7 +390,7 @@ export default {
             return await this.select(!this.selected, false);
         },
         async select(selected = true, unselectOthers = true) {
-            if (this.unselectOthers) {
+            if (unselectOthers) {
                 this.$parent.unselectAll();
             }
             this.$emit('update:selected', selected);
@@ -405,7 +405,7 @@ export default {
             dim.y = dim.offsetTop-blocksDim.offsetTop;
             return dim;
         },
-        edgesChanged(parameter, edges, el) {
+        edgesChanged(parameter, edges) {
             parameter.setRefs(edges.map(edge => edge.parameter1.value));
         },
         showParameters(parameterName = null) {
@@ -506,6 +506,7 @@ export default {
     background-color:#fafafa;
     opacity:0.8;
     font-size:14px;
+    user-select:none;
     -moz-user-select:none;
     -khtml-user-select:none;
     -webkit-user-select:none;
