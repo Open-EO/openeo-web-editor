@@ -137,7 +137,7 @@ class Utils extends VueUtils {
 	}
 
 	static isUrl(url) {
-		return (typeof url === 'string' && url.length > 0 && url.match(/^https?:\/\//i) !== null);
+		return (VueUtils.hasText(url) && url.match(/^https?:\/\//i) !== null);
 	}
 
 	static extentToBBox(extent) {

@@ -21,7 +21,7 @@
 import ParameterDataTypes from '../ParameterDataTypes.vue';
 import Utils from '../../utils.js';
 import Description from '@openeo/vue-components/components/Description.vue';
-import { ProcessParameter } from '../blocks/processSchema';
+import { ProcessParameter } from '@openeo/js-commons';
 
 export default {
 	name: 'FileFormatOptionsEditor',

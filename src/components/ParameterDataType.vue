@@ -92,7 +92,6 @@ export default {
 		},
 		schema: Object,
 		value: {},
-		processId: String,
 		context: {},
 		parent: {}
 	},
@@ -215,7 +214,7 @@ export default {
 		processParameters() {
 			let callbackParams = this.schema.getCallbackParameters(); // higher prio
 			let parentParams = []; // lower prio;
-			if (Utils.isObject(this.parent) && typeof this.parent.getPgParameters === 'function') { // instead of "instanceof Blocks" to avoid import
+			if (Utils.isObject(this.parent) && typeof this.parent.getPgParameters === 'function') { // instead of "instanceof ModelBuilder" to avoid import
 				parentParams = this.parent.getPgParameters().map(block => block.spec);
 			}
 			let overridingParams = callbackParams.map(p => p.name);

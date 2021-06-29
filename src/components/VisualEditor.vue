@@ -25,7 +25,7 @@
 		<div class="editorSplitter">
 			<DiscoveryToolbar v-if="(showDiscoveryToolbar || isFullScreen) && editable" class="discoveryToolbar" :onAddProcess="insertProcess" />
 			<div class="graphBuilder" @drop="onDrop($event)" @dragover="allowDrop($event)">
-				<Blocks
+				<ModelBuilder
 					ref="blocks"
 					:editable="editable"
 					:id="id"
@@ -51,7 +51,7 @@
 </template>
 
 <script>
-import Blocks from './blocks/Blocks.vue';
+import ModelBuilder from '@openeo/vue-components/components/ModelBuilder.vue';
 import Utils from '../utils.js';
 import DiscoveryToolbar from './DiscoveryToolbar.vue';
 import ParameterModal from './modals/ParameterModal.vue'; // Add a paremeter modal to each visual editor, otherwise we can't open a parameter modal over a parameter modal (e.g. edit the parameters of a callback)
@@ -62,7 +62,7 @@ export default {
 	name: 'VisualEditor',
 	mixins: [EventBusMixin],
 	components: {
-		Blocks,
+		ModelBuilder,
 		DiscoveryToolbar,
 		ParameterModal,
 		FullscreenButton,
@@ -171,8 +171,8 @@ export default {
 		showExpressionModal() {
 			this.$refs.expressionModal.show(this.value, this.$refs.blocks.getPgParameters());
 		},
-		openParameterEditor(parameters, values, title = "Edit", isEditable = true, selectParameterName = null, saveCallback = null, processId = null, parent = null) {
-			this.$refs.parameterModal.show(title, parameters, values, isEditable, saveCallback, null, processId, selectParameterName, parent);
+		openParameterEditor(parameters, values, title = "Edit", isEditable = true, selectParameterName = null, saveCallback = null, parent = null) {
+			this.$refs.parameterModal.show(title, parameters, values, isEditable, saveCallback, null, selectParameterName, parent);
 		},
 
 		confirmClear() {
@@ -251,29 +251,6 @@ export default {
 
 .compactMode {
 	color: green;
-}
-
-.blocks_js_editor {
-	width: 100%;
-	height: 100%;
-	position: relative;
-}
-
-.blocks_js_editor .blocks {
-	overflow: hidden;
-}
-
-.blocks_js_editor .canvas {
-	position: absolute;
-	z-index: 1;
-}
-
-.blocks_js_editor .blocks {
-	overflow: hidden;
-	position: absolute;
-	z-index: 3;
-	width: 100%;
-	height: 100%;
 }
 
 @keyframes glowing {
