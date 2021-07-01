@@ -1,5 +1,5 @@
 <template>
-	<button type="button" @click="toggleFullscreen" :title="isFullscreen ? 'Close fullscreen' : 'Show fullscreen'">
+	<button v-show="element" type="button" @click="toggleFullscreen" :title="isFullscreen ? 'Close fullscreen' : 'Show fullscreen'">
 		<span v-show="isFullscreen"><i class="fas fa-compress"></i></span>
 		<span v-show="!isFullscreen"><i class="fas fa-expand"></i></span>
 	</button>
@@ -11,10 +11,7 @@ import Utils from '../utils.js';
 export default {
 	name: 'FullscreenButton',
 	props: {
-		element: {
-			type: [String, Function, Object],
-			required: true
-		}
+		element: {}
 	},
 	data() {
 		return {
