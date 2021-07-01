@@ -8,12 +8,14 @@
 <script>
 import Utils from '../utils.js';
 
-// ToDo: Add key listeners for F11(?) and ESC (closing)
 export default {
 	name: 'FullscreenButton',
-	props: [
-		"element"
-	],
+	props: {
+		element: {
+			type: [String, Function, Object],
+			required: true
+		}
+	},
 	data() {
 		return {
 			isFullscreen: false,
@@ -41,7 +43,7 @@ export default {
 		...Utils.mapMutations('editor', ['openModal', 'closeModal']),
 		onkeyDown(e) {
 			// ToDo: This is very bugged and needs some attention
-			if(e.key === "F11" || (this.isFullscreen && e.key === "Escape")) {
+			if(this.isFullscreen && (e.key === "F11" || e.key === "Escape")) {
 				this.toggleFullscreen();
 				e.preventDefault();
 				e.stopPropagation();
