@@ -199,7 +199,7 @@ export default {
 			// Create the list of arguments
 			let argList = [];
 			let params = Array.isArray(process.parameters) ? process.parameters : [];
-			for(let parameter of process.parameters) {
+			for(let parameter of params) {
 				let value = convertValue(node.getRawArgument(parameter.name));
 
 				if (isArrayData && Array.isArray(value) && parameter.name === 'data') {

@@ -310,7 +310,7 @@ export default {
 <style>
 #ide {
 	margin-top: 80px;
-	height: calc(100vh - 80px);
+	height: calc(100% - 80px);
 	background-color: white;
 }
 #ide main, #workspace, #viewer, #wrapper {

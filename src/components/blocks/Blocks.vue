@@ -2,12 +2,11 @@
     <div ref="div" :id="id" class="blocks_js_editor" tabindex="0"
         @mousemove="onMouseMove($event)"
         @mousedown="onMouseDown($event)"
-        @mousewheel.prevent="onMouseWheel($event)"
+        @wheel.prevent="onMouseWheel($event)"
         @keydown="onKeyDown($event)"
         @focus="highlight(true)"
-        @blur="highlight(false)"
-        @DOMMouseScroll.prevent="onMouseWheel($event)">
-        <!-- @mousewheel for all brothers except Firefox, which needs @DOMMouseScroll - tabindex is to allow focus for delete keystroke etc -->
+        @blur="highlight(false)">
+        <!-- tabindex is to allow focus for delete keystroke etc -->
         <svg xmlns="http://www.w3.org/2000/svg" version="1.1" class="canvas">
             <Edge v-for="edge in edges" ref="edges" :key="edge.id"
                 v-bind="edge" :state="state"
@@ -71,7 +70,6 @@ const selectionChangeWatcher = function (newVal, oldVal) {
         this.$emit('selectionChanged', this.selectedBlocks, this.selectedEdges);
     }
 };
-const historySize = 30;
 
 export default {
     name: 'Blocks',
@@ -103,6 +101,10 @@ export default {
         pgParameters: {
             type: Array,
             default: () => []
+        },
+        historySize: {
+            type: Number,
+            default: 30
         }
     },
     data() {
@@ -363,8 +365,7 @@ export default {
         onMouseWheel(event) {
             var dX = this.state.mouse[0] - this.state.center[0];
             var dY = this.state.mouse[1] - this.state.center[1];
-            var wheelDelta = Math.max(-1, Math.min(1, event.wheelDelta || -event.detail)); // Browser compatibility, see https://embed.plnkr.co/plunk/skVoXt
-            var deltaScale = Math.pow(1.1, wheelDelta);
+            var deltaScale = Math.pow(1.1, Math.sign(event.deltaY)*-1);
             this.moveCenter(-dX*(deltaScale-1), -dY*(deltaScale-1));
             this.state.scale *= deltaScale;
         },
@@ -598,7 +599,7 @@ export default {
 
             var width;
             if (inputs > 0) {
-                width = this.state.compactMode ? 110 : 200;
+                width = this.state.compactMode ? 110 : 220;
             }
             else {
                 width = this.state.compactMode ? 60 : 110;

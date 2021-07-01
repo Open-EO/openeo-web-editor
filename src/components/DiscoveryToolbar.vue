@@ -22,7 +22,7 @@
 							<strong :title="item.id">{{ item.id }}</strong>
 							<small v-if="item.summary" :title="item.summary">{{ item.summary }}</small>
 						</div>
-						<button class="discovery-button" type="button" @click="insertProcess(e)" title="Insert"><i class="fas fa-plus"></i></button>
+						<button class="discovery-button" type="button" @click="insertProcess(item)" title="Insert"><i class="fas fa-plus"></i></button>
 					</div>
 				</template>
 			</Processes>

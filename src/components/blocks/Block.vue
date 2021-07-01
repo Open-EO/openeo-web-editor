@@ -152,8 +152,9 @@ export default {
         },
         // Visualizations
         width() {
+            // ToDo: Sizes also defined in Blocks.getBlockSize() - define only in one place!
             if (this.parameters.length > 0) {
-                return this.state.compactMode ? 110 : 200;
+                return this.state.compactMode ? 110 : 220;
             }
             else {
                 return this.state.compactMode ? 60 : 110;
@@ -193,7 +194,7 @@ export default {
                 return "Process Parameter";
             }
             else {
-                return "Output";
+                return "";
             }
         },
         containerClasses() {
@@ -389,7 +390,7 @@ export default {
             return await this.select(!this.selected, false);
         },
         async select(selected = true, unselectOthers = true) {
-            if (this.unselectOthers) {
+            if (unselectOthers) {
                 this.$parent.unselectAll();
             }
             this.$emit('update:selected', selected);
@@ -404,7 +405,7 @@ export default {
             dim.y = dim.offsetTop-blocksDim.offsetTop;
             return dim;
         },
-        edgesChanged(parameter, edges, el) {
+        edgesChanged(parameter, edges) {
             parameter.setRefs(edges.map(edge => edge.parameter1.value));
         },
         showParameters(parameterName = null) {
@@ -505,6 +506,7 @@ export default {
     background-color:#fafafa;
     opacity:0.8;
     font-size:14px;
+    user-select:none;
     -moz-user-select:none;
     -khtml-user-select:none;
     -webkit-user-select:none;
@@ -599,6 +601,9 @@ export default {
 
 .inputs {
     flex-grow: 1;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .editComment {
     padding: 0.3em 0.2em;

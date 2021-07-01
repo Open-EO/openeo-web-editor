@@ -5,8 +5,8 @@
             <span v-show="unspecified" class="unspecified" title="Parameter is likely unsupported!">
                 <i class="fas fa-exclamation-triangle"></i>
             </span>
-            {{ displayLabel }}<template v-if="displayValue.length">: </template>
-            <span v-html="displayValue"></span>
+            <span class="label">{{ displayLabel }}</span><template v-if="displayValue.length">: </template>
+            <span class="value" v-html="displayValue"></span>
         </span>
         <div v-if="output" ref="circle" :class="circleClasses" v-on="circleListeners"></div>
     </div>
@@ -147,7 +147,7 @@ export default {
             return classes;
         },
         displayValue() {
-            var maxLength = 25 - this.displayLabel.length;
+            var maxLength = 38 - this.displayLabel.length;
             var formattedValue = null;
             if (this.isEditable && !this.state.compactMode && !Utils.isRef(this.value) && typeof this.value !== 'undefined') {
                 formattedValue = this.formatValue(this.value, maxLength, true);
@@ -167,7 +167,7 @@ export default {
             if (this.output && this.state.compactMode) {
                 return '';
             }
-            else if (typeof this.label === 'string' && this.label.length > 0) {
+            else if (typeof this.label === 'string' && (this.label.length > 0 || this.output)) {
                 return this.label;
             }
             else {
@@ -397,79 +397,98 @@ export default {
         getEdgeCount() {
             return this.edges.length;
         },
-        formatProcess(pg) {
+        formatProcess(pg, maxLength) {
             // ToDO: Earlier this was always a ProcessGraph Object, but that seems no longer to be the case. How to clean-up?
             if (pg instanceof ProcessGraph && pg.getNodeCount() === 1) {
-                return Utils.htmlentities(pg.getResultNode().process_id);
+                return this.formatValue(pg.getResultNode().process_id, maxLength);
             }
             var nodes = Object.values(pg.process_graph);
             if (nodes.length === 1) {
-                return Utils.htmlentities(nodes[0].process_id);
+                return this.formatValue(nodes[0].process_id, maxLength);
             }
             else {
                 return 'Process';
             }
         },
         formatValue(value, maxLength, html = true) {
-            var formattedValue = null;
             if (typeof value === 'object') {
                 if (value === null) {
-                    formattedValue = 'N/A';
+                    return 'n/a';
                 }
                 else if (Array.isArray(value)) {
-                    formattedValue = this.formatArray(value, maxLength, html);
+                    return this.formatArray(value, maxLength, html);
                 }
                 else {
-                    formattedValue = this.formatObject(value, html);
+                    return this.formatObject(value, maxLength, html);
                 }
             }
             else if (typeof value === 'string') {
                 if (value.length > maxLength) {
-                    var text = Utils.htmlentities(value.substr(0, maxLength)) + '…';
-                    formattedValue = html ? '<span title="' + Utils.htmlentities(value) + '">' + text + '…</span>' : text;
+                    var text = Utils.htmlentities(value.substr(0, maxLength));
+                    return html ? text + '<span title="' + Utils.htmlentities(value) + '">…</span>' : text;
                 }
                 else {
-                    formattedValue = Utils.htmlentities(value);
+                    return Utils.htmlentities(value);
                 }
             }
             else if (typeof value === 'boolean') {
-                formattedValue = value ? '✔️' : '❌';
+                return value ? '✔️' : '❌';
             }
             else if (typeof value === 'number') {
-                formattedValue = value.toString();
+                return value.toString();
             }
             else {
-                formattedValue = Utils.htmlentities(JSON.stringify(value));
+                return Utils.htmlentities(JSON.stringify(value));
             }
-            return formattedValue;
         },
-        formatArray(value, maxLength, html = true) {
-            var formatted = value.map(v => this.formatValue(v, 25, false)).join(", ");
-            var unformatted = Utils.htmlentities_decode(formatted);
-            if (unformatted.length > 0 && unformatted.length <= maxLength) {
-                return "[" + formatted + "]";
+        formatArray(values, maxLength, html = true) {
+            let parts = [];
+            for(let i in values) {
+                let value = values[i];
+                let formatted = this.formatValue(value, 10, html);
+                let unformatted = Utils.htmlentities_decode(this.formatValue(value, 10, false));
+
+                if (unformatted.length > maxLength) {
+                    if (parts.length === 0) {
+                        return this.formatArraySimple(values, 'List(' + values.length + ')');
+                    }
+                    else {
+                        parts.push(this.formatArraySimple(values, '…'));
+                        break;
+                    }
+                }
+
+                parts.push(formatted);
+                maxLength -= unformatted.length + 2;
+            }
+            
+            return parts.join(", ");
+        },
+        formatArraySimple(values, text, html = true) {
+            if (html && values.length < 10) {
+                let title = values.map(v => this.formatValue(v, 25, false)).join(', ');
+                return '<span title="' + title + '">' + text + '</span>';
             }
             else {
-                var text = 'List(' + value.length + ')';
-                return html ? '<span title="' + formatted + '">' + text + '</span>' : text;
+                return text;
             }
         },
-        formatObject(value, html = true) {
+        formatObject(value, maxLength, html = true) {
             if (Object.keys(value).length === 0) {
                 return 'None';
             }
             // ToDO: Earlier this was always a ProcessGraph Object, but that seems no longer to be the case. How to clean-up?
             else if (value instanceof ProcessGraph || Utils.isObject(value.process_graph)) {
-                return this.formatProcess(value);
+                return this.formatProcess(value, maxLength);
             }
             else if (Utils.isRef(value)) {
-                return Utils.formatRef(value);
+                return this.formatValue(Utils.formatRef(value), maxLength);
             }
             else if (typeof value.west !== 'undefined' && typeof value.east !== 'undefined' && typeof value.south !== 'undefined' && typeof value.north !== 'undefined') {
-                return 'Bounding Box';
+                return maxLength >= 12 ? 'Bounding Box' : 'BBox';
             }
             else if (Utils.detectGeoJson(value)) {
-                return value.type;
+                return this.formatValue(value.type, maxLength);
             }
 
             // Fallback to default
@@ -479,25 +498,29 @@ export default {
 }
 </script>
 
+<style>
+.block .connector span[title] {
+    cursor: help;
+}
+</style>
 <style scoped>
 .block_collection .field_id { /* Hide collection ID as it's shown in the title */
     display: none;
 }
-
-.output {
-    text-align: right;
-}
-
 .connector {
     font-size: 0.9em;
     margin: 0.2em 0;
-    background-repeat: no-repeat;
-    width: 100%;
-    overflow: hidden;
     white-space: nowrap;
+}
+.input {
+    max-width: 100%;
+    overflow: hidden;
     text-overflow: ellipsis;
 }
-.input.connector {
+.output {
+    text-align: right;
+}
+.input .label, .circle {
     cursor: pointer;
 }
 .connector.noValue {
@@ -510,7 +533,6 @@ export default {
 .scale_xs .connector .text {
     display: none;
 }
-
 .circle {
     width: 0.8em;
     height: 0.8em;
@@ -519,21 +541,14 @@ export default {
     background-color: transparent;
     display: inline-block;
 }
-
 .block_result .field_output .circle {
     background-color: #888;
     cursor: auto;
 }
-.field_output .circle {
-    cursor: pointer;
-}
-
 .circle.io_active {
     background-color: #FFC800;
 }
-
 .circle.io_selected {
     background-color: #00C800 !important;
 }
-
 </style>

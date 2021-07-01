@@ -102,7 +102,6 @@ export default {
 		};
 	},
 	computed: {
-		...Utils.mapGetters(['processRegistry']),
 		type() {
 			return this.schema.dataType();
 		},
