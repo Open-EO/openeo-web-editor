@@ -2,12 +2,11 @@
     <div ref="div" :id="id" class="blocks_js_editor" tabindex="0"
         @mousemove="onMouseMove($event)"
         @mousedown="onMouseDown($event)"
-        @mousewheel.prevent="onMouseWheel($event)"
+        @wheel.prevent="onMouseWheel($event)"
         @keydown="onKeyDown($event)"
         @focus="highlight(true)"
-        @blur="highlight(false)"
-        @DOMMouseScroll.prevent="onMouseWheel($event)">
-        <!-- @mousewheel for all brothers except Firefox, which needs @DOMMouseScroll - tabindex is to allow focus for delete keystroke etc -->
+        @blur="highlight(false)">
+        <!-- tabindex is to allow focus for delete keystroke etc -->
         <svg xmlns="http://www.w3.org/2000/svg" version="1.1" class="canvas">
             <Edge v-for="edge in edges" ref="edges" :key="edge.id"
                 v-bind="edge" :state="state"
@@ -31,7 +30,7 @@
 import Block from './Block.vue';
 import Edge from './Edge.vue';
 import Utils from '../../utils.js';
-import { JsonSchemaValidator, ProcessGraph, ProcessRegistry } from '@openeo/js-processgraphs';
+import { JsonSchemaValidator, ProcessGraph, ProcessRegistry, Utils as PgUtils } from '@openeo/js-processgraphs';
 import Vue from 'vue';
 import boxIntersectsBox from 'intersects/box-box';
 import boxIntersectsLine from 'intersects/box-line';
@@ -44,7 +43,7 @@ Emits:
 - showProcess(id): Show process by id
 - showCollection(id): Show collection by id
 - showSchema(name, schema): Show JSON schema
-- editParameters(parameters, values, title = "Edit", isEditable = true, selectParameterName = null, saveCallback(data) = null, processId = null): Show the parameter editor
+- editParameters(parameters, values, title = "Edit", isEditable = true, selectParameterName = null, saveCallback(data) = null, processId = null, parentBlocks = null): Show the parameter editor
 - compactMode(enable): Informs about the current state of compact mode.
 - input(value) - The value has been updated
 - historyChanged(history, undoIndex = null, redoIndex = null) - The history has been changed
@@ -71,7 +70,6 @@ const selectionChangeWatcher = function (newVal, oldVal) {
         this.$emit('selectionChanged', this.selectedBlocks, this.selectedEdges);
     }
 };
-const historySize = 30;
 
 export default {
     name: 'Blocks',
@@ -103,6 +101,10 @@ export default {
         pgParameters: {
             type: Array,
             default: () => []
+        },
+        historySize: {
+            type: Number,
+            default: 30
         }
     },
     data() {
@@ -363,8 +365,7 @@ export default {
         onMouseWheel(event) {
             var dX = this.state.mouse[0] - this.state.center[0];
             var dY = this.state.mouse[1] - this.state.center[1];
-            var wheelDelta = Math.max(-1, Math.min(1, event.wheelDelta || -event.detail)); // Browser compatibility, see https://embed.plnkr.co/plunk/skVoXt
-            var deltaScale = Math.pow(1.1, wheelDelta);
+            var deltaScale = Math.pow(1.1, Math.sign(event.deltaY)*-1);
             this.moveCenter(-dX*(deltaScale-1), -dY*(deltaScale-1));
             this.state.scale *= deltaScale;
         },
@@ -598,7 +599,7 @@ export default {
 
             var width;
             if (inputs > 0) {
-                width = this.state.compactMode ? 110 : 200;
+                width = this.state.compactMode ? 110 : 220;
             }
             else {
                 width = this.state.compactMode ? 60 : 110;
@@ -653,11 +654,41 @@ export default {
             edge.parameter2.eraseEdge(edge);
             this.$delete(this.edges, this.edges.indexOf(edge));
         },
+
+        hiddenParameterRefs(block, parameterName) {
+            if (block.type !== 'process') {
+                return null;
+            }
+            for (let param in block.value.arguments) {
+                let value = block.value.arguments[param];
+                if (Utils.isObject(value) && Utils.isObject(value.process_graph)) {
+                    let refs = PgUtils.getRefs(value, true, true);
+                    if (refs.find(r => r.from_parameter === parameterName)) {
+                        return param;
+                    }
+                }
+            }
+            return null;
+        },
             
         /**
          * Remove a block
          */
         async removeBlock(block) {
+            // Check if the parameter for this block is used in child processes (callbacks).
+            // Then don't delete, but give error instead.
+            if (block.type === 'parameter') {
+                let param = null;
+                let conflictBlock = this.blocks.find(sub => {
+                    param = this.hiddenParameterRefs(sub, block.id);
+                    return (param !== null);
+                });
+                if (conflictBlock) {
+                    throw new Error(`Parameter is still used in '#${conflictBlock.id}', parameter '${param}'. Only unused parameters can be deleted.`);
+                }
+            }
+
+            // now start deleting the block
             return await this.startTransaction(async () => {
                 var i = this.blocks.findIndex(b => b.id == block.id);
                 if (i < 0) {
@@ -941,7 +972,6 @@ export default {
             let size = this.getBlockSize({}); // Estimate base size for an empty block
             let position = [0,0];
             for(var i in params) {
-                let param = params[i];
                 position = [
                     -size[0] - MARGIN,
                     i * (size[1] + MARGIN)
@@ -1058,8 +1088,9 @@ export default {
                 id = this.nextBlockId;
                 this.nextBlockId++;
             }
-            else if (!isNaN(parseInt(id))) {
-                this.nextBlockId = Math.max(this.nextBlockId, parseInt(id)+1);
+            let int = Number.parseInt(id);
+            if (!Number.isNaN(int)) {
+                this.nextBlockId = Math.max(this.nextBlockId, int+1);
             }
             return id;
         },

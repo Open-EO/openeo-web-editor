@@ -60,8 +60,8 @@ export default class AreaSelect {
                 var bottomLeft = this.map.getPixelFromCoordinate(ws);
                 var topRight = this.map.getPixelFromCoordinate(en);
 
-                this.width = parseInt(Math.abs(bottomLeft[0] - topRight[0]));
-                this.height = parseInt(Math.abs(bottomLeft[1] - topRight[1]));
+                this.width = Number.parseInt(Math.abs(bottomLeft[0] - topRight[0]));
+                this.height = Number.parseInt(Math.abs(bottomLeft[1] - topRight[1]));
                 this.render();
             }
         };

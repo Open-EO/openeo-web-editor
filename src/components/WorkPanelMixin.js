@@ -37,7 +37,7 @@ export default (namespace, singular, plural) => {
 			},
 			startSyncTimer() {
 				if (this.supportsList && this.syncTimer === null) {
-					this.syncTimer = setInterval(this.updateData, this.getSyncInterval()*1000);
+					this.syncTimer = setInterval(this.updateData, this.getSyncInterval());
 				}
 			},
 			stopSyncTimer() {
@@ -47,7 +47,7 @@ export default (namespace, singular, plural) => {
 				}
 			},
 			getSyncInterval() {
-				return 2*60; // Refresh data every two minutes
+				return this.$config.dataRefreshInterval*60*1000; // Refresh data every x minutes
 			},
 			refreshElement(obj, callback = null) {
 				var old = Object.assign({}, obj);
@@ -61,7 +61,7 @@ export default (namespace, singular, plural) => {
 			},
 			updateData() {
 				var table = this.getTable();
-				var nextSyncTime = Date.now() - this.getSyncInterval() * 1000;
+				var nextSyncTime = Date.now() - this.getSyncInterval();
 				if (!table || this.lastSyncTime > nextSyncTime) {
 					return;
 				}

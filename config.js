@@ -7,7 +7,7 @@ export default {
 
 	// Defaults for notifications
 	snotifyDefaults: {
-		timeout: 5000,
+		timeout: 10000,
 		titleMaxLength: 30,
 		bodyMaxLength: 120,
 		showProgressBar: true,
@@ -21,5 +21,10 @@ export default {
 	],
 
 	// Show a warning if HTTP is used instead of HTTPS
-	showHttpWarning: true
+	showHttpWarning: true,
+
+	// refresh interval for jobs/user data/services etc. in minutes - doesn't apply to logs.
+	// It's recommended to use a value between 1 and 5 minutes.
+	dataRefreshInterval: 2
+	
 };

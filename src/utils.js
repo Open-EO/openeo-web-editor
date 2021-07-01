@@ -1,16 +1,15 @@
-
-import Config from '../config';
 import VueUtils from '@openeo/vue-components/utils';
 import { Job, Service, UserProcess } from '@openeo/js-client';
 import { mapState, mapActions, mapMutations, mapGetters } from 'vuex';
-import { Formatters } from '@radiantearth/stac-fields';
+import contentType from 'content-type';
 
 class Utils extends VueUtils {
 
 	static exception(vm, error, alt) {
-		console.error(error); 
+		console.error(error);
+		var buttons = [];
 		var title = null; 
-		var message = alt; 
+		var message = alt;
 		if (Utils.isObject(error) && typeof error.message === 'string') {
 			if (error.code > 0) {
 				title = "Error #" + error.code; 
@@ -18,39 +17,54 @@ class Utils extends VueUtils {
 			else {
 				title = alt; 
 			}
-			message = error.message; 
+			message = error.message;
+
+			let log = {
+				id: error.id,
+				code: error.code,
+				level: 'error',
+				message: error.message,
+				time: new Date().toISOString(),
+				data: error,
+				links: error.links
+			};
+			// ToDo: This doesn't work if not authenticated / connected yet
+			buttons.push({
+				text: 'Show Details',
+				action: () => vm.emit('viewLogs', [log], 'Error', 'fa-bomb')
+			});
 		}
 		else if (typeof error === 'string') {
 			message = error; 
 			title = alt; 
 		}
-		Utils.error(vm, message, title); 
+		var typeDefaults =  {
+			closeOnClick: false, 
+			buttons
+		}; 
+		vm.$snotify.error(message, title, Object.assign({}, vm.$config.snotifyDefaults, typeDefaults)); 
 	} 
 	static error(vm, message, title = null) {
-		vm.$snotify.error(message, title, Config.snotifyDefaults); 
+		vm.$snotify.error(message, title, vm.$config.snotifyDefaults); 
 	} 
 	static info(vm, message, title = null) {
-		vm.$snotify.info(message, title, Config.snotifyDefaults); 
+		vm.$snotify.info(message, title, vm.$config.snotifyDefaults); 
 	} 
 	static ok(vm, message, title = null) {
-		var typeDefaults =  {
-			timeout:2000
-		}; 
-		vm.$snotify.success(message, title, Object.assign( {}, Config.snotifyDefaults, typeDefaults)); 
+		vm.$snotify.success(message, title, vm.$config.snotifyDefaults); 
 	}
 	static confirm(vm, message, buttons = []) {
 		var typeDefaults =  {
-			timeout:10000, 
-			closeOnClick:false, 
-			buttons:buttons
+			closeOnClick: false, 
+			buttons: buttons
 		}; 
-		vm.$snotify.confirm(message, null, Object.assign( {}, Config.snotifyDefaults, typeDefaults)); 
+		vm.$snotify.confirm(message, null, Object.assign({}, vm.$config.snotifyDefaults, typeDefaults)); 
 	}
 
 	static blobToText(blob, callback) {
 		var reader = new FileReader(); 
 		reader.onload = callback; 
-		reader.readAsText(blob); 
+		reader.readAsText(blob.blob); 
 	}
 
 	static isChildOfModal(that) {
@@ -76,26 +90,30 @@ class Utils extends VueUtils {
 		}
 
 		let ext = null;
-		switch(type.toLowerCase()) {
-			case 'application/json':
-			case 'application/zip':
-			case 'image/png':
-			case 'image/jpg':
-			case 'image/jpeg':
-			case 'image/gif':
-			case 'image/tiff':
-			case 'text/csv':
-			case 'text/html':
-				ext = type.split('/')[1];
-				break;
-			case 'text/plain':
-				ext = 'txt';
-				break;
-			case 'application/netcdf':
-			case 'application/x-netcdf':
-				ext = 'nc'
-				break;
-		}
+		try {
+			let mime = contentType.parse(type);
+			switch(mime.type.toLowerCase()) {
+				case 'application/json':
+				case 'application/zip':
+				case 'image/png':
+				case 'image/jpg':
+				case 'image/jpeg':
+				case 'image/gif':
+				case 'image/tiff':
+				case 'text/csv':
+				case 'text/html':
+					ext = type.split('/')[1];
+					break;
+				case 'text/plain':
+					ext = 'txt';
+					break;
+				case 'application/netcdf':
+				case 'application/x-netcdf':
+					ext = 'nc'
+					break;
+			}
+
+		} catch (error) {}
 
 		if (ext !== null) {
 			return filename + '.' + ext;
@@ -103,14 +121,6 @@ class Utils extends VueUtils {
 		else {
 			return filename;
 		}
-	}
-
-	static formatDateTime(value) {
-		return Formatters.formatTimestamp(value);
-	}
-
-	static formatFileSize(value) {
-		return Formatters.formatFileSize(value);
 	}
 
 	static replaceParam(url, paramName, paramValue) {

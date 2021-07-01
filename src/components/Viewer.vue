@@ -8,7 +8,7 @@
 			</Tab>
 		</template>
 		<template #dynamic="{ tab }">
-			<LogViewer v-if="tab.icon === 'fa-bug'" :data="tab.data" />
+			<LogViewer v-if="tab.icon === 'fa-bug' || tab.icon === 'fa-bomb'" :data="tab.data" />
 			<ImageViewer v-else-if="tab.icon === 'fa-image'" :data="tab.data" />
 			<DataViewer v-else :data="tab.data" />
 		</template>
@@ -26,8 +26,6 @@ import LogViewer from './LogViewer.vue';
 import MapViewer from './MapViewer.vue'
 import contentType from 'content-type';
 import { OpenEO } from '@openeo/js-client';
-import Config from '../../config';
-
 export default {
 	name: 'Viewer',
 	mixins: [EventBusMixin],
@@ -83,7 +81,7 @@ export default {
 				})
 				.catch(error => {
 					let title = "Processing Error";
-					if (typeof error.message === 'string' && error.message.length > Config.snotifyDefaults.bodyMaxLength) {
+					if (typeof error.message === 'string' && error.message.length > this.$config.snotifyDefaults.bodyMaxLength) {
 						this.showLogs([{
 							id: error.id || "unknown",
 							code: error.code || undefined,
@@ -104,10 +102,10 @@ export default {
 				this.showViewer(asset, this.makeTitle(key, job.id, true));
 			}
 		},
-		showLogs(resource) {
-			let title = Array.isArray(resource) ? 'Logs' : Utils.getResourceTitle(resource, true);
+		showLogs(resource, defaultTitle = 'Logs', faIcon = 'fa-bug') {
+			let title = Array.isArray(resource) ? defaultTitle : Utils.getResourceTitle(resource, true);
 			this.$refs.tabs.addTab(
-				title, "fa-bug", resource, null, true, true,
+				title, faIcon, resource, null, true, true,
 				tab => this.onShow(tab),
 				tab => this.onHide(tab)
 			);
@@ -161,7 +159,12 @@ export default {
 				Utils.error(this, "Sorry, can't detect content type.");
 			}
 
-			Object.assign(data, contentType.parse(data.type));
+			try {
+				let mime = contentType.parse(data.type);
+				data.type = mime.type;
+				data.parameters = mime.parameters;
+			} catch (error) {}
+
 			switch(data.type) {
 				case 'image/png':
 				case 'image/jpg':
@@ -171,7 +174,7 @@ export default {
 					break;
 				case 'application/json':
 				case 'text/plain':
-				case 'text/html':
+				case 'text/csv':
 					this.$refs.tabs.addTab(this.makeTitle(title, "Data"), "fa-database", data, null, true, true);
 					break;
 				case 'image/tiff':

@@ -29,7 +29,7 @@
 		<!-- GeoJSON -->
 		<MapGeoJsonEditor v-else-if="type === 'geojson'" v-model="state" :key="type" :id="name + '_geojson'" :editable="editable" class="geoJsonEditor"></MapGeoJsonEditor>
 		<!-- Process Editor -->
-		<Editor v-else-if="type === 'process-graph'" class="callbackEditor" :id="name" :editable="editable" :pgParameters="schema.getCallbackParameters()" :showDiscoveryToolbar="true" v-model="state" :defaultValue="editorDefaultValue" />
+		<Editor v-else-if="type === 'process-graph'" class="callbackEditor" :id="name" :editable="editable" :pgParameters="processParameters" :showDiscoveryToolbar="true" v-model="state" :defaultValue="editorDefaultValue" />
 		<!-- Output format options -->
 		<FileFormatOptionsEditor v-else-if="type === 'output-format-options' || type === 'input-format-options'" ref="fileFormatOptionsEditor" :type="type" v-model="state" :format="dependency"></FileFormatOptionsEditor>
 		<!-- Budget -->
@@ -45,7 +45,7 @@
 		<!-- Boolean -->
 		<input class="fieldValue" v-else-if="type === 'boolean'" v-model="state" type="checkbox" :name="name" :disabled="!editable" />
 		<!-- Integer / Number -->
-		<input class="fieldValue" v-else-if="type === 'integer'" v-model.number="state" type="number" :min="numericMin" :max="numericMax" :step="numericStep" :name="name" :disabled="!editable" />
+		<input class="fieldValue" v-else-if="type === 'integer' || type === 'number'" v-model.number="state" type="number" :min="numericMin" :max="numericMax" :step="numericStep" :name="name" :disabled="!editable" />
 		<!-- URL -->
 		<input class="fieldValue" v-else-if="type === 'url' || type === 'uri'" v-model="state" type="url" :name="name" :disabled="!editable" />
 		<!-- Objects / Arrays -->
@@ -56,7 +56,6 @@
 </template>
 
 <script>
-import { ProcessGraph } from '@openeo/js-processgraphs';
 import EventBusMixin from './EventBusMixin.vue';
 
 import ObjectEditor from './datatypes/ObjectEditor.vue';
@@ -94,7 +93,8 @@ export default {
 		schema: Object,
 		value: {},
 		processId: String,
-		context: {}
+		context: {},
+		parent: {}
 	},
 	data() {
 		return {
@@ -102,7 +102,6 @@ export default {
 		};
 	},
 	computed: {
-		...Utils.mapGetters(['processRegistry']),
 		type() {
 			return this.schema.dataType();
 		},
@@ -180,7 +179,8 @@ export default {
 		},
 		newValue() {
 			if (this.type === 'number') {
-				return Number.isNaN(this.state) ? null : Number.parseFloat(this.state);
+				var num = Number.parseFloat(this.state);
+				return Number.isNaN(num) ? null : num;
 			}
 			else if (this.type === 'integer') {
 				var num = Number.parseInt(this.state);
@@ -211,6 +211,16 @@ export default {
 				default:
 					return undefined;
 			}
+		},
+		processParameters() {
+			let callbackParams = this.schema.getCallbackParameters(); // higher prio
+			let parentParams = []; // lower prio;
+			if (Utils.isObject(this.parent) && typeof this.parent.getPgParameters === 'function') { // instead of "instanceof Blocks" to avoid import
+				parentParams = this.parent.getPgParameters().map(block => block.spec);
+			}
+			let overridingParams = callbackParams.map(p => p.name);
+			let filteredParentParams = parentParams.filter(p => !overridingParams.includes(p.name));
+			return callbackParams.concat(filteredParentParams);
 		}
 	},
 	watch: {

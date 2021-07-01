@@ -10,7 +10,7 @@
 							<Description :description="param.description" />
 						</div>
 					</label>
-					<ParameterDataTypes :ref="param.name" :editable="editable" :parameter="param" v-model="values[param.name]" :processId="processId" :context="context" @schemaSelected="updateType(param, $event)" />
+					<ParameterDataTypes :ref="param.name" :editable="editable" :parameter="param" v-model="values[param.name]" :processId="processId" :context="context" @schemaSelected="updateType(param, $event)" :parent="parent" />
 					<button v-if="param.unspecified" title="Delete unspecified parameter" class="deleteBtn" type="button" @click="deleteParam(k)"><i class="fas fa-trash"></i></button>
 				</div>
 				<!-- We need a hidden submit button in the form tags to allow submiting the form via keyboard (enter key) -->
@@ -46,7 +46,8 @@ export default {
 			editable: true,
 			selectParameter: null,
 			saveCallback: null,
-			processId: null
+			processId: null,
+			parent: null
 		};
 	},
 	computed: {
@@ -86,7 +87,7 @@ export default {
 				Utils.exception(this, error);
 			}
 		},
-		show(title, editableFields, values, editable = true, saveCallback = null, closeCallback = null, processId = null, selectParameter = null) {
+		show(title, editableFields, values, editable = true, saveCallback = null, closeCallback = null, processId = null, selectParameter = null, parent = null) {
 			this.editableFields = editableFields;
 			this.values = Utils.deepClone(values);
 			this.schemas = {};
@@ -94,24 +95,10 @@ export default {
 			this.saveCallback = saveCallback;
 			this.processId = processId;
 			this.selectParameter = selectParameter;
+			this.parent = parent;
 			this.$refs.__modal.show(title, closeCallback);
 
-			// ToDo: It's a bit hacky to have a fixed timeout set to allow the element to be available for scrolling => improve?!
-			setTimeout(() => {
-				let component;
-				if (this.selectParameter) {
-					component = this.componentforParameter(this.selectParameter);
-				}
-				else if (this.editableFields.length > 0) {
-					component = this.componentforParameter(this.editableFields[0].name);
-				}
-				if (component) {
-					if (this.selectParameter) {
-						component.$el.scrollIntoView();
-					}
-					this.focusInput(component);
-				}
-			}, 100);
+			this.$nextTick(() => this.setSelected());
 		},
 		componentforParameter(name) {
 			if (name && Array.isArray(this.$refs[name]) && this.$refs[name][0]) {
@@ -119,10 +106,39 @@ export default {
 			}
 			return null;
 		},
-		focusInput(component) {
-			let firstElement = component.$el.querySelector('input:not([type="hidden"]):not([disabled]):not([class~="multiselect__input"]), button:not([disabled]), textarea:not([disabled]), select:not([disabled]), datalist:not([disabled])');
-			if (firstElement) {
-				firstElement.focus();
+		setSelected(callCounter = 0) {
+			let component;
+			if (this.selectParameter) {
+				component = this.componentforParameter(this.selectParameter);
+			}
+			else if (this.editableFields.length > 0) {
+				component = this.componentforParameter(this.editableFields[0].name);
+			}
+			if (!component) {
+				return;
+			}
+	
+			if (component.$el && component.$el.scrollIntoView) {
+				if (this.selectParameter) {
+					component.$el.scrollIntoView();
+				}
+				this.setInputFocus(component.$el);
+			}
+			else {
+				// Retry the selection, up to 2.5 seconds
+				callCounter < 10 && setTimeout(() => this.setSelected(++callCounter), 250);
+			}
+		},
+		setInputFocus(node, callCounter = 0) {
+			if (node.querySelector) {
+				let firstElement = node.querySelector('input:not([type="hidden"]):not([disabled]):not([class~="multiselect__input"]), button:not([disabled]), textarea:not([disabled]), select:not([disabled]), datalist:not([disabled])');
+				if (firstElement) {
+					firstElement.focus();
+				}
+			}
+			else {
+				// Retry focussing, up to 2.5 seconds
+				callCounter < 10 && setTimeout(() => this.setInputFocus(node, ++callCounter), 250);
 			}
 		}
 	}

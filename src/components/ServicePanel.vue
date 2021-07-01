@@ -15,7 +15,6 @@
 </template>
 
 <script>
-import Config from '../../config';
 import EventBusMixin from './EventBusMixin.vue';
 import WorkPanelMixin from './WorkPanelMixin';
 import Utils from '../utils';
@@ -71,7 +70,7 @@ export default {
 			if (typeof mapType !== 'string') {
 				return false;
 			}
-			return Config.supportedMapServices.includes(mapType.toLowerCase());
+			return this.$config.supportedMapServices.includes(mapType.toLowerCase());
 		},
 		showInEditor(service) {
 			this.refreshElement(service, updatedService => this.emit('editProcess', updatedService));

@@ -3,13 +3,13 @@
 		<template #main>
 			<div class="docgen">
 				<!-- ToDo: Implement processUrl -->
-				<Process :process="process" :provideDownload="false"></Process>
 				<!-- ToDo: Remove process graph view once implemented in Vue components -->
 				<!-- ToDo: Show info (badge?) that process is custom -->
-				<section class="process-graph" v-if="process.process_graph">
-					<div class="vue-component"><h3>Model</h3></div>
-					<Editor :value="process" :editable="false" class="infoViewer" id="pgInfoViewer" />
-				</section>
+				<Process :process="process" :provideDownload="false" :showGraph="true">
+					<template #process-graph>
+						<Editor :value="process" :editable="false" class="infoViewer" id="pgInfoViewer" />
+					</template>
+				</Process>
 			</div>
 		</template>
 	</Modal>

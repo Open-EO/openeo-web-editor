@@ -2,7 +2,7 @@
 	<div class="discovery-toolbar">
 		<SearchBox v-model="searchTerm" />
 		<div class="search-results">
-			<Collections class="category" :collections="collections" :searchTerm="searchTerm" :offerDetails="false" :collapsed="true">
+			<Collections class="category" :collections="collections" :searchTerm="searchTerm" :offerDetails="false" :collapsed="collapsed">
 				<template #summary="{ item }">
 					<div class="discovery-entity" :draggable="supportsLoadCollection" @dragstart="onDrag($event, 'collection', item)">
 						<div class="discovery-info" @click="showCollectionInfo(item.id)">
@@ -15,7 +15,7 @@
 				</template>
 			</Collections>
 
-			<Processes class="category" :processes="processes" :searchTerm="searchTerm" :offerDetails="false" :collapsed="true">
+			<Processes class="category" :processes="processes" :searchTerm="searchTerm" :offerDetails="false" :collapsed="collapsed">
 				<template #summary="{ item }">
 					<div class="discovery-entity" draggable="true" @dragstart="onDrag($event, 'process', item)">
 						<div class="discovery-info" @click="showProcessInfo(item)">
@@ -23,23 +23,24 @@
 							<strong :title="item.id">{{ item.id }}</strong>
 							<small v-if="item.summary" :title="item.summary">{{ item.summary }}</small>
 						</div>
-						<button class="discovery-button" type="button" @click="insertProcess(e)" title="Insert"><i class="fas fa-plus"></i></button>
+						<button class="discovery-button" type="button" @click="insertProcess(item)" title="Insert"><i class="fas fa-plus"></i></button>
 					</div>
 				</template>
 			</Processes>
 
-			<UdfRuntimes class="category" :runtimes="udfRuntimes" :searchTerm="searchTerm" :offerDetails="false" :collapsed="true">
-				<template #summary="{ item }">
-					<div class="discovery-entity" :draggable="supportsRunUdf" @dragstart="onDrag($event, 'udf', item)">
-						<div class="discovery-info" @click="showUdfInfo(item)">
-							<strong :title="item.id">{{ item.id }} {{ item.version }}</strong>
+			<UdfRuntimes v-if="hasUdfRuntimes" class="category" :runtimes="udfRuntimes" :searchTerm="searchTerm" :offerDetails="false" :collapsed="collapsed">
+				<template #summary="{ summary, item }">
+					<div class="discovery-entity" :draggable="supportsRunUdf" @dragstart="onDrag($event, 'udf', {runtime: summary.identifier, version: item.default})">
+						<div class="discovery-info" @click="showUdfInfo(summary.identifier, item)">
+							<strong :title="summary.identifier">{{ summary.identifier }} ({{ item.default }})</strong>
+							<small v-if="summary.summary" :title="summary.summary">{{ summary.summary }}</small>
 						</div>
-						<button v-if="supportsRunUdf" class="discovery-button" type="button" @click="insertUdf(item)" title="Insert"><i class="fas fa-plus"></i></button>
+						<button v-if="supportsRunUdf" class="discovery-button" type="button" @click="insertUdf(summary.identifier, item.default)" title="Insert"><i class="fas fa-plus"></i></button>
 					</div>
 				</template>
 			</UdfRuntimes>
 
-			<FileFormats class="category" :formats="fileFormats" :showInput="false" heading="Export File Formats" :searchTerm="searchTerm" :offerDetails="false" :collapsed="true">
+			<FileFormats class="category" :formats="fileFormats" :showInput="false" heading="Export File Formats" :searchTerm="searchTerm" :offerDetails="false" :collapsed="collapsed">
 				<template #summary="{ item }">
 					<div class="discovery-entity" :draggable="supportsSaveResult" @dragstart="onDrag($event, 'fileformat', item)">
 						<div class="discovery-info" @click="showFileFormatInfo(item)">
@@ -81,7 +82,8 @@ export default {
 	},
 	data() {
 		return {
-			searchTerm: ''
+			searchTerm: '',
+			collapsed: true
 		};
 	},
 	computed: {
@@ -98,8 +100,21 @@ export default {
 		supportsSaveResult() {
 			return !!this.getProcessById('save_result');
 		},
+		hasUdfRuntimes() {
+			return Utils.size(this.udfRuntimes);
+		},
 		processes() {
 			return this.predefinedProcesses.concat(this.userProcesses);
+		}
+	},
+	watch: {
+		searchTerm(newVal, oldVal) {
+			if (!newVal && oldVal) {
+				this.collapsed = true;
+			}
+			else if (newVal && !oldVal) {
+				this.collapsed = false;
+			}
 		}
 	},
 	methods: {
@@ -119,8 +134,9 @@ export default {
 		showProcessInfo(process) {
 			this.emit('showProcessInfo', process);
 		},
-		showUdfInfo(runtime) {
-			this.emit('showUdfRuntimeInfo', runtime.id, this.udfRuntimes[runtime.id], runtime.version);
+		showUdfInfo(id, runtime) {
+
+			this.emit('showUdfRuntimeInfo', id, runtime, runtime.default);
 		},
 		showFileFormatInfo(format) {
 			this.emit('showFileFormatInfo', format.name, this.fileFormats.output[format.name], "output");
@@ -140,7 +156,7 @@ export default {
 				case 'udf':
 					return {
 						process_id: 'run_udf',
-						arguments: {runtime: data.id, version: data.version}
+						arguments: data
 					};
 				case 'fileformat':
 					return {
@@ -157,8 +173,8 @@ export default {
 			let node = this.getNode('process', process);
 			this.onAddProcess(node);
 		},
-		insertUdf(udf) {
-			let node = this.getNode('udf', udf);
+		insertUdf(runtime, version) {
+			let node = this.getNode('udf', {runtime, version});
 			this.onAddProcess(node);
 		},
 		insertFileFormat(format) {

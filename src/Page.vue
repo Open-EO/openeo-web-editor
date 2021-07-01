@@ -179,24 +179,6 @@ button:disabled i {
 	color: #555;
 }
 
-.status[data-value="submitted"] {
-	color: black;
-}
-.status[data-value="running"] {
-	color: darkorange;
-}
-.status[data-value="queued"] {
-	color: darkblue;
-}
-.status[data-value="finished"] {
-	color: darkgreen;
-}
-.status[data-value="canceled"] {
-	color: darkgrey;
-}
-.status[data-value="error"] {
-	color: red;
-}
 tt, code {
 	color: maroon;
 	display: inline-block;

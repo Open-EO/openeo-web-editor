@@ -49,12 +49,12 @@ export default new Vuex.Store({
 		},
 		capabilities: (state) => state.connection !== null ? state.connection.capabilities() : null,
 		supports: (state) => (feature) => state.connection !== null && state.connection.capabilities() !== null && state.connection.capabilities().hasFeature(feature),
-		formatCurrency: (state) => (amount) => {
+		currency: (state) => {
 			var currency = '';
 			if (state.connection && state.connection.capabilities().currency() !== null) {
-				currency = ' ' + state.connection.capabilities().currency();
+				currency = state.connection.capabilities().currency();
 			}
-			return amount + currency;
+			return currency;
 		},
 		isConnected: (state) => state.connection !== null && state.connection.capabilities() !== null,
 		isDiscovered: (state) => state.connection !== null && state.discoveryCompleted,
@@ -81,7 +81,13 @@ export default new Vuex.Store({
 
 			var temporal_extent = null;
 			try {
-				temporal_extent = collection.extent.temporal.interval[0];
+				// Only supports temporal ranges with start and end date.
+				// All other temporal extents will be unbounded for now.
+				// ToDo: Support open date ranges: https://github.com/mengxiong10/vue2-datepicker/issues/612
+				temporal_extent = collection.extent.temporal.interval[0].filter(date => date !== null);
+				if (temporal_extent.length !== 2) {
+					temporal_extent = null;
+				}
 			} catch (error) {}
 	
 			var bands = null;
