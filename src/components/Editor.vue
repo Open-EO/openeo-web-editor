@@ -1,7 +1,7 @@
 <template>
 	<Tabs class="editor" ref="tabs" id="customProcessContent" position="bottom">
 		<Tab id="visual" name="Visual Model" icon="fa-project-diagram" :selected="true" :allowShow="canSwitchView" @show="showModel">
-			<VisualEditor class="visualEditorTab" ref="graphBuilder" :editable="editable" :pgParameters="pgParameters" :value="modelValue" @input="commit" @error="onError" :title="title" :id="id + '_visual'" :showDiscoveryToolbar="showDiscoveryToolbar" :defaultValue="defaultValue">
+			<VisualEditor class="visualEditorTab" ref="graphBuilder" :editable="editable" :parent="parent" :parentSchema="parentSchema" :value="modelValue" @input="commit" @error="onError" :title="title" :id="id + '_visual'" :showDiscoveryToolbar="showDiscoveryToolbar" :defaultValue="defaultValue">
 				<template #file-toolbar><slot name="file-toolbar"></slot></template>
 				<template #toolbar><slot name="toolbar"></slot></template>
 			</VisualEditor>
@@ -43,9 +43,13 @@ export default {
 		title: {
 			type: String
 		},
-		pgParameters: {
-			type: Array,
-			default: () => []
+		parent: {
+			type: Object,
+			default: null
+		},
+		parentSchema: {
+			type: Object,
+			default: null
 		},
 		showDiscoveryToolbar: {
 			type: Boolean,

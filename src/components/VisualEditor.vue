@@ -31,7 +31,8 @@
 					:id="id"
 					:processes="processRegistry"
 					:collections="collections"
-					:pgParameters="pgParameters"
+					:parent="parent"
+					:parentSchema="parentSchema"
 					:value="value"
 					@input="commit"
 					@error="errorHandler"
@@ -79,9 +80,13 @@ export default {
 			type: Object,
 			default: () => null
 		},
-		pgParameters: {
-			type: Array,
-			default: () => []
+		parent: {
+			type: Object,
+			default: null
+		},
+		parentSchema: {
+			type: Object,
+			default: null
 		},
 		showDiscoveryToolbar: {
 			type: Boolean,
@@ -141,7 +146,7 @@ export default {
 		},
 
 		onDrop(event) {
-			var json = event.dataTransfer.getData("application/openeo-node");
+			var json = event.dataTransfer.getData("application/vnd.openeo-node");
 			if (json) {
 				event.preventDefault();
 				let node = JSON.parse(json);

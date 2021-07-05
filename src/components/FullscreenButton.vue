@@ -12,7 +12,6 @@ export default {
 	name: 'FullscreenButton',
 	props: {
 		element: {
-			type: [String, Function, Object],
 			required: true
 		}
 	},
