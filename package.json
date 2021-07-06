@@ -1,6 +1,6 @@
 {
   "name": "@openeo/web-editor",
-  "version": "0.7.8",
+  "version": "0.8.0-beta.1",
   "apiVersions": [
     "1.0.0-rc.2",
     "1.0.0",
@@ -41,7 +41,7 @@
     "build": "npm run build:epsg && npx vue-cli-service build --report"
   },
   "dependencies": {
-    "@openeo/js-client": "Open-EO/openeo-js-client#development",
+    "@openeo/js-client": "^2.0.0",
     "@openeo/js-commons": "^1.2.0",
     "@openeo/js-processgraphs": "^1.0.0",
     "@openeo/vue-components": "^2.1.2",
