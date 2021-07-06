@@ -99,9 +99,9 @@ export default {
 		};
 	},
 	computed: {
-		...Utils.mapState(['connection']),
+		...Utils.mapState(['connection', 'isAuthenticated']),
 		...Utils.mapState('editor', ['context', 'process']),
-		...Utils.mapGetters(['title', 'isAuthenticated', 'apiVersion']),
+		...Utils.mapGetters(['title', 'apiVersion']),
 		...Utils.mapGetters('jobs', {supportsJobUpdate: 'supportsUpdate'}),
 		...Utils.mapGetters('services', {supportsServiceUpdate: 'supportsUpdate'}),
 		...Utils.mapGetters('userProcesses', {getProcessById: 'getAllById', supportsUserProcessUpdate: 'supportsUpdate'}),
