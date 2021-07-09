@@ -2,13 +2,13 @@
 	<div class="fieldContainer" v-if="selectedSchema">
 		<div class="dataTypeChooser" v-if="showDataTypeChooser">
 			<select name="dataType" :value="selectedType" @input="onSelectType" :disabled="!editable">
-				<template v-if="groupedAllowedTypes.length > 1">
-					<optgroup v-for="group in groupedAllowedTypes" :key="group.name" :label="group.name">
+				<template v-if="selectableTypes.length > 1">
+					<optgroup v-for="group in selectableTypes" :key="group.name" :label="group.name">
 						<option v-for="type in group.types" :key="type.dataType()" :value="type.dataType()">{{ type | dataTypeTitle }}</option>
 					</optgroup>
 				</template>
 				<template v-else>
-					<option v-for="type in groupedAllowedTypes[0].types" :key="type.dataType()" :value="type.dataType()">{{ type | dataTypeTitle }}</option>
+					<option v-for="type in selectableTypes[0].types" :key="type.dataType()" :value="type.dataType()">{{ type | dataTypeTitle }}</option>
 				</template>
 			</select>
 		</div>
@@ -16,7 +16,7 @@
 			<i class="fas fa-info-circle"></i>
 			<Description :description="selectedSchema.description()" :compact="true" />
 		</div>
-		<ParameterDataType :editable="editable" :parameter="parameter" :schema="selectedSchema" v-model="state" :processId="processId" :context="context" @changeType="setSelected" :parent="parent" />
+		<ParameterDataType :editable="editable" :parameter="parameter" :schema="selectedSchema" v-model="state" :context="context" @changeType="setSelected" :parent="parent" />
 	</div>
 </template>
 
@@ -26,7 +26,7 @@ import JsonSchema from './jsonSchema.js';
 import ParameterDataType from './ParameterDataType.vue';
 import Description from '@openeo/vue-components/components/Description.vue';
 import EventBusMixin from './EventBusMixin.vue';
-import { ProcessParameter, ProcessDataType } from './blocks/processSchema.js';
+import { ProcessDataType, ProcessParameter } from '@openeo/js-commons';
 
 const API_TYPES = Utils.resolveJsonRefs(require('@openeo/js-processgraphs/assets/subtype-schemas.json')).definitions;
 const TYPE_GROUPS = [
@@ -58,7 +58,10 @@ const SUPPORTED_TYPES = [
 		{type: 'boolean', default: false, group: 'Basics'},
 	//	{type: 'array', subtype: 'labeled-array', title: 'Array with labels', group: 'Basics'}, // Can't be transfered between client and server, no JSON encoding available.
 		{type: 'array', default: [], group: 'Basics'},
-		{type: 'object', default: {}, group: 'Basics'},
+		{type: 'object', default: {}, group: 'Basics', properties: {
+			from_node: { not: {} },
+			from_parameter: { not: {} }
+		}},
 
 		{type: 'string', subtype: 'date-time', format: 'date-time', title: 'Date and Time', group: 'Temporal', default: () => now()},
 		{type: 'string', subtype: 'date', format: 'date', title: 'Date only', group: 'Temporal', default: () => now().substring(0, 10)},
@@ -90,10 +93,11 @@ const SUPPORTED_TYPES = [
 		{type: 'string', subtype: 'input-format', title: 'Import file format', group: 'File and Folders'},
 		{type: 'object', subtype: 'input-format-options', title: 'Import file format parameters', group: 'File and Folders', any: false},
 
-	//	{type: 'array', subtype: 'kernel', title: 'Kernel'},
+	//	{type: 'array', subtype: 'kernel', title: 'Kernel'}, // ToDo
 		{type: 'object', subtype: 'process-graph', title: 'Custom Process'},
-		{subtype: 'json', title: 'JSON'},
+		{subtype: 'json', title: 'JSON', noAutoDetect: true},
 
+// Can't be transfered between client and server, no JSON encoding available for cubes:
 //		{type: 'object', subtype: 'raster-cube'},
 //		{type: 'object', subtype: 'vector-cube'},
 ];
@@ -114,7 +118,6 @@ export default {
 			type: Boolean,
 			default: true
 		},
-		processId: String,
 		value: {},
 		isItem: {
 			type: Boolean,
@@ -150,15 +153,18 @@ export default {
 	},
 	computed: {
 		refSchemas() {
+			if (!Array.isArray(this.parameter.refs)) {
+				return {};
+			}
 			let refs = {};
-			for(let r of this.parameter.getRefs()) {
+			for(let r of this.parameter.refs) {
 				let name;
 				if (r.from_node) {
 					name = 'from_node:' + r.from_node;
 					refs[name] = new ProcessDataType({
 						type: 'object',
 						group: 'References',
-						refId: name,
+						subtype: name,
 						isRef: 'from_node',
 						from_node: r.from_node,
 						title: 'Output of #' + r.from_node,
@@ -169,7 +175,7 @@ export default {
 								const: r.from_node
 							}
 						},
-						const: r,
+						default: r,
 						additionalProperties: false
 					});
 				}
@@ -178,7 +184,7 @@ export default {
 					refs[name] = new ProcessDataType({
 						type: 'object',
 						group: 'References',
-						refId: name,
+						subtype: name,
 						isRef: 'from_parameter',
 						from_parameter: r.from_parameter,
 						title: 'Value of process parameter "' + r.from_parameter + '"',
@@ -189,7 +195,7 @@ export default {
 								const: r.from_parameter
 							}
 						},
-						const: r,
+						default: r,
 						additionalProperties: false
 					});
 				}
@@ -197,20 +203,21 @@ export default {
 			return refs;
 		},
 		showDataTypeChooser() {
-			return Utils.size(this.allowedTypes) >= 2;
+			return Utils.size(this.allowedTypes) > 1;
 		},
 		allowedTypes() {
+			let allowed = {};
 			if (this.parameter.dataType() === 'any') {
-				return Object.assign({}, this.supportedTypes, this.refSchemas);
+				Object.assign(allowed, this.supportedTypes);
 			}
 			else {
-				let types = {};
 				for(let type of this.parameter.schemas) {
 					let name = type.dataType();
-					types[name] = type;
+					allowed[name] = type;
 				}
-				return Object.assign(types, this.refSchemas);
 			}
+			Object.assign(allowed, this.refSchemas);
+			return allowed;
 		},
 		supportedTypes() {
 			let map = {};
@@ -224,7 +231,7 @@ export default {
 			}
 			return map;
 		},
-		groupedAllowedTypes() {
+		selectableTypes() {
 			let grouped = {};
 			for(let type in this.allowedTypes) {
 				let schema = this.allowedTypes[type];
@@ -236,12 +243,13 @@ export default {
 					grouped[group].push(schema);
 				}
 			}
-			return TYPE_GROUPS
+			let groups = TYPE_GROUPS
 				.map(group => ({
 					name: group,
 					types: grouped[group] || []
 				}))
 				.filter(group => group.types.length !== 0);
+			return groups;
 		}
 	},
 	watch: {
@@ -292,7 +300,8 @@ export default {
 				await this.setSelected(nonNullKeys[0], true);
 			}
 			else {
-				let types = await this.getTypeForValue(Object.values(this.allowedTypes), this.state);
+				let detectableTypes = Object.values(this.allowedTypes).filter(type => !type.schema.noAutoDetect);
+				let types = await this.getTypeForValue(detectableTypes, this.state);
 				if (types.length === 0) {
 					await this.setSelected('json');
 				}
@@ -311,7 +320,11 @@ export default {
 					}
 		
 					// If multiple types have been detected and a native one is included, fall back to the native one
-					let index = types.findIndex(type => NATIVE_TYPES.includes(type)) || 0;
+					let index = types.findIndex(type => NATIVE_TYPES.includes(type));
+					// If not even a native one is available, choose the first one
+					if (index === -1) {
+						index = 0;
+					}
 					await this.setSelected(types[index]);
 				}
 			}

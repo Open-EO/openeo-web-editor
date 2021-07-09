@@ -52,7 +52,7 @@ import UserWorkspace from './UserWorkspace.vue';
 import Viewer from './Viewer.vue';
 import Editor from './Editor.vue';
 import DiscoveryToolbar from './DiscoveryToolbar.vue';
-import { ProcessParameter } from './blocks/processSchema';
+import { ProcessParameter } from '@openeo/js-commons';
 import { Job, Service, UserProcess } from '@openeo/js-client';
 
 export default {
@@ -85,9 +85,9 @@ export default {
 		};
 	},
 	computed: {
-		...Utils.mapState(['connection']),
+		...Utils.mapState(['connection', 'isAuthenticated']),
 		...Utils.mapState('editor', ['context', 'process']),
-		...Utils.mapGetters(['title', 'isAuthenticated', 'apiVersion']),
+		...Utils.mapGetters(['title', 'apiVersion']),
 		...Utils.mapGetters('jobs', {supportsJobUpdate: 'supportsUpdate'}),
 		...Utils.mapGetters('services', {supportsServiceUpdate: 'supportsUpdate'}),
 		...Utils.mapGetters('userProcesses', {getProcessById: 'getAllById', supportsUserProcessUpdate: 'supportsUpdate'}),

@@ -26,7 +26,7 @@
 <script>
 import draggable from 'vuedraggable';
 import FullscreenButton from '../FullscreenButton.vue';
-import Utils from '../../utils.js';
+import { ProcessUtils, ProcessSchema } from '@openeo/js-commons';
 
 export default {
 	name: 'ObjectEditor',
@@ -92,7 +92,12 @@ export default {
 	},
 	methods: {
 		elementSchema(index, key = null) {
-			return this.schema.getElementSchema(key || index);
+			let element = ProcessUtils.getElementJsonSchema(this.schema.schema, key || index);
+			let schema = new ProcessSchema(element);
+			if (this.schema.parent instanceof ProcessSchema) {
+				schema.refs = this.schema.parent.refs || [];
+			}
+			return schema;
 		},
 		add(key = null, value = undefined) {
 			let obj = {

@@ -120,7 +120,7 @@ export default {
 	methods: {
 		onDrag(event, type, data) {
 			let node = this.getNode(type, data);
-			event.dataTransfer.setData("application/openeo-node", JSON.stringify(node));
+			event.dataTransfer.setData("application/vnd.openeo-node", JSON.stringify(node));
 			event.dataTransfer.setData("text/plain", JSON.stringify(node, null, 2));
 		},
 		showCollectionInfo(id) {

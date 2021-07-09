@@ -1,5 +1,7 @@
 export default {
-	// URL of the back-end to start with (string)
+	// Set this to connect to a back-end automatically when opening the Web Editor,
+	// so you could set this to https://example.com and then the Web Editor connects
+	// to the corresponding back-end automatically.
 	serverUrl: '',
 
 	// A message shown on the login page

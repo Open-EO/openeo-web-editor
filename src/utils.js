@@ -46,10 +46,13 @@ class Utils extends VueUtils {
 	} 
 	static error(vm, message, title = null) {
 		vm.$snotify.error(message, title, vm.$config.snotifyDefaults); 
-	} 
+	}
+	static warn(vm, message, title = null) {
+		vm.$snotify.warning(message, title, vm.$config.snotifyDefaults);
+	}
 	static info(vm, message, title = null) {
 		vm.$snotify.info(message, title, vm.$config.snotifyDefaults); 
-	} 
+	}
 	static ok(vm, message, title = null) {
 		vm.$snotify.success(message, title, vm.$config.snotifyDefaults); 
 	}
@@ -137,7 +140,7 @@ class Utils extends VueUtils {
 	}
 
 	static isUrl(url) {
-		return (typeof url === 'string' && url.length > 0 && url.match(/^https?:\/\//i) !== null);
+		return (VueUtils.hasText(url) && url.match(/^https?:\/\//i) !== null);
 	}
 
 	static extentToBBox(extent) {

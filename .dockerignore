@@ -1,0 +1,12 @@
+# Contains files which should be ignored in the build context.
+
+# This includes large files and folders which might exist locally
+# but are not needed during docker build to speed up build time
+dist
+node_modules
+.git
+
+# and files which are equally not needed and would break the
+# build cache at an early step (COPY . ...) if changed.
+Dockerfile
+.dockerignore
