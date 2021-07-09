@@ -1,5 +1,8 @@
 <template>
-	<Logs class="log-viewer" :logs="logs" />
+	<div class="log-viewer">
+		<div v-if="logs === null" class="noDataMessage"><i class="fas fa-spinner fa-spin fa-lg"></i> Loading logs...</div>
+		<Logs v-else :logs="logs" />
+	</div>
 </template>
 
 <script>
@@ -108,7 +111,7 @@ export default {
 </script>
 
 <style>
-.vue-component .log-viewer {
+.log-viewer, .vue-component.logs {
 	width: 100%;
 	height: 100%;
 }

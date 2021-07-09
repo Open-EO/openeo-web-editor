@@ -11,7 +11,9 @@ import Utils from '../utils.js';
 export default {
 	name: 'FullscreenButton',
 	props: {
-		element: {}
+		element: {
+			required: true
+		}
 	},
 	data() {
 		return {

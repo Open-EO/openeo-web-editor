@@ -52,7 +52,7 @@ import UserWorkspace from './UserWorkspace.vue';
 import Viewer from './Viewer.vue';
 import Editor from './Editor.vue';
 import DiscoveryToolbar from './DiscoveryToolbar.vue';
-import { ProcessParameter } from './blocks/processSchema';
+import { ProcessParameter } from '@openeo/js-commons';
 import { Job, Service, UserProcess } from '@openeo/js-client';
 
 export default {

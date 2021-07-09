@@ -29,7 +29,7 @@
 		<!-- GeoJSON -->
 		<MapGeoJsonEditor v-else-if="type === 'geojson'" v-model="state" :key="type" :id="name + '_geojson'" :editable="editable" class="geoJsonEditor"></MapGeoJsonEditor>
 		<!-- Process Editor -->
-		<Editor v-else-if="type === 'process-graph'" class="callbackEditor" :id="name" :editable="editable" :pgParameters="processParameters" :showDiscoveryToolbar="true" v-model="state" :defaultValue="editorDefaultValue" />
+		<Editor v-else-if="type === 'process-graph'" class="callbackEditor" :id="name" :editable="editable" :parent="parent" :parentSchema="schema" :showDiscoveryToolbar="true" v-model="state" :defaultValue="editorDefaultValue" />
 		<!-- Output format options -->
 		<FileFormatOptionsEditor v-else-if="type === 'output-format-options' || type === 'input-format-options'" ref="fileFormatOptionsEditor" :type="type" v-model="state" :format="dependency"></FileFormatOptionsEditor>
 		<!-- Budget -->
@@ -92,7 +92,6 @@ export default {
 		},
 		schema: Object,
 		value: {},
-		processId: String,
 		context: {},
 		parent: {}
 	},
@@ -211,16 +210,6 @@ export default {
 				default:
 					return undefined;
 			}
-		},
-		processParameters() {
-			let callbackParams = this.schema.getCallbackParameters(); // higher prio
-			let parentParams = []; // lower prio;
-			if (Utils.isObject(this.parent) && typeof this.parent.getPgParameters === 'function') { // instead of "instanceof Blocks" to avoid import
-				parentParams = this.parent.getPgParameters().map(block => block.spec);
-			}
-			let overridingParams = callbackParams.map(p => p.name);
-			let filteredParentParams = parentParams.filter(p => !overridingParams.includes(p.name));
-			return callbackParams.concat(filteredParentParams);
 		}
 	},
 	watch: {

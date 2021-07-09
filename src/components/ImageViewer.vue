@@ -92,7 +92,7 @@ export default {
 		},
 		getPixelValue(event) {
 			try {
-				let size = Utils.domBoundingBox(this.$refs.canvas);
+				let size = this.$refs.canvas.getBoundingClientRect();
 				let xScale = this.img.naturalWidth / size.width;
 				let yScale = this.img.naturalHeight / size.height;
 				let x = event.offsetX * xScale;
