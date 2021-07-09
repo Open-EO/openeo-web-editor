@@ -80,8 +80,9 @@ export default {
 }
 </script>
 
-<style>
-@import url('https://fonts.googleapis.com/css?family=Ubuntu&display=swap');
+<style lang="scss">
+@import 'https://fonts.googleapis.com/css?family=Ubuntu&display=swap';
+@import '../theme.scss';
 
 html, body, .container {
 	height: 100%;
@@ -95,7 +96,7 @@ body {
 	margin: 0;
 }
 a {
-	color: #1665B6;
+	color: $linkColor;
 	text-decoration: none;
 	cursor: pointer;
 }
@@ -140,33 +141,6 @@ button:disabled i {
 }
 .sepl {
     margin-left: 0.5em;
-}
-
-.logo img {
-	height: 60px;
-	vertical-align: middle;
-}
-.logo h2 {
-	display: inline-block;
-	margin: 0;
-	margin-left: 15px;
-	font-size: 40px;
-	vertical-align: middle;
-	color: #152558;
-	font-weight: normal;
-}
-.logo .version {
-	position: relative;
-	top: -26px;
-	font-size: 11px;
-	background-color: #152558;
-	color: white;
-	padding: 3px;
-	border-radius: 5px;
-	cursor: pointer;
-}
-.logo .version:hover {
-	background-color: #65421F;
 }
 
 .boolean .fa-check-circle {

@@ -2,10 +2,7 @@
 	<div id="wrapper">
 		<div id="ide" @mouseup="stopMovingSeparator($event)" @mousemove="moveSeparator($event)">
 			<header class="navbar">
-				<div class="logo">
-					<img src="../assets/logo.png" alt="openEO" />
-					<h2>Web Editor <span class="version" @click="showWebEditorInfo">{{ version }}</span></h2>
-				</div>
+				<Logo />
 				<ul id="menu">
 					<li><div class="menuItem" @click="showServerInfo" title="Get server information"><i class="fas fa-info fa-fw"></i> Server</div></li>
 					<li><UserMenu /></li>
@@ -44,13 +41,13 @@
 </template>
 
 <script>
-import Package from '../../package.json';
 import EventBusMixin from './EventBusMixin.vue';
 import Utils from '../utils.js';
 import UserMenu from './UserMenu.vue';
 import UserWorkspace from './UserWorkspace.vue';
 import Viewer from './Viewer.vue';
 import Editor from './Editor.vue';
+import Logo from './Logo.vue';
 import DiscoveryToolbar from './DiscoveryToolbar.vue';
 import { ProcessParameter } from '@openeo/js-commons';
 import { Job, Service, UserProcess } from '@openeo/js-client';
@@ -61,6 +58,7 @@ export default {
 	components: {
 		DiscoveryToolbar,
 		Editor,
+		Logo,
 		Viewer,
 		UserMenu,
 		UserWorkspace,
@@ -93,7 +91,6 @@ export default {
 					width: '30%'
 				}
 			],
-			version: Package.version,
 			resizeListener: null,
 			userInfoUpdater: null
 		};
@@ -285,10 +282,6 @@ export default {
 			this.$refs.serverInfoModal.show();
 		},
 
-		showWebEditorInfo() {
-			this.emit('showWebEditorInfo');
-		},
-
 		showDataForm(title, fields, saveCallback = null, closeCallback = null) {
 			var editable = typeof saveCallback === 'function';
 			var values = {};
@@ -307,7 +300,9 @@ export default {
 }
 </script>
 
-<style>
+<style lang="scss">
+@import '../../theme.scss';
+
 #ide {
 	margin-top: 80px;
 	height: calc(100% - 80px);
@@ -349,8 +344,8 @@ export default {
 	border: 0;
 	padding: 3px;
 	margin: 0;
-	border-right: 1px dotted #65421F;
-	border-left: 1px dotted #65421F;
+	border-right: 1px dotted #aaa;
+	border-left: 1px dotted #aaa;
 	cursor: e-resize;
 }
 .infoViewer {
@@ -358,7 +353,7 @@ export default {
 }
 #ide header.navbar {
 	width: 100%;
-	background-color: #1665B6;
+	background-color: $mainColor;
 	color: white;
 	height: 80px;
 	position: fixed;
@@ -371,21 +366,12 @@ export default {
 	display: flex;
 }
 #ide .logo {
-	margin: 10px 1em;
-	display: inline-block;
+	flex-grow: 1;
 	align-content: flex-start;
+	white-space: nowrap;
 	overflow: hidden;
-}
-#ide .logo h2 {
-	color: white;
-}
-#ide .logo .version {
-	background-color: #1665B6;
-	color: white;
-}
-#ide .logo .version:hover {
-	background-color: white;
-	color: #1665B6;
+	justify-content: left;
+	padding-left: 1em;
 }
 #menu {
 	list-style-type: none;
@@ -401,7 +387,7 @@ export default {
 }
 #menu li:hover {
 	background-color: white;
-	color: #1665B6;
+	color: $mainColor;
 }
 #menu li:hover .dropdown {
 	display: block;

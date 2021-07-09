@@ -7,6 +7,9 @@ export default {
 	// A message shown on the login page
 	loginMessage: '',
 
+	// The logo to show
+	logo: './logo.png',
+
 	// Defaults for notifications
 	snotifyDefaults: {
 		timeout: 10000,

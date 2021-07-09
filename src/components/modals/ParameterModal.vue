@@ -152,7 +152,9 @@ export default {
 }
 </style>
 
-<style>
+<style lang="scss">
+@import '../../../theme.scss';
+
 #parameterModal .fieldRow .description {
 	font-size: 0.8em;
 	width: 100%;
@@ -179,7 +181,7 @@ export default {
 }
 #parameterModal .fieldRow .fieldLabel.highlight {
 	width: calc(35% - 5px);
-    border-left: 5px solid #1665B6;
+    border-left: 5px solid $linkColor;
     padding-left: 5px;
 }
 #parameterModal .fieldRow .fieldEditorContainer {

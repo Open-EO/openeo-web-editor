@@ -203,7 +203,9 @@ export default {
 }
 </style>
 
-<style scoped>
+<style lang="scss" scoped>
+@import '../../theme.scss';
+
 .discovery-toolbar {
 	width: 100%;
 	height: 100%;
@@ -252,7 +254,7 @@ export default {
 	width: 100%;
 	overflow: hidden; 
 	text-overflow: ellipsis;
-	color: #1665B6;
+	color: $linkColor;
 }
 .discovery-info:hover strong {
 	color: #000;

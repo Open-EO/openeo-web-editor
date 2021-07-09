@@ -1,10 +1,7 @@
 <template>
 	<div class="connectPage">
+		<Logo />
 		<div class="connectContainer">
-			<header class="logo">
-				<img src="../assets/logo.png" alt="openEO" />
-				<h2>Web Editor <span class="version" @click="showWebEditorInfo">{{ version }}</span></h2>
-			</header>
 			<div v-if="httpsUrl" class="message error">
 				<i class="fas fa-shield-alt"></i>
 				<span>You are using an <strong>insecure</strong> HTTP connection, which is not encrypted. Please use HTTPS if possible.<br />
@@ -94,8 +91,8 @@
 </template>
 
 <script>
-import Package from '../../package.json';
 import EventBusMixin from './EventBusMixin.vue';
+import Logo from './Logo.vue';
 import Tabs from '@openeo/vue-components/components/Tabs.vue';
 import Tab from '@openeo/vue-components/components/Tab.vue';
 import TermsOfServiceConsent from './TermsOfServiceConsent.vue';
@@ -106,6 +103,7 @@ export default {
 	name: 'ConnectForm',
 	mixins: [EventBusMixin],
 	components: {
+		Logo,
 		Tabs,
 		Tab,
 		TermsOfServiceConsent
@@ -170,7 +168,6 @@ export default {
 			password: '',
 			provider: null,
 			loading: false,
-			version: Package.version,
 			message: this.$config.loginMessage,
 			oidcClientId: '',
 			oidcOptions: {
@@ -351,10 +348,6 @@ export default {
 			}
 		},
 
-		showWebEditorInfo() {
-			this.emit('showWebEditorInfo');
-		},
-
 		showServerSelector() {
 			this.emit(
 				'showListModal', 
@@ -379,22 +372,32 @@ export default {
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+@import '../../theme.scss';
+
 .connectPage {
-	background-color: #1665B6;
+	background-color: $mainColor;
 	align-items: center;
+	justify-content: center;
 	display: flex;
+	flex-direction: column;
 	overflow: auto;
 	width: 100%;
 	height: 100%;
 }
+.connectPage .logo {
+	max-width: 500px;
+	margin-bottom: 1rem;
+}
+.connectPage .logo img {
+	max-height: 150px;
+}
 .connectContainer {
 	width: 500px;
-	background-color: #fff;
-	border: 1px solid #152558;
+	background-color: white;
+	border: 1px solid black;
 	border-radius: 3em;
 	padding: 2.5em 3em;
-	margin: auto;
 	font-family: 'Ubuntu', sans-serif;
 }
 header {

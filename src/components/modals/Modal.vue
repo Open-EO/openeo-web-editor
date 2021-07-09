@@ -189,7 +189,9 @@ export default {
 };
 </script>
 
-<style>
+<style lang="scss">
+@import '../../../theme.scss';
+
 .modal {
     position: fixed;
     z-index: 1000; /* Snotify has 9999 and is intentionally above the modals */
@@ -213,7 +215,7 @@ export default {
 }
 
 .modal .modal-header {
-	background-color: #1665B6;
+	background-color: $mainColor;
 	color: white;
 	margin: 0;
 	height: 1.5rem;
