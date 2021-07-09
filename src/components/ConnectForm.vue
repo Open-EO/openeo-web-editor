@@ -33,14 +33,14 @@
 					<Tabs id="credentials" ref="providers" :pills="true" :pillsMultiline="true" @selected="providerSelected">
 						<template #dynamic="{ tab }">
 							<form @submit.prevent="initDiscovery(tab.data)">
-								<div class="row help" v-if="tab.data && tab.data.description">
+								<div class="row help" v-if="tab.data.description">
 									<i class="fas fa-info-circle"></i>
 									<span>{{ tab.data.description }}</span>
 								</div>
-								<template v-if="!defaultClientId">
+								<template v-if="!tab.data.defaultClient">
 									<div class="row">
 										<label for="password">Client ID:</label>
-										<textarea class="input" v-model.trim="userClientId" required="required" />
+										<input type="text" class="input" v-model.trim="oidcClientId" required="required" />
 									</div>
 									<div class="row help">
 										<i class="fas fa-exclamation-circle"></i>
@@ -117,8 +117,8 @@ export default {
 		}
 	},
 	computed: {
-		...Utils.mapState(['connectionError', 'discoveryErrors', 'authProviders']),
-		...Utils.mapGetters(['isConnected', 'isDiscovered', 'isAuthenticated', 'title']),
+		...Utils.mapState(['connectionError', 'discoveryErrors', 'authProviders', 'isAuthenticated']),
+		...Utils.mapGetters(['isConnected', 'isDiscovered', 'title']),
 		...Utils.mapState('editor', ['storedServers']),
 		isLocal() {
 			return Boolean(
@@ -147,14 +147,6 @@ export default {
 		},
 		showLoginForm() {
 			return !this.showConnectForm && !this.isDiscovered && !this.skipLogin;
-		},
-		clientId() {
-			if (this.userClientId) {
-				return this.userClientId;
-			}
-			else {
-				return this.defaultClientId;
-			}
 		}
 	},
 	watch: {
@@ -180,17 +172,12 @@ export default {
 			loading: false,
 			version: Package.version,
 			message: this.$config.loginMessage,
-			userClientId: '',
-			defaultClientId: '',
+			oidcClientId: '',
 			oidcOptions: {
 				automaticSilentRenew: true,
 				popupWindowFeatures: 'location=no,toolbar=no,width=750,height=550,left=50,top=50'
 			},
-			// Remove fragment, query and trailing slash from redirect_url.
-			// The fragment conflicts with the fragment appended by the Implicit Flow and
-			// the query conflicts with the query appended by the Authorization Code Flow.
-			// The trailing slash is removed for consistency.
-			oidcRedirectUrl: window.location.toString().split('#')[0].split('?')[0].replace(/\/$/, '')
+			oidcRedirectUrl: OidcProvider.redirectUrl
 		};
 	},
 	async created() {
@@ -204,14 +191,9 @@ export default {
 		}
 
 		// Do this after the other initial work as the await delays execution and makes mounted run before created sometimes.
-		OidcProvider.setUiMethod('popup');
-		// Make authorization_code the default grant. The JS client 1.0 still uses implicit as default.
-		OidcProvider.setSupportedGrants([
-			'authorization_code+pkce',
-			'implicit'
-		]);
+		OidcProvider.uiMethod = 'popup';
 		try {
-			await OidcProvider.signinCallback(null, this.oidcOptions);
+			await OidcProvider.signinCallback();
 		} catch (error) {
 			if (error instanceof Error && error.message !== "No state in response") {
 				Utils.exception(this, error);
@@ -276,12 +258,6 @@ export default {
 
 		providerSelected(tab) {
 			this.provider = tab.data;
-			if (this.provider && this.provider.getType() === 'oidc') {
-				this.defaultClientId = this.provider.detectDefaultClient(this.oidcRedirectUrl);
-			}
-			else {
-				this.defaultClientId = null;
-			}
 		},
 
 		async submitForm() {
@@ -332,7 +308,12 @@ export default {
 					await provider.login(this.username, this.password);
 				}
 				else if (authType === 'oidc') {
-					await provider.login(this.clientId, this.oidcRedirectUrl, this.oidcOptions);
+					if (this.oidcClientId) {
+						this.provider.setClientId(this.oidcClientId);
+					}
+					await provider.login(this.oidcOptions);
+					provider.addListener('AccessTokenExpired', () => Utils.warn(this, "User session has expired, please login again."));
+					provider.addListener('SilentRenewError', () => Utils.error(this, "You'll be switching to Guest mode in less than a minute.", "Session renewal failed"));
 				}
 				else { // noauth/discovery
 					window.history.pushState({reset: true, serverUrl: this.serverUrl, autoConnect: true, skipLogin: true}, "", ".?server=" + this.serverUrl + "&discover=1");

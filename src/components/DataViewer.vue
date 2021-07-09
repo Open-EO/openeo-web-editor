@@ -45,7 +45,6 @@ export default {
 	},
 	methods: {
 		processData(data) {
-			console.log(data);
 			if (typeof data.blob !== 'undefined') {
 				switch(data.type) {
 					case 'application/json':

@@ -46,10 +46,13 @@ class Utils extends VueUtils {
 	} 
 	static error(vm, message, title = null) {
 		vm.$snotify.error(message, title, vm.$config.snotifyDefaults); 
-	} 
+	}
+	static warn(vm, message, title = null) {
+		vm.$snotify.warning(message, title, vm.$config.snotifyDefaults);
+	}
 	static info(vm, message, title = null) {
 		vm.$snotify.info(message, title, vm.$config.snotifyDefaults); 
-	} 
+	}
 	static ok(vm, message, title = null) {
 		vm.$snotify.success(message, title, vm.$config.snotifyDefaults); 
 	}
