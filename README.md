@@ -14,7 +14,7 @@ You can also build the files yourself and deploy them to any web host:
 3. Open a command line window and go to the directory which contains the cloned/downloaded web editor files.
 4. Configure the web editor by editing `config.js` and `vue.config.js` to suit your needs.
 6. Install the dependencies by executing `npm install` on the command line
-7. 
+7.
     * Development: Run the development server by executing `npm start`.
     * Deployment: Build the project by executing `npm run build`. Afterwards upload the content of the `dist` folder to your server.
 
@@ -37,3 +37,16 @@ Example: <https://editor.openeo.org?server=https://earthengine.openeo.org&discov
 
 ## License
 This project is licensed under the Apache 2.0 license - see the [LICENSE.md](LICENSE.md) file for details.
+
+## Docker
+This repository contains a Dockerfile. It can be build with
+```
+docker build . -t openeo-web-editor
+```
+and then tested locally with
+```
+docker run -p 8080:80 openeo-web-editor
+```
+After sucessfull startup, the webeditor can be reached locally at http://127.0.0.1:8080/
+
+More startup information can be seen at the [official nginx docker image](https://hub.docker.com/_/nginx/) which is used.
