@@ -222,6 +222,11 @@ export default {
 	flex-direction: column;
 }
 
+.visualEditor .vue-component.model-builder {
+	min-height: 100px;
+	min-width: 100px;
+}
+
 .visualEditor .editorSplitter {
 	display: flex;
 	flex-direction: row-reverse;
