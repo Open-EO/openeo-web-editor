@@ -336,8 +336,9 @@ export default {
 	min-width: 200px;
 	width: 25%;
 }
-.mainEditor, .userContent {
-	height: calc(50% - 1em);
+#workspace .mainEditor.tabs,
+#workspace .userContent.tabs {
+	height: 50%;
 	flex-grow: 1;
 }
 .separator {
