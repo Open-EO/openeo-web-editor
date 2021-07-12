@@ -106,7 +106,6 @@ export default {
 			this.refreshElement(job, updatedJob => this.emit('editProcess', updatedJob));
 		},
 		executeProcess() {
-			Utils.info(this, 'Data requested. Please wait...');
 			this.emit('viewSyncResult', this.process);
 		},
 		jobCreated(job) {
@@ -294,8 +293,6 @@ export default {
 			}
 		},
 		async viewResults(job) {			
-			Utils.info(this, 'Data requested. Please wait...');
-
 			// Doesn't need to go through job store as it doesn't change job-related data
 			try {
 				let stac = await job.getResultsAsStac()

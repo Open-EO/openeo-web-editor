@@ -300,11 +300,9 @@ export default new Vuex.Store({
 		},
 		startActiveRequest(state) {
 			state.activeRequests += 1;
-			console.log(state.activeRequests);
 		},
 		endActiveRequest(state) {
 			state.activeRequests -= 1;
-			console.log(state.activeRequests);
 		}
 	}
 });
