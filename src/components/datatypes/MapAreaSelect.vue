@@ -19,10 +19,21 @@ export default {
 			default: () => null
 		}
 	},
+	data() {
+		return {
+			callback: null
+		};
+	},
 	computed: {
 		asArray() {
 			return Array.isArray(this.value);
 		}
+	},
+	beforeDestroy() {
+		this.areaSelect.tearDown();
+		this.map.un('change', this.callback);
+		this.map.getView().un('change', this.callback);
+		this.map.un('propertychange', this.callback);
 	},
 	methods: {
 		renderMap() {
@@ -34,11 +45,11 @@ export default {
 			}
 
 			if (this.editable) {
-				var callback = () => this.$emit('input', this.areaSelect.getBounds(this.asArray));
-				this.areaSelect.setInteractionListener(callback);
-				this.map.on('change', callback);
-				this.map.getView().on('change', callback);
-				this.map.on('propertychange', callback);
+				this.callback = () => this.$emit('input', this.areaSelect.getBounds(this.asArray));
+				this.areaSelect.setInteractionListener(this.callback);
+				this.map.on('change', this.callback);
+				this.map.getView().on('change', this.callback);
+				this.map.on('propertychange', this.callback);
 			}
 		}
 	}

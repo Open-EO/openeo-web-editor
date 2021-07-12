@@ -108,6 +108,13 @@ export default {
 			this.listen('windowResized', this.updateMapSize);
 		},
 
+		onShow() {
+			this.listen('windowResized', this.updateMapSize);
+		},
+		onHide() {
+			this.unlisten('windowResized');
+		},
+
 		// To be overridden by implementing components.
 		renderMap() {
 			this.createMap();

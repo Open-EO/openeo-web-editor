@@ -13,6 +13,8 @@ export default class AreaSelect {
         this.moving = false;
         this.editable = editable;
         this.interactionListener = null;
+        this.htmlMouseUpListener = null;
+        this.changeSizeListener = null;
 		this.createElements();
 		this.addControls();
 		this.render();
@@ -104,8 +106,8 @@ export default class AreaSelect {
             this.setUpHandlerEvents(this.swHandle, 1, -1);
             this.setUpHandlerEvents(this.seHandle, -1, -1);
         }
-
-        this.map.on("change:size", () => this.onInteraction());
+        this.changeSizeListener = () => this.onInteraction();
+        this.map.on("change:size", this.changeSizeListener);
     }
     
     setUpHandlerEvents(handle, xMod, yMod) {
@@ -127,10 +129,10 @@ export default class AreaSelect {
         var mapElem = this.map.getTargetElement();
         var htmlElem = document.querySelector('html');
 
-        var onMouseUp = () => {
+        this.htmlMouseUpListener = () => {
             if (!this.map.getTargetElement()) return;
             mapElem.removeEventListener("mousemove", onMouseMove);
-            htmlElem.removeEventListener("mouseup", onMouseUp);
+            htmlElem.removeEventListener("mouseup", this.htmlMouseUpListener);
 			this.moving = false;
             if (typeof this.interactionListener === 'function') {
                 this.interactionListener();
@@ -141,8 +143,13 @@ export default class AreaSelect {
 			event.stopPropagation();
 			this.moving = [event.pageX, event.pageY];
             mapElem.addEventListener("mousemove", onMouseMove);
-            htmlElem.addEventListener("mouseup", onMouseUp);
+            htmlElem.addEventListener("mouseup", this.htmlMouseUpListener);
         });
+    }
+
+    tearDown() {
+        document.querySelector('html').removeEventListener("mouseup", this.htmlMouseUpListener);
+        this.map.un("change:size", this.changeSizeListener);
     }
     
     onInteraction() {

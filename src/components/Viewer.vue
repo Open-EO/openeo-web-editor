@@ -1,7 +1,7 @@
 <template>
 	<Tabs id="viewerContent" ref="tabs">
 		<template #default>
-			<Tab id="mapView" name="Map" icon="fa-map" :selected="true">
+			<Tab id="mapView" name="Map" icon="fa-map" :selected="true" @show="onShow" @hide="onHide">
 				<template #default="{ tab }">
 					<MapViewer id="mapCanvas" ref="mapViewer" :show="tab.active" :center="[50.1725, 9.15]" :zoom="6" />
 				</template>
@@ -50,6 +50,7 @@ export default {
 	data() {
 		return {
 			tabCounter: {},
+			mapActive: false
 		}
 	},
 	computed: {
@@ -109,10 +110,16 @@ export default {
 			if (tab.$children.length && typeof tab.$children[0].onShow === 'function') {
 				tab.$children[0].onShow();
 			}
+			else if (typeof tab.onShow === 'function') {
+				tab.onShow();
+			}
 		},
 		onHide(tab) {
 			if (tab.$children.length && typeof tab.$children[0].onHide === 'function') {
 				tab.$children[0].onHide();
+			}
+			else if (typeof tab.onHide === 'function') {
+				tab.onHide();
 			}
 		},
 		uniqueTitle(title) {
