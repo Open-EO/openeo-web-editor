@@ -230,6 +230,8 @@ export default {
 	flex-grow: 1;
 	margin: 0;
 	font-size: 1.5rem;
+	border: 0;
+	padding: 0;
 }
 
 .modal .modal-content {

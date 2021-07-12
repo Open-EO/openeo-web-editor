@@ -141,7 +141,8 @@ export default {
 	justify-content: flex-end;
 	background-color: #fff;
 }
-.sourceHeader h3 {
+.sourceHeader strong {
+	display: block;
 	margin: auto 0;
 	flex-grow: 1;
 }

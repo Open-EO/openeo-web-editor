@@ -1,7 +1,7 @@
 <template>
 	<div class="textEditor" :class="languageString">
 		<div class="sourceHeader">
-			<h3 v-if="title">{{ title }}</h3>
+			<strong v-if="title">{{ title }}</strong>
 			<div class="sourceToolbar">
 				<span class="sepr" v-if="editable">
 					<button type="button" @click="confirmClear" title="New script / Clear current script"><i class="fas fa-file"></i></button>
