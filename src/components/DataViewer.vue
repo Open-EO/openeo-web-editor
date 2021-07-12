@@ -1,6 +1,12 @@
 <template>
 	<div class="dataViewer">
-		<div class="noDataMessage" v-if="isError">{{ content.message }}</div>
+		<div class="message error" v-if="isError">
+			<i class="fas fa-exclamation-circle"></i>
+			<span>
+				Sorry, the Editor was unable to read the data.<br /><br />The following error occured:<br />
+				<em>{{ content.message }}</em>
+			</span>
+		</div>
 		<pre class="text" v-else-if="typeof content === 'string'">{{ content }}</pre>
 		<ObjectTree class="tree" v-else-if="content !== null" :data="content"></ObjectTree>
 		<div class="noDataMessage" v-else><i class="fas fa-spinner fa-spin"></i> Loading data...</div>
@@ -44,13 +50,17 @@ export default {
 		this.processData(this.data);
 	},
 	methods: {
-		processData(data) {
+		async processData(data) {
 			if (typeof data.blob !== 'undefined') {
 				switch(data.type) {
 					case 'application/json':
 						Utils.blobToText(data, event => {
-							var json = JSON.parse(event.target.result);
-							this.content = json;
+							try {
+								var json = JSON.parse(event.target.result);
+								this.content = json;
+							} catch (error) {
+								this.content = error;
+							}
 						});
 						break;
 					case 'text/plain':
@@ -66,9 +76,12 @@ export default {
 				}
 			}
 			else if (data.url) {
-				this.connection.download(data.url, false)
-					.then(response => this.processData(response.data))
-					.catch(error => Utils.exception(this, error, "Download File Error"));
+				try {
+					let response = await this.connection.download(data.url, false);
+					this.processData(response.data);
+				} catch(error) {
+					Utils.exception(this, error, "Download File Error");
+				}
 			}
 			else {
 				// Could also be JSON
@@ -83,6 +96,9 @@ export default {
 </script>
 
 <style scoped>
+.dataViewer .message {
+	margin: 1em;
+}
 .dataViewer .text, .dataViewer .tree {
 	padding: 5px;
 }
