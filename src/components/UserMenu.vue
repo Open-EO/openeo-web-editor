@@ -23,7 +23,9 @@
 				<a :href="link.href" target="_blank" :rel="link.rel">{{ link.title }}</a>
 			</div>
 			<div class="item">
-				<button class="navButton" type="button" @click.prevent="logout"><i class="fas fa-sign-out-alt"></i> Logout</button>
+				<button v-if="!isAuthenticated" class="navButton" type="button" @click.prevent="login"><i class="fas fa-sign-in-alt"></i> Login</button>
+				<button v-else class="navButton" type="button" @click.prevent="logout"><i class="fas fa-sign-out-alt"></i> Logout</button>
+				<button v-if="!$config.serverUrl" class="navButton" type="button" @click.prevent="disconnect"><i class="fas fa-sign-out-alt"></i> Disconnect</button>
 			</div>
 		</div>
 	</div>
@@ -35,7 +37,7 @@ import Utils from '../utils.js';
 export default {
 	name: 'UserMenu',
 	computed: {
-		...Utils.mapState(['userInfo']),
+		...Utils.mapState(['userInfo', 'isAuthenticated']),
 		...Utils.mapGetters(['currency']),
 		links() {
 			return Utils.friendlyLinks(this.userInfo.links);
@@ -52,6 +54,9 @@ export default {
 			}
 			else if (typeof this.userInfo.user_id === 'string') {
 				return this.userInfo.user_id;
+			}
+			else if (this.isAuthenticated) {
+				return 'User';
 			}
 			else {
 				return 'Guest';
@@ -71,11 +76,20 @@ export default {
 		}
 	},
 	methods: {
-		...Utils.mapActions({logoutServer: 'logout'}),
+		...Utils.mapActions({logoutUser: 'logout'}),
 		...Utils.mapMutations('editor', {resetEditor: 'reset'}),
+		...Utils.mapMutations(['discoveryCompleted']),
 		async logout() {
-			await this.logoutServer();
+			await this.logoutUser(false);
+			Utils.ok(this, 'Logout successful.');
+		},
+		async disconnect() {
+			await this.logoutUser(true);
 			this.resetEditor();
+			window.history.pushState({}, "", "?");
+		},
+		login() {
+			this.discoveryCompleted(false);
 		},
 		formatMegabyte(num) {
 			var gb = 1024*1024*1024;

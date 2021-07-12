@@ -212,7 +212,7 @@ export default {
 
 		historyNavigate(evt) {
 			if (!Utils.isObject(evt.state) || evt.state.reset) {
-				this.logout();
+				this.logout(true);
 				this.autoConnect = false;
 				this.loading = false;
 				this.password = '';

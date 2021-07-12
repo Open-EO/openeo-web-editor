@@ -186,7 +186,7 @@ export default new Vuex.Store({
 
 			await Promise.all(promises);
 
-			cx.commit('discoveryCompleted', true);
+			cx.commit('discoveryCompleted');
 		},
 
 		// Request user account info
@@ -209,7 +209,7 @@ export default new Vuex.Store({
 			return collection;
 		},
 
-		async logout(cx) {
+		async logout(cx, disconnect = false) {
 			if (cx.state.isAuthenticated) {
 				// Logout (mostly for OIDC)
 				var authProvider = cx.state.connection.getAuthProvider();
@@ -217,17 +217,22 @@ export default new Vuex.Store({
 					await authProvider.logout();
 				}
 			}
-			// Reset values
-			cx.commit('reset');
-			cx.commit('jobs/reset');
-			cx.commit('files/reset');
-			cx.commit('services/reset');
-			cx.commit('userProcesses/reset');
+			if (disconnect) {
+				// Reset values
+				cx.commit('reset', this.isAuthenticated);
+				cx.commit('jobs/reset');
+				cx.commit('files/reset');
+				cx.commit('services/reset');
+				cx.commit('userProcesses/reset');
+			}
+			else {
+				cx.commit('authenticated', false);
+			}
 		}
 	},
 	mutations: {
-		discoveryCompleted(state) {
-			state.discoveryCompleted = true;
+		discoveryCompleted(state, completed = true) {
+			state.discoveryCompleted = completed;
 		},
 		connection(state, connection) {
 			state.connection = connection;
@@ -287,8 +292,10 @@ export default new Vuex.Store({
 				state.userInfo = {};
 			}
 		},
-		reset(state) {
-			Object.assign(state, getDefaultState());
+		reset(state, keepConnection = false) {
+			Object.assign(state, getDefaultState(), {
+				connection: keepConnection ? state.connection : null
+			});
 		}
 	}
 });
