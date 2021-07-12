@@ -151,10 +151,13 @@ export default {
 				this.updateMetadata(process, newProcess)
 			}
 		},
-		updateMetadata(process, data) {
-			this.update({data: process, parameters: this.normalize(process, data)})
-				.then(updatedProcess => Utils.ok(this, 'Process "' + Utils.getResourceTitle(updatedProcess) + '" successfully updated.'))
-				.catch(error => Utils.exception(this, error, "Update Process Error: " + process.id));
+		async updateMetadata(process, data) {
+			try {
+				let updatedProcess = await this.update({data: process, parameters: this.normalize(process, data)});
+				Utils.ok(this, 'Process "' + Utils.getResourceTitle(updatedProcess) + '" successfully updated.');
+			} catch (error) {
+				Utils.exception(this, error, "Update Process Error: " + process.id);
+			}
 		},
 		deleteProcess(process) {
 			this.delete({data: process})

@@ -169,10 +169,13 @@ export default {
 			this.$refs.editor.insertProcess(node);
 		},
 
-		showCollectionInfo(id) {
-			this.describeCollection(id)
-				.then(info => this.$refs.collectionModal.show(info))
-				.catch(error => Utils.error(this, "Sorry, can't load collection details for " + id + "."));
+		async showCollectionInfo(id) {
+			try {
+				let info = await this.describeCollection(id);
+				this.$refs.collectionModal.show(info);
+			} catch (error) {
+				Utils.error(this, "Sorry, can't load collection details for " + id + ".");
+			}
 		},
 
 		showProcessInfoById(id) {
@@ -200,11 +203,14 @@ export default {
 			this.$refs.schemaModal.show(name, schema, msg);
 		},
 
-		_showProcessInfo(process) {
+		async _showProcessInfo(process) {
 			if (!process.native) {
-				this.readUserProcess({data: process})
-					.then(updated => this._showProcessInfoModal(updated.toJSON()))
-					.catch(error => Utils.exception(this, error, "Load Process Error: " + process.id));
+				try {
+					let updated = await this.readUserProcess({data: process});
+					this._showProcessInfoModal(updated.toJSON());
+				} catch(error) {
+					Utils.exception(this, error, "Load Process Error: " + process.id);
+				}
 			}
 			else {
 				this._showProcessInfoModal(process);

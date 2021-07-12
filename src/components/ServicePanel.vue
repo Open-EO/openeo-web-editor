@@ -179,11 +179,14 @@ export default {
 			}
 			return data;
 		},
-		createService(script, data) {
+		async createService(script, data) {
 			data = this.normalizeToDefaultData(data);
-			this.create({parameters: [script, data.type, data.title, data.description, data.enabled, data.configuration, data.plan, data.budget]})
-				.then(service => this.serviceCreated(service))
-				.catch(error => Utils.exception(this, error, 'Create Service Error: ' + (data.title || '')));
+			try {
+				let service = await this.create({parameters: [script, data.type, data.title, data.description, data.enabled, data.configuration, data.plan, data.budget]});
+				this.serviceCreated(service);
+			} catch(error) {
+				Utils.exception(this, error, 'Create Service Error: ' + (data.title || ''));
+			}
 		},
 		createServiceFromScript() {
 			var fields = [
@@ -226,18 +229,23 @@ export default {
 		toggleEnabled(service) {
 			this.updateService(service, {enabled: !service.enabled});
 		},
-		updateService(service, parameters) {
-			this.update({data: service, parameters: this.normalizeToDefaultData(parameters)})
-				.then(updatedService => Utils.ok(this, 'Service "' + Utils.getResourceTitle(updatedService) + '" successfully updated.'))
-				.catch(error => Utils.exception(this, error, "Update Service Error: " + Utils.getResourceTitle(service)));
+		async updateService(service, parameters) {
+			try {
+				let updatedService = await this.update({data: service, parameters: this.normalizeToDefaultData(parameters)});
+				Utils.ok(this, 'Service "' + Utils.getResourceTitle(updatedService) + '" successfully updated.');
+			} catch(error) {
+				Utils.exception(this, error, "Update Service Error: " + Utils.getResourceTitle(service));
+			}
 		},
-		deleteService(service) {
-			this.delete({data: service})
-				.then(() => this.emit('removeWebService', service.id))
-				.catch(error => Utils.exception(this, error, 'Delete Service Error: ' + Utils.getResourceTitle(service)));
+		async deleteService(service) {
+			try {
+				await this.delete({data: service});
+				this.emit('removeWebService', service.id);
+			} catch(error) {
+				Utils.exception(this, error, 'Delete Service Error: ' + Utils.getResourceTitle(service));
+			}
 		},
 		viewService(service) {
-			Utils.info(this, 'Requesting tiles from server. Please wait...');
 			this.emit('viewWebService', service);
 		}
 	}

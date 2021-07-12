@@ -1,5 +1,5 @@
 <template>
-	<div class="container">
+	<div class="container" :class="{connecting: !isDiscovered}">
 		<transition name="connect-fade" mode="out-in">
 			<ConnectForm key="1" v-if="!isDiscovered" :skipLogin="skipLogin" />
 			<IDE key="2" v-else />
@@ -7,6 +7,9 @@
 		<Modal ref="modal" maxWidth="60%" />
 		<WebEditorModal ref="webEditorModal" />
 		<vue-snotify />
+		<span v-show="activeRequests > 0" id="activeRequests" :style="{zIndex: hightestModalZIndex+2}">
+			<i class="fas fa-spinner fa-spin fa-2x"></i>
+		</span>
 	</div>
 </template>
 
@@ -38,6 +41,21 @@ export default {
 	},
 	created() {
 		this.skipLogin = !!Utils.param('discover');
+
+		// Count active requests
+		axios.interceptors.request.use(config => {
+			this.startActiveRequest();
+			return config;
+		});
+
+		// Add a response interceptor
+		axios.interceptors.response.use(response => {
+			this.endActiveRequest();
+			return response;
+		}, error => {
+			this.endActiveRequest();
+			return Promise.reject(error);
+		});
 	},
 	mounted() {
 		this.listen('showMessageModal', this.showMessageModal);
@@ -57,9 +75,12 @@ export default {
 		}
 	},
 	computed: {
+		...Utils.mapState(['activeRequests']),
+		...Utils.mapState('editor', ['hightestModalZIndex']),
 		...Utils.mapGetters(['isDiscovered'])
 	},
 	methods: {
+		...Utils.mapMutations(['startActiveRequest', 'endActiveRequest']),
 		setTitle(subtitle) {
 			var title = "openEO Web Editor";
 			if (subtitle) {
@@ -159,6 +180,22 @@ tt, code {
 	padding: 0 0.1em 0 0.3em;
 }
 
+#activeRequests {
+	display: inline-block;
+	width: 2em;
+	height: 2em;
+	padding: 0.5em;
+	position: absolute;
+	left: 1rem;
+	bottom: 1rem;
+	background-color: rgba(255, 255, 255, 0.5);
+	border-radius: 2em;
+}
+.connecting #activeRequests {
+	color: white;
+	background-color: rgba(0, 0, 0, 0.5);
+}
+
 .vue-component h2 {
 	font-size: 1.75em;
 	padding: 0.25em 0 0.25em 0;
@@ -207,7 +244,6 @@ h3.aboutPage {
 	margin: 1em;
 	font-weight: bold;
 }
-
 
 .message {
 	padding: 0.5em;

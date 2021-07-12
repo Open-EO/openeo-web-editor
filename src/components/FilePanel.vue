@@ -99,24 +99,24 @@ export default {
 				this.uploadFile(files[i], i);
 			}
 		},
-		uploadFile(file, i) {
+		async uploadFile(file, i) {
 			this.uploadProgressPerFile.push(0);
 			if (typeof file.name !== 'string') {
 				return;
 			}
 
-			this.create({parameters: [
-				file,
-				null,
-				percent => this.$set(this.uploadProgressPerFile, i, percent)
-			]})
-				.then(uploadedFile => {
-					this.$set(this.uploadProgressPerFile, i, 100);
-					Utils.ok(this, 'File upload completed.', file.name);
-				}).catch(error => {
-					console.error(error);
-					Utils.exception(this, error, "Upload File Error: " + file.name);
-				});
+			try {
+				await this.create({parameters: [
+					file,
+					null,
+					percent => this.$set(this.uploadProgressPerFile, i, percent)
+				]});
+				this.$set(this.uploadProgressPerFile, i, 100);
+				Utils.ok(this, 'File upload completed.', file.name);
+			} catch (error) {
+				console.error(error);
+				Utils.exception(this, error, "Upload File Error: " + file.name);
+			}
 		},
 		finishAllUploads() {
 			this.$refs.uploadUserFile.value = '';
@@ -130,7 +130,6 @@ export default {
 			}, 100);
 		},
 		downloadFile(file) {
-			Utils.info(this, 'File requested. Please wait...');
 			file.downloadFile(file.path);
 		},
 		deleteFile(file) {

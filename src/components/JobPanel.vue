@@ -177,11 +177,14 @@ export default {
 			}
 			return data;
 		},
-		createJob(process, data) {
-			data = this.normalizeToDefaultData(data);
-			this.create({parameters: [process, data.title, data.description, data.plan, data.budget]})
-				.then(job => this.jobCreated(job))
-				.catch(error => Utils.exception(this, error, 'Create Job Error: ' + (data.title || '')));
+		async createJob(process, data) {
+			try {
+				data = this.normalizeToDefaultData(data);
+				let job = await this.create({parameters: [process, data.title, data.description, data.plan, data.budget]});
+				this.jobCreated(job);
+			} catch (error) {
+				Utils.exception(this, error, 'Create Job Error: ' + (data.title || ''));
+			}
 		},
 		createJobFromScript() {
 			var fields = [
@@ -217,7 +220,7 @@ export default {
 				});
 			}
 		},
-		showJobInfo(job) {
+		async showJobInfo(job) {
 			this.refreshElement(job, async (updatedJob) => {
 				let result = null;
 				if (updatedJob.status === 'finished') {
@@ -230,11 +233,14 @@ export default {
 				this.emit('showJobInfo', updatedJob.getAll(), result);
 			});
 		},
-		estimateJob(job) {
+		async estimateJob(job) {
 			// Doesn't need to go through job store as it doesn't change job-related data
-			job.estimateJob()
-				.then(estimate => this.emit('showJobEstimate', job.getAll(), estimate))
-				.catch(error => Utils.exception(this, error, "Job Estimate Error: " + Utils.getResourceTitle(job)));
+			try {
+				let estimate = await job.estimateJob();
+				this.emit('showJobEstimate', job.getAll(), estimate);
+			} catch(error) {
+				Utils.exception(this, error, "Job Estimate Error: " + Utils.getResourceTitle(job));
+			}
 		},
 		showLogs(job) {
 			this.emit('viewLogs', job);
@@ -263,47 +269,58 @@ export default {
 		updateTitle(job, newTitle) {
 			this.updateJob(job, {title: newTitle});
 		},
-		updateJob(job, parameters) {
-			this.update({data: job, parameters: this.normalizeToDefaultData(parameters)})
-				.then(updatedJob => Utils.ok(this, 'Job "' + Utils.getResourceTitle(updatedJob) + '" successfully updated.'))
-				.catch(error => Utils.exception(this, error, 'Update Job Error: ' + Utils.getResourceTitle(job)));
+		async updateJob(job, parameters) {
+			try {
+				let updatedJob = await this.update({data: job, parameters: this.normalizeToDefaultData(parameters)});
+				Utils.ok(this, 'Job "' + Utils.getResourceTitle(updatedJob) + '" successfully updated.');
+			} catch(error) {
+				Utils.exception(this, error, 'Update Job Error: ' + Utils.getResourceTitle(job));
+			}
 		},
-		queueJob(job) {
-			this.queue({data: job})
-				.then(updatedJob => Utils.ok(this, 'Job "' + Utils.getResourceTitle(updatedJob) + '" successfully queued.'))
-				.catch(error => Utils.exception(this, error, 'Queue Job Error: ' + Utils.getResourceTitle(job)));
+		async queueJob(job) {
+			try {
+				let updatedJob = await this.queue({data: job});
+				Utils.ok(this, 'Job "' + Utils.getResourceTitle(updatedJob) + '" successfully queued.');
+			} catch(error) {
+				Utils.exception(this, error, 'Queue Job Error: ' + Utils.getResourceTitle(job));
+			}
 		},
-		cancelJob(job) {
-			this.cancel({data: job})
-				.then(updatedJob => Utils.ok(this, 'Job "' + Utils.getResourceTitle(updatedJob) + '" successfully canceled.'))
-				.catch(error => Utils.exception(this, error, 'Cancel Job Error: ' + Utils.getResourceTitle(job)));
+		async cancelJob(job) {
+			try {
+				let updatedJob = await this.cancel({data: job});
+				Utils.ok(this, 'Job "' + Utils.getResourceTitle(updatedJob) + '" successfully canceled.');
+			} catch(error) {
+				Utils.exception(this, error, 'Cancel Job Error: ' + Utils.getResourceTitle(job));
+			}
 		},
-		viewResults(job) {			
+		async viewResults(job) {			
 			Utils.info(this, 'Data requested. Please wait...');
 
 			// Doesn't need to go through job store as it doesn't change job-related data
-			job.getResultsAsStac().then(stac => {
+			try {
+				let stac = await job.getResultsAsStac()
 				if(Utils.size(stac.assets) == 0) {
 					Utils.error(this, 'No results available for job "' + Utils.getResourceTitle(job) + '".');
 					return;
 				}
-
 				this.emit('viewJobResults', stac, job);
-			});
+			} catch(error) {
+				Utils.exception(this, error, 'View Result Error: ' + Utils.getResourceTitle(job));
+			}
 		},
-		downloadResults(job) {	
+		async downloadResults(job) {	
 			// Doesn't need to go through job store as it doesn't change job-related data
-			job.getResultsAsStac().then(item => {
-				if(Utils.size(item.assets) == 0) {
+			try {
+				let stac = await job.getResultsAsStac();
+				if(Utils.size(stac.assets) == 0) {
 					Utils.error(this, 'No results available for job "' + Utils.getResourceTitle(job) + '".');
 					return;
 				}
-				
-				// This can be formatted much nicer and more useful...
+				// ToDo: This can be formatted much nicer and more useful...
 				this.emit(
 					'showListModal', 
 					'Download results',
-					Object.values(item.assets).map(a => a.href),
+					Object.values(stac.assets).map(a => a.href),
 					[
 						{
 							callback: url => {
@@ -313,7 +330,9 @@ export default {
 						}
 					]
 				);
-			});
+			} catch(error) {
+				Utils.exception(this, error, 'Download Result Error: ' + Utils.getResourceTitle(job));
+			}
 		},
 		hasResults(job) {
 			return (typeof job.status !== 'string' || job.status.toLowerCase() == 'finished');

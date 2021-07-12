@@ -16,6 +16,7 @@ Vue.use(Vuex);
 const getDefaultState = () => {
 	return {
 		connection: null,
+		activeRequests: 0,
 		discoveryCompleted: false,
 		isAuthenticated: false,
 		userInfo: {},
@@ -296,6 +297,14 @@ export default new Vuex.Store({
 			Object.assign(state, getDefaultState(), {
 				connection: keepConnection ? state.connection : null
 			});
+		},
+		startActiveRequest(state) {
+			state.activeRequests += 1;
+			console.log(state.activeRequests);
+		},
+		endActiveRequest(state) {
+			state.activeRequests -= 1;
+			console.log(state.activeRequests);
 		}
 	}
 });

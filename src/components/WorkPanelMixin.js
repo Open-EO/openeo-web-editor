@@ -49,17 +49,18 @@ export default (namespace, singular, plural) => {
 			getSyncInterval() {
 				return this.$config.dataRefreshInterval*60*1000; // Refresh data every x minutes
 			},
-			refreshElement(obj, callback = null) {
+			async refreshElement(obj, callback = null) {
 				var old = Object.assign({}, obj);
-				this.read({data: obj})
-					.then(updated => {
-						if (typeof callback === 'function') {
-							callback(updated, old);
-						}
-					})
-					.catch(error => Utils.exception(this, error, "Load " + singular + " error"));
+				try {
+					let updated = await this.read({data: obj});
+					if (typeof callback === 'function') {
+						callback(updated, old);
+					}
+				} catch(error) {
+					Utils.exception(this, error, "Load " + singular + " error");
+				}
 			},
-			updateData() {
+			async updateData() {
 				var table = this.getTable();
 				var nextSyncTime = Date.now() - this.getSyncInterval();
 				if (!table || this.lastSyncTime > nextSyncTime) {
@@ -77,20 +78,19 @@ export default (namespace, singular, plural) => {
 						table.setNoData("Loading " + plural + "...");
 					}
 					this.lastSyncTime = Date.now();
-					this.list()
-						.then(data => {
-							if(data.length == 0) {
-								table.setNoData("Add your first " + singular + " here...");
-							}
-						})
-						.catch(error => {
-							if (!isUpdate) {
-								table.setNoData(error);
-							}
-							else {
-								console.log(error);
-							}
-						});
+					try {
+						let data = await this.list();
+						if(data.length == 0) {
+							table.setNoData("Add your first " + singular + " here...");
+						}
+					} catch(error) {
+						if (!isUpdate) {
+							table.setNoData(error);
+						}
+						else {
+							console.log(error);
+						}
+					}
 				}
 			}
 		}
