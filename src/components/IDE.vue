@@ -1,6 +1,6 @@
 <template>
 	<div id="wrapper">
-		<div id="ide" @mouseup="stopMovingSeparator($event)" @mousemove="moveSeparator($event)">
+		<div id="ide">
 			<header class="navbar">
 				<Logo />
 				<ul id="menu">
@@ -8,24 +8,28 @@
 					<li><UserMenu /></li>
 				</ul>
 			</header>
-			<main class="page">
-				<div id="discovery" ref="discovery">
+			<Splitpanes class="default-theme" @resize="resized" @pane-maximize="resized">
+				<Pane id="discovery" size="20">
 					<DiscoveryToolbar class="toolbar" :onAddProcess="insertProcess" />
-				</div>
-				<hr class="separator" ref="separator0" @dblclick="centerSeparator($event, 0)" @mousedown="startMovingSeparator($event, 0)" />
-				<div id="workspace" ref="workspace">
-					<Editor ref="editor" class="mainEditor" id="main" :value="process" @input="updateEditor" :title="contextTitle">
-						<template #file-toolbar>
-							<button type="button" v-show="saveSupported" @click="saveProcess" :title="'Save to ' + contextTitle"><i class="fas fa-save"></i></button>
-						</template>
-					</Editor>
-					<UserWorkspace class="userContent" v-if="isAuthenticated" />
-				</div>
-				<hr class="separator" ref="separator1" @dblclick="centerSeparator($event, 1)" @mousedown="startMovingSeparator($event, 1)" />
-				<div id="viewer" ref="viewer">
+				</Pane>
+				<Pane id="workspace" size="50">
+					<Splitpanes class="default-theme" horizontal @resize="resized" @pane-maximize="resized">
+						<Pane id="editor" size="50">
+							<Editor ref="editor" class="mainEditor" id="main" :value="process" @input="updateEditor" :title="contextTitle">
+								<template #file-toolbar>
+									<button type="button" v-show="saveSupported" @click="saveProcess" :title="'Save to ' + contextTitle"><i class="fas fa-save"></i></button>
+								</template>
+							</Editor>
+						</Pane>
+						<Pane id="user" size="50" v-if="isAuthenticated">
+							<UserWorkspace class="userContent" />
+						</Pane>
+					</Splitpanes>
+				</Pane>
+				<Pane id="viewer" size="30">
 					<Viewer />
-				</div>
-			</main>
+				</Pane>
+			</Splitpanes>
 		</div>
 		<CollectionModal ref="collectionModal" />
 		<ProcessModal ref="processModal" />
@@ -51,6 +55,7 @@ import Logo from './Logo.vue';
 import DiscoveryToolbar from './DiscoveryToolbar.vue';
 import { ProcessParameter } from '@openeo/js-commons';
 import { Job, Service, UserProcess } from '@openeo/js-client';
+import { Splitpanes, Pane } from 'splitpanes';
 
 export default {
 	name: 'IDE',
@@ -62,6 +67,8 @@ export default {
 		Viewer,
 		UserMenu,
 		UserWorkspace,
+		Splitpanes,
+		Pane,
 		CollectionModal: () => import('./modals/CollectionModal.vue'),
 		ProcessModal: () => import('./modals/ProcessModal.vue'),
 		ServerInfoModal: () => import('./modals/ServerInfoModal.vue'),
@@ -75,22 +82,6 @@ export default {
 	},
 	data() {
 		return {
-			moving: false,
-			movingOffset: 0,
-			separators: [
-				{
-					left: 'discovery',
-					right: 'workspace',
-					anchor: 'left',
-					width: '20%'
-				},
-				{
-					left: 'workspace',
-					right: 'viewer',
-					anchor: 'right',
-					width: '30%'
-				}
-			],
 			resizeListener: null,
 			userInfoUpdater: null
 		};
@@ -134,7 +125,7 @@ export default {
 		this.listen('showDataForm', this.showDataForm);
 		this.listen('editProcess', this.editProcess);
 
-		this.resizeListener = (event) => this.emit('windowResized', event);
+		this.resizeListener = event => this.resized(event);
 		window.addEventListener('resize', this.resizeListener);
 		if (this.isAuthenticated) {
 			this.userInfoUpdater = setInterval(this.describeAccount, this.$config.dataRefreshInterval*60*1000); // Refresh user data every x minutes
@@ -155,6 +146,10 @@ export default {
 		...Utils.mapActions('editor', ['loadInitialProcess']),
 		...Utils.mapMutations('editor', ['setContext', 'setProcess']),
 
+		resized(event) {
+			this.emit('windowResized', event);
+		},
+
 		saveProcess() {
 			this.emit('replaceProcess', this.context, this.process);
 		},
@@ -172,52 +167,6 @@ export default {
 
 		insertProcess(node) {
 			this.$refs.editor.insertProcess(node);
-		},
-
-		startMovingSeparator(evt, id) {
-			this.moving = false;
-			if (evt.which === 1) {
-				this.moving = id;
-			}
-		},
-
-		stopMovingSeparator(evt) {
-			this.moving = false;
-		},
-
-		moveSeparator(evt) {
-			if (this.moving !== false && this.separators[this.moving] && evt.movementX !== 0) {
-				var sep = this.separators[this.moving];
-				var elem = this.$refs[sep[sep.anchor]];
-				var x;
-				if (sep.anchor === 'right') {
-					x = Math.max(document.body.scrollWidth, document.documentElement.scrollWidth, document.body.offsetWidth, document.documentElement.offsetWidth, document.documentElement.clientWidth) - evt.x;
-				}
-				else {
-					x = evt.x;
-				}
-				elem.style.width = x + 'px';
-				this.emit('windowResized', evt);
-				evt.preventDefault();
-				evt.stopPropagation();
-			}
-		},
-
-		centerSeparator(event, id) {
-			this.moving = false;
-			var sep = this.separators[id];
-			if (!sep) {
-				return;
-			}
-
-			var elem = this.$refs[sep[sep.anchor]];
-			if (elem.getBoundingClientRect().width < 220) {
-				elem.style.width = sep.width;
-			}
-			else {
-				elem.style.width = 0;
-			}
-			this.emit('windowResized', event);
 		},
 
 		showCollectionInfo(id) {
@@ -302,55 +251,58 @@ export default {
 
 <style lang="scss">
 @import '../../theme.scss';
+@import '~splitpanes/dist/splitpanes.css';
+
+.splitpanes.default-theme {
+  .splitpanes__pane {
+    background-color: transparent;
+  }
+  .splitpanes__splitter {
+	  border: 0;
+  }
+  > * {
+	-webkit-transition: none;
+	transition: none;
+  }
+}
 
 #ide {
 	margin-top: 80px;
 	height: calc(100% - 80px);
 	background-color: white;
 }
-#ide main, #workspace, #viewer, #wrapper {
+#wrapper {
 	height: 100%;
 }
-#discovery {
-	width: 20%;
-	min-width: 200px;
-}
-#discovery .search-box {
-	margin: 1em;
-}
-#discovery .category {
-	padding: 5px 1em;;
-}
 #workspace, #viewer {
+	height: 100%;
+	min-width: 200px;
+	padding: 1rem;
 	box-sizing: border-box;
-	padding: 1em;
 }
 #workspace {
-	flex-grow: 1;
 	min-width: 300px;
-	width: 300px; /* Set a fixed size so that the box doesn't change size when tabs are changed or so. flex-grow will make the width larger/smaller anyway */
-	display: flex;
-	flex-direction: column;
 }
-#viewer {
-	min-width: 200px;
-	width: 25%;
+#discovery {
+	height: 100%;
+	overflow: auto;
+
+	.search-box {
+		margin: 1rem;
+	}
+	.category {
+		padding: 5px 1em;
+	}
 }
-#workspace .mainEditor.tabs,
-#workspace .userContent.tabs {
-	height: 50%;
-	flex-grow: 1;
+#editor, #user {
+	width: 100%;
+	min-height: 150px;
 }
-.separator {
-	border: 0;
-	padding: 3px;
-	margin: 0;
-	border-right: 1px dotted #aaa;
-	border-left: 1px dotted #aaa;
-	cursor: e-resize;
+#editor {
+	padding-bottom: 0.5rem;
 }
-.infoViewer {
-	height: 450px;
+#user {
+	padding-top: 0.5rem;
 }
 #ide header.navbar {
 	width: 100%;
@@ -363,20 +315,18 @@ export default {
 	justify-content: space-between;
 	z-index: 100;
 }
-#ide main.page {
-	display: flex;
-}
 #ide .logo {
 	flex-grow: 1;
 	align-content: flex-start;
 	white-space: nowrap;
 	overflow: hidden;
 	justify-content: left;
-	padding-left: 1em;
+	padding-left: 1rem;
 }
+
 #menu {
 	list-style-type: none;
-	margin: 0 1em;
+	margin: 0 1rem;
 	padding: 0;
 	display: flex;
 	align-items: center;

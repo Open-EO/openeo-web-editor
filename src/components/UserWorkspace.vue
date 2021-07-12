@@ -65,9 +65,6 @@ export default {
 </script>
 
 <style>
-#userContent {
-	margin-top: 1em;
-}
 #userContent .tabContent {
 	padding: 5px;
 	height: calc(100% - 12px);

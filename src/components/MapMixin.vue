@@ -120,8 +120,9 @@ export default {
 			this.createMap();
 		},
 
-		updateMapSize() {
+		async updateMapSize() {
 			if (this.map) {
+				await this.$nextTick();
 				this.map.updateSize();
 			}
 		},
