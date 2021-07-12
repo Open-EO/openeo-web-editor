@@ -242,7 +242,7 @@ export default {
 		replaceProcess(job, process) {
 			if (job instanceof Job) {
 				if (this.isJobActive(job)) {
-					Utils.error(this, "Can't change process while batch job is running.");
+					Utils.error(this, "Can't update process while batch job is running.");
 				}
 				else {
 					this.updateJob(job, {process: process});
@@ -265,6 +265,7 @@ export default {
 		},
 		updateJob(job, parameters) {
 			this.update({data: job, parameters: this.normalizeToDefaultData(parameters)})
+				.then(updatedJob => Utils.ok(this, 'Job "' + Utils.getResourceTitle(updatedJob) + '" successfully updated.'))
 				.catch(error => Utils.exception(this, error, 'Update Job Error: ' + Utils.getResourceTitle(job)));
 		},
 		queueJob(job) {

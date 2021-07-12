@@ -153,6 +153,7 @@ export default {
 		},
 		updateMetadata(process, data) {
 			this.update({data: process, parameters: this.normalize(process, data)})
+				.then(updatedProcess => Utils.ok(this, 'Process "' + Utils.getResourceTitle(updatedProcess) + '" successfully updated.'))
 				.catch(error => Utils.exception(this, error, "Update Process Error: " + process.id));
 		},
 		deleteProcess(process) {

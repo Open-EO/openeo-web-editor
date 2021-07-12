@@ -228,6 +228,7 @@ export default {
 		},
 		updateService(service, parameters) {
 			this.update({data: service, parameters: this.normalizeToDefaultData(parameters)})
+				.then(updatedService => Utils.ok(this, 'Service "' + Utils.getResourceTitle(updatedService) + '" successfully updated.'))
 				.catch(error => Utils.exception(this, error, "Update Service Error: " + Utils.getResourceTitle(service)));
 		},
 		deleteService(service) {
