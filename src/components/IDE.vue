@@ -10,7 +10,7 @@
 			</header>
 			<Splitpanes class="default-theme" @resize="resized" @pane-maximize="resized">
 				<Pane id="discovery" size="20">
-					<DiscoveryToolbar class="toolbar" :onAddProcess="insertProcess" />
+					<DiscoveryToolbar class="toolbar" :onAddProcess="insertProcess" :collectionPreview="true" />
 				</Pane>
 				<Pane id="workspace" size="50">
 					<Splitpanes class="default-theme" horizontal @resize="resized" @pane-maximize="resized">

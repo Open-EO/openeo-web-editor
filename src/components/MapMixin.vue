@@ -41,6 +41,10 @@ export default {
 		editable: {
 			type: Boolean,
 			default: true
+		},
+		removableLayers: {
+			type: Boolean,
+			default: false
 		}
 	},
 	data() {
@@ -76,7 +80,8 @@ export default {
 			this.baseLayer = new TileLayer({
 				source: this.trackTileProgress(this.osm),
 				baseLayer: true,
-				title: "OpenStreetMap"
+				title: "OpenStreetMap",
+				noSwitcherDelete: true
 			});
 			var customControls = [
 				new FullScreen(),
@@ -84,7 +89,7 @@ export default {
 				this.progress.getControl()
 			];
 			if (showLayerSwitcher) {
-				customControls.push(new LayerSwitcher());
+				customControls.push(new LayerSwitcher({trash: this.removableLayers}));
 			}
 			var mapOptions = {
 				target: this.id,
@@ -125,6 +130,17 @@ export default {
 				await this.$nextTick();
 				this.map.updateSize();
 			}
+		},
+
+		getVisibleLayers() {
+			let shownLayers = [];
+			let layers = this.map.getLayers().getArray();
+			for(let layer of layers) {
+				if (layer.get('userLayer') && layer.getVisible()) {
+					shownLayers.push(layer);
+				}
+			}
+			return shownLayers;
 		},
 
 		addGeoJson(geojson) {

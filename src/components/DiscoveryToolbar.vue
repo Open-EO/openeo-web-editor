@@ -9,6 +9,7 @@
 							<strong :title="item.id">{{ item.id }}</strong>
 							<small v-if="item.title" :title="item.title">{{ item.title }}</small>
 						</div>
+						<button v-if="hasCollectionPreview(item)" class="discovery-button" type="button" @click="showCollectionPreview(item)" title="View on map"><i class="fas fa-map"></i></button>
 						<button v-if="supportsLoadCollection" class="discovery-button" type="button" @click="insertCollection(item)" title="Insert"><i class="fas fa-plus"></i></button>
 					</div>
 				</template>
@@ -77,6 +78,10 @@ export default {
 		onAddProcess: {
 			type: Function,
 			required: true
+		},
+		collectionPreview: {
+			type: Boolean,
+			default: false
 		}
 	},
 	data() {
@@ -126,6 +131,12 @@ export default {
 			if (this.supports('listCollections')) {
 				this.emit('showCollection', id);
 			}
+		},
+		hasCollectionPreview(collection) {
+			return Boolean(this.collectionPreview && Utils.getPreviewLinkFromSTAC(collection));
+		},
+		showCollectionPreview(collection) {
+			this.emit('showCollectionPreview', collection);
 		},
 		showProcessInfo(process) {
 			this.emit('showProcessInfo', process);

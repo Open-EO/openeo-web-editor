@@ -3,7 +3,22 @@ import { Job, Service, UserProcess } from '@openeo/js-client';
 import { mapState, mapActions, mapMutations, mapGetters } from 'vuex';
 import contentType from 'content-type';
 
+const SUPPORTED_PREVIEW = [
+	'wmts',
+	'xyz'
+];
+
 class Utils extends VueUtils {
+
+	static getPreviewLinkFromSTAC(stac) {
+		if (Utils.isObject(stac) && Array.isArray(stac.links)) {
+			let link = stac.links.find(link => Utils.isObject(link) && typeof link.rel === 'string' && SUPPORTED_PREVIEW.includes(link.rel.toLowerCase()));
+			if (link) {
+				return link;
+			}
+		}
+		return null;
+	}
 
 	static exception(vm, error, alt) {
 		console.error(error);

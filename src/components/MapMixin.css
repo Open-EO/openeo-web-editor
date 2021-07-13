@@ -63,3 +63,15 @@
 	height: 10px;
 	width: 0;
 }
+
+.ol-control, .ol-unselectable {
+	z-index: 10;
+}
+.ol-control.ol-timeline {
+	z-index: 1
+}
+.ol-control.ol-timeline .timeline-date-label {
+	width: 7em;
+    font-size: 0.8em;
+    font-weight: normal;
+}

@@ -6,7 +6,9 @@
 import MapMixin from './MapMixin.vue';
 import Utils from '../utils.js';
 
+import Collection from 'ol/Collection';
 import Feature from 'ol/Feature';
+import LayerGroup from 'ol/layer/Group';
 import { fromExtent as PolygonFromExtent } from 'ol/geom/Polygon';
 import { fromLonLat } from 'ol/proj';
 import TileLayer from 'ol/layer/Tile';
@@ -38,13 +40,13 @@ export default {
 	},
 	data() {
 		return {
-			userLayers: {},
 			WMTSCapabilities: {},
 			swipe: {
 				control: null,
 				left: null,
 				right: null
-			}
+			},
+			timeline: null
 		}
 	},
 	methods: {
@@ -62,6 +64,10 @@ export default {
 			if (Utils.isObject(this.geoJson)) {
 				this.geoJsonLayer = this.addGeoJson(this.geoJson);
 			}
+
+			let layers = this.map.getLayers();
+			layers.on('add', () => this.toggleSwipeControl());
+			layers.on('remove', () => this.toggleSwipeControl());
 		},
 
 		addRectangle(w, e, n, s) {
@@ -81,23 +87,14 @@ export default {
 			// Implement something similar here, too.
 		},
 
-		getVisibleLayers() {
-			var shownLayers = [];
-			for(var id in this.userLayers) {
-				if (this.userLayers[id].getVisible()) {
-					shownLayers.push(id);
-				}
-			}
-			return shownLayers;
-		},
-
-		showWebService(service) {
+		async showWebService(service) {
 			switch(service.type.toLowerCase()) {
 				case 'xyz':
 					this.updateXYZLayer(service);
 					break;
 				case 'wmts':
-					this.updateWMTSLayer(service);
+					await this.updateWMTSLayer(service);
+					break;
 				default:
 					Utils.error(this, 'Sorry, the service type is not supported by the map.');
 			}
@@ -111,11 +108,11 @@ export default {
 					this.map.addControl(this.swipe.control);
 				}
 				if (this.swipe.left !== shownLayers[0]) {
-					this.swipe.control.addLayer(this.userLayers[shownLayers[0]]);
+					this.swipe.control.addLayer(shownLayers[0]);
 					this.swipe.left = shownLayers[0];
 				}
 				if (this.swipe.right !== shownLayers[1]) {
-					this.swipe.control.addLayer(this.userLayers[shownLayers[1]], true);
+					this.swipe.control.addLayer(shownLayers[1], true);
 					this.swipe.right = shownLayers[1];
 				}
 			}
@@ -127,58 +124,88 @@ export default {
 			}
 		},
 
-		addLayerToMap(id, layer) {
-			this.userLayers[id] = layer;
+		addLayerToMap(layer) {
+			layer.set('userLayer', true);
+
 			this.map.addLayer(layer);
-			this.toggleSwipeControl();
+
 			layer.on('change', () => this.toggleSwipeControl());
 			layer.on('change:visible', () => this.toggleSwipeControl());
 			layer.on('change:zIndex', () => this.toggleSwipeControl());
 		},
 
 		removeLayerFromMap(id) {
-			if (!this.userLayers[id]) {
-				return;
+			let layer = this.getLayerFromMap(id);
+			if (layer) {
+				this.map.removeLayer(layer);
 			}
-			this.map.removeLayer(this.userLayers[id]);
-			delete this.userLayers[id];
-			this.toggleSwipeControl();
+		},
+
+		getLayerFromMap(id) {
+			let layers = this.map.getLayers().getArray();
+			for(let layer of layers) {
+				if (layer.get('id') === id) {
+					return layer;
+				}
+			}
+			return null;
 		},
 
 		updateGeoTiffLayer(url, title = null) {
 			var layer = new TileLayer({
+				id: url,
+				title: title ? title : 'GeoTiff',
 				source: new TileJSON({
 					url: 'http://tiles.rdnt.io/tiles?url=' + encodeURIComponent(url),
 					crossOrigin: 'anonymous'
 				})
 			});
-			this.addLayerToMap(title ? title : "GeoTiff", layer);
+			this.addLayerToMap(layer);
+			return layer;
 			// ToDo: Implement full/native GTiff support
 		},
 
-		addCollection(collection) {
-			this.addWMTSLayerFromCollection(collection);
-			// ToDo: Add XYZ support
-		},
-
-		addWMTSLayerFromCollection(collection) {
-			let wmtsLink = collection.links.find(link => link.rel === 'wmts');
-			if (!wmtsLink) {
+		async addCollection(collection) {
+			let link = Utils.getPreviewLinkFromSTAC(collection);
+			if (!link) {
 				Utils.error(this, 'No visualizations found for collection');
 			}
-			let layers = [];
-			if (wmtsLink['wmts:layer']) {
-				layers.push(wmtsLink['wmts:layer']);
-			}
-			this.updateWMTSLayer({
+
+			let service = {
 				id: collection.id,
-				url: wmtsLink.href,
+				url: link.href,
 				title: collection.title || collection.id
-			}, layers);
+			};
+
+			// Remove other previewLayers, only show one at a time
+			this.map.getLayers().forEach(layer => {
+				if (layer.get('previewLayer') && layer.get('id') !== service.id) {
+					this.map.removeLayer(layer);
+				}
+			});
+
+			let layer;
+			switch(link.rel.toLowerCase()) {
+				case 'xyz':
+					layer = this.updateXYZLayer(service);
+					break;
+				case 'wmts':
+					let layers = [];
+					if (link['wmts:layer']) {
+						layers.push(link['wmts:layer']);
+					}
+					layer = await this.updateWMTSLayer(service, layers);
+					break;
+				default:
+					Utils.error(this, 'Sorry, the service type is not supported by the map.');
+					return;
+			}
+
+			layer.set('previewLayer', true);			
 		},
 
 		getWMTSTimes(capabilities, layerId) {
-			const layers = capabilities['Contents']['Layer'];
+			const layers = capabilities.Contents.Layer || [];
 			let layer = layers.find(l => l.Identifier == layerId);
 			if (!layer || !layer.Dimension) {
 				return [];
@@ -190,114 +217,132 @@ export default {
 			return timeDimension.Value.sort();
 		},
 
-		async updateWMTSLayer(service, layers = [], time = undefined, prefix = "Service") {
-			if (typeof this.userLayers[service.id] === 'undefined') {
-				if (!this.WMTSCapabilities[service.url]) {
-					let url = new URL(service.url);
-					url.searchParams.set('service', 'wmts');
-					url.searchParams.set('request', 'GetCapabilities');
-					let response = await axios.get(url.toString(), { responseType: 'text' });
-					var parser = new WMTSCapabilities();
-					this.WMTSCapabilities[service.url] = parser.read(response.data);
-				}
+		async updateWMTSLayer(service, layerNames = [], time = undefined, prefix = "Service") {
+			this.removeLayerFromMap(service.id);
 
-				let capabilities = this.WMTSCapabilities[service.url];
-				let minDate = null;
-				let maxDate = null;
-				let defaultDate = null;
-				let source = null;
-				for(let layer of layers) {
-					let options = optionsFromCapabilities(capabilities, {
-						layer,
-						matrixSet: 'EPSG:3857'
-					});
-					if (!defaultDate) {
-						defaultDate = new Date(options.dimensions.TIME);
-					}
-
-					let times = this.getWMTSTimes(capabilities, layer);
-					if (times.length) {
-						let min = new Date(times[0]);
-						let max = new Date(times[times.length -1]);
-						if (!minDate || min < minDate) {
-							minDate = min;
-						}
-						if (!maxDate || max > maxDate) {
-							maxDate = max;
-						}
-					}
-					if (time) {
-						if (!Utils.isObject(options.dimensions)) {
-							options.dimensions = {};
-						}
-						options.dimensions.time = time;
-					}
-					source = new WMTS(options);
-					var mapLayer = new TileLayer({
-						source: this.trackTileProgress(source),
-						title: Utils.getResourceTitle(service, prefix)
-					});
-					this.addLayerToMap(service.id + layer, mapLayer);
-				}
-
-				if (minDate && maxDate) {
-					var tline = new Timeline({
-						className: 'ol-pointer',
-						graduation: 'day',
-						minDate: minDate,
-						maxDate: maxDate
-					});
-					let run;
-					tline.on('scroll', function(e) {
-						if (!e.date || e.date > maxDate || e.date < minDate) {
-							return;
-						}
-						if (run) {
-							window.clearTimeout(run);
-						}
-						run = window.setTimeout(() => {
-							try {
-								let date = e.date.toISOString().substr(0, 10);
-								source.updateDimensions({
-									TIME: date
-								});
-								let btns = document.getElementsByClassName('timeline-date-label');
-								btns[0].innerText = date;
-								btns[0].disabled = true;
-							} catch (error) {
-								console.log(error.message);
-							}
-							run = null;
-						}, 500);
-					});
-					this.map.addControl(tline);
-					tline.addButton ({
-						className: 'timeline-date-label',
-						title: 'Date shown',
-						html: 'No date'
-					});
-					tline.setDate(defaultDate); 
-				}
+			if (!this.WMTSCapabilities[service.url]) {
+				let url = new URL(service.url);
+				url.searchParams.set('service', 'wmts');
+				url.searchParams.set('request', 'GetCapabilities');
+				let response = await axios.get(url.toString(), { responseType: 'text' });
+				var parser = new WMTSCapabilities();
+				this.WMTSCapabilities[service.url] = parser.read(response.data);
 			}
-			else {
-				for(let layer of layers) {
-					this.userLayers[service.id + layer].getSource().updateDimensions({
-						TIME: time
-					});
+
+			let capabilities = this.WMTSCapabilities[service.url];
+			let minDate = null;
+			let maxDate = null;
+			let defaultDate = null;
+			let source = null;
+			let title = Utils.getResourceTitle(service, prefix);
+			let layerCollection = new Collection();
+			for(let layer of layerNames) {
+				let options = optionsFromCapabilities(capabilities, {
+					layer,
+					matrixSet: 'EPSG:3857'
+				});
+				if (!defaultDate) {
+					defaultDate = new Date(options.dimensions.TIME);
 				}
+
+				let times = this.getWMTSTimes(capabilities, layer);
+				if (times.length) {
+					let min = new Date(times[0]);
+					let max = new Date(times[times.length -1]);
+					if (!minDate || min < minDate) {
+						minDate = min;
+					}
+					if (!maxDate || max > maxDate) {
+						maxDate = max;
+					}
+				}
+				if (time) {
+					if (!Utils.isObject(options.dimensions)) {
+						options.dimensions = {};
+					}
+					options.dimensions.time = time;
+				}
+				source = new WMTS(options);
+				var mapLayer = new TileLayer({
+					id: service.id,
+					title,
+					source: this.trackTileProgress(source),
+					noSwitcherDelete: true
+				});
+				layerCollection.push(mapLayer);
 			}
+
+			if (minDate && maxDate) {
+				this.timeline = new Timeline({
+					className: 'ol-pointer',
+					graduation: 'day',
+					minDate: minDate,
+					maxDate: maxDate
+				});
+				let run;
+				this.timeline.on('scroll', function(e) {
+					if (!e.date || e.date > maxDate || e.date < minDate) {
+						return;
+					}
+					if (run) {
+						window.clearTimeout(run);
+					}
+					run = window.setTimeout(() => {
+						try {
+							let date = e.date.toISOString().substr(0, 10);
+							source.updateDimensions({
+								TIME: date
+							});
+							let btns = document.getElementsByClassName('timeline-date-label');
+							btns[0].innerText = date;
+							btns[0].disabled = true;
+						} catch (error) {
+							console.log(error);
+						}
+						run = null;
+					}, 500);
+				});
+				this.map.addControl(this.timeline);
+
+				this.timeline.addButton ({
+					className: 'timeline-date-label',
+					title: `The date that is shown on the map for the collection '${title}'`,
+					html: 'No date'
+				});
+				this.timeline.setDate(defaultDate);
+			}
+
+			let group = new LayerGroup({
+				id: service.id,
+				title
+			});
+			group.setLayers(layerCollection);
+			this.addLayerToMap(group);
+
+			if (this.timeline) {
+				this.map.getLayers().on('remove', event => {
+					if (event.element === group) {
+						this.map.removeControl(this.timeline);
+						this.timeline = null;
+					}
+				});
+			}
+
+			return group;
 		},
 
 		updateXYZLayer(service, prefix = "Service") {
-			var id = service.id;
-			if (typeof this.userLayers[id] === 'undefined') {
-				var layer = new TileLayer({
+			let layer = this.getLayerFromMap(service.id);
+			if (!layer) {
+				let title = Utils.getResourceTitle(service, prefix);
+				layer = new TileLayer({
+					id: service.id,
+					title,
 					source: this.trackTileProgress(new XYZ({
 						url: service.url
-					})),
-					title: Utils.getResourceTitle(service, prefix)
+					}))
 				});
-				this.addLayerToMap(id, layer);
+				this.addLayerToMap(layer);
 			}
 			else {
 				// Replace/add a query parameter with a unique ID so that OpenLayers doesn't load tiles from cache
@@ -305,8 +350,9 @@ export default {
 				// Make sure { and } are not url-encoded
 				newUrl = newUrl.replace(/%7B/g, '{').replace(/%7D/g, '}');
 				// Set new URL to reload tiles
-				this.userLayers[id].getSource().setUrl(newUrl);
+				layer.getSource().setUrl(newUrl);
 			}
+			return layer;
 		}
 
 	}
