@@ -12,7 +12,7 @@
 					<button type="button" @click="editor.redo()" :disabled="!canRedo" title="Redo last reverted change"><i class="fas fa-redo-alt"></i></button>
 					<slot name="edit-toolbar"></slot>
 				</span>
-				<FullscreenButton :element="$el" />
+				<FullscreenButton :element="element" />
 				<slot name="toolbar"></slot>
 			</div>
 		</div>
@@ -116,7 +116,8 @@ export default {
 			canUndo: false,
 			canRedo: false,
 			editor: null,
-			emitValue: this.value
+			emitValue: this.value,
+			element: null
 		}
 	},
 	watch: {
@@ -135,7 +136,7 @@ export default {
 	mounted() {
 		this.editor = CodeMirror(document.getElementById(this.id), this.editorOptions);
 		this.editor.setSize(null, "100%");
-		if (this.languageString === 'processgraph') {
+		if (this.languageString 	=== 'processgraph') {
 			this.editor.on("change", () => this.updateState());
 		}
 		this.updateContent();
@@ -151,6 +152,8 @@ export default {
 				this.$emit('error', error);
 			}
 		});
+
+		this.element = this.$el;
 	},
 	methods: {
 		confirmClear() {
@@ -169,6 +172,8 @@ export default {
 			this.canRedo = history.redo > 0;
 			// Refresh editor
 			this.editor.refresh();
+			// Refresh element for fullscreen
+			this.element = this.$el;
 		},
 		commit() {
 			var value = this.editor.getValue();
