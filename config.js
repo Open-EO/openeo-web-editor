@@ -25,6 +25,9 @@ export default {
 		'xyz'
 	],
 
+	// Key is the OIDC provider id, value is the client ID
+	oidcClientIds: {},
+
 	// Show a warning if HTTP is used instead of HTTPS
 	showHttpWarning: true,
 

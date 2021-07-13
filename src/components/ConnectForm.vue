@@ -34,10 +34,10 @@
 									<i class="fas fa-info-circle"></i>
 									<span>{{ tab.data.description }}</span>
 								</div>
-								<template v-if="!tab.data.defaultClient">
+								<template v-if="!hasPredefinedOidcClientId">
 									<div class="row">
 										<label for="password">Client ID:</label>
-										<input type="text" class="input" v-model.trim="oidcClientId" required="required" />
+										<input type="text" class="input" v-model.trim="userOidcClientId" required="required" />
 									</div>
 									<div class="row help">
 										<i class="fas fa-exclamation-circle"></i>
@@ -134,6 +134,18 @@ export default {
 			
 			return null;
 		},
+		hasPredefinedOidcClientId() {
+			if (this.provider && this.provider.getType() === 'oidc') {
+				return Boolean(this.provider.defaultClient || this.$config.oidcClientIds[this.provider.id]);
+			}
+			return false;
+		},
+		oidcClientId() {
+			if (this.provider && this.provider.getType() === 'oidc') {
+				return this.userOidcClientId || this.$config.oidcClientIds[this.provider.id] || this.provider.defaultClient;
+			}
+			return null;
+		},
 		oidcProviders() {
 			return this.authProviders.filter(obj => obj.getType() === 'oidc');
 		},
@@ -169,7 +181,7 @@ export default {
 			provider: null,
 			loading: false,
 			message: this.$config.loginMessage,
-			oidcClientId: '',
+			userOidcClientId: '',
 			oidcOptions: {
 				automaticSilentRenew: true,
 				popupWindowFeatures: 'location=no,toolbar=no,width=750,height=550,left=50,top=50'
