@@ -2,17 +2,13 @@ import VueUtils from '@openeo/vue-components/utils';
 import { Job, Service, UserProcess } from '@openeo/js-client';
 import { mapState, mapActions, mapMutations, mapGetters } from 'vuex';
 import contentType from 'content-type';
-
-const SUPPORTED_PREVIEW = [
-	'wmts',
-	'xyz'
-];
+import Config from '../config';
 
 class Utils extends VueUtils {
 
 	static getPreviewLinkFromSTAC(stac) {
 		if (Utils.isObject(stac) && Array.isArray(stac.links)) {
-			let link = stac.links.find(link => Utils.isObject(link) && typeof link.rel === 'string' && SUPPORTED_PREVIEW.includes(link.rel.toLowerCase()));
+			let link = stac.links.find(link => Utils.isObject(link) && typeof link.rel === 'string' && Config.supportedMapServices.includes(link.rel.toLowerCase()));
 			if (link) {
 				return link;
 			}

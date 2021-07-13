@@ -22,7 +22,8 @@ export default {
 
 	// List of supported web map services (all lower-cased)
 	supportedMapServices: [
-		'xyz'
+		'xyz',
+		'wmts'
 	],
 
 	// Key is the OIDC provider id, value is the client ID
