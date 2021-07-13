@@ -69,4 +69,7 @@ export default {
 	padding: 5px;
 	height: calc(100% - 12px);
 }
+#userContent .data-table .title {
+	word-break: break-all;
+}
 </style>

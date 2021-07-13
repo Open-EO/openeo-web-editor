@@ -142,7 +142,7 @@ export default {
 		},
 		oidcClientId() {
 			if (this.provider && this.provider.getType() === 'oidc') {
-				return this.userOidcClientId || this.$config.oidcClientIds[this.provider.id] || this.provider.defaultClient;
+				return this.userOidcClientId || this.$config.oidcClientIds[this.provider.id] || null;
 			}
 			return null;
 		},
