@@ -332,11 +332,6 @@ export default {
 				}
 				else { // noauth/discovery
 					window.history.pushState({reset: true, serverUrl: this.serverUrl, autoConnect: true, skipLogin: true}, "", ".?server=" + this.serverUrl + "&discover=1");
-					// Delay info a bit to show after transition only and also avoid flickering
-					window.setTimeout(
-						() => Utils.info(this, 'You are working as a guest. Your data will be publicly available!'),
-						1000
-					);
 				}
 			} catch(error) {
 				if (authType === 'basic') {
