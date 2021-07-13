@@ -9,10 +9,10 @@
 				</ul>
 			</header>
 			<Splitpanes class="default-theme" @resize="resized" @pane-maximize="resized">
-				<Pane id="discovery" size="20">
+				<Pane id="discovery" :size="splitpaneSize[0]">
 					<DiscoveryToolbar class="toolbar" :onAddProcess="insertProcess" :collectionPreview="true" />
 				</Pane>
-				<Pane id="workspace" size="50">
+				<Pane id="workspace" :size="splitpaneSize[1]">
 					<Splitpanes class="default-theme" horizontal @resize="resized" @pane-maximize="resized">
 						<Pane id="editor" size="50">
 							<Editor ref="editor" class="mainEditor" id="main" :value="process" @input="updateEditor" :title="contextTitle">
@@ -26,7 +26,7 @@
 						</Pane>
 					</Splitpanes>
 				</Pane>
-				<Pane id="viewer" size="30">
+				<Pane id="viewer" :size="splitpaneSize[2]">
 					<Viewer />
 				</Pane>
 			</Splitpanes>
@@ -102,6 +102,14 @@ export default {
 				(this.context instanceof Service && this.supportsServiceUpdate) ||
 				(this.context instanceof UserProcess && this.supportsUserProcessUpdate)
 			);
+		},
+		splitpaneSize() {
+			if (this.isAuthenticated) {
+				return [20,50,30];
+			}
+			else {
+				return [20,40,40];
+			}
 		}
 	},
 	async created() {
@@ -307,6 +315,10 @@ export default {
 #editor {
 	padding-bottom: 0.5rem;
 }
+#editor:last-child {
+	padding-bottom: 0;
+}
+
 #user {
 	padding-top: 0.5rem;
 }
