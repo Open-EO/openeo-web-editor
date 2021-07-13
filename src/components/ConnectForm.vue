@@ -210,6 +210,7 @@ export default {
 		}
 	},
 	mounted() {
+		this.listen('viewLogs', this.showErrors);
 		window.onpopstate = evt => this.historyNavigate(evt);
 		window.history.replaceState({reset: true, serverUrl: this.serverUrl}, "");
 		this.initProviders();
@@ -267,6 +268,11 @@ export default {
 
 		providerSelected(tab) {
 			this.provider = tab.data;
+		},
+
+		showErrors(error) {
+			// ToDo: Show Modal with Logs component?
+			alert(`Close this popup and press the 'F12' key to open the Browser console for more details.`);
 		},
 
 		async submitForm() {

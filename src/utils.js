@@ -28,10 +28,9 @@ class Utils extends VueUtils {
 				data: error,
 				links: error.links
 			};
-			// ToDo: This doesn't work if not authenticated / connected yet
 			buttons.push({
 				text: 'Show Details',
-				action: () => vm.emit('viewLogs', [log], 'Error', 'fa-bomb')
+				action: () => vm.$root.$emit('viewLogs', [log], 'Error', 'fa-bomb')
 			});
 		}
 		else if (typeof error === 'string') {
