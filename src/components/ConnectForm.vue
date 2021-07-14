@@ -356,7 +356,6 @@ export default {
 			this.loading = false;
 
 			if (this.isAuthenticated) {
-				Utils.ok(this, 'Login successful.');
 				window.history.pushState({reset: true, serverUrl: this.serverUrl, autoConnect: true}, "", ".?server=" + this.serverUrl);
 			}
 		},
