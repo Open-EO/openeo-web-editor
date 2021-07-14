@@ -141,8 +141,8 @@ export default {
 			this.canRedo = !!history[index+1];
 		},
 
-		allowDrop(ev) {
-			ev.preventDefault();
+		allowDrop(event) {
+			event.preventDefault();
 		},
 
 		onDrop(event) {

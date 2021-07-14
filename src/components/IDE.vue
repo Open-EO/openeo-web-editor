@@ -182,7 +182,7 @@ export default {
 				let info = await this.describeCollection(id);
 				this.$refs.collectionModal.show(info);
 			} catch (error) {
-				Utils.error(this, "Sorry, can't load collection details for " + id + ".");
+				Utils.error(this, "Sorry, can't load collection details for '" + id + "'.");
 			}
 		},
 

@@ -3,7 +3,7 @@
 		<template #default>
 			<Tab id="mapView" name="Map" icon="fa-map" :selected="true" @show="onShow" @hide="onHide">
 				<template #default="{ tab }">
-					<MapViewer id="mapCanvas" ref="mapViewer" :show="tab.active" :center="[50.1725, 9.15]" :zoom="6" :removableLayers="true" />
+					<MapViewer id="mapCanvas" ref="mapViewer" :show="tab.active" :center="[50.1725, 9.15]" :zoom="6" :removableLayers="true" @drop="onDrop($event)" />
 				</template>
 			</Tab>
 		</template>
@@ -59,7 +59,9 @@ export default {
 		...Utils.mapState(['connection'])
 	},
 	methods: {
+		...Utils.mapActions(['describeCollection']),
 		showCollectionPreview(collection) {
+			this.showMapViewer();
 			this.$refs.mapViewer.addCollection(collection);
 		},
 		showWebService(service) {
@@ -109,6 +111,23 @@ export default {
 				tab => this.onShow(tab),
 				tab => this.onHide(tab)
 			);
+		},
+		async onDrop(event) {
+			var json = event.dataTransfer.getData("application/vnd.openeo-node");
+			if (!json) {
+				return;
+			}
+			let node = JSON.parse(json);
+			if (node.process_id === 'load_collection') {
+				event.preventDefault();
+				let id = Utils.isObject(node.arguments) ? node.arguments.id : null;
+				try {
+					let collection = await this.describeCollection(id);
+					this.showCollectionPreview(collection);
+				} catch (error) {
+					Utils.error(this, "Sorry, can't load collection details for '" + id + "'.");
+				}
+			}
 		},
 		onShow(tab) {
 			if (tab.$children.length && typeof tab.$children[0].onShow === 'function') {

@@ -68,11 +68,16 @@ export default {
 			let layers = this.map.getLayers();
 			layers.on('add', () => this.toggleSwipeControl());
 			layers.on('remove', () => this.toggleSwipeControl());
+
+			if (this.$listeners && this.$listeners.drop) {
+				this.map.getViewport().addEventListener('dragover', event => event.preventDefault());
+				this.map.getViewport().addEventListener('drop', this.$listeners.drop);
+			}
 		},
 
 		addRectangle(w, e, n, s) {
-			var extent = [...fromLonLat([w, s]), ...fromLonLat([e, n])];
-			this.map.addLayer(new VectorLayer({
+			let extent = [...fromLonLat([w, s]), ...fromLonLat([e, n])];
+			let layer = new VectorLayer({
 				title: "Extent",
 				displayInLayerSwitcher: false,
 				source: new VectorSource({
@@ -81,7 +86,8 @@ export default {
 					],
 					wrapX: false
 				})
-			}));
+			});
+			this.map.addLayer(layer);
 			this.map.getView().fit(extent);
 			// ToDo: The Collection component has some smart fitting behavior in setMapSize()
 			// Implement something similar here, too.
@@ -201,7 +207,36 @@ export default {
 					return;
 			}
 
-			layer.set('previewLayer', true);			
+			layer.set('previewLayer', true);
+
+			// Fit to extent of collection
+			try {
+				let bbox = Utils.extentToBBox(collection.extent.spatial.bbox[0]);
+				let extent = [...fromLonLat([bbox.west, bbox.south]), ...fromLonLat([bbox.east, bbox.north])];
+				let extentLayer = new VectorLayer({
+					title: "Extent",
+					noSwitcherDelete: true,
+					source: new VectorSource({
+						features: [
+							new Feature(PolygonFromExtent(extent))
+						],
+						wrapX: false
+					})
+				});
+			
+				let style = extentLayer.getStyle();
+				// https://github.com/openlayers/openlayers/issues/10131
+				if (typeof style === 'function') {
+					style = style()[0];
+				}
+				style.setFill(null);
+
+				layer.getLayers().push(extentLayer);
+
+				this.map.getView().fit(extent);
+			} catch (error) {
+				console.log(error);
+			}
 		},
 
 		getWMTSTimes(capabilities, layerId) {
@@ -264,7 +299,6 @@ export default {
 				}
 				source = new WMTS(options);
 				var mapLayer = new TileLayer({
-					id: service.id,
 					title,
 					source: this.trackTileProgress(source),
 					noSwitcherDelete: true
@@ -304,7 +338,7 @@ export default {
 				});
 				this.map.addControl(this.timeline);
 
-				this.timeline.addButton ({
+				this.timeline.addButton({
 					className: 'timeline-date-label',
 					title: `The date that is shown on the map for the collection '${title}'`,
 					html: 'No date'
@@ -314,9 +348,9 @@ export default {
 
 			let group = new LayerGroup({
 				id: service.id,
-				title
+				title,
+				layers: layerCollection
 			});
-			group.setLayers(layerCollection);
 			this.addLayerToMap(group);
 
 			if (this.timeline) {
@@ -332,27 +366,27 @@ export default {
 		},
 
 		updateXYZLayer(service, prefix = "Service") {
-			let layer = this.getLayerFromMap(service.id);
-			if (!layer) {
-				let title = Utils.getResourceTitle(service, prefix);
-				layer = new TileLayer({
-					id: service.id,
-					title,
-					source: this.trackTileProgress(new XYZ({
-						url: service.url
-					}))
-				});
-				this.addLayerToMap(layer);
-			}
-			else {
-				// Replace/add a query parameter with a unique ID so that OpenLayers doesn't load tiles from cache
-				var newUrl = Utils.replaceParam(service.url, '__editorSessionId', new Date().getTime());
-				// Make sure { and } are not url-encoded
-				newUrl = newUrl.replace(/%7B/g, '{').replace(/%7D/g, '}');
-				// Set new URL to reload tiles
-				layer.getSource().setUrl(newUrl);
-			}
-			return layer;
+			this.removeLayerFromMap(service.id);
+
+			// Replace/add a query parameter with a unique ID so that OpenLayers doesn't load tiles from cache
+			let url = Utils.replaceParam(service.url, '__editorSessionId', new Date().getTime()).replace(/%7B/g, '{').replace(/%7D/g, '}');
+			let title = Utils.getResourceTitle(service, prefix);
+			let layer = new TileLayer({
+				title,
+				source: this.trackTileProgress(new XYZ({
+					url
+				})),
+				noSwitcherDelete: true
+			});
+			let group = new LayerGroup({
+				id: service.id,
+				title,
+				layers: [
+					layer
+				]
+			});
+			this.addLayerToMap(group);
+			return group;
 		}
 
 	}
