@@ -22,11 +22,11 @@
 					</p>
 					<p><strong>Parameters</strong>: If a variable is found in the formula which can't be resolved to a pre-defined parameter, a new parameter will be created for it. Available pre-defined parameters:
 						<template v-if="pgParameters.length">
-							<br /><kbd v-for="param in pgParameters" :key="param.id" @click="emit('showSchema', param.id, param.spec.schema)" class="click" draggable="true" @dragstart="onDrag($event, 'pgParameters', param.id)">{{ param.id }}</kbd>
+							<br /><kbd v-for="param in pgParameters" :key="param.id" @click="emit('showSchema', param.spec.name, param.spec.schema)" class="click" draggable="true" @dragstart="onDrag($event, 'pgParameters', param.spec.name)">{{ param.spec.name }}</kbd>
 						</template>
 						<template v-else>None</template>
 					</p>
-					<p v-if="supportsArrayElement">If the first pre-defined parameter is a (labeled) <strong>array</strong>, the value for a specific index or label can be accessed by typing the numeric index or textual label with a <kbd>$</kbd> in front, for example <kbd>$B1</kbd> for the label B1 or <kbd>$0</kbd> for the first element in the array. Numeric labels are not supported.</p>
+					<p v-if="supportsArrayElement">If the first pre-defined parameter is a (labeled) <strong>array</strong>, the value for a specific index or label can be accessed by typing the numeric index or textual label with a <kbd>$</kbd> in front, for example <kbd>$B1</kbd> for the label B1 or <kbd>$0</kbd> for the first element in the array. You can access subsequent parameters by adding additional $ characters at the beginning, e.g. <kbd>$$0</kbd> for the first element of an array in the second parameter, <kbd>$$$0</kbd> for the same behavior in the third parameter etc. Numeric labels are not supported.</p>
 				</div>
 			</div>
 		</template>
@@ -126,7 +126,8 @@ export default {
 				for(let id in this.processGraph) {
 					let node = this.processGraph[id];
 					if (node.process_id === 'array_element' && Utils.isObject(node.arguments) && node.arguments.label) {
-						this.arrayElements[node.arguments.label] = {from_node: node.id};
+						let placeholder = this.getArrayElementPlaceholder(node);
+						this.arrayElements[placeholder] = {from_node: node.id};
 					}
 				}
 			}
@@ -166,9 +167,24 @@ export default {
 				this.replace = true;
 			}
 		},
+		getArrayElementPlaceholder(node) {
+			if (node.process_id === 'array_element') {
+				if (node.getArgumentType('data') === 'parameter') {
+					let parameter = node.getRawArgument('data').from_parameter;
+					let index = this.pgParameters.findIndex(param => param.spec.name === parameter);
+					if (typeof index !== 'undefined') {
+						return '$'.repeat(index+1) + (node.getArgument('label') || node.getArgument('index'));
+					}
+				}
+			}
+			return null;
+		},
 		nodeToFormula(node, parentOperator = null) {
 			if (node.process_id === 'array_element') {
-				return '$' + (node.getArgument('label') || node.getArgument('index'));
+				let arrayElement = this.getArrayElementPlaceholder(node);
+				if (arrayElement) {
+					return arrayElement;
+				}
 			}
 
 			let operator = this.reverseOperatorMapping[node.process_id];
@@ -327,28 +343,32 @@ export default {
 				}
 			}
 			// Array labels / indices
-			if (this.supportsArrayElement && typeof value === 'string' && value.startsWith('$')) {
-				let ref = value.substring(1);
-				if (!(ref in this.arrayElements)) {
-					// ToDo: Check whether label is really supported - see implementation for supportsArrayElement()
-					let args = {
-						data: {
-							from_parameter: this.pgParameters[0].id
+			if (this.supportsArrayElement && typeof value === 'string') {
+				let prefix = value.match(/^\$+/);
+				let count = prefix ? prefix[0].length : 0;
+				if (count > 0) {
+					let ref = value.substring(count);
+					if (!(ref in this.arrayElements)) {
+						// ToDo: Check whether label is really supported - see implementation for supportsArrayElement()
+						let args = {
+							data: {
+								from_parameter: this.pgParameters[count-1].spec.name
+							}
+						};
+						if (ref.match(/^\d+$/)) {
+							args.index = Number.parseInt(ref, 10);
 						}
-					};
-					if (ref.match(/^\d+$/)) {
-						args.index = Number.parseInt(ref, 10);
+						else {
+							args.label = ref;
+						}
+						this.arrayElements[value] = this.addProcess("array_element", args);
 					}
-					else {
-						args.label = ref;
-					}
-					this.arrayElements[ref] = this.addProcess("array_element", args);
+					return this.arrayElements[value];
 				}
-				return this.arrayElements[ref];
 			}
 
 			// Everything else is a parameter
-			if (this.pgParameters.filter(p => p.id === value).length === 0) {
+			if (this.pgParameters.filter(p => p.spec.name === value).length === 0) {
 				// ToDo: Add new parameter to process
 			}
 			return { from_parameter: value };
