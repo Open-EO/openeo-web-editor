@@ -1,11 +1,9 @@
 <template>
-	<Modal ref="modal">
-		<template #main>
-			<div id="schemaModal">
-				<p class="message" v-if="message">{{ message }}</p>
-				<JsonSchema :schema="schema"></JsonSchema>
-			</div>
-		</template>
+	<Modal :title="name" @closed="$emit('closed')">
+		<div id="schemaModal">
+			<p class="message" v-if="message">{{ message }}</p>
+			<JsonSchema :schema="schema" />
+		</div>
 	</Modal>
 </template>
 
@@ -19,37 +17,39 @@ export default {
 		Modal,
 		JsonSchema
 	},
-	data() {
-		return {
-			schema: null,
-			message: null
-		};
-	},
-	methods: {
-		show(title, schema, message = null) {
-			this.schema = schema;
-			this.message = message;
-			this.$refs.modal.show(title);
+	props: {
+		name: {
+			type: String
+		},
+		message: {
+			type: String,
+			default: null
+		},
+		schema: {
+			default: null,
 		}
 	}
 }
 </script>
 
-<style>
-#schemaModal p.message {
-	margin-top: 0;
-}
-#schemaModal .json-schema {
-	border: 0;
-}
-#schemaModal table {
-	width: 100%;
-	border-collapse: collapse;
-	font-size: 0.95em;
-}
-#schemaModal table td,
-#schemaModal table th {
-	border: 1px solid #ddd;
-	padding: 3px;
+<style lang="scss">
+#schemaModal {
+	p.message {
+		margin-top: 0;
+	}
+	.json-schema {
+		border: 0;
+	}
+	table {
+		width: 100%;
+		border-collapse: collapse;
+		font-size: 0.95em;
+
+		td,
+		th {
+			border: 1px solid #ddd;
+			padding: 3px;
+		}
+	}
 }
 </style>

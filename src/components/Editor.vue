@@ -76,6 +76,7 @@ export default {
 		...Utils.mapGetters('userProcesses', {getProcessById: 'getAllById'})
 	},
 	methods: {
+		...Utils.mapActions('userProcesses', {readUserProcess: 'read'}),
 		showModel() {
 			this.error = null;
 			this.modelValue = this.value;

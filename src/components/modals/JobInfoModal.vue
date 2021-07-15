@@ -1,30 +1,27 @@
 <template>
-	<Modal ref="modal" minWidth="85%">
-		<template #main>
-			<Job :job="job" :currency="currency">
-				<template #process-graph>
-					<Editor :value="job.process" :editable="false" class="infoViewer" id="jobPgViewer" />
+	<Modal minWidth="85%" :title="title" @closed="$emit('closed')">
+		<Job :job="job" :currency="currency">
+			<template #process-graph>
+				<Editor :value="job.process" :editable="false" class="infoViewer" id="jobPgViewer" />
+			</template>
+		</Job>
+
+		<section class="vue-component result" v-if="resultType">
+			<h3>Results</h3>
+			<p><em>Below the metadata for the results of the batch job are shown.</em></p>
+			<Collection v-if="resultType === 'Collection'" :data="result">
+				<template #title><span class="hidden" /></template>
+				<template #spatial-extents="p">
+					<MapViewer id="collectionMap" :show="showMap" :extents="p.extents"></MapViewer>
 				</template>
-			</Job>
-
-			<section class="vue-component result" v-if="resultType">
-				<h3>Results</h3>
-				<p><em>Below the metadata for the results of the batch job are shown.</em></p>
-				<Collection v-if="resultType === 'Collection'" :data="result">
-					<template #title><span class="hidden" /></template>
-					<template #spatial-extents="p">
-						<MapViewer id="collectionMap" :show="showMap" :extents="p.extents"></MapViewer>
-					</template>
-				</Collection>
-				<Item v-else :data="result">
-					<template #title><span class="hidden" /></template>
-					<template #location="p">
-						<MapViewer id="itemMap" :show="showMap" :geoJson="p.geometry" :extents="p.bbox"></MapViewer>
-					</template>
-				</Item>
-			</section>
-
-		</template>
+			</Collection>
+			<Item v-else :data="result">
+				<template #title><span class="hidden" /></template>
+				<template #location="p">
+					<MapViewer id="itemMap" :show="showMap" :geoJson="p.geometry" :extents="p.bbox"></MapViewer>
+				</template>
+			</Item>
+		</section>
 	</Modal>
 </template>
 
@@ -56,31 +53,33 @@ export default {
 			}
 			return null;
 		},
-		displayTitle() {
+		title() {
 			return "Batch Job: " + (this.job.title || "#" + this.job.id);
+		}
+	},
+	props: {
+		job: {
+			type: Object
+		},
+		result: {
+			type: Object,
+			default: null
 		}
 	},
 	data() {
 		return {
-			job: {},
-			result: null,
 			showMap: false
 		};
 	},
-	methods: {
-		show(job, result = null) {
-			this.job = job;
-			this.result = result;
-			this.$refs.modal.show(this.displayTitle);
-			this.$nextTick(() => {
-				this.showMap = true;
-			});
-		}
+	mounted() {
+		this.$nextTick(() => {
+			this.showMap = true;
+		});
 	}
 }
 </script>
 
-<style>
+<style lang="scss">
 .vue-component.job h2 {
 	display: none;
 }

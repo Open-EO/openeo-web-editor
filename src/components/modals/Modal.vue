@@ -1,6 +1,6 @@
 <template>
-	<div class="modal" ref="modal" v-if="shown" @mousedown="possiblyClose" :style="{'z-index': zIndex}">
-		<div ref="container" class="modal-container" :style="{'min-width': minWidth, 'max-width': maxWidth, 'min-height': minHeight}">
+	<div class="modal" @mousedown="backgroundClose" :style="{'z-index': zIndex}">
+		<div ref="container" class="modal-container" :style="style">
 			<header class="modal-header" @mousedown.prevent.stop="startMove">
 				<slot name="header">
 					<h2>{{ title }}</h2>
@@ -8,20 +8,7 @@
 				</slot>
 			</header>
 			<main class="modal-content">
-				<slot name="main">
-					<template v-if="list !== null">
-						<strong class="listEmpty" v-if="listCount == 0">Sorry, no data available.</strong>
-						<ul class="modal-list" v-else>
-							<li v-for="(item, key) in listItems" :key="key" @click="doMainListAction(item, key)">
-								<strong>{{ Array.isArray(listItems) ? item : key }}</strong>
-								<button type="button" v-for="action in otherListActions" :key="action.icon" :title="action.title" @click.prevent.stop="doListAction(item, key, action.callback)">
-									<i :class="'fas fa-'+action.icon"></i>
-								</button>
-							</li>
-						</ul>
-					</template>
-					<template v-else>{{ message }}</template>
-				</slot>
+				<slot></slot>
 			</main>
 			<footer class="modal-footer">
 				<slot name="footer"></slot>
@@ -34,30 +21,14 @@
 import EventBusMixin from '../EventBusMixin.vue';
 import Utils from '../../utils.js';
 
-const getDefaultState = () => {
-	return {
-		title: 'Sorry, no message passed!',
-		message: null,
-		list: null,
-		listActions: [],
-		shown: false,
-		onClose: null,
-		zIndex: 1000,
-		drag: {
-			mousemove: null,
-			mouseup: null,
-			clientX: undefined,
-			clientY: undefined,
-			movementX: 0,
-			movementY: 0
-		}
-	};
-};
-
 export default {
 	name: 'Modal',
 	mixins: [EventBusMixin],
 	props: {
+		title: {
+			type: String,
+			default: null
+		},
 		minWidth: {
 			type: String,
 			default: "30%"
@@ -69,53 +40,87 @@ export default {
 		minHeight: {
 			type: String,
 			default: "auto"
+		},
+		show: {
+			type: Boolean,
+			default: true
 		}
 	},
 	data() {
-		return getDefaultState();
+		return {
+			zIndex: 1000,
+			position: null,
+			dragPosition: null
+		};
 	},
     computed: {
 		...Utils.mapState('editor', ['hightestModalZIndex']),
-		listCount() {
-			return Utils.size(this.listItems);
-		},
-        listItems() {
-            return (typeof this.list == 'function' ? this.list() : this.list);
-		},
-		otherListActions() {
-			return Array.isArray(this.listActions) && this.listActions.length > 1 ? this.listActions.slice(1) : [];
+		style() {
+			let style = {
+				'min-width': this.minWidth,
+				'max-width': this.maxWidth,
+				'min-height': this.minHeight
+			};
+			if (Array.isArray(this.position)) {
+				style.position = 'absolute';
+				style.left = this.position[0] + 'px';
+				style.top = this.position[1] + 'px';
+			}
+			return style;
 		}
     },
+	watch: {
+		show: {
+			immediate: true,
+			handler(show) {
+				if (!show) {
+					this.close();
+				}
+				else {
+					this.open();
+				}
+			}
+		}
+	},
 	methods: {
 		...Utils.mapMutations('editor', ['openModal', 'closeModal']),
-
+		open() {
+			this.openModal();
+			this.zIndex = this.hightestModalZIndex;
+			window.addEventListener('keydown', this.escCloseListener);
+			this.$emit('shown');
+		},
+		close() {
+			window.removeEventListener('keydown', this.escCloseListener);
+			this.closeModal();
+			this.$emit('closed');
+		},
 		startMove(event) {
-			this.drag.clientX = event.clientX;
-			this.drag.clientY = event.clientY;
+			this.dragPosition = [
+				event.clientX,
+				event.clientY
+			];
 
-			this.drag.mousemove = this.move.bind(this);
-			document.addEventListener('mousemove', this.drag.mousemove);
-			this.drag.mouseup = this.stopMove.bind(this);
-			document.addEventListener('mouseup', this.drag.mouseup);
+			document.addEventListener('mousemove', this.move);
+			document.addEventListener('mouseup', this.stopMove);
 		},
-
-		stopMove(event) {
-			document.removeEventListener('mousemove', this.drag.mousemove);
-			document.removeEventListener('mouseup', this.drag.mouseup);
+		stopMove() {
+			document.removeEventListener('mousemove', this.move);
+			document.removeEventListener('mouseup', this.stopMove);
 		},
-
 		move(event) {
       		event.preventDefault();
-			this.drag.movementX = this.drag.clientX - event.clientX;
-			this.drag.movementY = this.drag.clientY - event.clientY;
-			this.drag.clientX = event.clientX;
-			this.drag.clientY = event.clientY;
-			// set the element's new position:
-			this.$refs.container.style.position = 'absolute';
-			this.$refs.container.style.top = (this.$refs.container.offsetTop - this.drag.movementY) + 'px';
-			this.$refs.container.style.left = (this.$refs.container.offsetLeft - this.drag.movementX) + 'px'
+			// set the element's new position
+			this.position = [
+				this.$refs.container.offsetLeft - (this.dragPosition[0] - event.clientX),
+				this.$refs.container.offsetTop - (this.dragPosition[1] - event.clientY)
+			];
+			// Store for later
+			this.dragPosition = [
+				event.clientX,
+				event.clientY
+			];
 		},
-
 		escCloseListener(event) {
 			if (event.key == "Escape") { 
 				this.close();
@@ -124,67 +129,11 @@ export default {
 				return false;
 			}
 		},
-
-		show(title, onClose = null) {
-			this.reset();
-			this._show(title, onClose);
-		},
-
-		showMessage(title, message, onClose = null) {
-			this.reset();
-			this.message = message;
-			this._show(title, onClose);
-		},
-
-		showList(title, list, actions, onClose = null) {
-			this.reset();
-			this.list = list;
-			this.listActions = actions;
-			this._show(title, onClose);
-		},
-
-		_show(title, onClose) {
-			this.onClose = onClose;
-			this.title = title;
-			this.openModal();
-			this.zIndex = this.hightestModalZIndex;
-			window.addEventListener('keydown', this.escCloseListener);
-			this.shown = true;
-			this.$nextTick(() => this.$emit('shown'));
-		},
-
-		reset() {
-			Object.assign(this, getDefaultState());
-		},
-
-		close() {
-			if (typeof this.onClose === 'function' && !this.onClose()) {
-				return;
-			}
-			this.shown = false;
-			this.closeModal();
-			this.$emit('closed');
-			window.removeEventListener('keydown', this.escCloseListener);
-		},
-
-		possiblyClose(event) {
-			if(event.target == this.$refs.modal) {
+		backgroundClose(event) {
+			if (event.target === this.$el) {
 				this.close();
 			}
-		},
-		
-        doListAction(item, key, callback) {
-            const closeAfterCompletion = callback(Array.isArray(this.listItems) ? item : key);
-            if(closeAfterCompletion === true) {
-                this.close();
-            }
-		},
-
-        doMainListAction(item, key) {
-            if(this.listActions.length > 0) {
-                this.doListAction(item, key, this.listActions[0].callback);
-            }
-        }
+		}
 	}
 };
 </script>
@@ -267,37 +216,5 @@ export default {
 
 .modal .close:hover, .modal .close:focus {
     color: red;
-}
-
-.modal .modal-list {
-	list-style-type: none;
-	margin: 0;
-	padding: 0;
-	border: 1px solid #ccc;
-}
-
-.modal .modal-list li:first-of-type {
-	border: 0;
-}
-.modal .modal-list li {
-	cursor: pointer;
-	display: block;
-	border-top: 1px solid #ccc;
-	padding: 0.5rem;
-	color: #1665B6;
-	display: flex;
-	align-items: center;
-}
-.modal .modal-list li:hover {
-	color: black;
-	background-color: #eee;
-}
-.modal .modal-list li strong {
-	flex-grow: 1;
-	font-weight: normal;
-}
-.modal .listEmpty {
-    display: block;
-    text-align: center;
 }
 </style>

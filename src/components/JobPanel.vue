@@ -229,14 +229,14 @@ export default {
 						Utils.exception(this, error, "Load Results Error: " + Utils.getResourceTitle(updatedJob));
 					}
 				}
-				this.emit('showJobInfo', updatedJob.getAll(), result);
+				this.emit('showModal', 'JobInfoModal', {job: updatedJob.getAll(), result});
 			});
 		},
 		async estimateJob(job) {
 			// Doesn't need to go through job store as it doesn't change job-related data
 			try {
 				let estimate = await job.estimateJob();
-				this.emit('showJobEstimate', job.getAll(), estimate);
+				this.emit('showModal', 'JobEstimateModal', {job: job.getAll(), estimate});
 			} catch(error) {
 				Utils.exception(this, error, "Job Estimate Error: " + Utils.getResourceTitle(job));
 			}

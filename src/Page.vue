@@ -4,10 +4,11 @@
 			<ConnectForm key="1" v-if="!isDiscovered" :skipLogin="skipLogin" />
 			<IDE key="2" v-else />
 		</transition>
-		<Modal ref="modal" maxWidth="60%" />
-		<WebEditorModal ref="webEditorModal" />
+		<template v-for="modal in modals">
+			<component :is="modal.component" :key="modal.id" v-bind="modal.props" v-on="modal.events" @closed="hideModal(modal)" />
+		</template>
 		<vue-snotify />
-		<span v-show="activeRequests > 0" id="activeRequests" :style="{zIndex: hightestModalZIndex+2}">
+		<span v-show="activeRequests > 0" id="activeRequests">
 			<i class="fas fa-spinner fa-spin fa-2x"></i>
 		</span>
 	</div>
@@ -17,9 +18,9 @@
 import EventBusMixin from './components/EventBusMixin.vue';
 import Utils from './utils';
 import ConnectForm from './components/ConnectForm.vue';
-import Modal from './components/modals/Modal.vue';
-import WebEditorModal from './components/modals/WebEditorModal.vue';
 import axios from 'axios';
+import { UserProcess } from '@openeo/js-client';
+import { ProcessGraph } from '@openeo/js-processgraphs';
 
 // Making axios available globally for the OpenEO JS client
 window.axios = axios;
@@ -30,11 +31,23 @@ export default {
 	components: {
 		ConnectForm,
 		IDE: () => import('./components/IDE.vue'),
-		Modal,
-		WebEditorModal
+		CollectionModal: () => import('./components/modals/CollectionModal.vue'),
+		ExpressionModal: () => import('./components/modals/ExpressionModal.vue'),
+		FileFormatModal: () => import('./components/modals/FileFormatModal.vue'),
+		JobEstimateModal: () => import('./components/modals/JobEstimateModal.vue'),
+		JobInfoModal: () => import('./components/modals/JobInfoModal.vue'),
+		ListModal: () => import('./components/modals/ListModal.vue'),
+		ParameterModal: () => import('./components/modals/ParameterModal.vue'),
+		ProcessModal: () => import('./components/modals/ProcessModal.vue'),
+		SchemaModal: () => import('./components/modals/SchemaModal.vue'),
+		ServerInfoModal: () => import('./components/modals/ServerInfoModal.vue'),
+		ServiceInfoModal: () => import('./components/modals/ServiceInfoModal.vue'),
+		UdfRuntimeModal: () => import('./components/modals/UdfRuntimeModal.vue'),
+		WebEditorModal: () => import('./components/modals/WebEditorModal.vue')
 	},
 	data() {
 		return {
+			modals: [],
 			skipLogin: false,
 			title: null
 		};
@@ -58,9 +71,11 @@ export default {
 		});
 	},
 	mounted() {
-		this.listen('showMessageModal', this.showMessageModal);
-		this.listen('showHtmlModal', this.showHtmlModal);
+		this.listen('showModal', this.showModal);
 		this.listen('showListModal', this.showListModal);
+		this.listen('showCollection', this.showCollection);
+		this.listen('showProcess', this.showProcess);
+		this.listen('showSchema', this.showSchemaInfo);
 		this.listen('showWebEditorInfo', this.showWebEditorInfo);
 		this.listen('title', this.setTitle);
 	},
@@ -76,11 +91,14 @@ export default {
 	},
 	computed: {
 		...Utils.mapState(['activeRequests']),
+		...Utils.mapGetters(['isDiscovered']),
 		...Utils.mapState('editor', ['hightestModalZIndex']),
-		...Utils.mapGetters(['isDiscovered'])
+		...Utils.mapGetters('userProcesses', {getProcessById: 'getAllById'})
 	},
 	methods: {
+		...Utils.mapActions(['describeAccount', 'describeCollection']),
 		...Utils.mapMutations(['startActiveRequest', 'endActiveRequest']),
+		...Utils.mapActions('userProcesses', {readUserProcess: 'read'}),
 		setTitle(subtitle) {
 			var title = "openEO Web Editor";
 			if (subtitle) {
@@ -88,14 +106,69 @@ export default {
 			}
 			this.title = title;
 		},
-		showMessageModal(title, message) {
-			this.$refs.modal.showMessage(title, message);
+		showModal(component, props = {}, events = {}, id = null) {
+			this.modals.push({
+				component,
+				props,
+				events,
+				id: id || "modal_" + Date.now()
+			});
+		},
+		hideModal(modal) {
+			let id = Utils.isObject(modal) ? modal.id : modal;
+			let index = this.modals.findIndex(other => other.id === id);
+			if (typeof index !== 'undefined') {
+				this.modals.splice(index, 1);
+			}
 		},
 		showListModal(title, list, listActions) {
-			this.$refs.modal.showList(title, list, listActions);
+			this.showModal('ListModal', {title, list, listActions});
 		},
 		showWebEditorInfo() {
-			this.$refs.webEditorModal.show(this.$refs.webEditorInfo);
+			this.showModal('WebEditorModal');
+		},
+		async showCollection(id) {
+			try {
+				let collection = await this.describeCollection(id);
+				this.showModal('CollectionModal', {collection});
+			} catch (error) {
+				console.log(error);
+				Utils.error(this, "Sorry, can't load collection details for '" + id + "'.");
+			}
+		},
+		async showProcess(process) {
+			// Convert process id into process
+			if (typeof process === 'string') {
+				process = this.getProcessById(process);
+			}
+
+			if (!process.native) {
+				try {
+					let udp = await this.readUserProcess({data: process});
+					process = udp.toJSON();
+				} catch(error) {
+					Utils.exception(this, error, "Load Process Error: " + process.id);
+					return;
+				}
+			}
+
+			if (process instanceof ProcessGraph || process instanceof UserProcess) {
+				process = process.toJSON();
+			}
+
+			this.showModal('ProcessModal', {process});
+		},
+		showSchemaInfo(name, schema, message = null) {
+			if (message === null) {
+				message = "This is a parameter for a user-defined process.\n"
+					+ "It is a value made available by the parent entity (usually another process or a secondary web service) that is executing this processes for further use.\n"
+					+ "The value will comply to the following data type(s):";
+			}
+			this.showModal('SchemaModal', {
+				name,
+				message,
+				schema
+			});
 		}
 	}
 }
@@ -174,7 +247,7 @@ button:disabled i {
 	color: #555;
 }
 
-tt, code {
+tt, .vue-component.styled-description code {
 	color: maroon;
 	display: inline-block;
 	padding: 0 0.1em 0 0.3em;
@@ -190,6 +263,7 @@ tt, code {
 	bottom: 1rem;
 	background-color: rgba(255, 255, 255, 0.5);
 	border-radius: 2em;
+	z-index: 9999;
 }
 .connecting #activeRequests {
 	color: white;

@@ -1,12 +1,10 @@
 <template>
-	<Modal ref="modal" minWidth="85%">
-		<template #main>
-			<Service :service="service" :currency="currency">
-				<template #process-graph>
-					<Editor :value="service.process" :editable="false" class="infoViewer" id="servicePgViewer" />
-				</template>
-			</Service>
-		</template>
+	<Modal minWidth="85%" :title="title" @closed="$emit('closed')">
+		<Service :service="service" :currency="currency">
+			<template #process-graph>
+				<Editor :value="service.process" :editable="false" class="infoViewer" id="servicePgViewer" />
+			</template>
+		</Service>
 	</Modal>
 </template>
 
@@ -23,28 +21,22 @@ export default {
 		Modal,
 		Service
 	},
-	computed: {
-		...Utils.mapGetters(['currency']),
-		displayTitle() {
-			return "Web Service: " + (this.service.title || "#" + this.service.id);
+	props: {
+		service: {
+			type: Object
 		}
 	},
-	data() {
-		return {
-			service: {}
-		};
-	},
-	methods: {
-		show(service) {
-			this.service = service;
-			this.$refs.modal.show(this.displayTitle);
+	computed: {
+		...Utils.mapGetters(['currency']),
+		title() {
+			return "Web Service: " + (this.service.title || "#" + this.service.id);
 		}
 	}
 }
 </script>
 
-<style>
-.vue-component.service h2 {
+<style lang="scss">
+.vue-component.service > h2 {
 	display: none;
 }
 </style>

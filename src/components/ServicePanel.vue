@@ -215,7 +215,7 @@ export default {
 		},
 		serviceInfo(service) {
 			this.refreshElement(service, updatedService => {
-				this.emit('showServiceInfo', updatedService.getAll());
+				this.emit('showModal', 'ServiceInfoModal', {service: updatedService.getAll()});
 			});
 		},
 		replaceProcess(service, process) {

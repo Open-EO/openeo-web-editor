@@ -1,19 +1,17 @@
 <template>
-	<Modal ref="modal">
-		<template #main>
-			<div class="vue-component server-info">
-				<Capabilities :capabilities="capabilities" :url="url" />
+	<Modal :title="title" @closed="$emit('closed')">
+		<div class="vue-component server-info">
+			<Capabilities :capabilities="capabilities" :url="url" />
 
-				<h3>File formats</h3>
-				<FileFormats :formats="fileFormats" searchTerm="" :heading="null" />
+			<h3>File formats</h3>
+			<FileFormats :formats="fileFormats" searchTerm="" :heading="null" />
 
-				<h3>Secondary web services</h3>
-				<ServiceTypes :services="serviceTypes" searchTerm="" :heading="null" />
+			<h3>Secondary web services</h3>
+			<ServiceTypes :services="serviceTypes" searchTerm="" :heading="null" />
 
-				<h3>Runtimes for user-defined functions (UDF)</h3>
-				<UdfRuntimes :runtimes="udfRuntimes" searchTerm="" :heading="null" />
-			</div>
-		</template>
+			<h3>Runtimes for user-defined functions (UDF)</h3>
+			<UdfRuntimes :runtimes="udfRuntimes" searchTerm="" :heading="null" />
+		</div>
 	</Modal>
 </template>
 
@@ -42,11 +40,9 @@ export default {
 		},
 		url() {
 			return this.connection.getBaseUrl();
-		}
-	},
-	methods: {
-		show() {
-			this.$refs.modal.show(this.connection.capabilities().title() || 'Server information');
+		},
+		title() {
+			return this.connection.capabilities().title() || 'Server information';
 		}
 	}
 }

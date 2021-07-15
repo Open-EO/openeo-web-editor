@@ -46,8 +46,6 @@
 					/>
 			</div>
 		</div>
-		<ParameterModal ref="parameterModal" />
-		<ExpressionModal v-if="editable && supportsMath" ref="expressionModal" @save="insertNodes" />
 	</div>
 </template>
 
@@ -55,7 +53,6 @@
 import ModelBuilder from '@openeo/vue-components/components/ModelBuilder.vue';
 import Utils from '../utils.js';
 import DiscoveryToolbar from './DiscoveryToolbar.vue';
-import ParameterModal from './modals/ParameterModal.vue'; // Add a paremeter modal to each visual editor, otherwise we can't open a parameter modal over a parameter modal (e.g. edit the parameters of a callback)
 import EventBusMixin from './EventBusMixin.vue';
 import FullscreenButton from './FullscreenButton.vue';
 
@@ -65,10 +62,7 @@ export default {
 	components: {
 		ModelBuilder,
 		DiscoveryToolbar,
-		ParameterModal,
-		FullscreenButton,
-		// Async loading for smaller starting bundle
-		ExpressionModal: () => import('./modals/ExpressionModal.vue')
+		FullscreenButton
 	},
 	props: {
 		id: String,
@@ -118,8 +112,6 @@ export default {
 		}
 	},
 	methods: {
-		...Utils.mapActions('userProcesses', {readUserProcess: 'read'}),
-
 		commit(value) {
 			// Fix #115: Return the default value/null if no nodes are given
 			if (typeof this.defaultValue !== 'undefined' && Utils.isObject(value) && Utils.size(value.process_graph) === 0) {
@@ -174,10 +166,29 @@ export default {
 			this.emit('showSchema', name, schema);
 		},
 		showExpressionModal() {
-			this.$refs.expressionModal.show(this.value, this.$refs.blocks.getPgParameters());
+			let props = {
+				process: this.value,
+				pgParameters: this.$refs.blocks.getPgParameters()
+			};
+			let events = {
+				save: this.insertNodes
+			};
+			this.emit('showModal', 'ExpressionModal', props, events);
 		},
-		openParameterEditor(parameters, values, title = "Edit", isEditable = true, selectParameterName = null, saveCallback = null, parent = null) {
-			this.$refs.parameterModal.show(title, parameters, values, isEditable, saveCallback, null, selectParameterName, parent);
+		openParameterEditor(parameters, data, title = "Edit", editable = true, selectParameterName = null, saveCallback = null, parent = null) {
+			let props = {
+				title,
+				parameters,
+				data,
+				editable,
+				selectParameterName,
+				parent
+			};
+			let events = {};
+			if (typeof saveCallback === 'function') {
+				events.save = saveCallback;
+			}
+			this.emit('showModal', 'ParameterModal', props, events);
 		},
 
 		confirmClear() {

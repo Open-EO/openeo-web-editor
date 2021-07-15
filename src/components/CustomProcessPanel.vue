@@ -138,7 +138,7 @@ export default {
 				.catch(error => Utils.exception(this, error, 'Store Process Error: ' + process.id));
 		},
 		processInfo(process) {
-			this.emit('showProcessInfo', process);
+			this.emit('showProcess', process);
 		},
 		editMetadata(oldPg) {
 			this.refreshElement(oldPg, process => {

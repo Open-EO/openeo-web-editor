@@ -31,16 +31,6 @@
 				</Pane>
 			</Splitpanes>
 		</div>
-		<CollectionModal ref="collectionModal" />
-		<ProcessModal ref="processModal" />
-		<ServerInfoModal ref="serverInfoModal" />
-		<ServiceInfoModal ref="serviceModal" />
-		<JobInfoModal ref="jobModal" />
-		<ParameterModal ref="parameterModal" />
-		<SchemaModal ref="schemaModal" />
-		<UdfRuntimeModal ref="udfRuntimeModal" />
-		<FileFormatModal ref="fileFormatModal" />
-		<JobEstimateModal ref="jobEstimateModal" />
 	</div>
 </template>
 
@@ -68,17 +58,7 @@ export default {
 		UserMenu,
 		UserWorkspace,
 		Splitpanes,
-		Pane,
-		CollectionModal: () => import('./modals/CollectionModal.vue'),
-		ProcessModal: () => import('./modals/ProcessModal.vue'),
-		ServerInfoModal: () => import('./modals/ServerInfoModal.vue'),
-		JobInfoModal: () => import('./modals/JobInfoModal.vue'),
-		JobEstimateModal: () => import('./modals/JobEstimateModal.vue'),
-		ServiceInfoModal: () => import('./modals/ServiceInfoModal.vue'),
-		ParameterModal: () => import('./modals/ParameterModal.vue'),
-		SchemaModal: () => import('./modals/SchemaModal.vue'),
-		FileFormatModal: () => import('./modals/FileFormatModal.vue'),
-		UdfRuntimeModal: () => import('./modals/UdfRuntimeModal.vue'),
+		Pane
 	},
 	data() {
 		return {
@@ -92,7 +72,7 @@ export default {
 		...Utils.mapGetters(['title', 'apiVersion']),
 		...Utils.mapGetters('jobs', {supportsJobUpdate: 'supportsUpdate'}),
 		...Utils.mapGetters('services', {supportsServiceUpdate: 'supportsUpdate'}),
-		...Utils.mapGetters('userProcesses', {getProcessById: 'getAllById', supportsUserProcessUpdate: 'supportsUpdate'}),
+		...Utils.mapGetters('userProcesses', {supportsUserProcessUpdate: 'supportsUpdate'}),
 		contextTitle() {
 			return this.context !== null ? Utils.getResourceTitle(this.context, true) : ''
 		},
@@ -121,15 +101,6 @@ export default {
 
 	},
 	mounted() {
-		this.listen('showCollection', this.showCollectionInfo);
-		this.listen('showProcess', this.showProcessInfoById);
-		this.listen('showJobInfo', this.showJobInfo);
-		this.listen('showJobEstimate', this.showJobEstimate);
-		this.listen('showProcessInfo', this.showProcessInfo);
-		this.listen('showServiceInfo', this.showServiceInfo);
-		this.listen('showUdfRuntimeInfo', this.showUdfRuntimeInfo);
-		this.listen('showFileFormatInfo', this.showFileFormatInfo);
-		this.listen('showSchema', this.showSchemaInfo);
 		this.listen('showDataForm', this.showDataForm);
 		this.listen('editProcess', this.editProcess);
 
@@ -149,8 +120,7 @@ export default {
 		}
 	},
 	methods: {
-		...Utils.mapActions(['describeAccount', 'describeCollection']),
-		...Utils.mapActions('userProcesses', {readUserProcess: 'read'}),
+		...Utils.mapActions(['describeAccount']),
 		...Utils.mapActions('editor', ['loadInitialProcess']),
 		...Utils.mapMutations('editor', ['setContext', 'setProcess']),
 
@@ -177,86 +147,36 @@ export default {
 			this.$refs.editor.insertProcess(node);
 		},
 
-		async showCollectionInfo(id) {
-			try {
-				let info = await this.describeCollection(id);
-				this.$refs.collectionModal.show(info);
-			} catch (error) {
-				Utils.error(this, "Sorry, can't load collection details for '" + id + "'.");
-			}
-		},
-
-		showProcessInfoById(id) {
-			this._showProcessInfo(this.getProcessById(id));
-		},
-
-		showProcessInfo(process) {
-			this._showProcessInfo(process);
-		},
-
-		showUdfRuntimeInfo(id, data, version = null) {
-			this.$refs.udfRuntimeModal.show(id, data, version);
-		},
-
-		showFileFormatInfo(id, format, type) {
-			this.$refs.fileFormatModal.show(id, format, type);
-		},
-
-		showSchemaInfo(name, schema, msg = null) {
-			if (msg === null) {
-				msg = "This is a parameter for a user-defined process.\n"
-					+ "It is a value made available by the parent entity (usually another process or a secondary web service) that is executing this processes for further use.\n"
-					+ "The value will comply to the following data type(s):";
-			}
-			this.$refs.schemaModal.show(name, schema, msg);
-		},
-
-		async _showProcessInfo(process) {
-			if (!process.native) {
-				try {
-					let updated = await this.readUserProcess({data: process});
-					this._showProcessInfoModal(updated.toJSON());
-				} catch(error) {
-					Utils.exception(this, error, "Load Process Error: " + process.id);
-				}
-			}
-			else {
-				this._showProcessInfoModal(process);
-			}
-		},
-
-		_showProcessInfoModal(process) {
-			this.$refs.processModal.show(process);
-		},
-
-		showServiceInfo(service) {
-			this.$refs.serviceModal.show(service);
-		},
-
-		showJobInfo(job, result = null) {
-			this.$refs.jobModal.show(job, result);
-		},
-
-		showJobEstimate(job, estimate) {
-			this.$refs.jobEstimateModal.show(job, estimate);
-		},
-
 		showServerInfo() {
-			this.$refs.serverInfoModal.show();
+			this.emit('showModal', 'ServerInfoModal');
 		},
 
 		showDataForm(title, fields, saveCallback = null, closeCallback = null) {
 			var editable = typeof saveCallback === 'function';
-			var values = {};
+			var data = {};
 			var parameters = [];
 			for(let field of fields) {
 				if (field === null) {
 					continue;
 				}
 				parameters.push(new ProcessParameter(field));
-				values[field.name] = field.value;
+				data[field.name] = field.value;
 			}
-			this.$refs.parameterModal.show(title, parameters, values, editable, saveCallback, closeCallback);
+	
+			let props = {
+				title,
+				parameters,
+				data,
+				editable
+			};
+			let events = {};
+			if (typeof saveCallback === 'function') {
+				events.save = saveCallback;
+			}
+			if (typeof closeCallback === 'function') {
+				events.closed = closeCallback;
+			}
+			this.emit('showModal', 'ParameterModal', props, events);
 		}
 
 	}

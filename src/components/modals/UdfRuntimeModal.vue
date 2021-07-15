@@ -1,8 +1,6 @@
 <template>
-	<Modal ref="modal">
-		<template #main>
-			<UdfRuntime :id="id" :runtime="data" :version="version"></UdfRuntime>
-		</template>
+	<Modal :title="title" @closed="$emit('closed')">
+		<UdfRuntime :id="id" :runtime="data" :version="version"></UdfRuntime>
 	</Modal>
 </template>
 
@@ -16,19 +14,20 @@ export default {
 		Modal,
 		UdfRuntime
 	},
-	data() {
-		return {
-			id: null,
-			data: null,
-			version: null
-		};
+	props: {
+		id: {
+			type: String
+		},
+		data: {
+			type: Object
+		},
+		version: {
+			type: String
+		}
 	},
-	methods: {
-		show(id, data, version = null) {
-			this.id = id;
-			this.data = data;
-			this.version = version;
-			this.$refs.modal.show(data.title || id);
+	computed: {
+		title() {
+			return this.data.title || this.id;
 		}
 	}
 }

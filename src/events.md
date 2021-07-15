@@ -7,11 +7,9 @@ Sends the current custom process and inserts it into the currently active editor
 
 ## Modals
 
-## showMessageModal(string $title, string $message)
-Sh#ows a simple text message in a modal.
+### showModal(component, props, events, id = null)
 
-### showHtmlModal(string $title, string $html)
-Shows rendered HTML in a modal.
+### hideModal(modal)
 
 ### showListModal(string $title, array $list, array $listActions)
 Shows a list in a modal.
@@ -24,9 +22,6 @@ Shows collection information in a modal.
 
 ### showProcess(id)
 Shows process information in a modal.
-
-### showSchema(name, schema, message)
-Shows schema information in a modal.
 
 ## Viewer & Web Services
 

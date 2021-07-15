@@ -1,16 +1,14 @@
 <template>
-	<Modal ref="modal" :minWidth="minWidth">
-		<template #main>
-			<div class="docgen">
-				<!-- ToDo: Implement processUrl -->
-				<!-- ToDo: Show info (badge?) that process is custom -->
-				<Process :process="process" :provideDownload="false" :showGraph="true">
-					<template #process-graph>
-						<Editor :value="process" :editable="false" class="infoViewer" id="pgInfoViewer" />
-					</template>
-				</Process>
-			</div>
-		</template>
+	<Modal :minWidth="minWidth" :title="process.id" @closed="$emit('closed')">
+		<div class="docgen">
+			<!-- ToDo: Implement processUrl -->
+			<!-- ToDo: Show info (badge?) that process is custom -->
+			<Process :process="process" :provideDownload="false" :showGraph="true">
+				<template #process-graph>
+					<Editor :value="process" :editable="false" class="infoViewer" id="pgInfoViewer" />
+				</template>
+			</Process>
+		</div>
 	</Modal>
 </template>
 
@@ -18,8 +16,6 @@
 import Editor from '../Editor.vue';
 import Modal from './Modal.vue';
 import Process from '@openeo/vue-components/components/Process.vue';
-import { UserProcess } from '@openeo/js-client';
-import { ProcessGraph } from '@openeo/js-processgraphs';
 
 export default {
 	name: 'ProcessModal',
@@ -28,10 +24,10 @@ export default {
 		Modal,
 		Process
 	},
-	data() {
-		return {
-			process: null
-		};
+	props: {
+		process: {
+			type: Object
+		}
 	},
 	computed: {
 		minWidth() {
@@ -42,23 +38,12 @@ export default {
 				return "50%";
 			}
 		}
-	},
-	methods: {
-		show(process) {
-			if (process instanceof ProcessGraph || process instanceof UserProcess) {
-				this.process = process.toJSON();
-			}
-			else {
-				this.process = process;
-			}
-			this.$refs.modal.show(process.id);
-		}
 	}
 }
 </script>
 
-<style>
-.docgen h2 {
+<style lang="scss">
+.docgen .process > h2 {
 	display: none;
 }
 </style>

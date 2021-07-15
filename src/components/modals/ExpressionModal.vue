@@ -1,8 +1,8 @@
 <template>
-	<Modal ref="modal" minWidth="70%">
-		<template #main>
+	<Modal :show="show" minWidth="70%" title="Formula Editor" @closed="$emit('closed')">
+		<template #default>
 			<div class="content">
-				<TextEditor ref="editor" id="input" class="editor" v-model="input" language="math" placeholder="e.g. x * 2.5 / (x - y)" @drop="onDrop($event)" @dragover="allowDrop($event)" />
+				<TextEditor ref="editor" id="input" class="editor" v-model="input" language="math" placeholder="e.g. x * 2.5 / (x - y)" @drop="onDrop" @dragover="allowDrop" />
 				<div class="description">
 					<p><i  class="fas fa-info-circle"></i> Above you can insert a mathematical formula and it will be converted to openEO code for you.</p>
 					<p><strong>Operators</strong>:<br />
@@ -54,15 +54,46 @@ export default {
 		Modal,
 		TextEditor
 	},
+	props: {
+		process: {
+			type: Object,
+			default: () => ({})
+		},
+		pgParameters: {
+			type: Array,
+			default: () => ([])
+		}
+	},
 	data() {
 		return {
+			show: true,
 			input: '',
-			pgParameters: [],
 			arrayElements: {},
 			processGraph: {},
 			result: {},
 			replace: false
 		};
+	},
+	created() {
+			this.processGraph = Utils.isObject(this.process) && Utils.isObject(this.process.process_graph) ? this.process.process_graph : {};
+
+			try {
+				this.importFormula(this.process);
+			} catch (error) {
+				console.info(error);
+			}
+
+			this.arrayElements = {};
+			if(!this.replace) {
+				// If not replacing: Add all array_element calls for labels to the list so that we don't get duplicate array_element calls
+				for(let id in this.processGraph) {
+					let node = this.processGraph[id];
+					if (node.process_id === 'array_element' && Utils.isObject(node.arguments) && node.arguments.label) {
+						let placeholder = this.getArrayElementPlaceholder(node);
+						this.arrayElements[placeholder] = {from_node: node.id};
+					}
+				}
+			}
 	},
 	computed: {
 		...Utils.mapState('userProcesses', ['operatorMapping', 'arrayOperatorMapping']),
@@ -106,32 +137,6 @@ export default {
 		}
 	},
 	methods: {
-		show(process = {}, pgParameters = []) {
-			this.$refs.modal.show("Insert Formula");
-			this.result = {};
-			this.input = '';
-			this.replace = false;
-			this.pgParameters = pgParameters;
-			this.processGraph = Utils.isObject(process) && Utils.isObject(process.process_graph) ? process.process_graph : {};
-
-			try {
-				this.importFormula(process);
-			} catch (error) {
-				console.info(error);
-			}
-
-			this.arrayElements = {};
-			if(!this.replace) {
-				// If not replacing: Add all array_element calls for labels to the list so that we don't get duplicate array_element calls
-				for(let id in this.processGraph) {
-					let node = this.processGraph[id];
-					if (node.process_id === 'array_element' && Utils.isObject(node.arguments) && node.arguments.label) {
-						let placeholder = this.getArrayElementPlaceholder(node);
-						this.arrayElements[placeholder] = {from_node: node.id};
-					}
-				}
-			}
-		},
 		onDrag(event, type, data) {
 			switch(type) {
 				case 'functions':
@@ -265,7 +270,7 @@ export default {
 		},
 		createResult() {
 			if (this.input.length === 0) {
-				this.$refs.modal.close();
+				this.show = false;
 				return;
 			}
 
@@ -280,7 +285,7 @@ export default {
 				this.result[res.from_node].result = true;
 				// Send result
 				this.$emit('save', this.result, this.replace);
-				this.$refs.modal.close();
+				this.show = false;
 			} catch(e) {
 				Utils.exception(this, e);
 			}

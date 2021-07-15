@@ -18,7 +18,7 @@
 			<Processes class="category" :processes="processes" :searchTerm="searchTerm" :offerDetails="false" :collapsed="collapsed">
 				<template #summary="{ item }">
 					<div class="discovery-entity" draggable="true" @dragstart="onDrag($event, 'process', item)">
-						<div class="discovery-info" @click="showProcessInfo(item)">
+						<div class="discovery-info" @click="showProcess(item)">
 							<i v-if="!item.native" class="custom-process fas fa-xs fa-sitemap" title="Custom Process"></i>
 							<strong :title="item.id">{{ item.id }}</strong>
 							<small v-if="item.summary" :title="item.summary">{{ item.summary }}</small>
@@ -128,9 +128,7 @@ export default {
 			event.dataTransfer.setData("text/plain", JSON.stringify(node, null, 2));
 		},
 		showCollectionInfo(id) {
-			if (this.supports('listCollections')) {
-				this.emit('showCollection', id);
-			}
+			this.emit('showCollection', id);
 		},
 		hasCollectionPreview(collection) {
 			return Boolean(this.collectionPreview && Utils.getPreviewLinkFromSTAC(collection));
@@ -138,15 +136,19 @@ export default {
 		showCollectionPreview(collection) {
 			this.emit('showCollectionPreview', collection);
 		},
-		showProcessInfo(process) {
-			this.emit('showProcessInfo', process);
+		showProcess(process) {
+			this.emit('showProcess', process);
 		},
-		showUdfInfo(id, runtime) {
-
-			this.emit('showUdfRuntimeInfo', id, runtime, runtime.default);
+		showUdfInfo(id, data) {
+			this.emit('showModal', 'UdfRuntimeModal', {id, data, version: data.default});
 		},
 		showFileFormatInfo(format) {
-			this.emit('showFileFormatInfo', format.name, this.fileFormats.output[format.name], "output");
+			let props = {
+				id: format.name,
+				format: this.fileFormats.output[format.name],
+				type: "output"
+			};
+			this.emit('showModal', 'FileFormatModal', props);
 		},
 		getNode(type, data) {
 			switch(type) {

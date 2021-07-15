@@ -1,9 +1,9 @@
 <template>
-	<Modal ref="__modal" minWidth="60%" maxWidth="90%" minHeight="75%">
-		<template #main>
-			<p v-if="editableFields.length === 0">No editable parameters available.</p>
+	<Modal :show="show" minWidth="60%" maxWidth="90%" minHeight="75%" :title="title" @closed="$emit('closed')">
+		<template #default>
+			<p v-if="parameters.length === 0">No editable parameters available.</p>
 			<form v-else id="parameterModal" @submit.prevent="save">
-				<div class="fieldRow" v-for="(param, k) in editableFields" :key="k">
+				<div class="fieldRow" v-for="(param, k) in parameters" :key="k">
 					<label :class="{ fieldLabel: true, highlight: param.name === selectParameter }">
 						{{ displayLabel(param) }}<strong class="required" v-if="!param.optional" title="required">*</strong>
 						<div v-if="param.description" class="description">
@@ -17,7 +17,7 @@
 				<button type="submit" style="display:none"></button>
 			</form>
 		</template>
-		<template v-if="typeof saveCallback === 'function'" #footer>
+		<template v-if="$listeners.save" #footer>
 			<div class="footer">
 				<button class="save" @click="save">Save</button>
 			</div>
@@ -38,15 +38,34 @@ export default {
 		Description,
 		ParameterDataTypes
 	},
+	props: {
+		title: {
+			type: String
+		},
+		parameters: {
+			type: Array
+		},
+		data: {
+			type: Object
+		},
+		editable: {
+			type: Boolean,
+			default: true
+		},
+		selectParameter: {
+			type: String,
+			default: null
+		},
+		parent: {
+			type: Object,
+			default: null
+		}
+	},
 	data() {
 		return {
-			editableFields: [],
-			values: {},
-			schemas: {},
-			editable: true,
-			selectParameter: null,
-			saveCallback: null,
-			parent: null
+			show: true,
+			values: Utils.deepClone(this.data),
+			schemas: {}
 		};
 	},
 	computed: {
@@ -54,14 +73,17 @@ export default {
 			return {
 				values: this.values,
 				schemas: this.schemas,
-				parameters: this.editableFields
+				parameters: this.parameters
 			};
 		}
 	},
+	mounted() {
+		this.$nextTick(() => this.setSelected());
+	},
 	methods: {
 		deleteParam(key) {
-			let name = this.editableFields[key].name;
-			this.$delete(this.editableFields, key);
+			let name = this.parameters[key].name;
+			this.$delete(this.parameters, key);
 			this.$delete(this.schemas, name);
 			this.$delete(this.values, name);
 		},
@@ -78,25 +100,11 @@ export default {
 		},
 		save() {
 			try {
-				if (typeof this.saveCallback === 'function') {
-					this.saveCallback(this.values);
-				}
-				this.$refs.__modal.close();
+				this.$emit('save', this.values);
+				this.show = false;
 			} catch (error) {
 				Utils.exception(this, error);
 			}
-		},
-		show(title, editableFields, values, editable = true, saveCallback = null, closeCallback = null, selectParameter = null, parent = null) {
-			this.editableFields = editableFields;
-			this.values = Utils.deepClone(values);
-			this.schemas = {};
-			this.editable = editable;
-			this.saveCallback = saveCallback;
-			this.selectParameter = selectParameter;
-			this.parent = parent;
-			this.$refs.__modal.show(title, closeCallback);
-
-			this.$nextTick(() => this.setSelected());
 		},
 		componentforParameter(name) {
 			if (name && Array.isArray(this.$refs[name]) && this.$refs[name][0]) {
@@ -109,8 +117,8 @@ export default {
 			if (this.selectParameter) {
 				component = this.componentforParameter(this.selectParameter);
 			}
-			else if (this.editableFields.length > 0) {
-				component = this.componentforParameter(this.editableFields[0].name);
+			else if (this.parameters.length > 0) {
+				component = this.componentforParameter(this.parameters[0].name);
 			}
 			if (!component) {
 				return;
@@ -143,7 +151,7 @@ export default {
 };
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .footer {
 	text-align: right;
 }
@@ -155,61 +163,71 @@ export default {
 <style lang="scss">
 @import '../../../theme.scss';
 
-#parameterModal .fieldRow .description {
-	font-size: 0.8em;
-	width: 100%;
-}
-#parameterModal .fieldRow .required {
-	color: red;
-	font-weight: bold;
-}
-#parameterModal .fieldRow:first-of-type {
-	border: 0;
-	margin: 0;
-	padding: 0;
-}
-#parameterModal .fieldRow {
-	display: flex;
-	padding-top: 1em;
-	margin-top: 1em;
-	border-top: 1px dotted #ccc;
-}
-#parameterModal .fieldRow .fieldLabel {
-	min-width: 30%;
-	width: 30%;
-	padding-right: 1em;
-}
-#parameterModal .fieldRow .fieldLabel.highlight {
-	width: calc(35% - 5px);
-    border-left: 5px solid $linkColor;
-    padding-left: 5px;
-}
-#parameterModal .fieldRow .fieldEditorContainer {
-	flex-grow: 1;
-	display: flex;
-}
-#parameterModal .fieldRow .fieldContainer {
-	min-width: 50%;
-	width: 70%;
-	flex-grow: 1;
-}
-#parameterModal .fieldRow .fieldValue {
-	display: flex;
-	flex-grow: 1;
-}
-#parameterModal .fieldRow .fieldValue input, .fieldRow .fieldValue textarea, .fieldRow .fieldValue select {
-	flex-grow: 1;
-	width: 100%;
-}
-#parameterModal .fieldRow input[type="checkbox"].fieldValue  {
-	display: inline-block;
-	flex-grow: unset;
-}
+#parameterModal {
+	.fieldRow {
+		display: flex;
+		padding-top: 1em;
+		margin-top: 1em;
+		border-top: 1px dotted #ccc;
 
-#parameterModal .description .styled-description {
-	line-height: 1.1em;
-}
-#parameterModal .description .styled-description p {
-	margin: 0.2em 0;
+		&:first-of-type {
+			border: 0;
+			margin: 0;
+			padding: 0;
+		}
+
+		.description {
+			font-size: 0.8em;
+			width: 100%;
+		}
+		.required {
+			color: red;
+			font-weight: bold;
+		}
+		.fieldLabel {
+			min-width: 30%;
+			width: 30%;
+			padding-right: 1em;
+
+			&.highlight {
+				width: calc(35% - 5px);
+				border-left: 5px solid $linkColor;
+				padding-left: 5px;
+			}
+		}
+		.fieldEditorContainer {
+			flex-grow: 1;
+			display: flex;
+		}
+		.fieldContainer {
+			min-width: 50%;
+			width: 70%;
+			flex-grow: 1;
+		}
+		.fieldValue {
+			display: flex;
+			flex-grow: 1;
+
+			input,
+			textarea,
+			select {
+				flex-grow: 1;
+				width: 100%;
+			}
+		}
+		
+		input[type="checkbox"].fieldValue  {
+			display: inline-block;
+			flex-grow: unset;
+		}
+	}
+
+	.description .styled-description {
+		line-height: 1.1em;
+
+		p {
+			margin: 0.2em 0;
+		}
+	}
 }
 </style>
