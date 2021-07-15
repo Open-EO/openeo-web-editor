@@ -2,7 +2,7 @@ name: Web Editor Demo Deployment
 on:
   push:
     branches:
-      - dev
+      - master
 jobs:
   deploy:
     runs-on: ubuntu-latest
