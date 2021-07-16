@@ -38,7 +38,7 @@
 					@error="errorHandler"
 					@showProcess="id => emit('showProcess', id)"
 					@showCollection="id => emit('showCollection', id)"
-					@showSchema="showSchemaModal"
+					@showParameter="param => emit('showProcessParameter', param)"
 					@editParameters="openParameterEditor"
 					@compactMode="compact => this.compactMode = compact"
 					@selectionChanged="selectionChanged"
@@ -119,24 +119,19 @@ export default {
 			}
 			this.$emit('input', value);
 		},
-
 		errorHandler(message, title = null) {
 			Utils.exception(this, message, title)
 		},
-
 		selectionChanged(blocks, edges) {
 			this.hasSelection = Boolean(blocks.filter(block => block.$el.allowsDelete).length || edges.length);
 		},
-
 		historyChanged(history, index) {
 			this.canUndo = !!history[index-1];
 			this.canRedo = !!history[index+1];
 		},
-
 		allowDrop(event) {
 			event.preventDefault();
 		},
-
 		onDrop(event) {
 			var json = event.dataTransfer.getData("application/vnd.openeo-node");
 			if (json) {
@@ -145,7 +140,6 @@ export default {
 				this.insertProcess(node, event.pageX, event.pageY);
 			}
 		},
-
 		addParameter() {
 			var fields = [
 				{
@@ -160,10 +154,6 @@ export default {
 					this.$refs.blocks.addPgParameter(data);
 				}
 			});
-		},
-
-		showSchemaModal(name, schema) {
-			this.emit('showSchema', name, schema);
 		},
 		showExpressionModal() {
 			let props = {
@@ -190,7 +180,6 @@ export default {
 			}
 			this.emit('showModal', 'ParameterModal', props, events);
 		},
-
 		confirmClear() {
 			var confirmed = confirm("Do you really want to clear the existing model?");
 			if (confirmed) {
@@ -203,7 +192,6 @@ export default {
 			}
 			this.commit(null);
 		},
-
 		insertProcess(node, x = null, y = null) {
 			try {
 				var pos = this.$refs.blocks.getPositionForPageXY(x, y);
@@ -212,7 +200,6 @@ export default {
 				Utils.exception(this, error);
 			}
 		},
-
 		async insertNodes(nodes, replace = false) {
 			return await this.$refs.blocks.import({
 				process_graph: nodes
@@ -220,7 +207,6 @@ export default {
 				clear: replace
 			});
 		}
-
 	}
 }
 </script>

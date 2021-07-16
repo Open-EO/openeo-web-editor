@@ -22,7 +22,7 @@
 					</p>
 					<p><strong>Parameters</strong>: If a variable is found in the formula which can't be resolved to a pre-defined parameter, a new parameter will be created for it. Available pre-defined parameters:
 						<template v-if="pgParameters.length">
-							<br /><kbd v-for="param in pgParameters" :key="param.id" @click="emit('showSchema', param.spec.name, param.spec.schema)" class="click" draggable="true" @dragstart="onDrag($event, 'pgParameters', param.spec.name)">{{ param.spec.name }}</kbd>
+							<br /><kbd v-for="param in pgParameters" :key="param.id" @click="emit('showParameter', param.spec)" class="click" draggable="true" @dragstart="onDrag($event, 'pgParameters', param.spec.name)">{{ param.spec.name }}</kbd>
 						</template>
 						<template v-else>None</template>
 					</p>

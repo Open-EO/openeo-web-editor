@@ -39,7 +39,7 @@ export default {
 		ListModal: () => import('./components/modals/ListModal.vue'),
 		ParameterModal: () => import('./components/modals/ParameterModal.vue'),
 		ProcessModal: () => import('./components/modals/ProcessModal.vue'),
-		SchemaModal: () => import('./components/modals/SchemaModal.vue'),
+		ProcessParameterModal: () => import('./components/modals/ProcessParameterModal.vue'),
 		ServerInfoModal: () => import('./components/modals/ServerInfoModal.vue'),
 		ServiceInfoModal: () => import('./components/modals/ServiceInfoModal.vue'),
 		UdfRuntimeModal: () => import('./components/modals/UdfRuntimeModal.vue'),
@@ -75,7 +75,7 @@ export default {
 		this.listen('showListModal', this.showListModal);
 		this.listen('showCollection', this.showCollection);
 		this.listen('showProcess', this.showProcess);
-		this.listen('showSchema', this.showSchemaInfo);
+		this.listen('showProcessParameter', this.showProcessParameter);
 		this.listen('showWebEditorInfo', this.showWebEditorInfo);
 		this.listen('title', this.setTitle);
 	},
@@ -158,16 +158,10 @@ export default {
 
 			this.showModal('ProcessModal', {process});
 		},
-		showSchemaInfo(name, schema, message = null) {
-			if (message === null) {
-				message = "This is a parameter for a user-defined process.\n"
-					+ "It is a value made available by the parent entity (usually another process or a secondary web service) that is executing this processes for further use.\n"
-					+ "The value will comply to the following data type(s):";
-			}
-			this.showModal('SchemaModal', {
-				name,
-				message,
-				schema
+		showProcessParameter(parameter, udp = true) {
+			this.showModal('ProcessParameterModal', {
+				parameter,
+				udp
 			});
 		}
 	}
@@ -319,32 +313,39 @@ h3.aboutPage {
 	font-weight: bold;
 }
 
+.help, .message {
+	display: flex;
+
+	span {
+		display: block;
+		flex-grow: 1;
+	}
+	.fas {
+		display: block;
+		height: 100%;
+		margin-right: 0.5em;
+	}
+
+	&.info {
+		border: 1px solid #aaa;
+		background-color: #eee;
+		color: #555;
+	}
+	&.warning {
+		border: 1px solid #f9d67a;
+		background-color: #fbeabc;
+		color: #795600;
+	}
+	&.error {
+		border: 1px solid #f97a7a;
+		background-color: #fbbcbc;
+		color: #790000;
+	}
+}
 .message {
 	padding: 0.5em;
 	margin-bottom: 1em;
 	border-radius: 0.5em;
-}
-.warning {
-	border: 1px solid #f9d67a;
-	background-color: #fbeabc;
-	color: #795600;
-}
-.error {
-	border: 1px solid #f97a7a;
-	background-color: #fbbcbc;
-	color: #790000;
-}
-.help, .message {
-	display: flex;
-}
-.help span, .message span {
-	display: block;
-	flex-grow: 1;
-}
-.help .fas, .message .fas {
-	display: block;
-	height: 100%;
-	margin-right: 0.5em;
 }
 .help {
 	margin: 0.75em 0.5em;
