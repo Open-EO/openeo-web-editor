@@ -14,8 +14,6 @@ jobs:
     strategy:
       matrix:
         node-version: [14.x]
-    env:
-      CLIENT_URL: /
     steps:
       - uses: actions/setup-node@v1
       - uses: actions/checkout@v2
