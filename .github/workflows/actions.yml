@@ -2,12 +2,7 @@ name: Web Editor Deployment
 on:
   push:
     branches:
-      - deploy
-  release:
-    types: 
-      - published
-      - created
-      - edited
+      - master
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -26,3 +21,4 @@ jobs:
           exclude_assets: 'report.html'
           user_name: 'openEO CI'
           user_email: openeo.ci@uni-muenster.de
+          cname: editor.openeo.org
