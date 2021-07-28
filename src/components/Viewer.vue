@@ -100,6 +100,9 @@ export default {
 		},
 		showJobResults(item, job) {
 			for(var key in item.assets) {
+				if (key === "out") {
+					continue; // Ignore VITOs strange out file.
+				}
 				var asset = item.assets[key];
 				this.showViewer(asset, this.makeTitle(key, job.id, true));
 			}
