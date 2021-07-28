@@ -101,6 +101,18 @@ const SUPPORTED_TYPES = [
 //		{type: 'object', subtype: 'raster-cube'},
 //		{type: 'object', subtype: 'vector-cube'},
 ];
+const refSchema = {
+	type: 'object',
+	additionalProperties: false,
+	properties: {
+		from_node: {
+			type: 'string'
+		},
+		from_parameter: {
+			type: 'string'
+		}
+	}
+};
 
 export default {
 	name: 'ParameterDataTypes',
@@ -266,6 +278,20 @@ export default {
 		}
 	},
 	methods: {
+		async isValueInvalid(value, schema) {
+			let schema2 = Utils.deepClone(schema);
+			// Allow from_node and from_parameter in values, see https://github.com/Open-EO/openeo-web-editor/issues/179
+			if (schema2.type === 'array' && Utils.isObject(schema2.items)) {
+				schema2.items = {
+					oneOf: [
+						schema2.items,
+						refSchema
+					]
+				};
+			}
+			let errors = await this.jsonSchemaValidator.validateValue(value, schema2);
+			return errors.length > 0;
+		},
 		/**
 		 * Returns the indices of provided JSON Schemas that the provided values matches against.
 		 * 
@@ -277,8 +303,7 @@ export default {
 			var validTypes = [];
 			for(var type of types) {
 				try {
-					var errors = await this.jsonSchemaValidator.validateValue(value, type.schema);
-					if (errors.length > 0) {
+					if (await this.isValueInvalid(value, type.schema)) {
 						continue;
 					}
 					validTypes.push(type.dataType());
@@ -380,7 +405,7 @@ export default {
 				else {
 					let defaultValue = this.selectedSchema.default();
 					try {
-						if (typeof this.state === 'undefined' || (await this.jsonSchemaValidator.validateValue(this.state, this.selectedSchema)).length > 0) {
+						if (typeof this.state === 'undefined' || await this.isValueInvalid(this.state, this.selectedSchema)) {
 							this.state = defaultValue;
 						}
 					}
