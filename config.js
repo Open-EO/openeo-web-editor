@@ -2,13 +2,13 @@ export default {
 	// Set this to connect to a back-end automatically when opening the Web Editor,
 	// so you could set this to https://example.com and then the Web Editor connects
 	// to the corresponding back-end automatically.
-	serverUrl: '',
+	serverUrl: 'https://openeo.cloud',
 
 	// A message shown on the login page
 	loginMessage: '',
 
 	// The logo to show
-	logo: './logo.png',
+	logo: 'https://openeo.cloud/wp-content/themes/openeo_platform/images/logo-pages.svg',
 
 	// Defaults for notifications
 	snotifyDefaults: {
@@ -27,7 +27,9 @@ export default {
 	],
 
 	// Key is the OIDC provider id, value is the client ID
-	oidcClientIds: {},
+	oidcClientIds: {
+		'egi-dev': 'openeo-platform'
+	},
 
 	// Show a warning if HTTP is used instead of HTTPS
 	showHttpWarning: true,

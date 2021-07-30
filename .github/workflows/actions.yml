@@ -21,4 +21,4 @@ jobs:
           exclude_assets: 'report.html'
           user_name: 'openEO CI'
           user_email: openeo.ci@uni-muenster.de
-          cname: editor.openeo.org
+          cname: editor.openeo.cloud

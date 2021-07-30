@@ -1,2 +1,10 @@
-$mainColor: #1665B6;
-$linkColor: #1665B6;
+$linkColor: #960136;
+$mainColor: #003247;
+
+#ide header.navbar {
+	border-bottom: 4px solid #335E6F;
+}
+
+.modal .modal-header {
+	border-bottom: 4px solid #335E6F;
+}
