@@ -133,11 +133,33 @@ export default {
 			event.preventDefault();
 		},
 		onDrop(event) {
-			var json = event.dataTransfer.getData("application/vnd.openeo-node");
-			if (json) {
-				event.preventDefault();
-				let node = JSON.parse(json);
+			var editorNodeJson = event.dataTransfer.getData("application/vnd.openeo-node");
+			if (editorNodeJson) {
+				let node = JSON.parse(editorNodeJson);
 				this.insertProcess(node, event.pageX, event.pageY);
+				return event.preventDefault();
+			}
+
+			// Read a JSON file that has been dropped
+			let files = event.dataTransfer.files;
+			if (files.length === 1) {
+				let file = event.dataTransfer.files[0];
+				if (file.type === 'application/json') {
+					var reader = new FileReader();
+					reader.onload = async e => {
+						try {
+							let process = JSON.parse(e.target.result);
+							await this.$refs.blocks.import(process);
+						} catch(error) {
+							Utils.exception(this, error, "Parsing JSON file failed");
+						}
+					};
+					reader.onerror = error => {
+						Utils.exception(this, error, "Reading JSON file failed");
+					};
+					reader.readAsText(file, "UTF-8");
+					return event.preventDefault();
+				}
 			}
 		},
 		addParameter() {
