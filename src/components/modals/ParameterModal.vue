@@ -3,7 +3,7 @@
 		<template #default>
 			<p v-if="parameters.length === 0">No editable parameters available.</p>
 			<form v-else id="parameterModal" @submit.prevent="save">
-				<div class="fieldRow" v-for="(param, k) in parameters" :key="k">
+				<div class="fieldRow" v-for="(param, k) in parameters" v-show="toggleParamVisibility(param)" :key="k">
 					<label :class="{ fieldLabel: true, highlight: param.name === selectParameter, info: param.info }">
 						{{ displayLabel(param) }}
 						<strong class="required" v-if="!param.info && !param.optional" title="required">*</strong>
@@ -82,6 +82,13 @@ export default {
 		this.$nextTick(() => this.setSelected());
 	},
 	methods: {
+		toggleParamVisibility(param) {
+			if (!param || !param.toggledBy) {
+				return true;
+			}
+
+			return !!this.context.values[param.toggledBy];
+		},
 		deleteParam(key) {
 			let name = this.parameters[key].name;
 			this.$delete(this.parameters, key);

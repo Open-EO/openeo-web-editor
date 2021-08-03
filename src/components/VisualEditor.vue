@@ -168,6 +168,7 @@ export default {
 			return {
 				value,
 				name,
+				description: 'A unique identifier. Must contain only letters (`a`-`z`), digits (`0`-`9`) and underscores (`_`). `snake_case` is recommended.',
 				label: 'Name',
 				schema: {
 					type: 'string',
@@ -180,6 +181,7 @@ export default {
 			return {
 				value,
 				name,
+				description: 'Provides a detailed description. CommonMark (Markdown) syntax can be used for rich text formatting.',
 				label,
 				optional,
 				schema: {
@@ -193,30 +195,7 @@ export default {
 				value,
 				name: 'optional',
 				label: 'Optional',
-				optional: true,
-				schema: {
-					type: 'boolean'
-				},
-				default: false
-			};
-		},
-		getExperimentalField(value = undefined) {
-			return {
-				value,
-				name: 'experimental',
-				label: 'Experimental',
-				optional: true,
-				schema: {
-					type: 'boolean'
-				},
-				default: false
-			};
-		},
-		getDeprecatedField(value = undefined) {
-			return {
-				value,
-				name: 'deprecated',
-				label: 'Deprecated',
+				description: 'Parameters by default are required. CHeck this option to make the parameter optional. For optional parameters a default value should be specified.',
 				optional: true,
 				schema: {
 					type: 'boolean'
@@ -229,8 +208,36 @@ export default {
 				value,
 				name: 'default',
 				label: 'Default Value',
+				description: 'This value is used whenever the user of this process did not specify a value for this parameter.',
+				toggledBy: 'optional',
 				optional: true,
 				schema: {}
+			};
+		},
+		getExperimentalField(value = undefined) {
+			return {
+				value,
+				name: 'experimental',
+				label: 'Experimental',
+				description: 'Declares that this is experimental, which means that it is unstable and likely to change.',
+				optional: true,
+				schema: {
+					type: 'boolean'
+				},
+				default: false
+			};
+		},
+		getDeprecatedField(value = undefined) {
+			return {
+				value,
+				name: 'deprecated',
+				label: 'Deprecated',
+				description: 'Declares that this is deprecated with the potential to be removed in any of the next versions. It should be transitioned out of usage.',
+				optional: true,
+				schema: {
+					type: 'boolean'
+				},
+				default: false
 			};
 		},
 		getSchemaField(value = undefined, name = "schema", label = "Data Types") {
@@ -266,6 +273,7 @@ export default {
 				{
 					value: process.summary,
 					name: 'summary',
+					description: 'A very short description of the process with usually less than 60 characters.',
 					label: 'Summary',
 					optional: true,
 					schema: {
@@ -297,7 +305,7 @@ export default {
 				{
 					value: process.exceptions,
 					name: 'exceptions',
-					description: 'The keys are the error codes.',
+					description: 'Declares exceptions (errors) that might occur during execution of this process. This list is just for informative purposes.\n\nThe keys of the object are the error codes, which should only consist of alphanumerical characters. `PascalCase` is recommended.',
 					label: 'Errors',
 					optional: true,
 					schema: {
@@ -334,6 +342,7 @@ export default {
 					value: process.examples,
 					name: 'examples',
 					label: 'Examples',
+					description: 'Example calls for this process with specific values for the parameters (arguments) and the result (return value).',
 					optional: true,
 					schema: {
 						type: 'array',
@@ -368,6 +377,7 @@ export default {
 					value: process.links,
 					name: 'links',
 					label: 'Links',
+					description: 'Links related to this process, e.g. additional documentation.',
 					optional: true,
 					schema: {
 						type: 'array',
@@ -421,9 +431,9 @@ export default {
 				this.getNameField(),
 				this.getDescriptionField(),
 				this.getOptionalField(),
+				this.getDefaultField(),
 				this.getExperimentalField(),
 				this.getDeprecatedField(),
-				this.getDefaultField(),
 				this.getSchemaField()
 			];
 			this.emit('showDataForm', "Add Parameter", fields, async data => {
@@ -437,9 +447,9 @@ export default {
 				this.getNameField(parameter.name),
 				this.getDescriptionField(parameter.description),
 				this.getOptionalField(parameter.optional),
+				this.getDefaultField(parameter.default),
 				this.getExperimentalField(parameter.experimental),
 				this.getDeprecatedField(parameter.deprecated),
-				this.getDefaultField(parameter.default),
 				this.getSchemaField(parameter.schema)
 			];
 			this.emit('showDataForm', title, fields, saveCallback);
