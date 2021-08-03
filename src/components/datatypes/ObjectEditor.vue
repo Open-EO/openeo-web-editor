@@ -1,7 +1,7 @@
 <template>
 	<div :class="{editor: true, array: !isObject, object: isObject}">
 		<div class="buttons">
-			<button type="button" class="addBtn" v-if="editable" @click="add()"><i class="fas fa-plus"></i> Add</button>
+			<button type="button" class="addBtn" v-if="editable" :disabled="count >= maxCount" @click="add()"><i class="fas fa-plus"></i> Add</button>
 			<FullscreenButton :element="() => this.$el" />
 		</div>
 		<div v-if="!elements.length" class="empty description">
@@ -11,12 +11,12 @@
 		</div>
 		<draggable v-else v-model="elements" handle=".mover">
 			<div class="fieldValue element" v-for="(e, k) in elements" :key="e.id">
-				<label class="fieldLabel" :key="k">
+				<label class="fieldLabel">
 					<input v-if="isObject" v-model="e.key" type="text" :disabled="!editable"/>
-					<template v-else>{{ k }}</template>
+					<template v-else>{{ k+1 }}</template>
 				</label>
 				<ParameterDataTypes :editable="editable" :parameter="elementSchema(k, e.key)" :isItem="true" :context="context" v-model="e.value" />
-				<button v-if="editable" class="deleteBtn" type="button" @click="remove(k)"><i class="fas fa-trash"></i></button>
+				<button v-if="editable" :disabled="count <= minCount" class="deleteBtn" type="button" @click="remove(k)"><i class="fas fa-trash"></i></button>
 				<button v-show="editable && !isObject" class="mover" type="button"><i class="fas fa-arrows-alt"></i></button>
 			</div>
 		</draggable>
@@ -27,6 +27,7 @@
 import draggable from 'vuedraggable';
 import FullscreenButton from '../FullscreenButton.vue';
 import { ProcessUtils, ProcessSchema } from '@openeo/js-commons';
+import Utils from '../../utils';
 
 export default {
 	name: 'ObjectEditor',
@@ -55,6 +56,24 @@ export default {
 		};
 	},
 	computed: {
+		count() {
+			return Utils.size(this.elements);
+		},
+		maxCount() {
+			return (this.isObject ? this.schema.schema.maxProperties : this.schema.schema.maxItems) || Number.MAX_VALUE;
+		},
+		minCount() {
+			return (this.isObject ? this.schema.schema.minProperties : this.schema.schema.minItems) || 0;
+		},
+		requiredKeys() {
+			if (this.isObject && Array.isArray(this.schema.schema.required)) {
+				return this.schema.schema.required;
+			}
+			else if (!this.isObject && this.minCount > 0) {
+				return [...Array(this.minCount).keys()];
+			}
+			return [];
+		},
 		newValue() {
 			if (this.isObject) {
 				let obj = {};
@@ -78,11 +97,18 @@ export default {
 		value: {
 			immediate: true,
 			handler(value) {
-				// ToDo: Pre-fill if empty, e.g. set minimum number of array elements or required object properties
 				if (this.newValue !== value) {
 					this.elements = [];
-					if (value && typeof value === 'object') {
-						for(var key in value) {
+					
+					// Prefill if empty
+					if (Utils.size(value) === 0 && this.requiredKeys.length > 0) {
+						for(let key of this.requiredKeys) {
+							this.add(key, null);
+						}
+					}
+					// Convert to internal state object
+					else if (value && typeof value === 'object') {
+						for(let key in value) {
 							this.add(key, value[key]);
 						}
 					}

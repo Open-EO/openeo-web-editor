@@ -18,9 +18,7 @@ export default {
 		MultiSelect
 	},
 	props: {
-		value: {
-			type: [String, Number]
-		},
+		value: {},
 		type: {
 			type: String
 		},
@@ -73,6 +71,14 @@ export default {
 				case 'input-format':
 					state = this.$store.state.fileFormats.getInputTypes();
 					break;
+				case 'openeo-datatype':
+					let t = require('./api');
+					let types = {};
+					for(let native of t.NATIVE_TYPES) {
+						types[native] = {type: native}
+					}
+					state = Object.assign(types, t.API_TYPES);
+					break;
 				case 'output-format':
 					state = this.$store.state.fileFormats.getOutputTypes();
 					break;
@@ -99,6 +105,16 @@ export default {
 						id: j.id,
 						label: Utils.getResourceTitle(j)
 					})).sort(this.sortByLabel);
+				case 'openeo-datatype':
+					for(let type in state) {
+						let schema = state[type];
+						data.push({
+							id: type,
+							label: schema.title || Utils.prettifyString(type),
+							value: schema
+						});
+					}
+					return data;
 				case 'file-path':
 				case 'file-paths':
 					return state.map(f => this.e(f.path)).sort((a, b) => Utils.sortByPath(a.id, b.id));
@@ -208,6 +224,9 @@ export default {
 					case 'epsg-code':
 						var num = Number.parseInt(newValue.id);
 						value = Number.isNaN(num) ? null : num;
+						break;
+					case 'openeo-datatype':
+						value = newValue.value;
 						break;
 					case 'year':
 						value = String(newValue.id);

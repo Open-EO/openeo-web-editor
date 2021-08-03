@@ -24,7 +24,7 @@
 		</div>
 		<div class="editorSplitter">
 			<DiscoveryToolbar v-if="(showDiscoveryToolbar || isFullScreen) && editable" class="discoveryToolbar" :onAddProcess="insertProcess" />
-			<div class="graphBuilder" @drop="onDrop($event)" @dragover="allowDrop($event)">
+			<div class="graphBuilder" @drop="onDrop" @dragover="allowDrop">
 				<ModelBuilder
 					ref="blocks"
 					:editable="editable"
@@ -39,7 +39,8 @@
 					@showProcess="id => emit('showProcess', id)"
 					@showCollection="id => emit('showCollection', id)"
 					@showParameter="param => emit('showProcessParameter', param)"
-					@editParameters="openParameterEditor"
+					@editParameter="editParameter"
+					@editArguments="openArgumentEditor"
 					@compactMode="compact => this.compactMode = compact"
 					@selectionChanged="selectionChanged"
 					@historyChanged="historyChanged"
@@ -133,27 +134,152 @@ export default {
 			event.preventDefault();
 		},
 		onDrop(event) {
-			var json = event.dataTransfer.getData("application/vnd.openeo-node");
-			if (json) {
-				event.preventDefault();
-				let node = JSON.parse(json);
+			var editorNodeJson = event.dataTransfer.getData("application/vnd.openeo-node");
+			if (editorNodeJson) {
+				let node = JSON.parse(editorNodeJson);
 				this.insertProcess(node, event.pageX, event.pageY);
+				return event.preventDefault();
 			}
+
+			// Read a JSON file that has been dropped
+			let files = event.dataTransfer.files;
+			if (files.length === 1) {
+				let file = event.dataTransfer.files[0];
+				if (file.type === 'application/json') {
+					var reader = new FileReader();
+					reader.onload = async e => {
+						try {
+							let process = JSON.parse(e.target.result);
+							await this.$refs.blocks.import(process);
+						} catch(error) {
+							Utils.exception(this, error, "Parsing JSON file failed");
+						}
+					};
+					reader.onerror = error => {
+						Utils.exception(this, error, "Reading JSON file failed");
+					};
+					reader.readAsText(file, "UTF-8");
+					return event.preventDefault();
+				}
+			}
+		},
+		getNameField(value = undefined) {
+			return {
+				value,
+				name: 'name',
+				label: 'Name',
+				schema: {type: 'string'},
+				default: null
+			};
+		},
+		getDescriptionField(value = undefined) {
+			return {
+				value,
+				name: 'description',
+				label: 'Description',
+				schema: {
+					type: 'string',
+					subtype: 'commonmark'
+				}
+			};
+		},
+		getOptionalField(value = undefined) {
+			return {
+				value,
+				name: 'optional',
+				label: 'Optional',
+				optional: true,
+				schema: {
+					type: 'boolean'
+				},
+				default: false
+			};
+		},
+		getExperimentalField(value = undefined) {
+			return {
+				value,
+				name: 'experimental',
+				label: 'Experimental',
+				optional: true,
+				schema: {
+					type: 'boolean'
+				},
+				default: false
+			};
+		},
+		getDeprecatedField(value = undefined) {
+			return {
+				value,
+				name: 'deprecated',
+				label: 'Deprecated',
+				optional: true,
+				schema: {
+					type: 'boolean'
+				},
+				default: false
+			};
+		},
+		getDefaultField(value = undefined) {
+			return {
+				value,
+				name: 'default',
+				label: 'Default Value',
+				optional: true,
+				schema: {}
+			};
+		},
+		getSchemaField(value = undefined) {
+			let subtype = !value ? 'openeo-datatype' : 'json-schema';
+			return {
+				value,
+				name: 'schema',
+				label: 'Data Types',
+				description: 'Allowed data type(s) for this parameter as JSON Schema.',
+				schema: [
+					{
+						title: 'Single data type',
+						type: 'object',
+						subtype
+					},
+					{
+						title: 'Multiple data types',
+						type: 'array',
+						minItems: 1,
+						items: {
+							type: 'object',
+							subtype
+						}
+					}
+				]
+			};
 		},
 		addParameter() {
 			var fields = [
-				{
-					name: 'name',
-					label: 'Parameter name',
-					schema: {type: 'string'},
-					default: null
-				}
+				this.getNameField(),
+				this.getDescriptionField(),
+				this.getOptionalField(),
+				this.getExperimentalField(),
+				this.getDeprecatedField(),
+				this.getDefaultField(),
+				this.getSchemaField()
 			];
-			this.emit('showDataForm', "Add Parameter", fields, data => {
+			this.emit('showDataForm', "Add Parameter", fields, async data => {
 				if (typeof data.name === 'string' && data.name.length > 0) {
-					this.$refs.blocks.addPgParameter(data);
+					await this.$refs.blocks.addPgParameter(data);
 				}
 			});
+		},
+		editParameter(parameter, title = "Edit Parameter", saveCallback = null) {
+			var fields = [
+				this.getNameField(parameter.name),
+				this.getDescriptionField(parameter.description),
+				this.getOptionalField(parameter.optional),
+				this.getExperimentalField(parameter.experimental),
+				this.getDeprecatedField(parameter.deprecated),
+				this.getDefaultField(parameter.default),
+				this.getSchemaField(parameter.schema)
+			];
+			this.emit('showDataForm', title, fields, saveCallback);
 		},
 		showExpressionModal() {
 			let props = {
@@ -165,7 +291,7 @@ export default {
 			};
 			this.emit('showModal', 'ExpressionModal', props, events);
 		},
-		openParameterEditor(parameters, data, title = "Edit", editable = true, selectParameterName = null, saveCallback = null, parent = null) {
+		openArgumentEditor(parameters, data, title = "Edit", editable = true, selectParameterName = null, saveCallback = null, parent = null) {
 			let props = {
 				title,
 				parameters,
