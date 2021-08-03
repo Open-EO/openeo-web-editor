@@ -13,6 +13,7 @@
 					<button type="button" @click="$refs.blocks.deleteSelected()" :disabled="!hasSelection" title="Delete selected elements"><i class="fas fa-trash"></i></button>
 				</span>
 				<span class="sepr" v-if="editable">
+					<button type="button" v-if="!parent" @click="() => editProcess(value)" title="Edit Process Metadata"><i class="fas fa-sliders-h"></i></button>
 					<button type="button" @click="addParameter" title="Add Parameter"><i class="fas fa-parking"></i></button>
 					<button type="button" v-if="supportsMath" :class="{highlightFormula: isMath}" @click="showExpressionModal" title="Insert/Edit formula"><i class="fas fa-square-root-alt"></i></button>
 				</span>
@@ -163,20 +164,26 @@ export default {
 				}
 			}
 		},
-		getNameField(value = undefined) {
+		getNameField(value = undefined, name = "name") {
 			return {
 				value,
-				name: 'name',
+				name,
+				description: 'A unique identifier. Must contain only letters (`a`-`z`), digits (`0`-`9`) and underscores (`_`). `snake_case` is recommended.',
 				label: 'Name',
-				schema: {type: 'string'},
+				schema: {
+					type: 'string',
+					pattern: '^\\w+$'
+				},
 				default: null
 			};
 		},
-		getDescriptionField(value = undefined) {
+		getDescriptionField(value = undefined, optional = false, name = "description", label = "Description") {
 			return {
 				value,
-				name: 'description',
-				label: 'Description',
+				name,
+				description: 'Provides a detailed description. CommonMark (Markdown) syntax can be used for rich text formatting.',
+				label,
+				optional,
 				schema: {
 					type: 'string',
 					subtype: 'commonmark'
@@ -188,30 +195,7 @@ export default {
 				value,
 				name: 'optional',
 				label: 'Optional',
-				optional: true,
-				schema: {
-					type: 'boolean'
-				},
-				default: false
-			};
-		},
-		getExperimentalField(value = undefined) {
-			return {
-				value,
-				name: 'experimental',
-				label: 'Experimental',
-				optional: true,
-				schema: {
-					type: 'boolean'
-				},
-				default: false
-			};
-		},
-		getDeprecatedField(value = undefined) {
-			return {
-				value,
-				name: 'deprecated',
-				label: 'Deprecated',
+				description: 'Parameters by default are required. CHeck this option to make the parameter optional. For optional parameters a default value should be specified.',
 				optional: true,
 				schema: {
 					type: 'boolean'
@@ -224,17 +208,45 @@ export default {
 				value,
 				name: 'default',
 				label: 'Default Value',
+				description: 'This value is used whenever the user of this process did not specify a value for this parameter.',
+				toggledBy: 'optional',
 				optional: true,
 				schema: {}
 			};
 		},
-		getSchemaField(value = undefined) {
+		getExperimentalField(value = undefined) {
+			return {
+				value,
+				name: 'experimental',
+				label: 'Experimental',
+				description: 'Declares that this is experimental, which means that it is unstable and likely to change.',
+				optional: true,
+				schema: {
+					type: 'boolean'
+				},
+				default: false
+			};
+		},
+		getDeprecatedField(value = undefined) {
+			return {
+				value,
+				name: 'deprecated',
+				label: 'Deprecated',
+				description: 'Declares that this is deprecated with the potential to be removed in any of the next versions. It should be transitioned out of usage.',
+				optional: true,
+				schema: {
+					type: 'boolean'
+				},
+				default: false
+			};
+		},
+		getSchemaField(value = undefined, name = "schema", label = "Data Types") {
 			let subtype = !value ? 'openeo-datatype' : 'json-schema';
 			return {
 				value,
-				name: 'schema',
-				label: 'Data Types',
-				description: 'Allowed data type(s) for this parameter as JSON Schema.',
+				name,
+				label,
+				description: 'Allowed data type(s) as JSON Schema.',
 				schema: [
 					{
 						title: 'Single data type',
@@ -244,7 +256,7 @@ export default {
 					{
 						title: 'Multiple data types',
 						type: 'array',
-						minItems: 1,
+						minItems: 2,
 						items: {
 							type: 'object',
 							subtype
@@ -253,14 +265,175 @@ export default {
 				]
 			};
 		},
+		editProcess(process) {
+			process = Utils.isObject(process) ? process : {};
+			let returns = Utils.isObject(process.returns) ? process.returns : {};
+			var fields = [
+				this.getNameField(process.id, 'id'),
+				{
+					value: process.summary,
+					name: 'summary',
+					description: 'A very short description of the process with usually less than 60 characters.',
+					label: 'Summary',
+					optional: true,
+					schema: {
+						type: 'string'
+					}
+				},
+				this.getDescriptionField(process.description, true),
+				{
+					value: process.categories,
+					name: 'categories',
+					label: 'Categories',
+					optional: true,
+					schema: {
+						type: 'array',
+						items: {
+							type: 'string'
+						}
+					}
+				},
+				this.getExperimentalField(process.experimental),
+				this.getDeprecatedField(process.deprecated),
+				{
+					label: 'Parameters',
+					description: 'The parameters can be edited directly in the "Visual Model" interface.',
+					info: true
+				},
+				this.getDescriptionField(returns.description, true, 'returns_description', 'Return Value > Description'),
+				this.getSchemaField(returns.schema, 'returns_schema', 'Return Value > Data Type'),
+				{
+					value: process.exceptions,
+					name: 'exceptions',
+					description: 'Declares exceptions (errors) that might occur during execution of this process. This list is just for informative purposes.\n\nThe keys of the object are the error codes, which should only consist of alphanumerical characters. `PascalCase` is recommended.',
+					label: 'Errors',
+					optional: true,
+					schema: {
+						type: 'object',
+						additionalProperties: {
+							type: 'object',
+							required: [
+								"message"
+							],
+							properties: {
+								message: {
+									title: 'Error Message',
+									type: 'string'
+								},
+								description: {
+									title: 'Description',
+									type: 'string',
+									subtype: 'commonmark'
+								},
+								http: {
+									title: 'HTTP Status Code',
+									type: 'integer',
+									enum: [
+										400,
+										500,
+										501
+									]
+								}
+							},
+						}
+					}
+				},
+				{
+					value: process.examples,
+					name: 'examples',
+					label: 'Examples',
+					description: 'Example calls for this process with specific values for the parameters (arguments) and the result (return value).',
+					optional: true,
+					schema: {
+						type: 'array',
+						items: {
+							type: 'object',
+							required: [
+								"arguments"
+							],
+							properties: {
+								title: {
+									title: 'Title',
+									type: 'string'
+								},
+								title: {
+									title: 'Description',
+									type: 'string',
+									subtype: 'commonmark'
+								},
+								arguments: {
+									title: 'Arguments',
+									type: 'object',
+									default: {}
+								},
+								returns: {
+									title: 'Return Value'
+								}
+							}
+						}
+					}
+				},
+				{
+					value: process.links,
+					name: 'links',
+					label: 'Links',
+					description: 'Links related to this process, e.g. additional documentation.',
+					optional: true,
+					schema: {
+						type: 'array',
+						items: {
+							type: 'object',
+							required: [
+								"href",
+								"rel"
+							],
+							properties: {
+								href: {
+									title: 'URL',
+									type: 'string'
+								},
+								rel: {
+									title: 'Relation',
+									description: 'For examples see [IANA relation types](https://www.iana.org/assignments/link-relations/link-relations.xhtml)',
+									type: 'string',
+									default: 'about'
+								},
+								title: {
+									title: 'Title',
+									type: 'string'
+								},
+								type: {
+									title: 'Media Type',
+									description: 'For examples see [IANA media types](https://www.iana.org/assignments/media-types/media-types.xhtml)',
+									type: 'string'
+								}
+							}
+						}
+					}
+				}
+			];
+			this.emit('showDataForm', "Edit Process", fields, async data => {
+				let newData = Utils.pickFromObject(data, ['id', 'description', 'categories', 'experimental', 'deprecated', 'exception', 'examples', 'links']);
+				if (typeof newData.description === 'string' || Utils.isObject(newData.schema)) {
+					newData.returns = {
+						description: newData.returns_description,
+						schema: data.returns_schema
+					};
+				}
+				// ToDo: This is bypassing Vue's reactivity system, we should directly commit 
+				// the changes to the ModelBuilder or make it so that the state of the ModelBuilder
+				// is not destroyed when commiting a new object
+				this.commit(Object.assign(process, newData));
+			});
+		},
 		addParameter() {
 			var fields = [
 				this.getNameField(),
 				this.getDescriptionField(),
 				this.getOptionalField(),
+				this.getDefaultField(),
 				this.getExperimentalField(),
 				this.getDeprecatedField(),
-				this.getDefaultField(),
 				this.getSchemaField()
 			];
 			this.emit('showDataForm', "Add Parameter", fields, async data => {
@@ -274,9 +447,9 @@ export default {
 				this.getNameField(parameter.name),
 				this.getDescriptionField(parameter.description),
 				this.getOptionalField(parameter.optional),
+				this.getDefaultField(parameter.default),
 				this.getExperimentalField(parameter.experimental),
 				this.getDeprecatedField(parameter.deprecated),
-				this.getDefaultField(parameter.default),
 				this.getSchemaField(parameter.schema)
 			];
 			this.emit('showDataForm', title, fields, saveCallback);
