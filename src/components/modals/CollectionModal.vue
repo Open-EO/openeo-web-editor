@@ -3,7 +3,7 @@
 		<div class="docgen">
 			<Collection :data="collection">
 				<template #spatial-extents="p">
-					<MapViewer id="collectionMap" :show="showMap" :extents="p.extents"></MapViewer>
+					<MapViewer class="map" id="collectionMap" :show="showMap" :extents="p.extents"></MapViewer>
 				</template>
 			</Collection>
 			<section v-if="currentItems">
@@ -129,10 +129,5 @@ export default {
 	font-size: 1.4em;
     margin-top: 1.5em;
     border-bottom-style: dotted;
-}
-#collectionMap {
-	height: 300px;
-	width: 100%;
-	max-width: 600px;
 }
 </style>
