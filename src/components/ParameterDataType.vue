@@ -21,7 +21,7 @@
 		<!-- Undefined -->
 		<div class="description" v-else-if="type === 'undefined'">
 			<i class="fas fa-info-circle"></i>
-			<p>No value is set for this parameter.</p>
+			<p>No value is set.</p>
 		</div>
 		<!-- Null -->
 		<div class="description" v-else-if="type === 'null'">

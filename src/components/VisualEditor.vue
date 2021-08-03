@@ -13,6 +13,7 @@
 					<button type="button" @click="$refs.blocks.deleteSelected()" :disabled="!hasSelection" title="Delete selected elements"><i class="fas fa-trash"></i></button>
 				</span>
 				<span class="sepr" v-if="editable">
+					<button type="button" v-if="!parent" @click="() => editProcess(value)" title="Edit Process Metadata"><i class="fas fa-sliders-h"></i></button>
 					<button type="button" @click="addParameter" title="Add Parameter"><i class="fas fa-parking"></i></button>
 					<button type="button" v-if="supportsMath" :class="{highlightFormula: isMath}" @click="showExpressionModal" title="Insert/Edit formula"><i class="fas fa-square-root-alt"></i></button>
 				</span>
@@ -163,20 +164,24 @@ export default {
 				}
 			}
 		},
-		getNameField(value = undefined) {
+		getNameField(value = undefined, name = "name") {
 			return {
 				value,
-				name: 'name',
+				name,
 				label: 'Name',
-				schema: {type: 'string'},
+				schema: {
+					type: 'string',
+					pattern: '^\\w+$'
+				},
 				default: null
 			};
 		},
-		getDescriptionField(value = undefined) {
+		getDescriptionField(value = undefined, optional = false, name = "description", label = "Description") {
 			return {
 				value,
-				name: 'description',
-				label: 'Description',
+				name,
+				label,
+				optional,
 				schema: {
 					type: 'string',
 					subtype: 'commonmark'
@@ -228,13 +233,13 @@ export default {
 				schema: {}
 			};
 		},
-		getSchemaField(value = undefined) {
+		getSchemaField(value = undefined, name = "schema", label = "Data Types") {
 			let subtype = !value ? 'openeo-datatype' : 'json-schema';
 			return {
 				value,
-				name: 'schema',
-				label: 'Data Types',
-				description: 'Allowed data type(s) for this parameter as JSON Schema.',
+				name,
+				label,
+				description: 'Allowed data type(s) as JSON Schema.',
 				schema: [
 					{
 						title: 'Single data type',
@@ -244,7 +249,7 @@ export default {
 					{
 						title: 'Multiple data types',
 						type: 'array',
-						minItems: 1,
+						minItems: 2,
 						items: {
 							type: 'object',
 							subtype
@@ -252,6 +257,164 @@ export default {
 					}
 				]
 			};
+		},
+		editProcess(process) {
+			process = Utils.isObject(process) ? process : {};
+			let returns = Utils.isObject(process.returns) ? process.returns : {};
+			var fields = [
+				this.getNameField(process.id, 'id'),
+				{
+					value: process.summary,
+					name: 'summary',
+					label: 'Summary',
+					optional: true,
+					schema: {
+						type: 'string'
+					}
+				},
+				this.getDescriptionField(process.description, true),
+				{
+					value: process.categories,
+					name: 'categories',
+					label: 'Categories',
+					optional: true,
+					schema: {
+						type: 'array',
+						items: {
+							type: 'string'
+						}
+					}
+				},
+				this.getExperimentalField(process.experimental),
+				this.getDeprecatedField(process.deprecated),
+				{
+					label: 'Parameters',
+					description: 'The parameters can be edited directly in the "Visual Model" interface.',
+					info: true
+				},
+				this.getDescriptionField(returns.description, true, 'returns_description', 'Return Value > Description'),
+				this.getSchemaField(returns.schema, 'returns_schema', 'Return Value > Data Type'),
+				{
+					value: process.exceptions,
+					name: 'exceptions',
+					description: 'The keys are the error codes.',
+					label: 'Errors',
+					optional: true,
+					schema: {
+						type: 'object',
+						additionalProperties: {
+							type: 'object',
+							required: [
+								"message"
+							],
+							properties: {
+								message: {
+									title: 'Error Message',
+									type: 'string'
+								},
+								description: {
+									title: 'Description',
+									type: 'string',
+									subtype: 'commonmark'
+								},
+								http: {
+									title: 'HTTP Status Code',
+									type: 'integer',
+									enum: [
+										400,
+										500,
+										501
+									]
+								}
+							},
+						}
+					}
+				},
+				{
+					value: process.examples,
+					name: 'examples',
+					label: 'Examples',
+					optional: true,
+					schema: {
+						type: 'array',
+						items: {
+							type: 'object',
+							required: [
+								"arguments"
+							],
+							properties: {
+								title: {
+									title: 'Title',
+									type: 'string'
+								},
+								title: {
+									title: 'Description',
+									type: 'string',
+									subtype: 'commonmark'
+								},
+								arguments: {
+									title: 'Arguments',
+									type: 'object',
+									default: {}
+								},
+								returns: {
+									title: 'Return Value'
+								}
+							}
+						}
+					}
+				},
+				{
+					value: process.links,
+					name: 'links',
+					label: 'Links',
+					optional: true,
+					schema: {
+						type: 'array',
+						items: {
+							type: 'object',
+							required: [
+								"href",
+								"rel"
+							],
+							properties: {
+								href: {
+									title: 'URL',
+									type: 'string'
+								},
+								rel: {
+									title: 'Relation',
+									description: 'For examples see [IANA relation types](https://www.iana.org/assignments/link-relations/link-relations.xhtml)',
+									type: 'string',
+									default: 'about'
+								},
+								title: {
+									title: 'Title',
+									type: 'string'
+								},
+								type: {
+									title: 'Media Type',
+									description: 'For examples see [IANA media types](https://www.iana.org/assignments/media-types/media-types.xhtml)',
+									type: 'string'
+								}
+							}
+						}
+					}
+				}
+			];
+			this.emit('showDataForm', "Edit Process", fields, async data => {
+				let newData = Utils.pickFromObject(data, ['id', 'description', 'categories', 'experimental', 'deprecated', 'exception', 'examples', 'links']);
+				if (typeof newData.description === 'string' || Utils.isObject(newData.schema)) {
+					newData.returns = {
+						description: newData.returns_description,
+						schema: data.returns_schema
+					};
+				}
+				// ToDo: This is bypassing Vue's reactivity system, we should directly commit 
+				// the changes to the ModelBuilder or make it so that the state of the ModelBuilder
+				// is not destroyed when commiting a new object
+				this.commit(Object.assign(process, newData));
+			});
 		},
 		addParameter() {
 			var fields = [

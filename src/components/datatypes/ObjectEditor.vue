@@ -11,13 +11,22 @@
 		</div>
 		<draggable v-else v-model="elements" handle=".mover">
 			<div class="fieldValue element" v-for="(e, k) in elements" :key="e.id">
-				<label class="fieldLabel">
-					<input v-if="isObject" v-model="e.key" type="text" :disabled="!editable"/>
-					<template v-else>{{ k+1 }}</template>
-				</label>
-				<ParameterDataTypes :editable="editable" :parameter="elementSchema(k, e.key)" :isItem="true" :context="context" v-model="e.value" />
-				<button v-if="editable" :disabled="count <= minCount" class="deleteBtn" type="button" @click="remove(k)"><i class="fas fa-trash"></i></button>
-				<button v-show="editable && !isObject" class="mover" type="button"><i class="fas fa-arrows-alt"></i></button>
+				<div class="row">
+					<label class="fieldLabel">
+						<template v-if="isObject && (e.prop.title || e.prop.required)">{{ e.prop.title || e.key }}</template>
+						<input v-else-if="isObject" v-model="e.key" type="text" :disabled="!editable"/>
+						<template v-else>{{ k+1 }}</template>
+					</label>
+					<ParameterDataTypes :editable="editable" :parameter="elementSchema(k, e.key)" :isItem="true" :context="context" v-model="e.value" />
+					<button v-if="editable && !e.prop.required" :disabled="count <= minCount" class="deleteBtn" type="button" @click="remove(k)"><i class="fas fa-trash"></i></button>
+					<button v-show="editable && !isObject" class="mover" type="button"><i class="fas fa-arrows-alt"></i></button>
+				</div>
+				<div class="row" v-if="e.prop.description">
+					<div class="description">
+						<i class="fas fa-info-circle"></i>
+						<Description :description="e.prop.description" :compact="true" />
+					</div>
+				</div>
 			</div>
 		</draggable>
 	</div>
@@ -25,6 +34,7 @@
 
 <script>
 import draggable from 'vuedraggable';
+import Description from '@openeo/vue-components/components/Description.vue';
 import FullscreenButton from '../FullscreenButton.vue';
 import { ProcessUtils, ProcessSchema } from '@openeo/js-commons';
 import Utils from '../../utils';
@@ -33,6 +43,7 @@ export default {
 	name: 'ObjectEditor',
 	components: {
 		draggable,
+		Description,
 		FullscreenButton,
 		ParameterDataTypes: () => import('../ParameterDataTypes.vue')
 	},
@@ -65,12 +76,23 @@ export default {
 		minCount() {
 			return (this.isObject ? this.schema.schema.minProperties : this.schema.schema.minItems) || 0;
 		},
-		requiredKeys() {
-			if (this.isObject && Array.isArray(this.schema.schema.required)) {
-				return this.schema.schema.required;
+		prefill() {
+			let schema = this.schema.schema;
+			if (this.isObject && Utils.isObject(schema.properties)) {
+				let arr = [];
+				for (let name in schema.properties) {
+					let required = false;
+					if (Array.isArray(schema.required) && schema.required.includes(name)) {
+						required = true;
+					}
+					arr.push(Object.assign({name, required}, schema.properties[name]));
+				}
+				return arr;
 			}
 			else if (!this.isObject && this.minCount > 0) {
-				return [...Array(this.minCount).keys()];
+				return [...Array(this.minCount).keys()].map(key => ({
+					name: key
+				}));
 			}
 			return [];
 		},
@@ -101,9 +123,9 @@ export default {
 					this.elements = [];
 					
 					// Prefill if empty
-					if (Utils.size(value) === 0 && this.requiredKeys.length > 0) {
-						for(let key of this.requiredKeys) {
-							this.add(key, null);
+					if (Utils.size(value) === 0 && this.prefill.length > 0) {
+						for(let prop of this.prefill) {
+							this.add(prop.name, undefined, prop);
 						}
 					}
 					// Convert to internal state object
@@ -125,7 +147,7 @@ export default {
 			}
 			return schema;
 		},
-		add(key = null, value = undefined) {
+		add(key = null, value = undefined, prop = {}) {
 			let obj = {
 				id: String(this.elements.length),
 				value: value
@@ -133,8 +155,14 @@ export default {
 			if (this.isObject) {
 				obj.key = key ? key : "unnamed" + this.elements.length;
 			}
+			obj.prop = prop;
 			if (typeof obj.value === 'undefined') {
-				obj.value = this.elementSchema(this.elements.length, obj.key).default;
+				if (typeof prop.default !== 'undefined') {
+					obj.value = prop.default;
+				}
+				else {
+					obj.value = this.elementSchema(this.elements.length, obj.key).default;
+				}
 			}
 			this.elements.push(obj);
 		},
@@ -150,12 +178,10 @@ export default {
 	width: 100%;
 }
 .element {
-	display: flex;
 	border: 1px solid #ccc;
 	border-radius: 3px;
 	padding: 0.4em 0.25em;
 	margin: 0.4em 0.25em;
-	align-items: stretch;
 }
 .array .element.sortable-chosen {
 	background: #eee;
@@ -170,6 +196,22 @@ export default {
 	width: auto;
 	padding: 0 0.5em;
 }
+#parameterModal .fieldRow .object .element .fieldLabel {
+	min-width: 20%;
+}
+#parameterModal .fieldRow .element .fieldValue {
+	display: block;
+}
+.element > .row {
+	width: 100%;
+	display: flex;
+	align-items: stretch;
+}
+.element > .row > .description {
+	padding: 0 0.5em;
+	margin-top: 0.5em;
+	margin-bottom: 0;
+}
 .array .deleteBtn {
 	margin: 0 0.5em 0 1em;
 }
@@ -177,7 +219,7 @@ export default {
 	margin-left: 10px;
 }
 .addBtn {
-	margin: 0.25em;
+	margin: 0 0.25em;
 }
 .empty.description {
 	padding: 0.5em 0.25em;
