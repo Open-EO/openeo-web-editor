@@ -25,7 +25,7 @@
 						<button type="submit" class="connectBtn" :class="{loading: loading}"><i class="fas fa-spinner fa-spin fa-lg"></i> Connect</button>
 					</div>
 				</form>
-				<div v-else-if="this.showLoginForm" class="login">
+				<div v-else-if="showLoginForm" class="login">
 					<h3>Log in to {{ title }}</h3>
 					<Tabs id="credentials" ref="providers" :pills="true" :pillsMultiline="true" @selected="providerSelected">
 						<template #dynamic="{ tab }">
