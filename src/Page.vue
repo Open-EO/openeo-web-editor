@@ -8,6 +8,7 @@
 			<component :is="modal.component" :key="modal.id" v-bind="modal.props" v-on="modal.events" @closed="hideModal(modal)" />
 		</template>
 		<vue-snotify />
+		<Tour v-if="tourType" v-model="tourType" />
 		<span v-show="activeRequests > 0" id="activeRequests">
 			<i class="fas fa-spinner fa-spin fa-2x"></i>
 		</span>
@@ -43,6 +44,7 @@ export default {
 		ProcessParameterModal: () => import('./components/modals/ProcessParameterModal.vue'),
 		ServerInfoModal: () => import('./components/modals/ServerInfoModal.vue'),
 		ServiceInfoModal: () => import('./components/modals/ServiceInfoModal.vue'),
+		Tour: () => import('./components/Tour.vue'),
 		UdfRuntimeModal: () => import('./components/modals/UdfRuntimeModal.vue'),
 		WebEditorModal: () => import('./components/modals/WebEditorModal.vue')
 	},
@@ -82,6 +84,7 @@ export default {
 		this.listen('showProcessParameter', this.showProcessParameter);
 		this.listen('showWebEditorInfo', this.showWebEditorInfo);
 		this.listen('title', this.setTitle);
+		this.listen('showTour', where => this.tourType = where);
 	},
 	watch: {
 		isDiscovered(newVal) {
