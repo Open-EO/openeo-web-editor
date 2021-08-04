@@ -5,7 +5,7 @@ export default {
 	serverUrl: 'https://openeo.cloud',
 
 	// Skip login and automatically load up the "discovery mode"
-	skipLogin: false,
+	skipLogin: true,
 
 	// A message shown on the login page
 	loginMessage: '',
