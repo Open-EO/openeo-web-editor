@@ -34,6 +34,7 @@ export default {
 		CollectionModal: () => import('./components/modals/CollectionModal.vue'),
 		ExpressionModal: () => import('./components/modals/ExpressionModal.vue'),
 		FileFormatModal: () => import('./components/modals/FileFormatModal.vue'),
+		ImportProcessModal: () => import('./components/modals/ImportProcessModal.vue'),
 		JobEstimateModal: () => import('./components/modals/JobEstimateModal.vue'),
 		JobInfoModal: () => import('./components/modals/JobInfoModal.vue'),
 		ListModal: () => import('./components/modals/ListModal.vue'),

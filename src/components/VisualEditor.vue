@@ -156,9 +156,7 @@ export default {
 							Utils.exception(this, error, "Parsing JSON file failed");
 						}
 					};
-					reader.onerror = error => {
-						Utils.exception(this, error, "Reading JSON file failed");
-					};
+					reader.onerror = error => Utils.exception(this, error, "Reading JSON file failed");
 					reader.readAsText(file, "UTF-8");
 					return event.preventDefault();
 				}
