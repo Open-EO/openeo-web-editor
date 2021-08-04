@@ -49,11 +49,14 @@ export default {
 		return {
 			modals: [],
 			skipLogin: false,
+			tourType: null,
 			title: null
 		};
 	},
 	created() {
-		this.skipLogin = !!Utils.param('discover');
+		if (Utils.param('discover')) {
+			this.skipLogin = true;
+		}
 
 		// Count active requests
 		axios.interceptors.request.use(config => {

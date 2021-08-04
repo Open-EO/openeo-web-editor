@@ -4,6 +4,9 @@ export default {
 	// to the corresponding back-end automatically.
 	serverUrl: '',
 
+	// Skip login and automatically load up the "discovery mode"
+	skipLogin: false,
+
 	// A message shown on the login page
 	loginMessage: '',
 
