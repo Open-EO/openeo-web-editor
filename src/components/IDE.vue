@@ -17,6 +17,7 @@
 						<Pane id="editor" size="50">
 							<Editor ref="editor" class="mainEditor" id="main" :value="process" @input="updateEditor" :title="contextTitle">
 								<template #file-toolbar>
+									<button type="button" @click="importProcess" title="Import process from external source"><i class="fas fa-cloud-download-alt"></i></button>
 									<button type="button" v-show="saveSupported" @click="saveProcess" :title="'Save to ' + contextTitle"><i class="fas fa-save"></i></button>
 								</template>
 							</Editor>
@@ -126,6 +127,13 @@ export default {
 
 		resized(event) {
 			this.emit('windowResized', event);
+		},
+
+		importProcess() {
+			let events = {
+				save: this.updateEditor
+			};
+			this.emit('showModal', 'ImportProcessModal', {}, events);
 		},
 
 		saveProcess() {

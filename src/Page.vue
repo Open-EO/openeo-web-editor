@@ -34,6 +34,7 @@ export default {
 		CollectionModal: () => import('./components/modals/CollectionModal.vue'),
 		ExpressionModal: () => import('./components/modals/ExpressionModal.vue'),
 		FileFormatModal: () => import('./components/modals/FileFormatModal.vue'),
+		ImportProcessModal: () => import('./components/modals/ImportProcessModal.vue'),
 		JobEstimateModal: () => import('./components/modals/JobEstimateModal.vue'),
 		JobInfoModal: () => import('./components/modals/JobInfoModal.vue'),
 		ListModal: () => import('./components/modals/ListModal.vue'),
@@ -49,11 +50,14 @@ export default {
 		return {
 			modals: [],
 			skipLogin: false,
+			tourType: null,
 			title: null
 		};
 	},
 	created() {
-		this.skipLogin = !!Utils.param('discover');
+		if (Utils.param('discover')) {
+			this.skipLogin = true;
+		}
 
 		// Count active requests
 		axios.interceptors.request.use(config => {

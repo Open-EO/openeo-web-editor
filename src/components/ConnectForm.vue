@@ -17,7 +17,7 @@
 					<div class="row">
 						<label for="serverUrl">URL:</label>
 						<div class="input">
-							<input id="serverUrl" v-model.lazy.trim="serverUrl" :disabled="autoConnect" />
+							<input type="url" id="serverUrl" v-model.lazy.trim="serverUrl" :disabled="autoConnect" />
 							<button v-if="allowOtherServers" type="button" @click="showServerSelector" title="Select previously used server"><i class="fas fa-book"></i></button>
 						</div>
 					</div>
@@ -191,7 +191,7 @@ export default {
 	},
 	async created() {
 		var serverFromQuery = Utils.param('server');
-		if (Utils.isUrl(serverFromQuery)) {
+		if (!this.$config.serverUrl && Utils.isUrl(serverFromQuery)) {
 			this.serverUrl = serverFromQuery;
 		}
 
@@ -244,7 +244,7 @@ export default {
 		},
 
 		switchServer() {
-			window.history.pushState({reset: true, serverUrl: this.serverUrl, autoConnect: true}, "", ".");
+			window.history.pushState({reset: true, serverUrl: this.serverUrl, autoConnect: true}, "", this.makeUrl(false));
 			this.serverUrl = null;
 			this.autoConnect = false;
 			this.reset();
@@ -296,7 +296,7 @@ export default {
 				if (await this.connect(this.serverUrl)) {
 					this.addServer(this.serverUrl);
 					if (!programmatically) {
-						window.history.pushState({reset: true, serverUrl: this.serverUrl, autoConnect: true}, "", ".?server=" + this.serverUrl);
+						window.history.pushState({reset: true, serverUrl: this.serverUrl, autoConnect: true}, "", this.makeUrl());
 					}
 					if (skipLogin) {
 						await this.initDiscovery();
@@ -331,7 +331,7 @@ export default {
 					provider.addListener('SilentRenewError', () => Utils.error(this, "You'll be switching to Guest mode in less than a minute.", "Session renewal failed"));
 				}
 				else { // noauth/discovery
-					window.history.pushState({reset: true, serverUrl: this.serverUrl, autoConnect: true, skipLogin: true}, "", ".?server=" + this.serverUrl + "&discover=1");
+					window.history.pushState({reset: true, serverUrl: this.serverUrl, autoConnect: true, skipLogin: true}, "", this.makeUrl(true, true));
 				}
 			} catch(error) {
 				if (authType === 'basic') {
@@ -356,7 +356,24 @@ export default {
 			this.loading = false;
 
 			if (this.isAuthenticated) {
-				window.history.pushState({reset: true, serverUrl: this.serverUrl, autoConnect: true}, "", ".?server=" + this.serverUrl);
+				window.history.pushState({reset: true, serverUrl: this.serverUrl, autoConnect: true}, "", this.makeUrl());
+			}
+		},
+
+		makeUrl(server = true, discover = false) {
+			let params = new URLSearchParams();
+			if (server && !this.$config.serverUrl) {
+				params.append('server', this.serverUrl);
+			}
+			if (discover && !this.$config.skipLogin) {
+				params.append('discover', 1);
+			}
+			let query = params.toString();
+			if (query) {
+				return `.?${query}`;
+			}
+			else {
+				return '.';
 			}
 		},
 
