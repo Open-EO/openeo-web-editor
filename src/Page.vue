@@ -51,7 +51,7 @@ export default {
 	data() {
 		return {
 			modals: [],
-			skipLogin: false,
+			skipLogin: this.$config.skipLogin,
 			tourType: null,
 			title: null
 		};
