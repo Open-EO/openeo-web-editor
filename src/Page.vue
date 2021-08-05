@@ -107,7 +107,7 @@ export default {
 		...Utils.mapMutations(['startActiveRequest', 'endActiveRequest']),
 		...Utils.mapActions('userProcesses', {readUserProcess: 'read'}),
 		setTitle(subtitle) {
-			var title = "openEO Web Editor";
+			var title = `${this.$config.serviceName} ${this.$config.appName}`;
 			if (subtitle) {
 				title += ": " + subtitle;
 			}
