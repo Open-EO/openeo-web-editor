@@ -1,7 +1,7 @@
 <template>
 	<div class="logo">
-		<img v-if="$config.logo" :src="$config.logo" alt="Logo" />
-		<h2>Web Editor <span class="version" @click="showWebEditorInfo">{{ version }}</span></h2>
+		<img v-if="$config.logo" :src="$config.logo" :alt="$config.serviceName" />
+		<h2>{{ $config.appName }} <span class="version" @click="showWebEditorInfo">{{ version }}</span></h2>
 	</div>
 </template>
 
