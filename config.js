@@ -5,9 +5,9 @@ export default {
 	serverUrl: 'https://openeo.cloud',
 
 	// The name of the service
-	serviceName: 'openEO',
+	serviceName: 'openEO Platform',
 	// The name of the app
-	appName: 'Web Editor',
+	appName: 'Editor',
 
 	// Skip login and automatically load up the "discovery mode"
 	skipLogin: true,
