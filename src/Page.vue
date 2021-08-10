@@ -20,8 +20,6 @@ import EventBusMixin from './components/EventBusMixin.vue';
 import Utils from './utils';
 import ConnectForm from './components/ConnectForm.vue';
 import axios from 'axios';
-import { UserProcess } from '@openeo/js-client';
-import { ProcessGraph } from '@openeo/js-processgraphs';
 
 // Making axios available globally for the OpenEO JS client
 window.axios = axios;
@@ -57,6 +55,10 @@ export default {
 		};
 	},
 	created() {
+		this.addProcessNamespacesToRequest(Utils.param('namespaces'));
+		this.setInitialProcess(Utils.param('process'));
+		this.setInitialNode(Utils.param('edit-node'));
+
 		if (Utils.param('discover')) {
 			this.skipLogin = true;
 		}
@@ -100,12 +102,11 @@ export default {
 		...Utils.mapState(['activeRequests']),
 		...Utils.mapGetters(['isDiscovered']),
 		...Utils.mapState('editor', ['hightestModalZIndex']),
-		...Utils.mapGetters('userProcesses', {getProcessById: 'getAllById'})
 	},
 	methods: {
-		...Utils.mapActions(['describeAccount', 'describeCollection']),
-		...Utils.mapMutations(['startActiveRequest', 'endActiveRequest']),
-		...Utils.mapActions('userProcesses', {readUserProcess: 'read'}),
+		...Utils.mapActions(['describeAccount', 'describeCollection', 'loadProcess']),
+		...Utils.mapMutations(['startActiveRequest', 'endActiveRequest', 'addProcessNamespacesToRequest']),
+		...Utils.mapMutations('editor', ['setInitialProcess', 'setInitialNode']),
 		setTitle(subtitle) {
 			var title = `${this.$config.serviceName} ${this.$config.appName}`;
 			if (subtitle) {
@@ -144,26 +145,9 @@ export default {
 			}
 		},
 		async showProcess(process) {
-			// Convert process id into process
-			if (typeof process === 'string') {
-				process = this.getProcessById(process);
-			}
-
-			if (!process.native) {
-				try {
-					let udp = await this.readUserProcess({data: process});
-					process = udp.toJSON();
-				} catch(error) {
-					Utils.exception(this, error, "Load Process Error: " + process.id);
-					return;
-				}
-			}
-
-			if (process instanceof ProcessGraph || process instanceof UserProcess) {
-				process = process.toJSON();
-			}
-
-			this.showModal('ProcessModal', {process});
+			this.showModal('ProcessModal', {
+				process: await this.loadProcess(process)
+			});
 		},
 		showProcessParameter(parameter, udp = true) {
 			this.showModal('ProcessParameterModal', {

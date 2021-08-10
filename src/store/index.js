@@ -1,9 +1,11 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
 
-import { OpenEO, FileTypes } from '@openeo/js-client';
-import { ProcessRegistry } from '@openeo/js-processgraphs';
+import { OpenEO, FileTypes, Formula } from '@openeo/js-client';
+import { ProcessRegistry } from '@openeo/js-commons';
 import Utils from '../utils.js';
+import Process from '../process.js';
+import Config from '../../config';
 // Sub-modules
 import editor from './editor';
 import files from './files';
@@ -26,8 +28,14 @@ const getDefaultState = () => {
 		fileFormats: {},
 		serviceTypes: {},
 		udfRuntimes: {},
-		predefinedProcesses: [],
-		collections: []
+		processesUpdated: 0,
+		collections: [],
+		processNamespaces: Config.processNamespaces || [],
+		operatorMapping: Formula.operatorMapping,
+		arrayOperatorMapping: {
+			'product': '*',
+			'sum': '+'
+		}
 	};
 };
 
@@ -64,11 +72,6 @@ export default new Vuex.Store({
 		supportsBillingPlans: (state) => state.connection !== null && state.connection.capabilities().currency() !== null && state.connection.capabilities().listPlans().length > 0,
 		apiVersion: (state) => state.connection !== null ? state.connection.capabilities().apiVersion() : null,
 		fileFormats: (state) => state.fileFormats instanceof FileTypes ? state.fileFormats.toJSON() : {input: {}, output: {}},
-		processRegistry: (state) => {
-			var registry = new ProcessRegistry(state.predefinedProcesses);
-			registry.addAll(state.userProcesses.userProcesses);
-			return registry;
-		},
 		collectionDefaults: (state) => (id) => {
 			var collection = state.collections.find(c => c.id === id);
 			if (!Utils.isObject(collection)) {
@@ -94,6 +97,42 @@ export default new Vuex.Store({
 			var bands = null;
 			return {id, spatial_extent, temporal_extent, bands};
 		},
+		processes: (state) => state.processesUpdated && state.connection !== null ? state.connection.processes : new ProcessRegistry(),
+		reverseOperatorMapping: (state) => {
+			let mapping = {};
+			for(var op in state.operatorMapping) {
+				mapping[state.operatorMapping[op]] = op;
+			}
+			return Object.assign(mapping, state.arrayOperatorMapping);
+		},
+		supportsMath: (state, getters) => {
+			for(let i in state.operatorMapping) {
+				let processId = state.operatorMapping[i];
+				if (!getters.processes.has(processId)) {
+					return false;
+				}
+			}
+			return true;
+		},
+		isMathProcess: (state, getters) => (process) => {
+			if (!Utils.isObject(process) || Utils.size(process.process_graph) === 0) {
+				return null;
+			}
+			let unsupportedFuncs = Object.values(process.process_graph).find(node => !getters.readableMathProcesses.includes(node.process_id));
+			if (unsupportedFuncs !== undefined) {
+				return false;
+			}
+			return true;
+		},
+		mathProcesses: (state, getters) => {
+			return getters.processes.all().filter(Process.isMathProcess);
+		},
+		readableMathProcesses: (state, getters) => {
+			return getters.mathProcesses.map(p => p.id)
+					.concat(Object.values(state.operatorMapping))
+					.concat(Object.keys(state.arrayOperatorMapping))
+					.concat(['array_element']);
+		}
 	},
 	actions: {
 		async connect(cx, url) {
@@ -102,7 +141,7 @@ export default new Vuex.Store({
 			// Connect and request capabilities
 			var connection = null;
 			try {
-				connection = await OpenEO.connect(url);
+				connection = await OpenEO.connect(url, {addNamespaceToProcess: true});
 			} catch (error) {
 				if(error.message == 'Network Error' || error.name == 'NetworkError') {
 					error = new Error("Server is not available.");
@@ -121,6 +160,7 @@ export default new Vuex.Store({
 			}
 
 			connection.on('authProviderChanged', provider => cx.commit('authenticated', provider !== null));
+			connection.on('processesChanged', () => cx.commit('updateProcesses'));
 
 			// Only commit the connection change after requesting the auth providers
 			// as this indicates that the connection procedure has finished.
@@ -146,11 +186,18 @@ export default new Vuex.Store({
 			// Request processes
 			if (capabilities.hasFeature('listProcesses')) {
 				promises.push(cx.state.connection.listProcesses()
-					.then(response => cx.commit('predefinedProcesses', response))
 					.catch(error => cx.commit('addDiscoveryError', error)));
 			}
 			else {
 				cx.commit('addDiscoveryError', new Error("Pre-defined processes not supported by the back-end."));
+			}
+
+			// Request processes from namespaces
+			if (cx.state.processNamespaces.length > 0) {
+				for(let namespace of cx.state.processNamespaces) {
+					promises.push(cx.state.connection.listProcesses(namespace)
+						.catch(error => cx.commit('addDiscoveryError', error)));
+				}
 			}
 
 			// Request custom processes
@@ -187,6 +234,13 @@ export default new Vuex.Store({
 
 			await Promise.all(promises);
 
+			// Request initial process
+			try {
+				await cx.dispatch('editor/loadInitialProcess');
+			} catch (error) {
+				cx.commit('addDiscoveryError', error)
+			}
+
 			cx.commit('discoveryCompleted');
 		},
 
@@ -208,6 +262,19 @@ export default new Vuex.Store({
 				cx.commit('fillCollection', collection);
 			}
 			return collection;
+		},
+
+		async loadProcess(cx, {id, namespace}) {
+			process = cx.getters.processes.get(id, namespace);
+			if (process.namespace !== 'backend') {
+				if (process.namespace === 'user') {
+					await cx.dispatch('userProcesses/read', {data: process});
+				}
+				else if (process.namespace && namespace !== 'backend') {
+					await cx.state.connection.describeProcess(id, process.namespace);
+				}
+			}
+			return cx.getters.processes.get(id, namespace);
 		},
 
 		async logout(cx, disconnect = false) {
@@ -263,11 +330,22 @@ export default new Vuex.Store({
 		udfRuntimes(state, udfRuntimes) {
 			state.udfRuntimes = udfRuntimes;
 		},
-		predefinedProcesses(state, data) {
-			state.predefinedProcesses = data.processes
-				.map(p => Object.assign(p, {native: true}))
-				.filter(p => (typeof p.id === 'string'))
-				.sort(Utils.sortById);
+		updateProcesses(state) {
+			state.processesUpdated++;
+		},
+		addProcessNamespacesToRequest(state, namespaces) {
+			if (typeof namespaces === 'string') {
+				namespaces = namespaces.split(',');
+			}
+			if (!Array.isArray(namespaces)) {
+				return;
+			}
+
+			for(let namespace of namespaces) {
+				if (namespace && !state.processNamespaces.includes(namespace)) {
+					state.processNamespaces.push(namespace);
+				}
+			}
 		},
 		fillCollection(state, data) {
 			let index = state.collections.findIndex(c => c.id === data.id);
