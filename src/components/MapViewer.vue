@@ -84,11 +84,12 @@ export default {
 					features: [
 						new Feature(PolygonFromExtent(extent))
 					],
+					projection: "EPSG:4326",
 					wrapX: false
 				})
 			});
 			this.map.addLayer(layer);
-			this.map.getView().fit(extent);
+			this.map.getView().fit(extent, this.fitOptions);
 			// ToDo: The Collection component has some smart fitting behavior in setMapSize()
 			// Implement something similar here, too.
 		},
@@ -220,6 +221,7 @@ export default {
 						features: [
 							new Feature(PolygonFromExtent(extent))
 						],
+						projection: "EPSG:4326",
 						wrapX: false
 					})
 				});
@@ -233,7 +235,7 @@ export default {
 
 				layer.getLayers().push(extentLayer);
 
-				this.map.getView().fit(extent);
+				this.map.getView().fit(extent, this.fitOptions);
 			} catch (error) {
 				console.log(error);
 			}
