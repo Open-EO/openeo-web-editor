@@ -9,6 +9,7 @@ const getDefaultState = () => {
 		storedServers: JSON.parse(localStorage.getItem(serverStorage) || "[]"),
 		context: null,
 		process: null,
+		discoverySearchTerm: '',
 		hightestModalZIndex: 1000,
 		epsgCodes: [],
 		initialProcess: null,
@@ -19,6 +20,9 @@ const getDefaultState = () => {
 export default {
 	namespaced: true,
 	state: getDefaultState(),
+	getters: {
+		hasProcess: state => Utils.isObject(state.process) && Utils.size(state.process) > 0 && Utils.size(state.process.process_graph),
+	},
 	actions: {
 		async loadEpsgCodes(cx) {
 			if (cx.state.epsgCodes.length === 0) {
@@ -59,6 +63,9 @@ export default {
 		}
 	},
 	mutations: {
+		setDiscoverySearchTerm(state, searchTerm) {
+			state.discoverySearchTerm = searchTerm;
+		},
 		setInitialProcess(state, process) {
 			state.initialProcess = process;
 		},

@@ -1,12 +1,10 @@
 <template>
 	<DataTable ref="table" :data="data" :columns="columns" class="CustomProcessPanel">
 		<template slot="toolbar">
-			<button title="Add new custom process" @click="addProcessFromScript" v-show="supportsCreate"><i class="fas fa-plus"></i> Add</button>
+			<button title="Add new custom process" @click="addProcessFromScript" v-show="supportsCreate" :disabled="!this.hasProcess"><i class="fas fa-plus"></i> Add</button>
 		</template>
 		<template #actions="p">
 			<button title="Details" @click="processInfo(p.row)" v-show="supportsRead"><i class="fas fa-info"></i></button>
-			<!-- ToDo: Align with 1.0, move edit metadata to visual model editor -->
-			<button title="Edit metadata" @click="editMetadata(p.row)" v-show="supportsUpdate"><i class="fas fa-edit"></i></button>
 			<button title="Edit process" @click="showInEditor(p.row)" v-show="supportsRead"><i class="fas fa-project-diagram"></i></button>
 			<button title="Delete" @click="deleteProcess(p.row)" v-show="supportsDelete"><i class="fas fa-trash"></i></button>
 		</template>
@@ -42,7 +40,9 @@ export default {
 		};
 	},
 	computed: {
-		...Utils.mapState('editor', ['process'])
+		...Utils.mapState('editor', ['process']),
+		...Utils.mapGetters(['processes']),
+		...Utils.mapGetters('editor', ['hasProcess']),
 	},
 	mounted() {
 		this.listen('replaceProcess', this.replaceProcess);
@@ -53,80 +53,47 @@ export default {
 		},
 		getIdField(value = undefined) {
 			return {
-				name: 'id',
+				value,
+				name: "name",
+				description: 'A unique identifier. Must contain only letters (`a`-`z`), digits (`0`-`9`) and underscores (`_`). `snake_case` is recommended.',
 				label: 'Name',
-				schema: {type: 'string'},
-				default: null,
-				value: value
+				schema: {
+					type: 'string',
+					pattern: '^\\w+$'
+				},
+				default: null
 			};
 		},
-		getSummaryField(value = undefined) {
-			return {
-				name: 'summary',
-				label: 'Summary',
-				schema: {type: 'string'},
-				default: null,
-				value: value,
-				optional: true
-			};
-		},
-		getDescriptionField(value = undefined) {
-			return {
-				name: 'description',
-				label: 'Description',
-				schema: {type: 'string', subtype: 'commonmark'},
-				default: null,
-				value: value,
-				description: 'CommonMark (Markdown) is allowed.',
-				optional: true
-			};
-		},
-		getCategoriesField(value = undefined) {
-			return {
-				name: 'categories',
-				label: 'Categories',
-				schema: {type: 'array', items: {type: 'string'}},
-				default: [],
-				value: value,
-				optional: true
-			};
-		},
-		getDeprecatedField(value = false) {
-			return {
-				name: 'deprecated',
-				label: 'Deprecated',
-				schema: {type: 'boolean'},
-				default: false,
-				value: value,
-				optional: true
-			};
-		},
-		getExperimentalField(value = false) {
-			return {
-				name: 'experimental',
-				label: 'Experimental',
-				schema: {type: 'boolean'},
-				default: false,
-				value: value,
-				optional: true
-			};
-		},
-		getFields(process) {
-			return [
-				this.getIdField(process.id),
-				this.getSummaryField(process.summary),
-				this.getDescriptionField(process.description),
-				this.getCategoriesField(process.categories),
-				this.getDeprecatedField(process.deprecated),
-				this.getExperimentalField(process.experimental)
-			];
-		},
-		// Add parameters, return value, exceptions, examples, links
 		addProcessFromScript() {
-			let fields = this.getFields(this.process);
-			this.emit('showDataForm', "Store a new custom process", fields, data => this.addProcess(this.normalize(this.process, data)));
+			let fields = [];
+			if (!this.process.id) {
+				fields.push(this.getIdField());
+			}
+			else if (!this.process.id.match('^\\w+$')) {
+				fields.push({
+					label: 'Please note...',
+					description: 'The given process name is invalid, please choose another one below.',
+					info: true
+				});
+				fields.push(this.getIdField(this.process.id));
+			}
+			else if (this.processes.has(this.process.id, 'user')) {
+				fields.push({
+					label: 'Warning!',
+					description: "A process with the given name exists! If you click 'Save' below, you confirm that you want to override the existing process. If you don't want to override the existing process, please choose a different name below.",
+					info: true
+				});
+				fields.push(this.getIdField(this.process.id));
+			}
+			let store = data => this.addProcess(this.normalize(this.process, data));
+			if (fields.length > 0) {
+				this.emit('showDataForm', 'Store a new custom process', fields, store);
+			}
+			else {
+				store();
+			}
 		},
-		normalize(process, data) {
+		normalize(process, data = {}) {
 			return Object.assign(
 				{},
 				typeof process.toJSON === 'function' ? process.toJSON() : process,
@@ -135,16 +102,10 @@ export default {
 		},
 		addProcess(process) {
 			this.create({parameters: [process.id, process]})
-				.catch(error => Utils.exception(this, error, 'Store Process Error: ' + process.id));
+				.catch(error => Utils.exception(this, error, 'Store Process Error' + (process.id ? `: ${process.id}` : '')));
 		},
 		processInfo(process) {
 			this.emit('showProcess', process);
-		},
-		editMetadata(oldPg) {
-			this.refreshElement(oldPg, process => {
-				let fields = this.getFields(process);
-				this.emit('showDataForm', "Edit metadata for a process graph", fields, data => this.updateMetadata(process, data));
-			});
 		},
 		replaceProcess(process, newProcess) {
 			if (process instanceof UserProcess) {
@@ -156,12 +117,12 @@ export default {
 				let updatedProcess = await this.update({data: process, parameters: this.normalize(process, data)});
 				Utils.ok(this, 'Process "' + Utils.getResourceTitle(updatedProcess) + '" successfully updated.');
 			} catch (error) {
-				Utils.exception(this, error, "Update Process Error: " + process.id);
+				Utils.exception(this, error, 'Update Process Error' + (process.id ? `: ${process.id}` : ''));
 			}
 		},
 		deleteProcess(process) {
 			this.delete({data: process})
-				.catch(error => Utils.exception(this, error, 'Delete Process Error: ' + process.id));
+				.catch(error => Utils.exception(this, error, 'Delete Process Error' + (process.id ? `: ${process.id}` : '')));
 		}
 	}
 }

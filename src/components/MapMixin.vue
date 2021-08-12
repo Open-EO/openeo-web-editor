@@ -52,7 +52,10 @@ export default {
 			map: null,
 			baseLayer: null,
 			osm: null,
-			progress: null
+			progress: null,
+			fitOptions: {
+				padding: [30,30,30,30]
+			}
 		};
 	},
 	watch: {
@@ -66,7 +69,7 @@ export default {
 	methods: {
 		showMap() {
 			if (this.show) {
-				this.$nextTick(this.renderMap);
+				this.$nextTick(() => this.renderMap());
 			}
 		},
 		createMap(showLayerSwitcher = false) {
@@ -98,7 +101,8 @@ export default {
 				],
 				view: new View({
 					center: fromLonLat([this.center[1], this.center[0]]),
-					zoom: this.zoom
+					zoom: this.zoom,
+					multiWorld: true
 				})
 			};
 			if (!this.editable) {
@@ -161,7 +165,7 @@ export default {
 			this.map.addLayer(layer);
 			var extent = source.getExtent();
 			if (!extentIsEmpty(extent)) {
-				this.map.getView().fit(extent);
+				this.map.getView().fit(extent, this.fitOptions);
 			}
 			return layer;
 		},
