@@ -19,6 +19,9 @@ const getDefaultState = importFromQuery => {
 export default {
 	namespaced: true,
 	state: getDefaultState(true),
+	getters: {
+		hasProcess: state => Utils.isObject(state.process) && Utils.size(state.process) > 0 && Utils.size(state.process.process_graph),
+	},
 	actions: {
 		async loadEpsgCodes(cx) {
 			if (cx.state.epsgCodes.length === 0) {

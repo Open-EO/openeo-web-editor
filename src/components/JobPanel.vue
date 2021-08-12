@@ -1,8 +1,8 @@
 <template>
 	<DataTable ref="table" :data="data" :columns="columns" class="JobPanel">
 		<template slot="toolbar">
-			<button title="Add new job for batch processing" @click="createJobFromScript()" v-show="supportsCreate"><i class="fas fa-plus"></i> Create</button>
-			<button title="Run process and view results synchronously" @click="executeProcess" v-show="supports('computeResult')"><i class="fas fa-play"></i> Run now</button>
+			<button title="Add new job for batch processing" @click="createJobFromScript()" v-show="supportsCreate" :disabled="!this.hasProcess"><i class="fas fa-plus"></i> Create</button>
+			<button title="Run process and view results synchronously" @click="executeProcess" v-show="supports('computeResult')" :disabled="!this.hasProcess"><i class="fas fa-play"></i> Run now</button>
 		</template>
 		<template #actions="p">
 			<button title="Details" @click="showJobInfo(p.row)" v-show="supportsRead"><i class="fas fa-info"></i></button>
@@ -71,6 +71,7 @@ export default {
 	},
 	computed: {
 		...Utils.mapGetters(['supports', 'supportsBilling', 'supportsBillingPlans']),
+		...Utils.mapGetters('editor', ['hasProcess']),
 		...Utils.mapState('editor', ['process'])
 	},
 	watch: {
