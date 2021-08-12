@@ -9,6 +9,7 @@ const getDefaultState = importFromQuery => {
 		storedServers: JSON.parse(localStorage.getItem(serverStorage) || "[]"),
 		context: null,
 		process: null,
+		discoverySearchTerm: '',
 		hightestModalZIndex: 1000,
 		epsgCodes: [],
 		initialProcessUrl: importFromQuery ? Utils.param('process') : null
@@ -38,6 +39,9 @@ export default {
 		}
 	},
 	mutations: {
+		setDiscoverySearchTerm(state, searchTerm) {
+			state.discoverySearchTerm = searchTerm;
+		},
 		openModal(state) {
 			state.hightestModalZIndex = state.hightestModalZIndex + 1;
 		},

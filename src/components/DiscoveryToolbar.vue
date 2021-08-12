@@ -82,16 +82,21 @@ export default {
 		collectionPreview: {
 			type: Boolean,
 			default: false
+		},
+		persist: {
+			type: Boolean,
+			default: false
 		}
 	},
 	data() {
 		return {
-			searchTerm: '',
+			internalSearchTerm: '',
 			collapsed: true
 		};
 	},
 	computed: {
 		...Utils.mapState(['predefinedProcesses', 'collections', 'udfRuntimes']),
+		...Utils.mapState('editor', ['discoverySearchTerm']),
 		...Utils.mapState('userProcesses', ['userProcesses']),
 		...Utils.mapGetters(['supports', 'collectionDefaults', 'fileFormats']),
 		...Utils.mapGetters('userProcesses', {getProcessById: 'getAllById'}),
@@ -109,19 +114,41 @@ export default {
 		},
 		processes() {
 			return this.predefinedProcesses.concat(this.userProcesses);
+		},
+		searchTerm: {
+			get() {
+				if (this.persist) {
+					return this.discoverySearchTerm;
+				}
+				else {
+					return this.internalSearchTerm;
+				}
+			},
+			set(newValue) {
+				if (this.persist) {
+					this.setDiscoverySearchTerm(newValue);
+				}
+				else {
+					this.internalSearchTerm = newValue;
+				}
+			}
 		}
 	},
 	watch: {
-		searchTerm(newVal, oldVal) {
-			if (!newVal && oldVal) {
-				this.collapsed = true;
-			}
-			else if (newVal && !oldVal) {
-				this.collapsed = false;
+		searchTerm: {
+			immediate: true,
+			handler(newVal, oldVal) {
+				if (!newVal && oldVal) {
+					this.collapsed = true;
+				}
+				else if (newVal && !oldVal) {
+					this.collapsed = false;
+				}
 			}
 		}
 	},
 	methods: {
+		...Utils.mapMutations('editor', ['setDiscoverySearchTerm']),
 		onDrag(event, type, data) {
 			let node = this.getNode(type, data);
 			event.dataTransfer.setData("application/vnd.openeo-node", JSON.stringify(node));
