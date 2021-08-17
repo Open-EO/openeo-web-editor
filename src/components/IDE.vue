@@ -11,7 +11,7 @@
 			</header>
 			<Splitpanes class="default-theme" @resize="resized" @pane-maximize="resized">
 				<Pane id="discovery" :size="splitpaneSize[0]">
-					<DiscoveryToolbar class="toolbar tour-ide-discovery" :onAddProcess="insertProcess" :collectionPreview="true" />
+					<DiscoveryToolbar class="toolbar tour-ide-discovery" :onAddProcess="insertProcess" :collectionPreview="true" :persist="true" />
 				</Pane>
 				<Pane id="workspace" :size="splitpaneSize[1]">
 					<Splitpanes class="default-theme" horizontal @resize="resized" @pane-maximize="resized">

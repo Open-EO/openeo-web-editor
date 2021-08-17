@@ -361,12 +361,18 @@ export default {
 		},
 
 		makeUrl(server = true, discover = false) {
-			let params = new URLSearchParams();
+			let params = new URLSearchParams(window.location.search);
 			if (server && !this.$config.serverUrl) {
-				params.append('server', this.serverUrl);
+				params.set('server', this.serverUrl);
+			}
+			else {
+				params.delete('server');
 			}
 			if (discover && !this.$config.skipLogin) {
-				params.append('discover', 1);
+				params.set('discover', 1);
+			}
+			else {
+				params.delete('discover');
 			}
 			let query = params.toString();
 			if (query) {
