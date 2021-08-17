@@ -13,6 +13,7 @@
 					<button type="button" @click="$refs.blocks.deleteSelected()" :disabled="!hasSelection" title="Delete selected elements"><i class="fas fa-trash"></i></button>
 				</span>
 				<span class="sepr" v-if="editable">
+					<button type="button" v-if="!parent" @click="() => editProcess(value)" title="Edit Process Metadata"><i class="fas fa-sliders-h"></i></button>
 					<button type="button" @click="addParameter" title="Add Parameter"><i class="fas fa-parking"></i></button>
 					<button type="button" v-if="supportsMath" :class="{highlightFormula: isMath}" @click="showExpressionModal" title="Insert/Edit formula"><i class="fas fa-square-root-alt"></i></button>
 				</span>
@@ -24,7 +25,7 @@
 		</div>
 		<div class="editorSplitter">
 			<DiscoveryToolbar v-if="(showDiscoveryToolbar || isFullScreen) && editable" class="discoveryToolbar" :onAddProcess="insertProcess" />
-			<div class="graphBuilder" @drop="onDrop($event)" @dragover="allowDrop($event)">
+			<div class="graphBuilder" @drop="onDrop" @dragover="allowDrop">
 				<ModelBuilder
 					ref="blocks"
 					:editable="editable"
@@ -39,7 +40,8 @@
 					@showProcess="id => emit('showProcess', id)"
 					@showCollection="id => emit('showCollection', id)"
 					@showParameter="param => emit('showProcessParameter', param)"
-					@editParameters="openParameterEditor"
+					@editParameter="editParameter"
+					@editArguments="openArgumentEditor"
 					@compactMode="compact => this.compactMode = compact"
 					@selectionChanged="selectionChanged"
 					@historyChanged="historyChanged"
@@ -133,27 +135,322 @@ export default {
 			event.preventDefault();
 		},
 		onDrop(event) {
-			var json = event.dataTransfer.getData("application/vnd.openeo-node");
-			if (json) {
-				event.preventDefault();
-				let node = JSON.parse(json);
+			var editorNodeJson = event.dataTransfer.getData("application/vnd.openeo-node");
+			if (editorNodeJson) {
+				let node = JSON.parse(editorNodeJson);
 				this.insertProcess(node, event.pageX, event.pageY);
+				return event.preventDefault();
 			}
+
+			// Read a JSON file that has been dropped
+			let files = event.dataTransfer.files;
+			if (files.length === 1) {
+				let file = event.dataTransfer.files[0];
+				if (file.type === 'application/json') {
+					var reader = new FileReader();
+					reader.onload = async e => {
+						try {
+							let process = JSON.parse(e.target.result);
+							await this.$refs.blocks.import(process);
+						} catch(error) {
+							Utils.exception(this, error, "Parsing JSON file failed");
+						}
+					};
+					reader.onerror = error => Utils.exception(this, error, "Reading JSON file failed");
+					reader.readAsText(file, "UTF-8");
+					return event.preventDefault();
+				}
+			}
+		},
+		getNameField(value = undefined, name = "name") {
+			return {
+				value,
+				name,
+				description: 'A unique identifier. Must contain only letters (`a`-`z`), digits (`0`-`9`) and underscores (`_`). `snake_case` is recommended.',
+				label: 'Name',
+				schema: {
+					type: 'string',
+					pattern: '^\\w+$'
+				},
+				default: null
+			};
+		},
+		getDescriptionField(value = undefined, optional = false, name = "description", label = "Description") {
+			return {
+				value,
+				name,
+				description: 'Provides a detailed description. CommonMark (Markdown) syntax can be used for rich text formatting.',
+				label,
+				optional,
+				schema: {
+					type: 'string',
+					subtype: 'commonmark'
+				}
+			};
+		},
+		getOptionalField(value = undefined) {
+			return {
+				value,
+				name: 'optional',
+				label: 'Optional',
+				description: 'Parameters by default are required. CHeck this option to make the parameter optional. For optional parameters a default value should be specified.',
+				optional: true,
+				schema: {
+					type: 'boolean'
+				},
+				default: false
+			};
+		},
+		getDefaultField(value = undefined) {
+			return {
+				value,
+				name: 'default',
+				label: 'Default Value',
+				description: 'This value is used whenever the user of this process did not specify a value for this parameter.',
+				toggledBy: 'optional',
+				optional: true,
+				schema: {}
+			};
+		},
+		getExperimentalField(value = undefined) {
+			return {
+				value,
+				name: 'experimental',
+				label: 'Experimental',
+				description: 'Declares that this is experimental, which means that it is unstable and likely to change.',
+				optional: true,
+				schema: {
+					type: 'boolean'
+				},
+				default: false
+			};
+		},
+		getDeprecatedField(value = undefined) {
+			return {
+				value,
+				name: 'deprecated',
+				label: 'Deprecated',
+				description: 'Declares that this is deprecated with the potential to be removed in any of the next versions. It should be transitioned out of usage.',
+				optional: true,
+				schema: {
+					type: 'boolean'
+				},
+				default: false
+			};
+		},
+		getSchemaField(value = undefined, name = "schema", label = "Data Types") {
+			let subtype = !value ? 'openeo-datatype' : 'json-schema';
+			return {
+				value,
+				name,
+				label,
+				description: 'Allowed data type(s) as JSON Schema.',
+				schema: [
+					{
+						title: 'Single data type',
+						type: 'object',
+						subtype
+					},
+					{
+						title: 'Multiple data types',
+						type: 'array',
+						minItems: 2,
+						items: {
+							type: 'object',
+							subtype
+						}
+					}
+				]
+			};
+		},
+		editProcess(process) {
+			process = Utils.isObject(process) ? process : {};
+			let returns = Utils.isObject(process.returns) ? process.returns : {};
+			var fields = [
+				this.getNameField(process.id, 'id'),
+				{
+					value: process.summary,
+					name: 'summary',
+					description: 'A very short description of the process with usually less than 60 characters.',
+					label: 'Summary',
+					optional: true,
+					schema: {
+						type: 'string'
+					}
+				},
+				this.getDescriptionField(process.description, true),
+				{
+					value: process.categories,
+					name: 'categories',
+					label: 'Categories',
+					optional: true,
+					schema: {
+						type: 'array',
+						items: {
+							type: 'string'
+						}
+					}
+				},
+				this.getExperimentalField(process.experimental),
+				this.getDeprecatedField(process.deprecated),
+				{
+					label: 'Parameters',
+					description: 'The parameters can be edited directly in the "Visual Model" interface.',
+					info: true
+				},
+				this.getDescriptionField(returns.description, true, 'returns_description', 'Return Value > Description'),
+				this.getSchemaField(returns.schema, 'returns_schema', 'Return Value > Data Type'),
+				{
+					value: process.exceptions,
+					name: 'exceptions',
+					description: 'Declares exceptions (errors) that might occur during execution of this process. This list is just for informative purposes.\n\nThe keys of the object are the error codes, which should only consist of alphanumerical characters. `PascalCase` is recommended.',
+					label: 'Errors',
+					optional: true,
+					schema: {
+						type: 'object',
+						additionalProperties: {
+							type: 'object',
+							required: [
+								"message"
+							],
+							properties: {
+								message: {
+									title: 'Error Message',
+									type: 'string'
+								},
+								description: {
+									title: 'Description',
+									type: 'string',
+									subtype: 'commonmark'
+								},
+								http: {
+									title: 'HTTP Status Code',
+									type: 'integer',
+									enum: [
+										400,
+										500,
+										501
+									]
+								}
+							},
+						}
+					}
+				},
+				{
+					value: process.examples,
+					name: 'examples',
+					label: 'Examples',
+					description: 'Example calls for this process with specific values for the parameters (arguments) and the result (return value).',
+					optional: true,
+					schema: {
+						type: 'array',
+						items: {
+							type: 'object',
+							required: [
+								"arguments"
+							],
+							properties: {
+								title: {
+									title: 'Title',
+									type: 'string'
+								},
+								title: {
+									title: 'Description',
+									type: 'string',
+									subtype: 'commonmark'
+								},
+								arguments: {
+									title: 'Arguments',
+									type: 'object',
+									default: {}
+								},
+								returns: {
+									title: 'Return Value'
+								}
+							}
+						}
+					}
+				},
+				{
+					value: process.links,
+					name: 'links',
+					label: 'Links',
+					description: 'Links related to this process, e.g. additional documentation.',
+					optional: true,
+					schema: {
+						type: 'array',
+						items: {
+							type: 'object',
+							required: [
+								"href",
+								"rel"
+							],
+							properties: {
+								href: {
+									title: 'URL',
+									type: 'string'
+								},
+								rel: {
+									title: 'Relation',
+									description: 'For examples see [IANA relation types](https://www.iana.org/assignments/link-relations/link-relations.xhtml)',
+									type: 'string',
+									default: 'about'
+								},
+								title: {
+									title: 'Title',
+									type: 'string'
+								},
+								type: {
+									title: 'Media Type',
+									description: 'For examples see [IANA media types](https://www.iana.org/assignments/media-types/media-types.xhtml)',
+									type: 'string'
+								}
+							}
+						}
+					}
+				}
+			];
+			this.emit('showDataForm', "Edit Process", fields, async data => {
+				let newData = Utils.pickFromObject(data, ['id', 'description', 'categories', 'experimental', 'deprecated', 'exception', 'examples', 'links']);
+				if (typeof newData.description === 'string' || Utils.isObject(newData.schema)) {
+					newData.returns = {
+						description: newData.returns_description,
+						schema: data.returns_schema
+					};
+				}
+				// ToDo: This is bypassing Vue's reactivity system, we should directly commit 
+				// the changes to the ModelBuilder or make it so that the state of the ModelBuilder
+				// is not destroyed when commiting a new object
+				this.commit(Object.assign(process, newData));
+			});
 		},
 		addParameter() {
 			var fields = [
-				{
-					name: 'name',
-					label: 'Parameter name',
-					schema: {type: 'string'},
-					default: null
-				}
+				this.getNameField(),
+				this.getDescriptionField(),
+				this.getOptionalField(),
+				this.getDefaultField(),
+				this.getExperimentalField(),
+				this.getDeprecatedField(),
+				this.getSchemaField()
 			];
-			this.emit('showDataForm', "Add Parameter", fields, data => {
+			this.emit('showDataForm', "Add Parameter", fields, async data => {
 				if (typeof data.name === 'string' && data.name.length > 0) {
-					this.$refs.blocks.addPgParameter(data);
+					await this.$refs.blocks.addPgParameter(data);
 				}
 			});
+		},
+		editParameter(parameter, title = "Edit Parameter", saveCallback = null) {
+			var fields = [
+				this.getNameField(parameter.name),
+				this.getDescriptionField(parameter.description),
+				this.getOptionalField(parameter.optional),
+				this.getDefaultField(parameter.default),
+				this.getExperimentalField(parameter.experimental),
+				this.getDeprecatedField(parameter.deprecated),
+				this.getSchemaField(parameter.schema)
+			];
+			this.emit('showDataForm', title, fields, saveCallback);
 		},
 		showExpressionModal() {
 			let props = {
@@ -165,7 +462,7 @@ export default {
 			};
 			this.emit('showModal', 'ExpressionModal', props, events);
 		},
-		openParameterEditor(parameters, data, title = "Edit", editable = true, selectParameterName = null, saveCallback = null, parent = null) {
+		openArgumentEditor(parameters, data, title = "Edit", editable = true, selectParameterName = null, saveCallback = null, parent = null) {
 			let props = {
 				title,
 				parameters,

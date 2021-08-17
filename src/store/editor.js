@@ -9,6 +9,7 @@ const getDefaultState = importFromQuery => {
 		storedServers: JSON.parse(localStorage.getItem(serverStorage) || "[]"),
 		context: null,
 		process: null,
+		discoverySearchTerm: '',
 		hightestModalZIndex: 1000,
 		epsgCodes: [],
 		initialProcessUrl: importFromQuery ? Utils.param('process') : null
@@ -18,6 +19,9 @@ const getDefaultState = importFromQuery => {
 export default {
 	namespaced: true,
 	state: getDefaultState(true),
+	getters: {
+		hasProcess: state => Utils.isObject(state.process) && Utils.size(state.process) > 0 && Utils.size(state.process.process_graph),
+	},
 	actions: {
 		async loadEpsgCodes(cx) {
 			if (cx.state.epsgCodes.length === 0) {
@@ -38,6 +42,9 @@ export default {
 		}
 	},
 	mutations: {
+		setDiscoverySearchTerm(state, searchTerm) {
+			state.discoverySearchTerm = searchTerm;
+		},
 		openModal(state) {
 			state.hightestModalZIndex = state.hightestModalZIndex + 1;
 		},

@@ -25,7 +25,7 @@ export default {
 	},
 	computed: {
 		title() {
-			return "openEO Web Editor " + this.pkg.version;
+			return `${this.$config.serviceName} ${this.$config.appName} ${this.pkg.version}`;
 		}
 	}
 }

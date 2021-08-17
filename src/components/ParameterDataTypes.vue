@@ -27,8 +27,8 @@ import ParameterDataType from './ParameterDataType.vue';
 import Description from '@openeo/vue-components/components/Description.vue';
 import EventBusMixin from './EventBusMixin.vue';
 import { ProcessDataType, ProcessParameter } from '@openeo/js-commons';
+import { API_TYPES, NATIVE_TYPES } from './datatypes/api';
 
-const API_TYPES = Utils.resolveJsonRefs(require('@openeo/js-processgraphs/assets/subtype-schemas.json')).definitions;
 const TYPE_GROUPS = [
 	'Basics',
 	'References',
@@ -41,16 +41,9 @@ const TYPE_GROUPS = [
 	'Other',
 ];
 const now = () => new Date().toISOString().replace(/\.\d+/, '');
-const NATIVE_TYPES = [
-	'string',
-	'integer',
-	'number',
-	'boolean',
-	'array',
-	'object'
-];
 const SUPPORTED_TYPES = [
 		// Native types
+		{subtype: 'undefined', title: 'No Value', const: undefined, group: 'Basics'},
 		{type: 'null', const: null, group: 'Basics'},
 		{type: 'string', default: "", group: 'Basics'},
 		{type: 'integer', default: 0, group: 'Basics'},
@@ -95,12 +88,25 @@ const SUPPORTED_TYPES = [
 
 	//	{type: 'array', subtype: 'kernel', title: 'Kernel'}, // ToDo
 		{type: 'object', subtype: 'process-graph', title: 'Custom Process'},
+		{tyoe: 'object', subtype: 'json-schema', title: 'Data Type (JSON Schema)', any: false},
 		{subtype: 'json', title: 'JSON', noAutoDetect: true},
 
 // Can't be transfered between client and server, no JSON encoding available for cubes:
 //		{type: 'object', subtype: 'raster-cube'},
 //		{type: 'object', subtype: 'vector-cube'},
 ];
+const refSchema = {
+	type: 'object',
+	additionalProperties: false,
+	properties: {
+		from_node: {
+			type: 'string'
+		},
+		from_parameter: {
+			type: 'string'
+		}
+	}
+};
 
 export default {
 	name: 'ParameterDataTypes',
@@ -266,6 +272,20 @@ export default {
 		}
 	},
 	methods: {
+		async isValueInvalid(value, schema) {
+			let schema2 = Utils.deepClone(schema);
+			// Allow from_node and from_parameter in values, see https://github.com/Open-EO/openeo-web-editor/issues/179
+			if (schema2.type === 'array' && Utils.isObject(schema2.items)) {
+				schema2.items = {
+					oneOf: [
+						schema2.items,
+						refSchema
+					]
+				};
+			}
+			let errors = await this.jsonSchemaValidator.validateValue(value, schema2);
+			return errors.length > 0;
+		},
 		/**
 		 * Returns the indices of provided JSON Schemas that the provided values matches against.
 		 * 
@@ -277,8 +297,7 @@ export default {
 			var validTypes = [];
 			for(var type of types) {
 				try {
-					var errors = await this.jsonSchemaValidator.validateValue(value, type.schema);
-					if (errors.length > 0) {
+					if (await this.isValueInvalid(value, type.schema)) {
 						continue;
 					}
 					validTypes.push(type.dataType());
@@ -380,7 +399,7 @@ export default {
 				else {
 					let defaultValue = this.selectedSchema.default();
 					try {
-						if (typeof this.state === 'undefined' || (await this.jsonSchemaValidator.validateValue(this.state, this.selectedSchema)).length > 0) {
+						if (typeof this.state === 'undefined' || await this.isValueInvalid(this.state, this.selectedSchema)) {
 							this.state = defaultValue;
 						}
 					}
@@ -394,17 +413,23 @@ export default {
 };
 </script>
 
-<style>
-.fieldContainer .description {
-	display: flex;
-	align-items: center;
-	font-size: 0.9em;
-	margin-bottom: 10px;
-}
-.fieldContainer .description .fas {
-	margin-right: 0.5em;
-}
-.fieldContainer .dataTypeChooser {
-	margin-bottom: 10px;
+<style lang="scss">
+.fieldContainer {
+ 	.description {
+		display: flex;
+		align-items: center;
+		font-size: 0.9em;
+		margin-bottom: 10px;
+
+		.fas {
+			margin-right: 0.5em;
+		}
+		p {
+			margin: 0;
+		}
+	}
+	.dataTypeChooser {
+		margin-bottom: 10px;
+	}
 }
 </style>

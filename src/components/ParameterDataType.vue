@@ -9,7 +9,7 @@
 		</template>
 		<div v-else-if="type === 'raster-cube' || type === 'vector-cube'" class="fieldValue description">
 			<i class="fas fa-exclamation-circle"></i>
-			This parameter can only be set by creating a connection between an "Output" / "Result" and this parameter in the Visual Model.
+			<p>This parameter can only be set by creating a connection between an "Output" / "Result" and this parameter in the Visual Model.</p>
 		</div>
 		<!-- Process Parameter -->
 		<template v-else-if="isPgParameter">
@@ -18,8 +18,16 @@
 			</div>
 			<button type="button" v-if="nativeParameterType === 'array'" @click="convertToArray()"><i class="fas fa-list"></i> Convert to array</button>
 		</template>
+		<!-- Undefined -->
+		<div class="description" v-else-if="type === 'undefined'">
+			<i class="fas fa-info-circle"></i>
+			<p>No value is set.</p>
+		</div>
 		<!-- Null -->
-		<div class="description" v-else-if="type === 'null'"><i class="fas fa-info-circle"></i> This is set to <strong><tt>null</tt></strong>, which is usually used as placeholder for no-data values or a default value.</div>
+		<div class="description" v-else-if="type === 'null'">
+			<i class="fas fa-info-circle"></i>
+			<p>This is set to <strong><tt>null</tt></strong>, which is usually used as placeholder for no-data values or a default value.</p>
+		</div>
 		<!-- Select Boxes (collection id, job id, epsg code, in/output format, service type, billing plan, enums) -->
 		<SelectBox v-else-if="isSelection" v-model="state" :key="type" :type="type" :editable="editable" :schema="schema" :context="dependency" @onDetails="onSelectDetails"></SelectBox>
 		<!-- Temporal (date, time, date-time, temporal-interval) -->
@@ -132,6 +140,7 @@ export default {
 				case 'file-paths':
 				case 'epsg-code':
 				case 'input-format':
+				case 'openeo-datatype':
 				case 'output-format':
 				case 'service-type':
 				case 'billing-plan':

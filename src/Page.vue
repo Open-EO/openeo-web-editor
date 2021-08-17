@@ -8,6 +8,7 @@
 			<component :is="modal.component" :key="modal.id" v-bind="modal.props" v-on="modal.events" @closed="hideModal(modal)" />
 		</template>
 		<vue-snotify />
+		<Tour v-if="tourType" v-model="tourType" />
 		<span v-show="activeRequests > 0" id="activeRequests">
 			<i class="fas fa-spinner fa-spin fa-2x"></i>
 		</span>
@@ -34,6 +35,7 @@ export default {
 		CollectionModal: () => import('./components/modals/CollectionModal.vue'),
 		ExpressionModal: () => import('./components/modals/ExpressionModal.vue'),
 		FileFormatModal: () => import('./components/modals/FileFormatModal.vue'),
+		ImportProcessModal: () => import('./components/modals/ImportProcessModal.vue'),
 		JobEstimateModal: () => import('./components/modals/JobEstimateModal.vue'),
 		JobInfoModal: () => import('./components/modals/JobInfoModal.vue'),
 		ListModal: () => import('./components/modals/ListModal.vue'),
@@ -42,18 +44,22 @@ export default {
 		ProcessParameterModal: () => import('./components/modals/ProcessParameterModal.vue'),
 		ServerInfoModal: () => import('./components/modals/ServerInfoModal.vue'),
 		ServiceInfoModal: () => import('./components/modals/ServiceInfoModal.vue'),
+		Tour: () => import('./components/Tour.vue'),
 		UdfRuntimeModal: () => import('./components/modals/UdfRuntimeModal.vue'),
 		WebEditorModal: () => import('./components/modals/WebEditorModal.vue')
 	},
 	data() {
 		return {
 			modals: [],
-			skipLogin: false,
+			skipLogin: this.$config.skipLogin,
+			tourType: null,
 			title: null
 		};
 	},
 	created() {
-		this.skipLogin = !!Utils.param('discover');
+		if (Utils.param('discover')) {
+			this.skipLogin = true;
+		}
 
 		// Count active requests
 		axios.interceptors.request.use(config => {
@@ -78,6 +84,7 @@ export default {
 		this.listen('showProcessParameter', this.showProcessParameter);
 		this.listen('showWebEditorInfo', this.showWebEditorInfo);
 		this.listen('title', this.setTitle);
+		this.listen('showTour', where => this.tourType = where);
 	},
 	watch: {
 		isDiscovered(newVal) {
@@ -100,7 +107,7 @@ export default {
 		...Utils.mapMutations(['startActiveRequest', 'endActiveRequest']),
 		...Utils.mapActions('userProcesses', {readUserProcess: 'read'}),
 		setTitle(subtitle) {
-			var title = "openEO Web Editor";
+			var title = `${this.$config.serviceName} ${this.$config.appName}`;
 			if (subtitle) {
 				title += ": " + subtitle;
 			}

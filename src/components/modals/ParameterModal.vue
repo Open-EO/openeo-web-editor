@@ -3,15 +3,16 @@
 		<template #default>
 			<p v-if="parameters.length === 0">No editable parameters available.</p>
 			<form v-else id="parameterModal" @submit.prevent="save">
-				<div class="fieldRow" v-for="(param, k) in parameters" :key="k">
-					<label :class="{ fieldLabel: true, highlight: param.name === selectParameter }">
-						{{ displayLabel(param) }}<strong class="required" v-if="!param.optional" title="required">*</strong>
+				<div class="fieldRow" v-for="(param, k) in parameters" v-show="toggleParamVisibility(param)" :key="k">
+					<label :class="{ fieldLabel: true, highlight: param.name === selectParameter, info: param.info }">
+						{{ displayLabel(param) }}
+						<strong class="required" v-if="!param.info && !param.optional" title="required">*</strong>
 						<div v-if="param.description" class="description">
 							<Description :description="param.description" />
 						</div>
 					</label>
-					<ParameterDataTypes :ref="param.name" :editable="editable" :parameter="param" v-model="values[param.name]" :context="context" @schemaSelected="updateType(param, $event)" :parent="parent" />
-					<button v-if="param.unspecified" title="Delete unspecified parameter" class="deleteBtn" type="button" @click="deleteParam(k)"><i class="fas fa-trash"></i></button>
+					<ParameterDataTypes v-if="!param.info" :ref="param.name" :editable="editable" :parameter="param" v-model="values[param.name]" :context="context" @schemaSelected="updateType(param, $event)" :parent="parent" />
+					<button v-if="!param.info && param.unspecified" title="Delete unspecified parameter" class="deleteBtn" type="button" @click="deleteParam(k)"><i class="fas fa-trash"></i></button>
 				</div>
 				<!-- We need a hidden submit button in the form tags to allow submiting the form via keyboard (enter key) -->
 				<button type="submit" style="display:none"></button>
@@ -81,6 +82,13 @@ export default {
 		this.$nextTick(() => this.setSelected());
 	},
 	methods: {
+		toggleParamVisibility(param) {
+			if (!param || !param.toggledBy) {
+				return true;
+			}
+
+			return !!this.context.values[param.toggledBy];
+		},
 		deleteParam(key) {
 			let name = this.parameters[key].name;
 			this.$delete(this.parameters, key);
@@ -193,6 +201,9 @@ export default {
 				width: calc(35% - 5px);
 				border-left: 5px solid $linkColor;
 				padding-left: 5px;
+			}
+			&.info {
+				width: 100%;
 			}
 		}
 		.fieldEditorContainer {

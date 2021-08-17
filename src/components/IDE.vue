@@ -4,30 +4,32 @@
 			<header class="navbar">
 				<Logo />
 				<ul id="menu">
+					<li><div class="menuItem" @click="showHelp" title="Start a guided tour"><i class="fas fa-question fa-fw"></i> Help</div></li>
 					<li><div class="menuItem" @click="showServerInfo" title="Get server information"><i class="fas fa-info fa-fw"></i> Server</div></li>
 					<li><UserMenu /></li>
 				</ul>
 			</header>
 			<Splitpanes class="default-theme" @resize="resized" @pane-maximize="resized">
 				<Pane id="discovery" :size="splitpaneSize[0]">
-					<DiscoveryToolbar class="toolbar" :onAddProcess="insertProcess" :collectionPreview="true" />
+					<DiscoveryToolbar class="toolbar tour-ide-discovery" :onAddProcess="insertProcess" :collectionPreview="true" :persist="true" />
 				</Pane>
 				<Pane id="workspace" :size="splitpaneSize[1]">
 					<Splitpanes class="default-theme" horizontal @resize="resized" @pane-maximize="resized">
 						<Pane id="editor" size="50">
-							<Editor ref="editor" class="mainEditor" id="main" :value="process" @input="updateEditor" :title="contextTitle">
+							<Editor ref="editor" class="mainEditor tour-ide-editor" id="main" :value="process" @input="updateEditor" :title="contextTitle">
 								<template #file-toolbar>
+									<button type="button" @click="importProcess" title="Import process from external source"><i class="fas fa-cloud-download-alt"></i></button>
 									<button type="button" v-show="saveSupported" @click="saveProcess" :title="'Save to ' + contextTitle"><i class="fas fa-save"></i></button>
 								</template>
 							</Editor>
 						</Pane>
 						<Pane id="user" size="50" v-if="isAuthenticated">
-							<UserWorkspace class="userContent" />
+							<UserWorkspace class="userContent tour-ide-workspace" />
 						</Pane>
 					</Splitpanes>
 				</Pane>
 				<Pane id="viewer" :size="splitpaneSize[2]">
-					<Viewer />
+					<Viewer class="tour-ide-viewer" />
 				</Pane>
 			</Splitpanes>
 		</div>
@@ -128,6 +130,13 @@ export default {
 			this.emit('windowResized', event);
 		},
 
+		importProcess() {
+			let events = {
+				save: this.updateEditor
+			};
+			this.emit('showModal', 'ImportProcessModal', {}, events);
+		},
+
 		saveProcess() {
 			this.emit('replaceProcess', this.context, this.process);
 		},
@@ -149,6 +158,10 @@ export default {
 
 		showServerInfo() {
 			this.emit('showModal', 'ServerInfoModal');
+		},
+
+		showHelp() {
+			this.emit('showTour', 'ide');
 		},
 
 		showDataForm(title, fields, saveCallback = null, closeCallback = null) {

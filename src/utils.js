@@ -211,8 +211,11 @@ class Utils extends VueUtils {
 				title += 'Process: ';
 			}
 		}
-		if (obj.title || obj.summary && obj.id) {
-			title += obj.title || obj.summary;
+		if (obj instanceof UserProcess) {
+			title += obj.id;
+		}
+		else if (obj.title) {
+			title += obj.title;
 		}
 		else if (obj.id) {
 			title += "#" + obj.id.toUpperCase().substr(-6);

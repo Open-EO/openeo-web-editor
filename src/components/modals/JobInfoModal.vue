@@ -12,13 +12,13 @@
 			<Collection v-if="resultType === 'Collection'" :data="result">
 				<template #title><span class="hidden" /></template>
 				<template #spatial-extents="p">
-					<MapViewer id="collectionMap" :show="showMap" :extents="p.extents"></MapViewer>
+					<MapViewer id="jobMap" :show="showMap" :extents="p.extents"></MapViewer>
 				</template>
 			</Collection>
 			<Item v-else :data="result">
 				<template #title><span class="hidden" /></template>
 				<template #location="p">
-					<MapViewer id="itemMap" :show="showMap" :geoJson="p.geometry" :extents="p.bbox"></MapViewer>
+					<MapViewer id="jobMap" :show="showMap" :geoJson="p.geometry" :extents="p.bbox"></MapViewer>
 				</template>
 			</Item>
 		</section>
@@ -86,5 +86,9 @@ export default {
 .result .vue-component h3 {
 	border-bottom: 0;
 	font-size: 1.2em;
+}
+#jobMap {
+	height: 300px;
+	max-width: 600px;
 }
 </style>

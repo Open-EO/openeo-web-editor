@@ -1,9 +1,10 @@
 <template>
-	<Modal :title="collection.id" @closed="$emit('closed')">
+	<Modal minWidth="80%" :title="collection.id" @closed="$emit('closed')">
 		<div class="docgen">
 			<Collection :data="collection">
 				<template #spatial-extents="p">
-					<MapViewer id="collectionMap" :show="showMap" :extents="p.extents"></MapViewer>
+					<span v-if="p.worldwide" class="worldwide"><i class="fas fa-globe"></i> Worldwide</span>
+					<MapViewer v-else class="map" id="collectionMap" :show="showMap" :extents="p.extents"></MapViewer>
 				</template>
 			</Collection>
 			<section v-if="currentItems">
@@ -129,10 +130,5 @@ export default {
 	font-size: 1.4em;
     margin-top: 1.5em;
     border-bottom-style: dotted;
-}
-#collectionMap {
-	height: 300px;
-	width: 100%;
-	max-width: 600px;
 }
 </style>

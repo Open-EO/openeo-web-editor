@@ -1,7 +1,7 @@
 <template>
 	<DataTable ref="table" :data="data" :columns="columns" class="ServicePanel">
 		<template slot="toolbar">
-			<button title="Add new service" @click="createServiceFromScript()" v-show="supportsCreate"><i class="fas fa-plus"></i> Create</button>
+			<button title="Add new service" @click="createServiceFromScript()" v-show="supportsCreate" :disabled="!this.hasProcess"><i class="fas fa-plus"></i> Create</button>
 		</template>
 		<template #actions="p">
 			<button title="Details" @click="serviceInfo(p.row)" v-show="supportsRead"><i class="fas fa-info"></i></button>
@@ -59,6 +59,7 @@ export default {
 	},
 	computed: {
 		...Utils.mapState('editor', ['process']),
+		...Utils.mapGetters('editor', ['hasProcess']),
 		...Utils.mapState(['serviceTypes']),
 		...Utils.mapGetters(['supports', 'supportsBilling', 'supportsBillingPlans'])
 	},

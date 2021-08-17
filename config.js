@@ -4,6 +4,14 @@ export default {
 	// to the corresponding back-end automatically.
 	serverUrl: '',
 
+	// The name of the service
+	serviceName: 'openEO',
+	// The name of the app
+	appName: 'Web Editor',
+
+	// Skip login and automatically load up the "discovery mode"
+	skipLogin: false,
+
 	// A message shown on the login page
 	loginMessage: '',
 
