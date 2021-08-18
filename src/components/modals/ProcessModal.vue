@@ -16,6 +16,7 @@
 import Editor from '../Editor.vue';
 import Modal from './Modal.vue';
 import Process from '@openeo/vue-components/components/Process.vue';
+import Utils from '../../utils';
 
 export default {
 	name: 'ProcessModal',
@@ -31,7 +32,7 @@ export default {
 	},
 	computed: {
 		minWidth() {
-			if (this.process !== null && this.process.process_graph) {
+			if (Utils.isObject(this.process) && this.process.process_graph) {
 				return "85%";
 			}
 			else {

@@ -72,7 +72,7 @@ export default {
 		}
 	},
 	computed: {
-		...Utils.mapGetters(['processRegistry']),
+		...Utils.mapGetters(['processes']),
 		languageString() {
 			return typeof this.language === 'string' ? this.language.toLowerCase() : '';
 		},
@@ -184,7 +184,7 @@ export default {
 					if (value) {
 						var process = JSON.parse(value);
 						if (Utils.size(process) > 0) {
-							var pg = new ProcessGraph(process, this.processRegistry);
+							var pg = new ProcessGraph(process, this.processes);
 							pg.allowEmpty();
 							pg.parse();
 							return this.emit(process);

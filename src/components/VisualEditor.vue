@@ -30,14 +30,14 @@
 					ref="blocks"
 					:editable="editable"
 					:id="id"
-					:processes="processRegistry"
+					:processes="processes"
 					:collections="collections"
 					:parent="parent"
 					:parentSchema="parentSchema"
 					:value="value"
 					@input="commit"
 					@error="errorHandler"
-					@showProcess="id => emit('showProcess', id)"
+					@showProcess="(id, namespace) => emit('showProcess', {id, namespace})"
 					@showCollection="id => emit('showCollection', id)"
 					@showParameter="param => emit('showProcessParameter', param)"
 					@editParameter="editParameter"
@@ -57,6 +57,7 @@ import Utils from '../utils.js';
 import DiscoveryToolbar from './DiscoveryToolbar.vue';
 import EventBusMixin from './EventBusMixin.vue';
 import FullscreenButton from './FullscreenButton.vue';
+import { ProcessParameter } from '@openeo/js-commons';
 
 export default {
 	name: 'VisualEditor',
@@ -95,8 +96,8 @@ export default {
 	},
 	computed: {
 		...Utils.mapState(['collections']),
-		...Utils.mapGetters(['processRegistry']),
-		...Utils.mapGetters('userProcesses', ['supportsMath', 'isMathProcess'])
+		...Utils.mapGetters(['supportsMath', 'isMathProcess', 'processes']),
+		...Utils.mapState('editor', ['initialNode']),
 	},
 	data() {
 		return {
@@ -109,11 +110,29 @@ export default {
 		};
 	},
 	watch: {
-		value(value) {
-			this.isMath = this.isMathProcess(value);
+		value: {
+			immediate: true,
+			handler(value) {
+				this.isMath = this.isMathProcess(value);
+
+				if (this.initialNode && Utils.isObject(value) && Utils.isObject(value.process_graph)) {
+					try {
+						let node = this.initialNode;
+						if (node == "1" && Utils.size(value.process_graph)) {
+							node = Object.keys(value.process_graph)[0];
+						}
+						this.openArgumentEditorForNode(node);
+					} catch (error) {
+						Utils.exception(this, error);
+					} finally {
+						this.setInitialNode(null);
+					}
+				}
+			}
 		}
 	},
 	methods: {
+		...Utils.mapMutations('editor', ['setInitialNode']),
 		commit(value) {
 			// Fix #115: Return the default value/null if no nodes are given
 			if (typeof this.defaultValue !== 'undefined' && Utils.isObject(value) && Utils.size(value.process_graph) === 0) {
@@ -462,6 +481,22 @@ export default {
 			};
 			this.emit('showModal', 'ExpressionModal', props, events);
 		},
+		openArgumentEditorForNode(nodeId) {
+			let process = Utils.deepClone(this.value);
+			let node = process.process_graph[nodeId];
+			let processSpec = this.processes.get(node.process_id, node.namespace);
+			this.openArgumentEditor(
+				processSpec.parameters.map(p => new ProcessParameter(p)).filter(p => p.isEditable()),
+				node.arguments,
+				processSpec.id,
+				true,
+				null,
+				data => {
+					Object.assign(node, {arguments: data});
+					this.commit(process);
+				}
+			);
+		},
 		openArgumentEditor(parameters, data, title = "Edit", editable = true, selectParameterName = null, saveCallback = null, parent = null) {
 			let props = {
 				title,
@@ -492,7 +527,11 @@ export default {
 		insertProcess(node, x = null, y = null) {
 			try {
 				var pos = this.$refs.blocks.getPositionForPageXY(x, y);
-				this.$refs.blocks.addProcess(node.process_id, node.arguments, pos);
+				let namespace = node.namespace;
+				if (namespace === 'backend' || namespace === 'user') {
+					namespace = null;
+				}
+				this.$refs.blocks.addProcess(node.process_id, node.arguments, pos, namespace);
 			} catch(error) {
 				Utils.exception(this, error);
 			}

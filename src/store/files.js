@@ -11,13 +11,10 @@ export default storeFactory({
 	primaryKey: 'path',
 	customizations: {
 		getters: {
-			// ToDo
 		},
 		actions: {
-			// ToDo
 		},
 		mutations: {
-			// ToDo
 		}
 	}
 });
