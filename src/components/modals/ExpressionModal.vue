@@ -10,7 +10,7 @@
 					</p>
 					<p>Supported <strong>mathematical functions</strong>:
 						<template v-if="mathProcesses.length">
-							<br /><kbd v-for="func in mathProcesses" :key="func.id" :title="func.summary" @click="emit('showProcess', func.id)" class="click" draggable="true" @dragstart="onDrag($event, 'functions', func)">{{ func.id }}</kbd>
+							<br /><kbd v-for="func in mathProcesses" :key="func.id" :title="func.summary" @click="emit('showProcess', func.id, func.namespace)" class="click" draggable="true" @dragstart="onDrag($event, 'functions', func)">{{ func.id }}</kbd>
 						</template>
 						<template v-else>None</template>
 					</p>
@@ -96,14 +96,13 @@ export default {
 			}
 	},
 	computed: {
-		...Utils.mapState('userProcesses', ['operatorMapping', 'arrayOperatorMapping']),
-		...Utils.mapGetters(['processRegistry']),
-		...Utils.mapGetters('userProcesses', ['mathProcesses', 'isMathProcess', 'reverseOperatorMapping']),
+		...Utils.mapState(['operatorMapping', 'arrayOperatorMapping']),
+		...Utils.mapGetters(['processes', 'mathProcesses', 'isMathProcess', 'reverseOperatorMapping']),
 		operators() {
 			var ops = [];
 			for(var op in this.operatorMapping) {
 				let processId = this.operatorMapping[op];
-				let title = this.processRegistry.get(processId).summary;
+				let title = this.processes.get(processId).summary;
 				ops.push({op, processId, title});
 			}
 			return ops;
@@ -112,7 +111,7 @@ export default {
 			let resultNodes = [];
 			for(var id in this.processGraph) {
 				var node = this.processGraph[id];
-				var p = this.processRegistry.get(node.process_id);
+				var p = this.processes.get(node.process_id);
 				if (Process.isMathProcess(p)) {
 					resultNodes.push(id);
 				}
@@ -126,7 +125,7 @@ export default {
 			}
 
 			// array_element must be supported
-			let process = this.processRegistry.get('array_element');
+			let process = this.processes.get('array_element');
 			if (!process) {
 				return false;
 			}
@@ -164,7 +163,7 @@ export default {
 				return;
 			}
 
-			var pg = new ProcessGraph(process, this.processRegistry);
+			var pg = new ProcessGraph(process, this.processes);
 			pg.parse();
 			let formula = this.nodeToFormula(pg.getResultNode());
 			if (formula) {
@@ -193,7 +192,7 @@ export default {
 			}
 
 			let operator = this.reverseOperatorMapping[node.process_id];
-			let process = this.processRegistry.get(node.process_id);
+			let process = this.processes.get(node.process_id);
 			let isArrayData = (typeof this.arrayOperatorMapping[node.process_id] !== 'undefined');
 
 			let convertValue = value => {
@@ -380,7 +379,7 @@ export default {
 		},
 		addOperatorProcess(operator, left, right) {
 			if (typeof this.operatorMapping[operator] !== 'undefined') {
-				let process = this.processRegistry.get(this.operatorMapping[operator]);
+				let process = this.processes.get(this.operatorMapping[operator]);
 				let args = {};
 				if (!process || !Array.isArray(process.parameters) || process.parameters.length < 2) {
 					throw new Error("Process for operator " + operator + " must have at least two parameters");
@@ -395,7 +394,7 @@ export default {
 		},
 		addProcess(process, args) {
 			if (typeof process === 'string') {
-				process = this.processRegistry.get(process);
+				process = this.processes.get(process);
 			}
 
 			if (!process) {
