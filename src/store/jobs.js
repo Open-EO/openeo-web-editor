@@ -34,6 +34,8 @@ export default storeFactory({
 					throw new Error("Canceling a batch job is not supported by the server.");
 				}
 			}
+		},
+		mutations: {
 		}
 	}
 });

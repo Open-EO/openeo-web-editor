@@ -1,3 +1,5 @@
+import { UserProcess } from '@openeo/js-client';
+import { Utils } from '@openeo/js-commons';
 import Vue from 'vue';
 
 export default ({namespace, listFn, createFn, updateFn, deleteFn, readFn, readFnById, customizations, primaryKey}) => {
@@ -56,19 +58,17 @@ export default ({namespace, listFn, createFn, updateFn, deleteFn, readFn, readFn
 			},
 			async read(cx, {data}) {
 				let updated = null;
-				if (typeof data === 'string' || typeof data === 'number') {
-					let obj = cx.getters.get(data);
-					// Read by id into a new object
-					if (obj === null) {
+				if (!(data instanceof UserProcess)) {
+					let id = Utils.isObject(data) ? data[primaryKey] : data;
+					// Try to get UserProcess from store
+					data = cx.getters.getById(id);
+					if (!data) {
+						// Try to load UserProcess from Connection
 						updated = await cx.rootState.connection[readFnById](data);
 					}
-					// Update existing object by id
-					else {
-						data = obj;
-					}
 				}
-				// Update existing object by reference
-				if (updated === null) {
+				if (!updated) {
+					// Try to update UserProcess
 					updated = await data[readFn]();
 				}
 				// Update or insert, depending on previous state

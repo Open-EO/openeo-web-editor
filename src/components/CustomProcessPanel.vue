@@ -41,13 +41,13 @@ export default {
 	},
 	computed: {
 		...Utils.mapState('editor', ['process']),
+		...Utils.mapGetters(['processes']),
 		...Utils.mapGetters('editor', ['hasProcess']),
 	},
 	mounted() {
 		this.listen('replaceProcess', this.replaceProcess);
 	},
 	methods: {
-		...Utils.mapGetters('userProcesses', {getProcessById: 'getAllById'}),
 		showInEditor(process) {
 			this.refreshElement(process, updatedProcess => this.emit('editProcess', updatedProcess));
 		},
@@ -77,7 +77,7 @@ export default {
 				});
 				fields.push(this.getIdField(this.process.id));
 			}
-			else if (this.process.id && !!this.getProcessById(this.process.id)) {
+			else if (this.processes.has(this.process.id, 'user')) {
 				fields.push({
 					label: 'Warning!',
 					description: "A process with the given name exists! If you click 'Save' below, you confirm that you want to override the existing process. If you don't want to override the existing process, please choose a different name below.",

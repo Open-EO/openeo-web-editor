@@ -94,15 +94,7 @@ export default {
 			}
 		}
 	},
-	async created() {
-		try {
-			await this.loadInitialProcess();
-		} catch (error) {
-			Utils.exception(this, error, "Loading process failed");
-		}
-
-	},
-	mounted() {
+	async mounted() {
 		this.listen('showDataForm', this.showDataForm);
 		this.listen('editProcess', this.editProcess);
 
@@ -123,7 +115,6 @@ export default {
 	},
 	methods: {
 		...Utils.mapActions(['describeAccount']),
-		...Utils.mapActions('editor', ['loadInitialProcess']),
 		...Utils.mapMutations('editor', ['setContext', 'setProcess']),
 
 		resized(event) {
