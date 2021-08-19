@@ -99,6 +99,9 @@ export default {
 				case 'markdown':
 					options.mode = 'text/x-markdown';
 					break;
+				case 'javascript':
+					options.mode = 'text/javascript';
+					break;
 				case 'json':
 				case 'processgraph':
 					Object.assign(options, {
@@ -121,7 +124,7 @@ export default {
 		}
 	},
 	watch: {
-		value() {
+		async value() {
 			if (this.emitValue !== this.value) {
 				this.updateContent();
 				this.editor.clearHistory();
@@ -131,12 +134,13 @@ export default {
 			for(var key in this.editorOptions) {
 				this.editor.setOption(key, this.editorOptions[key]);
 			}
+			this.updateContent();
 		}
 	},
 	mounted() {
 		this.editor = CodeMirror(document.getElementById(this.id), this.editorOptions);
 		this.editor.setSize(null, "100%");
-		if (this.languageString 	=== 'processgraph') {
+		if (this.languageString === 'processgraph') {
 			this.editor.on("change", () => this.updateState());
 		}
 		this.updateContent();
