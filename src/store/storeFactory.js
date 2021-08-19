@@ -58,7 +58,6 @@ export default ({namespace, listFn, createFn, updateFn, deleteFn, readFn, readFn
 			},
 			async read(cx, {data}) {
 				let updated = null;
-				debugger;
 				if (!(data instanceof UserProcess)) {
 					let id = Utils.isObject(data) ? data[primaryKey] : data;
 					// Try to get UserProcess from store

@@ -102,7 +102,7 @@ export default {
 				view: new View({
 					center: fromLonLat([this.center[1], this.center[0]]),
 					zoom: this.zoom,
-					multiWorld: true
+					showFullExtent: true
 				})
 			};
 			if (!this.editable) {
