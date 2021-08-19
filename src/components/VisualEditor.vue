@@ -430,17 +430,17 @@ export default {
 				}
 			];
 			this.emit('showDataForm', "Edit Process", fields, async data => {
-				let newData = Utils.pickFromObject(data, ['id', 'description', 'categories', 'experimental', 'deprecated', 'exception', 'examples', 'links']);
+				let newData = Utils.pickFromObject(data, ['id', 'summary', 'description', 'categories', 'experimental', 'deprecated', 'exception', 'examples', 'links']);
 				if (typeof newData.description === 'string' || Utils.isObject(newData.schema)) {
 					newData.returns = {
 						description: newData.returns_description,
 						schema: data.returns_schema
 					};
 				}
-				// ToDo: This is bypassing Vue's reactivity system, we should directly commit 
-				// the changes to the ModelBuilder or make it so that the state of the ModelBuilder
-				// is not destroyed when commiting a new object
-				this.commit(Object.assign(process, newData));
+				
+				let process = this.$refs.blocks.export(true);
+				let newProcess = Object.assign({}, process, newData);
+				this.commit(newProcess);
 			});
 		},
 		addParameter() {
