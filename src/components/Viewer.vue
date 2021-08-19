@@ -8,7 +8,7 @@
 			</Tab>
 		</template>
 		<template #dynamic="{ tab }">
-			<LogViewer v-if="tab.icon === 'fa-bug' || tab.icon === 'fa-bomb'" :data="tab.data" />
+			<LogViewer v-if="logViewerIcons.includes(tab.icon)" :data="tab.data" />
 			<ImageViewer v-else-if="tab.icon === 'fa-image'" :data="tab.data" />
 			<DataViewer v-else :data="tab.data" />
 		</template>
@@ -52,7 +52,12 @@ export default {
 	data() {
 		return {
 			tabCounter: {},
-			mapActive: false
+			mapActive: false,
+			logViewerIcons: [
+				'fa-bug',
+				'fa-bomb',
+				'fa-tasks'
+			]
 		}
 	},
 	computed: {

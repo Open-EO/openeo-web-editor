@@ -20,6 +20,7 @@
 								<template #file-toolbar>
 									<button type="button" @click="importProcess" title="Import process from external source"><i class="fas fa-cloud-download-alt"></i></button>
 									<button type="button" v-show="saveSupported" @click="saveProcess" :title="'Save to ' + contextTitle"><i class="fas fa-save"></i></button>
+									<button type="button" v-show="validateSupported" :disabled="!hasProcess" @click="validateProcess" title="Validate process on server-side"><i class="fas fa-tasks"></i></button>
 								</template>
 							</Editor>
 						</Pane>
@@ -71,7 +72,7 @@ export default {
 	computed: {
 		...Utils.mapState(['connection', 'isAuthenticated']),
 		...Utils.mapState('editor', ['context', 'process']),
-		...Utils.mapGetters(['title', 'apiVersion']),
+		...Utils.mapGetters(['title', 'apiVersion', 'supports']),
 		...Utils.mapGetters('jobs', {supportsJobUpdate: 'supportsUpdate'}),
 		...Utils.mapGetters('services', {supportsServiceUpdate: 'supportsUpdate'}),
 		...Utils.mapGetters('userProcesses', {supportsUserProcessUpdate: 'supportsUpdate'}),
@@ -84,6 +85,12 @@ export default {
 				(this.context instanceof Service && this.supportsServiceUpdate) ||
 				(this.context instanceof UserProcess && this.supportsUserProcessUpdate)
 			);
+		},
+		hasProcess() {
+			return Utils.size(this.process) > 0;
+		},
+		validateSupported() {
+			return this.supports('validateProcess');
 		},
 		splitpaneSize() {
 			if (this.isAuthenticated) {
@@ -130,6 +137,27 @@ export default {
 
 		saveProcess() {
 			this.emit('replaceProcess', this.context, this.process);
+		},
+
+		async validateProcess() {
+			if (!this.validateSupported) {
+				return Utils.error(this, "Server doesn't support validation");
+			}
+			else if (!this.hasProcess) {
+				return Utils.info(this, 'Nothing to validate...');
+			}
+			try {
+				let errors = await this.connection.validateProcess(this.process);
+				if (errors.length > 0) {
+					errors.forEach(error => error.level = 'error');
+					this.emit('viewLogs', errors, 'Validation Result', 'fa-tasks');
+				}
+				else {
+					Utils.ok(this, "The process is valid");
+				}
+			} catch (error) {
+				Utils.exception(this, error, "Validation rejected");
+			}
 		},
 
 		updateEditor(value) {

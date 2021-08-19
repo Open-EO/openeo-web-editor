@@ -180,7 +180,7 @@ export default new Vuex.Store({
 					.catch(error => cx.commit('addDiscoveryError', error)));
 			}
 			else {
-				cx.commit('addDiscoveryError', new Error("Collections not supported by the back-end."));
+				cx.commit('addDiscoveryError', new Error("Collections not supported by the server."));
 			}
 
 			// Request processes
@@ -189,7 +189,7 @@ export default new Vuex.Store({
 					.catch(error => cx.commit('addDiscoveryError', error)));
 			}
 			else {
-				cx.commit('addDiscoveryError', new Error("Pre-defined processes not supported by the back-end."));
+				cx.commit('addDiscoveryError', new Error("Pre-defined processes not supported by the server."));
 			}
 
 			// Request processes from namespaces
