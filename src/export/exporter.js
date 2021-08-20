@@ -43,41 +43,159 @@ export default class Exporter extends ProcessGraph {
 		return false;
 	}
 
-	async generateFunction() {}
+	comment(/*comment*/) {}
+
+	generateImports() {}
+
+	generateConnection() {}
+
+	generateAuthentication() {}
+
+	generateBuilder() {}
+
+	generateMetadata(/*key, value*/) {}
+
+	async generateFunction(/*node*/) {}
+
+	generateFunctionParams(parameters) {
+		return parameters.map(p => {
+			if (typeof p.default !== 'undefined') {
+				return `${p.name} = ${this.e(p.default)}`;
+			}
+			else {
+				return p.name;
+			}
+		});
+	}
+
+	async generateCallback(/*callback, parameters, variable*/) {}
+
+	generateResult(/*resultNode, callback*/) {}
+
+	makeNull() {
+		return "null";
+	}
+	makeBoolean(val) {
+		return val ? "true" : "false";
+	}
+	makeArray(arr) {
+		return `[${arr.join(', ')}]`;
+	}
+	makeObject(obj) {
+		let arr = Utils.mapObject(obj, (val, key) => `${this.makeString(key)}: ${val}`);
+		return `{${arr.join(', ')}}`;
+	}
+	makeString(str) {
+		return JSON.stringify(str);
+	}
+	makeNumber(num) {
+		return num;
+	}
 
 	// Helpers
 
-	async generateArguments(node, ordered = false) {
-		let args = {};
-		for(let key in node.arguments) {
-			let value = node.arguments[key];
+	e(value) {
+		if (value === null) {
+			return this.makeNull();
+		}
+		else if (typeof value === 'boolean') {
+			return this.makeBoolean(value);
+		}
+		else if (typeof value === 'number') {
+			return this.makeNumber(value);
+		}
+		else if (typeof value === 'string') {
+			return this.makeString(value);
+		}
+		else if (Array.isArray(value)) {
+			return this.makeArray(value.map(val => this.e(val)));
+		}
+		else if (Utils.isObject(value)) {
+			return this.makeObject(Utils.mapObjectValues(value, val => this.e(val)));
+		}
+		else if (typeof value === 'function') {
+			return value();
+		}
+		else {
+			return this.makeNull();
+		}
+	}
+
+	generateMetadata() {
+		let hasComment = false;
+		for(let key in this.process) {
+			if (key === 'process_graph') {
+				continue;
+			}
+			let val = this.process[key];
+			if (Array.isArray(val) && val.length === 0) {
+				continue;
+			}
+			else if (typeof val === 'string' && val.length === 0) {
+				continue;
+			}
+			else if (typeof val === 'boolean' && !val) {
+				continue;
+			}
+			if (!hasComment) {
+				this.newLine();
+				this.comment(`Set the metadata for the process`);
+				hasComment = true;
+			}
+			this.generateMetadataEntry(key, val);
+		}
+	}
+
+	async resolveArguments(args, onExporter, filter) {
+		let newArgs = Array.isArray(args) ? [] : {};
+		for(let key in args) {
+			let value = args[key];
+			if (filter && filter(key, value)) {
+				continue;
+			}
 			if (Utils.isObject(value)) {
 				if (value.from_node) {
-					args[key] = this.var(value.from_node);
-					continue;
+					newArgs[key] = () => this.var(value.from_node);
+					continue; 
 				}
 				else if (value.from_parameter) {
-					args[key] = this.var(value.from_parameter);
+					newArgs[key] = () => this.var(value.from_parameter);
 					continue;
 				}
 				else if (value instanceof Exporter) {
-					let callback = node.getArgument(key);
-					let parameters = callback.getCallbackParameters();
-					await callback.execute(parameters);
-					let fnName = this.var(`fn_${node.id}`);
-					await this.generateCallback(callback, parameters, fnName);
-					args[key] = fnName;
+					let fnName = await onExporter(key);
+					newArgs[key] = () => fnName;
 					continue;
 				}
+				else {
+					newArgs[key] = await this.resolveArguments(value, onExporter, filter);
+				}
 			}
-			args[key] = this.e(value);
+			else if (Array.isArray(value)) {
+				newArgs[key] = await this.resolveArguments(value, onExporter, filter);
+			}
+			else {
+				newArgs[key] = value;
+			}
 		}
+		return newArgs;
+	}
+
+	async resolveCallback(node, key) {
+		let callback = node.getArgument(key);
+		let parameters = callback.getCallbackParameters();
+		await callback.execute(parameters);
+		let fnName = this.var(`fn_${node.id}`);
+		await this.generateCallback(callback, parameters, fnName);
+		return fnName;
+	}
+
+	async generateArguments(node, ordered = false, filter = null) {
+		let args = await this.resolveArguments(node.arguments, async key => await this.resolveCallback(node, key), filter);
 		if (ordered) {
-			return this.orderArguments(node, args);
+			args = this.orderArguments(node, args);
 		}
-		else {
-			return args;
-		}
+		return args;
 	}
 
 	orderArguments(node, args) {
@@ -88,7 +206,7 @@ export default class Exporter extends ProcessGraph {
 					return args[param.name];
 				}
 				else if (!param.optional) {
-					return this.e(null);
+					return null;
 				}
 				else {
 					return undefined;
@@ -98,7 +216,7 @@ export default class Exporter extends ProcessGraph {
 			for(let i = orderedArgs.length-1; i >= 0; i--) {
 				if (typeof orderedArgs[i] === 'undefined') {
 					if (definedValueFound) {
-						orderedArgs[i] = this.e(null);
+						orderedArgs[i] = null;
 					}
 					else {
 						orderedArgs.pop();
@@ -112,15 +230,11 @@ export default class Exporter extends ProcessGraph {
 		}
 	}
 
-	e(value) {
-		return JSON.stringify(value);
-	}
-
 	var(id) {
 		if (this.isKeyword(id)) {
 			return `${id}_`;
 		}
-		if (!id.match(/^[a-z_]\w+$/)) {
+		if (!id.match(/^[a-z_]\w*$/)) {
 			return `datacube${id}`;
 		}
 		else {
@@ -128,11 +242,15 @@ export default class Exporter extends ProcessGraph {
 		}
 	}
 
+	getTab() {
+		return `\t`;
+	}
+
 	addCode(code, prefix = '') {
 		if (typeof code !== 'string') {
 			return;
 		}
-		let tabs = `\t`.repeat(this.indent);
+		let tabs = this.getTab().repeat(this.indent);
 		let lines = code.trim().split(/\r\n|\r|\n/g);
 		for(let line of lines) {
 			this.code.push(`${tabs}${prefix}${line}\n`);
@@ -146,7 +264,7 @@ export default class Exporter extends ProcessGraph {
 	}
 
 	getServerUrl() {
-		return this.connection.getBaseUrl(); // ToDo: Get correct url from link version-history
+		return this.connection.getUrl();
 	}
 
 	async toCode(callback = false) {
@@ -157,33 +275,10 @@ export default class Exporter extends ProcessGraph {
 			this.newLine();
 			this.comment(`Connect to the back-end`);
 			this.generateConnection();
-			this.newLine();
-			this.comment(`Authenticate at the back-end`);
 			this.generateAuthentication();
 			this.newLine();
 			this.generateBuilder();
-			let hasComment = false;
-			for(let key in this.process) {
-				if (key === 'process_graph') {
-					continue;
-				}
-				let val = this.process[key];
-				if (Array.isArray(val) && val.length === 0) {
-					continue;
-				}
-				else if (typeof val === 'string' && val.length === 0) {
-					continue;
-				}
-				else if (typeof val === 'boolean' && !val) {
-					continue;
-				}
-				if (!hasComment) {
-					this.newLine();
-					this.comment(`Set the metadata for the process`);
-					hasComment = true;
-				}
-				this.generateMetadata(key, val);
-			}
+			this.generateMetadata();
 			this.newLine();
 		}
 		await this.execute();

@@ -1,23 +1,32 @@
 <template>
-	<Modal minWidth="80%" title="Export as Source Code" @closed="$emit('closed')">
+	<Modal minWidth="70%" title="Export as Source Code" @closed="$emit('closed')">
 		<section class="exportCode">
 			<h3>Choose Programming Language</h3>
-			<input type="radio" v-model="language" id="js" value="JavaScript" selected /><label for="js">JavaScript</label>
-			<input type="radio" v-model="language" id="py" value="Python" selected /><label for="py">Python</label>
-			<input type="radio" v-model="language" id="r" value="R" selected /><label for="r">R</label>
+			<input type="radio" v-model="language" id="js" value="JavaScript" /><label for="js">JavaScript</label>
+			<input type="radio" v-model="language" id="py" value="Python" /><label for="py">Python</label>
+			<input type="radio" v-model="language" id="r" value="R" /><label for="r">R</label>
 			<h3>Generated Code</h3>
-			<TextEditor :id="language" :title="language" :value="code" :language="language" ref="editor" />
+			<div class="message warning">
+				<i class="fas fa-bullhorn"></i>
+				<span>Please note that this feature is <strong>experimental</strong> and there are chances that the generated code won't work. Also, the code generated is not always following best practices nor will the implementation use the most efficient way of implementing processes, which is the nature of automatic code generation.</span>
+			</div>
+			<TextEditor :id="language" :title="language" :value="code" :language="language" :editable="false" ref="editor">
+				<template #file-toolbar>
+					<button type="button" @click="download" title="Download code"><i class="fas fa-download"></i></button>
+				</template>
+			</TextEditor>
 		</section>
 	</Modal>
 </template>
 
 <script>
+import { OpenEO } from '@openeo/js-client';
 import TextEditor from '../TextEditor.vue';
 import Modal from './Modal.vue';
 import Utils from '../../utils';
 import JavaScript from '../../export/javascript';
-//import R from '../../export/r';
-//import Python from '../../export/python';
+import Python from '../../export/python';
+import R from '../../export/r';
 
 export default {
 	name: 'ExportCode',
@@ -44,17 +53,32 @@ export default {
 				if (this.language === 'JavaScript') {
 					exporter = new JavaScript(this.process, this.processes, this.connection);
 				}
-/*				else if (this.language === 'Python') {
+				else if (this.language === 'Python') {
 					exporter = new Python(this.process, this.processes, this.connection);
 				}
 				else if (this.language === 'R') {
 					exporter = new R(this.process, this.processes, this.connection);
-				} */
+				}
 				else {
 					Utils.error(this, 'Unsupported programming language selected');
 				}
 				this.code = exporter ? await exporter.toCode() : '';
 			}
+		}
+	},
+	methods: {
+		download() {
+			let filename;
+			if (this.language === 'JavaScript') {
+				filename = 'code.js';
+			}
+			else if (this.language === 'Python') {
+				filename = 'code.py';
+			}
+			else if (this.language === 'R') {
+				filename = 'code.r';
+			}
+			OpenEO.Environment.saveToFile(this.code, filename);
 		}
 	}
 }
@@ -72,7 +96,7 @@ export default {
 		margin-top: 2em;
 	}
 	.textEditor {
-		min-height: 200px;
+		height: 50vh;
 	}
 }
 </style>

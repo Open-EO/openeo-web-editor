@@ -3,8 +3,8 @@
 		<div class="sourceHeader">
 			<strong v-if="title">{{ title }}</strong>
 			<div class="sourceToolbar">
-				<span class="sepr" v-if="editable">
-					<button type="button" @click="confirmClear" title="New script / Clear current script"><i class="fas fa-file"></i></button>
+				<span class="sepr">
+					<button type="button" v-if="editable" @click="confirmClear" title="New script / Clear current script"><i class="fas fa-file"></i></button>
 					<slot name="file-toolbar"></slot>
 				</span>
 				<span class="sepr" v-if="editable">
@@ -274,7 +274,7 @@ export default {
 .sourceCodeEditor {
 	flex-grow: 1;
 	height: 100%;
-	overflow: auto;
+	overflow: hidden;
 }
 </style>
 <style>

@@ -11,7 +11,7 @@ const KEYWORDS = [
 	"case",
 	"catch",
 	"char",
-	"class*",
+	"class",
 	"const",
 	"continue",
 	"debugger",
@@ -20,10 +20,10 @@ const KEYWORDS = [
 	"do",
 	"double",
 	"else",
-	"enum*",
+	"enum",
 	"eval",
 	"export",
-	"extends*",
+	"extends",
 	"false",
 	"final",
 	"finally",
@@ -98,35 +98,30 @@ export default class JavaScript extends Exporter {
 	}
 
 	generateAuthentication() {
-		this.comment(`ToDo: Authentication with authenticateBasic() or authhenticateOidc()`);
+		this.comment(`ToDo: Here you need to add your authentication steps`);
 	}
 
 	generateBuilder() {
 		this.addCode(`let builder = await connection.buildProcess();`);
 	}
 
-	generateMetadata(key, value) {
-		this.addCode(`builder.${key} = ${this.e(value)};`);f
+	generateMetadataEntry(key, value) {
+		this.addCode(`builder.${key} = ${this.e(value)};`);
 	}
 
 	async generateFunction(node) {
 		let variable = this.var(node.id);
 		let builderName = node.getParent() ? 'this' : 'builder';
-		let args = await this.generateArguments(node, true);
-		let useGenericFunction = node.namespace || Utils.isObject(args);
+		let args = await this.generateArguments(node, !node.namespace);
 
 		this.comment(node.description);
-		if (useGenericFunction) {
+		if (Utils.isObject(args)) {
 			let processId = node.namespace ? `${node.process_id}@${node.namespace}` : node.process_id;
-			this.addCode(`let ${variable} = ${builderName}.process(${processId}, ${this.e(args)});`);
+			this.addCode(`let ${variable} = ${builderName}.process("${processId}", ${this.e(args)});`);
 		}
 		else {
-			this.addCode(`let ${variable} = ${builderName}.${node.process_id}(${args.join(', ')});`);
+			this.addCode(`let ${variable} = ${builderName}.${node.process_id}(${args.map(arg => this.e(arg)).join(', ')});`);
 		}
-//		if (node.description) {
-//			this.addCode(`${variable}.description(${this.e(node.description)})`);
-//		}
-
 	}
 
 	async generateCallback(callback, parameters, variable) {
@@ -135,7 +130,8 @@ export default class JavaScript extends Exporter {
 			// ToDo: Use Formula class, use ExpressionModal code
 		}
 		else {
-			let params = parameters.map(p => p.name).join(', ');
+			let params = this.generateFunctionParams(parameters);
+			this.newLine();
 			this.addCode(`let ${variable} = function(${params}) {`);
 			this.indent++;
 			this.addCode(await callback.toCode(true));
