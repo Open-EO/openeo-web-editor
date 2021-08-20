@@ -19,7 +19,8 @@
 							<Editor ref="editor" class="mainEditor tour-ide-editor" id="main" :value="process" @input="updateEditor" :title="contextTitle">
 								<template #file-toolbar>
 									<button type="button" @click="importProcess" title="Import process from external source"><i class="fas fa-cloud-download-alt"></i></button>
-									<button type="button" v-show="saveSupported" @click="saveProcess" :title="'Save to ' + contextTitle"><i class="fas fa-save"></i></button>
+									<button type="button" v-show="saveSupported" :disabled="!hasProcess" @click="saveProcess" :title="'Save to ' + contextTitle"><i class="fas fa-save"></i></button>
+									<button type="button" @click="exportCode" :disabled="!hasProcess" title="Export into another programming language"><i class="fas fa-file-export"></i></button>
 									<button type="button" v-show="validateSupported" :disabled="!hasProcess" @click="validateProcess" title="Validate process on server-side"><i class="fas fa-tasks"></i></button>
 								</template>
 							</Editor>
@@ -137,6 +138,10 @@ export default {
 
 		saveProcess() {
 			this.emit('replaceProcess', this.context, this.process);
+		},
+
+		async exportCode() {
+			this.emit('showModal', 'ExportCode');
 		},
 
 		async validateProcess() {
