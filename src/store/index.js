@@ -53,7 +53,7 @@ export default new Vuex.Store({
 		title: (state) => {
 			if (state.connection !== null && state.connection.capabilities() !== null) {
 				var title = state.connection.capabilities().title();
-				return title ? title : state.connection.getBaseUrl();
+				return title ? title : state.connection.getUrl();
 			}
 			return null;
 		},
