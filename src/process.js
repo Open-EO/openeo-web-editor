@@ -1,7 +1,7 @@
-import Utils from './utils.js';
+import Utils from './utils';
 import { ProcessSchema } from '@openeo/js-commons';
 
-class Process {
+export default class Process {
 
 	static isMathProcess(p, operatorMapping = {}) {
 		// Skip processes handled by operators, if given
@@ -43,5 +43,3 @@ class Process {
 		return true;
 	}
 }
-
-export default Process;

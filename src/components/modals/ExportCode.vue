@@ -43,7 +43,7 @@ export default {
 	computed: {
 		...Utils.mapState(['connection']),
 		...Utils.mapState('editor', ['process']),
-		...Utils.mapGetters(['processes']),
+		...Utils.mapGetters(['processes', 'supportsMath']),
 	},
 	watch: {
 		language: {
@@ -51,7 +51,7 @@ export default {
 			async handler() {
 				let exporter;
 				if (this.language === 'JavaScript') {
-					exporter = new JavaScript(this.process, this.processes, this.connection);
+					exporter = new JavaScript(this.process, this.processes, this.connection, this.supportsMath);
 				}
 				else if (this.language === 'Python') {
 					exporter = new Python(this.process, this.processes, this.connection);

@@ -4,7 +4,7 @@ import Vuex from 'vuex';
 import { OpenEO, FileTypes, Formula } from '@openeo/js-client';
 import { ProcessRegistry } from '@openeo/js-commons';
 import Utils from '../utils.js';
-import Process from '../process.js';
+import ProcessRegistryExtension from '../registryExtension.js';
 import Config from '../../config';
 // Sub-modules
 import editor from './editor';
@@ -14,6 +14,18 @@ import services from './services';
 import userProcesses from './userProcesses';
 
 Vue.use(Vuex);
+
+Formula.arrayOperatorMapping = {
+	'product': '*',
+	'sum': '+'
+};
+Formula.reverseOperatorMapping = (() => {
+	let mapping = {};
+	for(var op in Formula.operatorMapping) {
+		mapping[Formula.operatorMapping[op]] = op;
+	}
+	return Object.assign(mapping, Formula.arrayOperatorMapping);
+})();
 
 const getDefaultState = () => {
 	return {
@@ -30,17 +42,12 @@ const getDefaultState = () => {
 		udfRuntimes: {},
 		processesUpdated: 0,
 		collections: [],
-		processNamespaces: Config.processNamespaces || [],
-		operatorMapping: Formula.operatorMapping,
-		arrayOperatorMapping: {
-			'product': '*',
-			'sum': '+'
-		}
+		processNamespaces: Config.processNamespaces || []
 	};
 };
 
 export default new Vuex.Store({
-//	strict: true,
+//	strict: true, // Can't enable, js-client gets mutated externally
 	modules: {
 		editor,
 		files,
@@ -97,41 +104,27 @@ export default new Vuex.Store({
 			var bands = null;
 			return {id, spatial_extent, temporal_extent, bands};
 		},
-		processes: (state) => state.processesUpdated && state.connection !== null ? state.connection.processes : new ProcessRegistry(),
-		reverseOperatorMapping: (state) => {
-			let mapping = {};
-			for(var op in state.operatorMapping) {
-				mapping[state.operatorMapping[op]] = op;
+		processes: (state) => {
+			let registry
+			if (state.processesUpdated && state.connection !== null) {
+				registry = state.connection.processes;
 			}
-			return Object.assign(mapping, state.arrayOperatorMapping);
+			else {
+				registry = new ProcessRegistry();
+			}
+			return Object.assign(registry, ProcessRegistryExtension);
 		},
 		supportsMath: (state, getters) => {
-			for(let i in state.operatorMapping) {
-				let processId = state.operatorMapping[i];
+			if (!state.processesUpdated) {
+				return;
+			}
+			for(let i in Formula.operatorMapping) {
+				let processId = Formula.operatorMapping[i];
 				if (!getters.processes.has(processId)) {
 					return false;
 				}
 			}
 			return true;
-		},
-		isMathProcess: (state, getters) => (process) => {
-			if (!Utils.isObject(process) || Utils.size(process.process_graph) === 0) {
-				return null;
-			}
-			let unsupportedFuncs = Object.values(process.process_graph).find(node => !getters.readableMathProcesses.includes(node.process_id));
-			if (unsupportedFuncs !== undefined) {
-				return false;
-			}
-			return true;
-		},
-		mathProcesses: (state, getters) => {
-			return getters.processes.all().filter(Process.isMathProcess);
-		},
-		readableMathProcesses: (state, getters) => {
-			return getters.mathProcesses.map(p => p.id)
-					.concat(Object.values(state.operatorMapping))
-					.concat(Object.keys(state.arrayOperatorMapping))
-					.concat(['array_element']);
 		}
 	},
 	actions: {
@@ -265,6 +258,7 @@ export default new Vuex.Store({
 		},
 
 		async loadProcess(cx, {id, namespace}) {
+			console.log(id, namespace);
 			process = cx.getters.processes.get(id, namespace);
 			if (process.namespace !== 'backend') {
 				if (process.namespace === 'user') {

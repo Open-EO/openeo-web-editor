@@ -58,6 +58,7 @@ import DiscoveryToolbar from './DiscoveryToolbar.vue';
 import EventBusMixin from './EventBusMixin.vue';
 import FullscreenButton from './FullscreenButton.vue';
 import { ProcessParameter } from '@openeo/js-commons';
+import JavaScript from '../export/javascript';
 
 export default {
 	name: 'VisualEditor',
@@ -95,9 +96,12 @@ export default {
 		defaultValue: {}
 	},
 	computed: {
-		...Utils.mapState(['collections']),
-		...Utils.mapGetters(['supportsMath', 'isMathProcess', 'processes']),
+		...Utils.mapState(['connection', 'collections']),
+		...Utils.mapGetters(['processes', 'supportsMath']),
 		...Utils.mapState('editor', ['initialNode']),
+		isMath() {
+			return (this.supportsMath && this.processes.isMath(this.value));
+		}
 	},
 	data() {
 		return {
@@ -105,7 +109,7 @@ export default {
 			canRedo: false,
 			compactMode: false,
 			hasSelection: false,
-			isMath: false,
+			formula: null,
 			isFullScreen: false
 		};
 	},
@@ -113,8 +117,6 @@ export default {
 		value: {
 			immediate: true,
 			handler(value) {
-				this.isMath = this.isMathProcess(value);
-
 				if (this.initialNode && Utils.isObject(value) && Utils.isObject(value.process_graph)) {
 					try {
 						let node = this.initialNode;
@@ -472,14 +474,20 @@ export default {
 			this.emit('showDataForm', title, fields, saveCallback);
 		},
 		showExpressionModal() {
-			let props = {
-				process: this.value,
-				pgParameters: this.$refs.blocks.getPgParameters()
-			};
-			let events = {
-				save: this.insertNodes
-			};
-			this.emit('showModal', 'ExpressionModal', props, events);
+			let js = new JavaScript(this.value, this.processes, this.connection, true);
+			js.setCallbackParameters(this.$refs.blocks.getPgParameters().map(block => block.spec));
+			try {
+				js.parse();
+				let props = {
+					process: js
+				};
+				let events = {
+					save: this.insertNodes
+				};
+				this.emit('showModal', 'ExpressionModal', props, events);
+			} catch (error) {
+				Utils.exception(this, error);
+			}
 		},
 		openArgumentEditorForNode(nodeId) {
 			let process = Utils.deepClone(this.value);

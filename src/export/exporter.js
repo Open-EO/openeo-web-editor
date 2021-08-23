@@ -186,8 +186,8 @@ export default class Exporter extends ProcessGraph {
 		let parameters = callback.getCallbackParameters();
 		await callback.execute(parameters);
 		let fnName = this.var(`fn_${node.id}`);
-		await this.generateCallback(callback, parameters, fnName);
-		return fnName;
+		let replacement = await this.generateCallback(callback, parameters, fnName);
+		return replacement ? replacement : fnName;
 	}
 
 	async generateArguments(node, ordered = false, filter = null) {
@@ -288,6 +288,14 @@ export default class Exporter extends ProcessGraph {
 		}
 		this.generateResult(this.getResultNode(), callback);
 		return this.code.join('').trim();
+	}
+
+	isMath() {
+		if (typeof this._isMath === 'undefined') {
+			// Determine whether the process is just math
+			this._isMath = this.processRegistry.isMath(this);
+		}
+		return this._isMath;
 	}
 
 }
