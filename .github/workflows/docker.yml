@@ -6,7 +6,7 @@ name: Docker build and push
 
 on:
   push:
-    branches: [master, gha-docker]
+    branches: [master]
     tags: ['*.*.*']
   release:
     types: [published]
