@@ -271,9 +271,10 @@ export default {
 }
 #editor {
 	padding-bottom: 0.5rem;
-}
-#editor:last-child {
-	padding-bottom: 0;
+
+	&:last-child {
+		padding-bottom: 0;
+	}
 }
 
 #user {
@@ -305,60 +306,74 @@ export default {
 	padding: 0;
 	display: flex;
 	align-items: center;
-}
-#menu li {
-	position: relative;
-	display: inline-block;
-	height: 80px;
-}
-#menu li:hover {
-	background-color: white;
-	color: $mainColor;
-}
-#menu li:hover .dropdown {
-	display: block;
-	border-color: #ddd;
-	border-style: solid;
-	border-width: 0 1px 1px 1px;
-}
-#menu li .menuItem {
-	display: flex;
-	align-items: center;
-	cursor: pointer;
-	padding: 10px 20px;
-	height: 60px;
-	font-size: 16px;
-	font-weight: bold;
-}
-#menu li .dropdown {
-	display: none;
-	position: absolute;
-	background-color: white;
-	color: black;
-	min-width: 200px;
-	box-shadow: 8px 8px 8px 0px rgba(0,0,0,0.3);
-	top: 80px;
-	right: -1px;
-}
-#menu li .dropdown .item {
-	padding: 10px;
-	border-top: 1px dotted #ccc;
-}
-#menu li .dropdown .item:first-of-type {
-	border-top: 0;
-}
-#menu li .dropdown .item button {
-	width: 100%;
+
+	li {
+		position: relative;
+		display: inline-block;
+		height: 80px;
+
+		&:hover {
+			background-color: white;
+			color: $mainColor;
+
+			.dropdown {
+				display: block;
+				border-color: #ddd;
+				border-style: solid;
+				border-width: 0 1px 1px 1px;
+			}
+		}
+
+		.menuItem {
+			display: flex;
+			align-items: center;
+			cursor: pointer;
+			padding: 10px 20px;
+			height: 60px;
+			font-size: 16px;
+			font-weight: bold;
+		}
+
+		.dropdown {
+			display: none;
+			position: absolute;
+			background-color: white;
+			color: black;
+			min-width: 200px;
+			box-shadow: 8px 8px 8px 0px rgba(0,0,0,0.3);
+			top: 80px;
+			right: -1px;
+
+			.item {
+				padding: 10px;
+				display: block;
+
+				&.separator {
+					border-bottom: 1px dotted $mainColor;
+				}
+			}
+
+			hr {
+				margin: 5px 10px;
+			}
+
+			a.item:hover {
+				background-color: $mainColor;
+				color: white;
+			}
+		}
+	}
 }
 
-.tabContent .dataTable, .tabContent table {
+.tabContent .dataTable,
+.tabContent table {
 	width: 100%;
 	border-collapse: collapse;
 	font-size: 0.95em;
-}
-.tabContent table td,
-.tabContent table th {
-	border: 1px solid #ddd;
-	padding: 3px;
+
+	td, th {
+		border: 1px solid #ddd;
+		padding: 3px;
+	}
 }
 </style>

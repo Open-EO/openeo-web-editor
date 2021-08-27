@@ -11,22 +11,39 @@
 			</div>
 		</div>
 		<div class="dropdown">
-			<div class="item">
-				Welcome, {{ userName }}!
-			</div>
-			<div class="item" v-if="hasStorage">
-				<h4>Storage</h4>
-				<div class="storagePercent"><div class="used" :style="'width: ' + storageUsedPercent + '%'"></div></div>
-				<div class="nowrap">Used {{ formatMegabyte(storageUsed) }} of {{ formatMegabyte(userInfo.storage.quota) }}.</div>
-			</div>
-			<div class="item" v-for="(link, key) in links" :key="key">
-				<a :href="link.href" target="_blank" :rel="link.rel">{{ link.title }}</a>
-			</div>
-			<div class="item">
-				<button v-if="!isAuthenticated" class="navButton" type="button" @click.prevent="login"><i class="fas fa-sign-in-alt"></i> Login</button>
-				<button v-else class="navButton" type="button" @click.prevent="logout"><i class="fas fa-sign-out-alt"></i> Logout</button>
-				<button v-if="!$config.serverUrl" class="navButton" type="button" @click.prevent="disconnect"><i class="fas fa-sign-out-alt"></i> Disconnect</button>
-			</div>
+			<a v-if="profileLink" class="item" :href="profileLink.href" target="_blank">Welcome, {{ userName }}!</a>
+			<div v-else class="item">Welcome, {{ userName }}!</div>
+			<template v-if="isAuthenticated">
+				<a v-if="settingsLink" class="item" :href="settingsLink.href" target="_blank"><i class="fas fa-user-edit"></i> {{ settingsLink.title || 'Edit Profile' }}</a>
+				<a class="item" @click.prevent="logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
+			</template>
+			<template v-else>
+				<a class="item" @click.prevent="login"><i class="fas fa-sign-in-alt"></i> Login</a>
+				<a v-if="registerLink" class="item" :href="registerLink.href" target="_blank"><i class="fas fa-user-plus"></i> Register</a>
+				<a v-if="passwordLink" class="item" :href="passwordLink.href" target="_blank"><i class="fas fa-key"></i>  Forgotten Password?</a>
+			</template>
+			<a v-if="!$config.serverUrl" class="item" @click.prevent="disconnect"><i class="fas fa-sign-out-alt"></i> Disconnect</a>
+			<template v-if="userLinks.length > 0">
+				<hr />
+				<a v-for="(link, key) in userLinks" :key="key" :href="link.href" target="_blank" class="item" :rel="link.rel">{{ link.title }}</a>
+			</template>
+			<template v-if="budget || userInfo.default_plan || paymentLink">
+				<hr />
+				<div class="item">
+					<h4>Billing</h4>
+					<div v-if="userInfo.default_plan" class="secondary-text">Plan: {{ userInfo.default_plan }}</div>
+					<div v-if="budget" class="secondary-text">Budget: {{ budget }}</div>
+				</div>
+				<a v-if="paymentLink" :href="paymentLink.href" class="item" target="_blank"><i class="fas fa-credit-card"></i> {{ paymentLink.title || 'Recharge' }}</a>
+			</template>
+			<template v-if="hasStorage">
+				<hr />
+				<div class="item">
+					<h4>Storage</h4>
+					<div class="secondary-text nowrap">Used {{ formatMegabyte(storageUsed) }} of {{ formatMegabyte(userInfo.storage.quota) }}.</div>
+					<div class="storagePercent"><div class="used" :style="'width: ' + storageUsedPercent + '%'"></div></div>
+				</div>
+			</template>
 		</div>
 	</div>
 </template>
@@ -38,9 +55,27 @@ export default {
 	name: 'UserMenu',
 	computed: {
 		...Utils.mapState(['userInfo', 'isAuthenticated']),
-		...Utils.mapGetters(['currency']),
-		links() {
-			return Utils.friendlyLinks(this.userInfo.links);
+		...Utils.mapGetters(['currency', 'capabilities']),
+		userLinks() {
+			return Utils.friendlyLinks(this.userInfo.links, true, ['self', 'edit-form', 'payment', 'alternate']);
+		},
+		serverLinks() {
+			return this.capabilities ? this.capabilities.links() : [];
+		},
+		registerLink() {
+			return this.serverLinks.find(link => link.rel === 'create-form');
+		},
+		passwordLink() {
+			return this.serverLinks.find(link => link.rel === 'recovery-form');
+		},
+		settingsLink() {
+			return Array.isArray(this.userInfo.links) ? this.userInfo.links.find(link => link.rel === 'edit-form') : undefined;
+		},
+		paymentLink() {
+			return Array.isArray(this.userInfo.links) ? this.userInfo.links.find(link => link.rel === 'payment') : undefined;
+		},
+		profileLink() {
+			return Array.isArray(this.userInfo.links) ? this.userInfo.links.find(link => link.rel === 'alternate') : undefined;
 		},
 		hasStorage() {
 			return Utils.isObject(this.userInfo.storage) && typeof this.userInfo.storage.quota === 'number' && typeof this.userInfo.storage.free === 'number';
@@ -104,7 +139,7 @@ export default {
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .down {
 	width: 1em;
 	padding-right: 10px;
@@ -126,17 +161,27 @@ export default {
 	background-color: green;
 	height: 1em;
 	border-radius: 0.3em;
+
+	.used {
+		background-color: maroon;
+		width: 1px;
+		height: 1em;
+		border-radius: 0.3em;
+	}
 }
-.storagePercent .used {
-	background-color: maroon;
-	width: 1px;
-	height: 1em;
-	border-radius: 0.3em;
+.secondary-text {
+	font-size: 0.9em;
+	line-height: 1.8em;
+	color: #555;
 }
 .nowrap {
 	white-space: nowrap;
 }
 h4 {
 	margin: 0 0 10px 0;
+}
+.navButton {
+	display: block;
+	text-align: left;
 }
 </style>

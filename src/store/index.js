@@ -258,7 +258,6 @@ export default new Vuex.Store({
 		},
 
 		async loadProcess(cx, {id, namespace}) {
-			console.log(id, namespace);
 			process = cx.getters.processes.get(id, namespace);
 			if (process.namespace !== 'backend') {
 				if (process.namespace === 'user') {
