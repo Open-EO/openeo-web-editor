@@ -44,6 +44,8 @@
 		<Budget v-else-if="type === 'budget'" v-model="state" :editable="editable" />
 		<!-- Budget -->
 		<Duration v-else-if="type === 'duration'" v-model="state" :editable="editable" />
+		<!-- Budget -->
+		<Kernel v-else-if="type === 'kernel'" v-model="state" :editable="editable" />
 		<!-- UDF-Code -->
 		<TextEditor class="fieldValue textarea" v-else-if="type === 'udf-code'" :id="name" :editable="editable" v-model="state" :language="dependency" />
 		<!-- CommonMark -->
@@ -92,6 +94,7 @@ export default {
 		ParameterDataTypes: () => import('./ParameterDataTypes.vue'),
 		// Async loading for smaller starting bundle,
 		Duration: () => import('./datatypes/Duration.vue'),
+		Kernel: () => import('./datatypes/Kernel.vue'),
 		SelectBox: () => import('./datatypes/SelectBox.vue'),
 		TemporalPicker: () => import('./datatypes/TemporalPicker.vue')
 	},
