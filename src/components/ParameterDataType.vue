@@ -279,7 +279,7 @@ export default {
 }
 .callbackEditor {
 	height: 450px;
-	min-width: 50vw;
+	min-width: 50px;
 	width: 100%;
 }
 </style>
