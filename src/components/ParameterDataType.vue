@@ -42,6 +42,8 @@
 		<FileFormatOptionsEditor v-else-if="type === 'output-format-options' || type === 'input-format-options'" ref="fileFormatOptionsEditor" :type="type" v-model="state" :format="dependency"></FileFormatOptionsEditor>
 		<!-- Budget -->
 		<Budget v-else-if="type === 'budget'" v-model="state" :editable="editable" />
+		<!-- Budget -->
+		<Duration v-else-if="type === 'duration'" v-model="state" :editable="editable" />
 		<!-- UDF-Code -->
 		<TextEditor class="fieldValue textarea" v-else-if="type === 'udf-code'" :id="name" :editable="editable" v-model="state" :language="dependency" />
 		<!-- CommonMark -->
@@ -88,7 +90,8 @@ export default {
 		Editor: () => import('./Editor.vue'),
 		FileFormatOptionsEditor: () => import('./datatypes/FileFormatOptionsEditor.vue'),
 		ParameterDataTypes: () => import('./ParameterDataTypes.vue'),
-		// Async loading for smaller starting bundle
+		// Async loading for smaller starting bundle,
+		Duration: () => import('./datatypes/Duration.vue'),
 		SelectBox: () => import('./datatypes/SelectBox.vue'),
 		TemporalPicker: () => import('./datatypes/TemporalPicker.vue')
 	},
