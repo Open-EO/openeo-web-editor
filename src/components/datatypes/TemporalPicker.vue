@@ -1,20 +1,21 @@
 <template>
 	<div class="datatypeEditor fieldValue temporalPicker">
-		<!-- ToDo: Support open date ranges: https://github.com/mengxiong10/vue2-datepicker/issues/612 -->
-		<DatePicker :key="type" v-model="dateTimes" :disabled ="!editable" :range="range" :placeholder="label" :format="formatUi" :type="pickerType" :showSecond="false" :value-type="formatApi"></DatePicker>
+		<template v-if="type === 'temporal-interval'">
+			<DatePicker v-model="dateTimes[0]" :get-classes="getRangeClasses" :default-value="dateTimes[0] || new Date()" :disabled-date="disabledStartDate" :disabled-time="disabledStartTime" :placeholder="label[0]" :type="pickerType" :value-type="formatApi"></DatePicker>
+			<DatePicker v-model="dateTimes[1]" :get-classes="getRangeClasses" :default-value="dateTimes[1] || new Date()" :disabled-date="disabledEndDate" :disabled-time="disabledEndTime" :placeholder="label[1]" :type="pickerType" :value-type="formatApi"></DatePicker>
+		</template>
+		<DatePicker v-else :key="type" v-model="dateTimes" :disabled ="!editable" :placeholder="label" :format="formatUi" :type="pickerType" :showSecond="false" :value-type="formatApi"></DatePicker>
 	</div>
 </template>
 
 <script>
 import DatePicker from 'vue2-datepicker';
 import 'vue2-datepicker/index.css';
-import SelectBox from './SelectBox.vue';
 
 export default {
 	name: 'TemporalPicker',
 	components: {
-		DatePicker,
-		SelectBox
+		DatePicker
 	},
 	props: {
 		value: {
@@ -58,13 +59,14 @@ export default {
 				case 'date-time': // Single date and time
 					return 'Select date and time';
 				case 'temporal-interval':
-					return 'Select start and end time';
+					let openRange = this.dateTimes[0] || this.dateTimes[1];
+					return [
+						openRange ? 'Open-ended interval': 'Select start time',
+						openRange ? 'Open-ended interval': 'Select end time'
+					];
 				case 'time': // Single time
 					return 'Select time';
 			}
-		},
-		range() {
-			return (this.type === 'temporal-interval');
 		},
 		pickerType() {
 			switch(this.type) {
@@ -85,11 +87,54 @@ export default {
 		value: {
 			immediate: true,
 			handler(newValue) {
-				this.dateTimes = newValue;
+				if (this.type === 'temporal-interval' && (!Array.isArray(newValue) || newValue.length < 2)) {
+					this.dateTimes = [null, null];
+				}
+				else {
+					this.dateTimes = newValue;
+				}
 			}
 		},
 		dateTimes(value) {
+			if (this.type === 'temporal-interval' && value[0] === null && value[1] === null) {
+				value = null;
+			}
       		this.$emit('input', value);
+		}
+	},
+	methods: {
+		getRangeClasses(cellDate, currentDates, classnames) {
+			const classes = [];
+			const start = this.dateTimes[0] && new Date(this.dateTimes[0]).setHours(0, 0, 0, 0);
+			const end = this.dateTimes[1] && new Date(this.dateTimes[1]).setHours(0, 0, 0, 0);
+			if (
+				!/disabled|active|not-current-month/.test(classnames) &&
+				start && end &&
+				cellDate.getTime() >= start && cellDate.getTime() <= end
+			) {
+				classes.push("in-range");
+			}
+			return classes;
+		},
+		disabledStartDate(date) {
+			return (
+				this.dateTimes[1] &&
+				new Date(date).setHours(0, 0, 0, 0) >
+				new Date(this.dateTimes[1]).setHours(0, 0, 0, 0)
+			);
+		},
+		disabledEndDate(date) {
+			return (
+				this.dateTimes[0] &&
+				new Date(date).setHours(0, 0, 0, 0) <
+				new Date(this.dateTimes[0]).setHours(0, 0, 0, 0)
+			);
+		},
+		disabledStartTime(date) {
+			return this.dateTimes[1] && date > this.dateTimes[1];
+		},
+		disabledEndTime(date) {
+			return this.dateTimes[0] && date < this.dateTimes[0];
 		}
 	}
 }
