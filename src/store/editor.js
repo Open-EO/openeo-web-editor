@@ -13,7 +13,8 @@ const getDefaultState = () => {
 		hightestModalZIndex: 1000,
 		epsgCodes: [],
 		initialProcess: null,
-		initialNode: null
+		initialNode: null,
+		collectionPreview: null
 	};
 };
 
@@ -71,6 +72,12 @@ export default {
 		},
 		setInitialNode(state, node) {
 			state.initialNode = node;
+		},
+		setCollectionPreview(state, collectionID) {
+			state.collectionPreview = collectionID;
+			if (!state.discoverySearchTerm) {
+				state.discoverySearchTerm = collectionID;
+			}
 		},
 		openModal(state) {
 			state.hightestModalZIndex = state.hightestModalZIndex + 1;

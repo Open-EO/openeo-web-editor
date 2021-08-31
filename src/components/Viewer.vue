@@ -65,9 +65,17 @@ export default {
 	},
 	methods: {
 		...Utils.mapActions(['describeCollection']),
-		showCollectionPreview(collection) {
+		async showCollectionPreview(collection) {
+			if (typeof collection === 'string') {
+				try {
+					collection = await this.describeCollection(collection);
+				} catch (error) {
+					Utils.error(this, "Sorry, can't load collection '" + collection + "'.");
+					return;
+				}
+			}
 			this.showMapViewer();
-			this.$refs.mapViewer.addCollection(collection);
+			await this.$refs.mapViewer.addCollection(collection);
 		},
 		showWebService(service) {
 			this.showMapViewer();

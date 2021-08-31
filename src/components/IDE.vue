@@ -72,7 +72,7 @@ export default {
 	},
 	computed: {
 		...Utils.mapState(['connection', 'isAuthenticated']),
-		...Utils.mapState('editor', ['context', 'process']),
+		...Utils.mapState('editor', ['context', 'process', 'collectionPreview']),
 		...Utils.mapGetters(['title', 'apiVersion', 'supports']),
 		...Utils.mapGetters('jobs', {supportsJobUpdate: 'supportsUpdate'}),
 		...Utils.mapGetters('services', {supportsServiceUpdate: 'supportsUpdate'}),
@@ -112,6 +112,13 @@ export default {
 			this.userInfoUpdater = setInterval(this.describeAccount, this.$config.dataRefreshInterval*60*1000); // Refresh user data every x minutes
 		}
 		this.emit('title', this.title);
+
+		if (this.collectionPreview) {
+			this.$nextTick(() => {
+				this.emit('showCollectionPreview', this.collectionPreview);
+				this.setCollectionPreview(null);
+			});
+		}
 	},
 	beforeDestroy() {
 		if (this.resizeListener !== null) {
@@ -123,7 +130,7 @@ export default {
 	},
 	methods: {
 		...Utils.mapActions(['describeAccount']),
-		...Utils.mapMutations('editor', ['setContext', 'setProcess']),
+		...Utils.mapMutations('editor', ['setContext', 'setProcess', 'setCollectionPreview']),
 
 		resized(event) {
 			this.emit('windowResized', event);

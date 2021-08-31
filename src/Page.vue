@@ -59,6 +59,7 @@ export default {
 		this.addProcessNamespacesToRequest(Utils.param('namespaces'));
 		this.setInitialProcess(Utils.param('process'));
 		this.setInitialNode(Utils.param('edit-node'));
+		this.setCollectionPreview(Utils.param('preview-collection'));
 
 		if (Utils.param('discover')) {
 			this.skipLogin = true;
@@ -107,7 +108,7 @@ export default {
 	methods: {
 		...Utils.mapActions(['describeAccount', 'describeCollection', 'loadProcess']),
 		...Utils.mapMutations(['startActiveRequest', 'endActiveRequest', 'addProcessNamespacesToRequest']),
-		...Utils.mapMutations('editor', ['setInitialProcess', 'setInitialNode']),
+		...Utils.mapMutations('editor', ['setInitialProcess', 'setInitialNode', 'setCollectionPreview']),
 		setTitle(subtitle) {
 			var title = `${this.$config.serviceName} ${this.$config.appName}`;
 			if (subtitle) {
