@@ -30,14 +30,14 @@
 					ref="blocks"
 					:editable="editable"
 					:id="id"
-					:processes="processRegistry"
+					:processes="processes"
 					:collections="collections"
 					:parent="parent"
 					:parentSchema="parentSchema"
 					:value="value"
 					@input="commit"
 					@error="errorHandler"
-					@showProcess="id => emit('showProcess', id)"
+					@showProcess="(id, namespace) => emit('showProcess', {id, namespace})"
 					@showCollection="id => emit('showCollection', id)"
 					@showParameter="param => emit('showProcessParameter', param)"
 					@editParameter="editParameter"
@@ -57,6 +57,8 @@ import Utils from '../utils.js';
 import DiscoveryToolbar from './DiscoveryToolbar.vue';
 import EventBusMixin from './EventBusMixin.vue';
 import FullscreenButton from './FullscreenButton.vue';
+import { ProcessParameter } from '@openeo/js-commons';
+import JavaScript from '../export/javascript';
 
 export default {
 	name: 'VisualEditor',
@@ -94,9 +96,12 @@ export default {
 		defaultValue: {}
 	},
 	computed: {
-		...Utils.mapState(['collections']),
-		...Utils.mapGetters(['processRegistry']),
-		...Utils.mapGetters('userProcesses', ['supportsMath', 'isMathProcess'])
+		...Utils.mapState(['connection', 'collections']),
+		...Utils.mapGetters(['processes', 'supportsMath']),
+		...Utils.mapState('editor', ['initialNode']),
+		isMath() {
+			return (this.supportsMath && this.processes.isMath(this.value));
+		}
 	},
 	data() {
 		return {
@@ -104,16 +109,32 @@ export default {
 			canRedo: false,
 			compactMode: false,
 			hasSelection: false,
-			isMath: false,
+			formula: null,
 			isFullScreen: false
 		};
 	},
 	watch: {
-		value(value) {
-			this.isMath = this.isMathProcess(value);
+		value: {
+			immediate: true,
+			handler(value) {
+				if (this.initialNode && Utils.isObject(value) && Utils.isObject(value.process_graph)) {
+					try {
+						let node = this.initialNode;
+						if (node == "1" && Utils.size(value.process_graph)) {
+							node = Object.keys(value.process_graph)[0];
+						}
+						this.openArgumentEditorForNode(node);
+					} catch (error) {
+						Utils.exception(this, error);
+					} finally {
+						this.setInitialNode(null);
+					}
+				}
+			}
 		}
 	},
 	methods: {
+		...Utils.mapMutations('editor', ['setInitialNode']),
 		commit(value) {
 			// Fix #115: Return the default value/null if no nodes are given
 			if (typeof this.defaultValue !== 'undefined' && Utils.isObject(value) && Utils.size(value.process_graph) === 0) {
@@ -411,17 +432,17 @@ export default {
 				}
 			];
 			this.emit('showDataForm', "Edit Process", fields, async data => {
-				let newData = Utils.pickFromObject(data, ['id', 'description', 'categories', 'experimental', 'deprecated', 'exception', 'examples', 'links']);
+				let newData = Utils.pickFromObject(data, ['id', 'summary', 'description', 'categories', 'experimental', 'deprecated', 'exception', 'examples', 'links']);
 				if (typeof newData.description === 'string' || Utils.isObject(newData.schema)) {
 					newData.returns = {
 						description: newData.returns_description,
 						schema: data.returns_schema
 					};
 				}
-				// ToDo: This is bypassing Vue's reactivity system, we should directly commit 
-				// the changes to the ModelBuilder or make it so that the state of the ModelBuilder
-				// is not destroyed when commiting a new object
-				this.commit(Object.assign(process, newData));
+				
+				let process = this.$refs.blocks.export(true);
+				let newProcess = Object.assign({}, process, newData);
+				this.commit(newProcess);
 			});
 		},
 		addParameter() {
@@ -453,14 +474,36 @@ export default {
 			this.emit('showDataForm', title, fields, saveCallback);
 		},
 		showExpressionModal() {
-			let props = {
-				process: this.value,
-				pgParameters: this.$refs.blocks.getPgParameters()
-			};
-			let events = {
-				save: this.insertNodes
-			};
-			this.emit('showModal', 'ExpressionModal', props, events);
+			let js = new JavaScript(this.value, this.processes, this.connection, true);
+			js.setCallbackParameters(this.$refs.blocks.getPgParameters().map(block => block.spec));
+			try {
+				js.parse();
+				let props = {
+					process: js
+				};
+				let events = {
+					save: this.insertNodes
+				};
+				this.emit('showModal', 'ExpressionModal', props, events);
+			} catch (error) {
+				Utils.exception(this, error);
+			}
+		},
+		openArgumentEditorForNode(nodeId) {
+			let process = Utils.deepClone(this.value);
+			let node = process.process_graph[nodeId];
+			let processSpec = this.processes.get(node.process_id, node.namespace);
+			this.openArgumentEditor(
+				processSpec.parameters.map(p => new ProcessParameter(p)).filter(p => p.isEditable()),
+				node.arguments,
+				processSpec.id,
+				true,
+				null,
+				data => {
+					Object.assign(node, {arguments: data});
+					this.commit(process);
+				}
+			);
 		},
 		openArgumentEditor(parameters, data, title = "Edit", editable = true, selectParameterName = null, saveCallback = null, parent = null) {
 			let props = {
@@ -492,7 +535,11 @@ export default {
 		insertProcess(node, x = null, y = null) {
 			try {
 				var pos = this.$refs.blocks.getPositionForPageXY(x, y);
-				this.$refs.blocks.addProcess(node.process_id, node.arguments, pos);
+				let namespace = node.namespace;
+				if (namespace === 'backend' || namespace === 'user') {
+					namespace = null;
+				}
+				this.$refs.blocks.addProcess(node.process_id, node.arguments, pos, namespace);
 			} catch(error) {
 				Utils.exception(this, error);
 			}

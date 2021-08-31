@@ -4,7 +4,7 @@ import { ProcessGraph } from '@openeo/js-processgraphs';
 
 const serverStorage = "serverUrls";
 
-const getDefaultState = importFromQuery => {
+const getDefaultState = () => {
 	return {
 		storedServers: JSON.parse(localStorage.getItem(serverStorage) || "[]"),
 		context: null,
@@ -12,13 +12,15 @@ const getDefaultState = importFromQuery => {
 		discoverySearchTerm: '',
 		hightestModalZIndex: 1000,
 		epsgCodes: [],
-		initialProcessUrl: importFromQuery ? Utils.param('process') : null
+		initialProcess: null,
+		initialNode: null,
+		collectionPreview: null
 	};
 };
 
 export default {
 	namespaced: true,
-	state: getDefaultState(true),
+	state: getDefaultState(),
 	getters: {
 		hasProcess: state => Utils.isObject(state.process) && Utils.size(state.process) > 0 && Utils.size(state.process.process_graph),
 	},
@@ -30,20 +32,52 @@ export default {
 			}
 		},
 		async loadInitialProcess(cx) {
-			if(!Utils.isUrl(cx.state.initialProcessUrl)) {
-				return;
+			if (cx.state.process) {
+				return; // Process already loaded (usually during a later login)
 			}
-			let response = await axios(cx.state.initialProcessUrl);
-			if (Utils.isObject(response.data)) {
-				var pg = new ProcessGraph(response.data);
-				pg.parse();
-				cx.commit('setProcess', response.data);
+			if (Utils.isUrl(cx.state.initialProcess)) {
+				let response = await axios(cx.state.initialProcess);
+				if (Utils.isObject(response.data)) {
+					var pg = new ProcessGraph(response.data);
+					pg.parse();
+					cx.commit('setProcess', response.data);
+				}
+			}
+			else if (typeof cx.state.initialProcess === 'string' && cx.state.initialProcess.length > 0) {
+				let [id, namespace] = cx.state.initialProcess.split('@');
+				try {
+					await cx.dispatch('loadProcess', {id, namespace}, {root: true});
+				} catch (error) {
+					console.warn(error);
+				}
+				cx.commit('setProcess', {
+					process_graph: {
+						[id]: {
+							process_id: id,
+							namespace,
+							arguments: {},
+							result: true
+						}
+					}
+				});
 			}
 		}
 	},
 	mutations: {
 		setDiscoverySearchTerm(state, searchTerm) {
 			state.discoverySearchTerm = searchTerm;
+		},
+		setInitialProcess(state, process) {
+			state.initialProcess = process;
+		},
+		setInitialNode(state, node) {
+			state.initialNode = node;
+		},
+		setCollectionPreview(state, collectionID) {
+			state.collectionPreview = collectionID;
+			if (!state.discoverySearchTerm) {
+				state.discoverySearchTerm = collectionID;
+			}
 		},
 		openModal(state) {
 			state.hightestModalZIndex = state.hightestModalZIndex + 1;

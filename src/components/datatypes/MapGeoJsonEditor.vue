@@ -36,7 +36,7 @@ export default {
 			}
 		},
 		renderMap() {
-			this.createMap(true);
+			this.createMap(true, 'EPSG:4326');
 
 			if (!this.editable) {
 				this.geoJsonLayer = this.addGeoJson(this.value);

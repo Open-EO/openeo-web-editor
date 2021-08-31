@@ -72,7 +72,7 @@ export default {
 				this.$nextTick(() => this.renderMap());
 			}
 		},
-		createMap(showLayerSwitcher = false) {
+		createMap(showLayerSwitcher = false, projection = 'EPSG:3857') {
 			if (this.map !== null) {
 				this.map.updateSize();
 				this.map.render();
@@ -94,15 +94,17 @@ export default {
 			if (showLayerSwitcher) {
 				customControls.push(new LayerSwitcher({trash: this.removableLayers}));
 			}
+			let center = [this.center[1], this.center[0]];
 			var mapOptions = {
 				target: this.id,
 				layers: [
 					this.baseLayer
 				],
 				view: new View({
-					center: fromLonLat([this.center[1], this.center[0]]),
+					center: projection === 'EPSG:3857' ? fromLonLat(center) : center,
 					zoom: this.zoom,
-					multiWorld: true
+					showFullExtent: true,
+					projection
 				})
 			};
 			if (!this.editable) {
@@ -115,6 +117,13 @@ export default {
 			this.map = new Map(mapOptions);
 
 			this.listen('windowResized', this.updateMapSize);
+		},
+
+		fromLonLat(coords) {
+			if (this.map && this.map.getView().getProjection().getCode() === 'EPSG:3857') {
+				return fromLonLat(coords);
+			}
+			return coords;
 		},
 
 		onShow() {

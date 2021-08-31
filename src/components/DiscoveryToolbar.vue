@@ -15,11 +15,12 @@
 				</template>
 			</Collections>
 
-			<Processes class="category" :processes="processes" :searchTerm="searchTerm" :offerDetails="false" :collapsed="collapsed">
+			<Processes class="category" :processes="allProcesses" :searchTerm="searchTerm" :offerDetails="false" :collapsed="collapsed">
 				<template #summary="{ item }">
 					<div class="discovery-entity" draggable="true" @dragstart="onDrag($event, 'process', item)">
 						<div class="discovery-info" @click="showProcess(item)">
-							<i v-if="!item.native" class="custom-process fas fa-xs fa-sitemap" title="Custom Process"></i>
+							<i v-if="item.namespace === 'user'" class="custom-process fas fa-xs fa-sitemap" title="Custom Process"></i>
+							<i v-else-if="item.namespace !== 'backend'" class="custom-process fas fa-xs fa-tag" :title="`Process from namespace '${item.namespace}'`"></i>
 							<strong :title="item.id">{{ item.id }}</strong>
 							<small v-if="item.summary" :title="item.summary">{{ item.summary }}</small>
 						</div>
@@ -95,25 +96,23 @@ export default {
 		};
 	},
 	computed: {
-		...Utils.mapState(['predefinedProcesses', 'collections', 'udfRuntimes']),
+		...Utils.mapState(['collections', 'udfRuntimes']),
 		...Utils.mapState('editor', ['discoverySearchTerm']),
-		...Utils.mapState('userProcesses', ['userProcesses']),
-		...Utils.mapGetters(['supports', 'collectionDefaults', 'fileFormats']),
-		...Utils.mapGetters('userProcesses', {getProcessById: 'getAllById'}),
+		...Utils.mapGetters(['supports', 'collectionDefaults', 'fileFormats', 'processes']),
 		supportsLoadCollection() {
-			return !!this.getProcessById('load_collection');
+			return this.processes.has('load_collection');
 		},
 		supportsRunUdf() {
-			return !!this.getProcessById('run_udf');
+			return this.processes.has('run_udf');
 		},
 		supportsSaveResult() {
-			return !!this.getProcessById('save_result');
+			return this.processes.has('save_result');
 		},
 		hasUdfRuntimes() {
 			return Utils.size(this.udfRuntimes);
 		},
-		processes() {
-			return this.predefinedProcesses.concat(this.userProcesses);
+		allProcesses() {
+			return this.processes.all();
 		},
 		searchTerm: {
 			get() {
@@ -187,6 +186,7 @@ export default {
 				case 'process':
 					return {
 						process_id: data.id,
+						namespace: data.namespace,
 						arguments: {}
 					};
 				case 'udf':

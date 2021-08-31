@@ -1,5 +1,5 @@
 <template>
-	<Modal :title="title" @closed="$emit('closed')">
+	<Modal minWidth="75%" maxWidth="75%" :title="title" @closed="$emit('closed')">
 		<div class="vue-component server-info">
 			<Capabilities :capabilities="capabilities" :url="url" />
 
@@ -39,7 +39,7 @@ export default {
 			return this.connection.capabilities().toJSON();
 		},
 		url() {
-			return this.connection.getBaseUrl();
+			return this.connection.getUrl();
 		},
 		title() {
 			return this.connection.capabilities().title() || 'Server information';

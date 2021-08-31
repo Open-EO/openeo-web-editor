@@ -34,6 +34,9 @@ export default {
 		'wmts'
 	],
 
+	// Additional process namespaces to load by default
+	processNamespaces: [],
+
 	// Key is the OIDC provider id, value is the client ID
 	oidcClientIds: {
 		'egi-dev': 'openeo-platform'

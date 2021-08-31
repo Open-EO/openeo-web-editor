@@ -166,6 +166,36 @@ class Utils extends VueUtils {
 		return VueUtils.compareStringCaseInsensitive(a.id, b.id);
 	}
 
+	static range(start, end) {
+		if (end < start) {
+			return [];
+		}
+		return Array.from({length: 1 + end - start}, (_, i) => start + i);
+	}
+
+	static newArray(length, defaultValue = 0) {
+		if (length < 1) {
+			return [];
+		}
+		return Array.from({length}, () => defaultValue);
+	}
+
+	static fitArray(arr, length, defaultValue = 0) {
+		if (length < 1) {
+			return [];
+		}
+
+		if (length > arr.length) {
+			return arr.concat(Utils.newArray(length - arr.length, defaultValue));
+		}
+		else if (length < arr.length) {
+			return arr.slice(0, length);
+		}
+		else {
+			return arr;
+		}
+	}
+
 	// Based on https://github.com/hughsk/path-sort
 	static sortByPath(a, b) {
 		a = a.split('/');

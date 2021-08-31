@@ -72,11 +72,8 @@ export default {
 	mounted() {
 		this.updateTab();
 	},
-	computed: {
-		...Utils.mapGetters('userProcesses', {getProcessById: 'getAllById'})
-	},
 	methods: {
-		...Utils.mapActions('userProcesses', {readUserProcess: 'read'}),
+		...Utils.mapActions(['loadProcess']),
 		showModel() {
 			this.error = null;
 			this.modelValue = this.value;
@@ -111,12 +108,7 @@ export default {
 		},
 		async insertProcess(node) {
 			try {
-				// Fully load or update custom process
-				let process = this.getProcessById(node.process_id);
-				if (process != null && !process.native) {
-					await this.readUserProcess({data: process});
-				}
-				// Add process to editor
+				await this.loadProcess({id: node.process_id, namespace: node.namespace});
 				this.activeEditor().insertProcess(node);
 			} catch(error) {
 				Utils.exception(this, error);

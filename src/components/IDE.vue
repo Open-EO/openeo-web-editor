@@ -19,7 +19,9 @@
 							<Editor ref="editor" class="mainEditor tour-ide-editor" id="main" :value="process" @input="updateEditor" :title="contextTitle">
 								<template #file-toolbar>
 									<button type="button" @click="importProcess" title="Import process from external source"><i class="fas fa-cloud-download-alt"></i></button>
-									<button type="button" v-show="saveSupported" @click="saveProcess" :title="'Save to ' + contextTitle"><i class="fas fa-save"></i></button>
+									<button type="button" v-show="saveSupported" :disabled="!hasProcess" @click="saveProcess" :title="'Save to ' + contextTitle"><i class="fas fa-save"></i></button>
+									<button type="button" @click="exportCode" :disabled="!hasProcess" title="Export into another programming language"><i class="fas fa-file-export"></i></button>
+									<button type="button" v-show="validateSupported" :disabled="!hasProcess" @click="validateProcess" title="Validate process on server-side"><i class="fas fa-tasks"></i></button>
 								</template>
 							</Editor>
 						</Pane>
@@ -70,8 +72,8 @@ export default {
 	},
 	computed: {
 		...Utils.mapState(['connection', 'isAuthenticated']),
-		...Utils.mapState('editor', ['context', 'process']),
-		...Utils.mapGetters(['title', 'apiVersion']),
+		...Utils.mapState('editor', ['context', 'process', 'collectionPreview']),
+		...Utils.mapGetters(['title', 'apiVersion', 'supports']),
 		...Utils.mapGetters('jobs', {supportsJobUpdate: 'supportsUpdate'}),
 		...Utils.mapGetters('services', {supportsServiceUpdate: 'supportsUpdate'}),
 		...Utils.mapGetters('userProcesses', {supportsUserProcessUpdate: 'supportsUpdate'}),
@@ -85,6 +87,12 @@ export default {
 				(this.context instanceof UserProcess && this.supportsUserProcessUpdate)
 			);
 		},
+		hasProcess() {
+			return Utils.size(this.process) > 0;
+		},
+		validateSupported() {
+			return this.supports('validateProcess');
+		},
 		splitpaneSize() {
 			if (this.isAuthenticated) {
 				return [20,50,30];
@@ -94,15 +102,7 @@ export default {
 			}
 		}
 	},
-	async created() {
-		try {
-			await this.loadInitialProcess();
-		} catch (error) {
-			Utils.exception(this, error, "Loading process failed");
-		}
-
-	},
-	mounted() {
+	async mounted() {
 		this.listen('showDataForm', this.showDataForm);
 		this.listen('editProcess', this.editProcess);
 
@@ -112,6 +112,13 @@ export default {
 			this.userInfoUpdater = setInterval(this.describeAccount, this.$config.dataRefreshInterval*60*1000); // Refresh user data every x minutes
 		}
 		this.emit('title', this.title);
+
+		if (this.collectionPreview) {
+			this.$nextTick(() => {
+				this.emit('showCollectionPreview', this.collectionPreview);
+				this.setCollectionPreview(null);
+			});
+		}
 	},
 	beforeDestroy() {
 		if (this.resizeListener !== null) {
@@ -123,8 +130,7 @@ export default {
 	},
 	methods: {
 		...Utils.mapActions(['describeAccount']),
-		...Utils.mapActions('editor', ['loadInitialProcess']),
-		...Utils.mapMutations('editor', ['setContext', 'setProcess']),
+		...Utils.mapMutations('editor', ['setContext', 'setProcess', 'setCollectionPreview']),
 
 		resized(event) {
 			this.emit('windowResized', event);
@@ -139,6 +145,31 @@ export default {
 
 		saveProcess() {
 			this.emit('replaceProcess', this.context, this.process);
+		},
+
+		async exportCode() {
+			this.emit('showModal', 'ExportCode');
+		},
+
+		async validateProcess() {
+			if (!this.validateSupported) {
+				return Utils.error(this, "Server doesn't support validation");
+			}
+			else if (!this.hasProcess) {
+				return Utils.info(this, 'Nothing to validate...');
+			}
+			try {
+				let errors = await this.connection.validateProcess(this.process);
+				if (errors.length > 0) {
+					errors.forEach(error => error.level = 'error');
+					this.emit('viewLogs', errors, 'Validation Result', 'fa-tasks');
+				}
+				else {
+					Utils.ok(this, "The process is valid");
+				}
+			} catch (error) {
+				Utils.exception(this, error, "Validation rejected");
+			}
 		},
 
 		updateEditor(value) {
@@ -247,9 +278,10 @@ export default {
 }
 #editor {
 	padding-bottom: 0.5rem;
-}
-#editor:last-child {
-	padding-bottom: 0;
+
+	&:last-child {
+		padding-bottom: 0;
+	}
 }
 
 #user {
@@ -281,60 +313,74 @@ export default {
 	padding: 0;
 	display: flex;
 	align-items: center;
-}
-#menu li {
-	position: relative;
-	display: inline-block;
-	height: 80px;
-}
-#menu li:hover {
-	background-color: white;
-	color: $mainColor;
-}
-#menu li:hover .dropdown {
-	display: block;
-	border-color: #ddd;
-	border-style: solid;
-	border-width: 0 1px 1px 1px;
-}
-#menu li .menuItem {
-	display: flex;
-	align-items: center;
-	cursor: pointer;
-	padding: 10px 20px;
-	height: 60px;
-	font-size: 16px;
-	font-weight: bold;
-}
-#menu li .dropdown {
-	display: none;
-	position: absolute;
-	background-color: white;
-	color: black;
-	min-width: 200px;
-	box-shadow: 8px 8px 8px 0px rgba(0,0,0,0.3);
-	top: 80px;
-	right: -1px;
-}
-#menu li .dropdown .item {
-	padding: 10px;
-	border-top: 1px dotted #ccc;
-}
-#menu li .dropdown .item:first-of-type {
-	border-top: 0;
-}
-#menu li .dropdown .item button {
-	width: 100%;
+
+	li {
+		position: relative;
+		display: inline-block;
+		height: 80px;
+
+		&:hover {
+			background-color: white;
+			color: $mainColor;
+
+			.dropdown {
+				display: block;
+				border-color: #ddd;
+				border-style: solid;
+				border-width: 0 1px 1px 1px;
+			}
+		}
+
+		.menuItem {
+			display: flex;
+			align-items: center;
+			cursor: pointer;
+			padding: 10px 20px;
+			height: 60px;
+			font-size: 16px;
+			font-weight: bold;
+		}
+
+		.dropdown {
+			display: none;
+			position: absolute;
+			background-color: white;
+			color: black;
+			min-width: 200px;
+			box-shadow: 8px 8px 8px 0px rgba(0,0,0,0.3);
+			top: 80px;
+			right: -1px;
+
+			.item {
+				padding: 10px;
+				display: block;
+
+				&.separator {
+					border-bottom: 1px dotted $mainColor;
+				}
+			}
+
+			hr {
+				margin: 5px 10px;
+			}
+
+			a.item:hover {
+				background-color: $mainColor;
+				color: white;
+			}
+		}
+	}
 }
 
-.tabContent .dataTable, .tabContent table {
+.tabContent .dataTable,
+.tabContent table {
 	width: 100%;
 	border-collapse: collapse;
 	font-size: 0.95em;
-}
-.tabContent table td,
-.tabContent table th {
-	border: 1px solid #ddd;
-	padding: 3px;
+
+	td, th {
+		border: 1px solid #ddd;
+		padding: 3px;
+	}
 }
 </style>

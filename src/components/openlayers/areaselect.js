@@ -1,5 +1,4 @@
 import { Control } from 'ol/control.js';
-import { fromLonLat, toLonLat } from 'ol/proj';
 import Utils from '../../utils.js';
 
 export default class AreaSelect {
@@ -33,8 +32,8 @@ export default class AreaSelect {
         topRight[0] = size[0] - bottomLeft[0];
         bottomLeft[1] = size[1] - topRight[1];
         
-        var sw = toLonLat(this.map.getCoordinateFromPixel(bottomLeft));
-        var ne = toLonLat(this.map.getCoordinateFromPixel(topRight));
+        var sw = this.map.getCoordinateFromPixel(bottomLeft);
+        var ne = this.map.getCoordinateFromPixel(topRight);
         if (asArray) {
             return sw.concat(ne);
         }
@@ -55,8 +54,8 @@ export default class AreaSelect {
         else if (Array.isArray(bounds)) {
             bounds = Utils.extentToBBox(bounds);
         }
-        var ws = fromLonLat([bounds.west, bounds.south]);
-        var en = fromLonLat([bounds.east, bounds.north]);
+        var ws = [bounds.west, bounds.south];
+        var en = [bounds.east, bounds.north];
         var fitOptions = {
             callback: () => {
                 var bottomLeft = this.map.getPixelFromCoordinate(ws);
@@ -69,8 +68,11 @@ export default class AreaSelect {
         };
         // Make a bigger extent visible so that user can get a better overview (they can't pan/zoom).
         var size = this.map.getSize();
-        if (!this.editable && size) {
+        if (size && !this.editable) {
             fitOptions.padding = [size[0]/3, size[1]/3, size[0]/3, size[1]/3];
+        }
+        else {
+            fitOptions.padding = [30,30,30,30];
         }
         this.map.getView().fit([...ws, ...en], fitOptions);
     }
