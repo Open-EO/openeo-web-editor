@@ -14,10 +14,11 @@ class ProcessImpl extends BaseProcess {
 export default class Exporter extends ProcessGraph {
 
 	constructor(process, registry, connection) {
-		super(process, registry);
+		super(Utils.isObject(process) ? process : {}, registry);
 		this.connection = connection;
 		this.indent = 0;
 		this.code = [];
+		this.allowEmpty();
 	}
 
 	// inherited from ProcessGraph

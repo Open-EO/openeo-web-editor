@@ -65,7 +65,7 @@ export default {
 	},
 	mutations: {
 		setDiscoverySearchTerm(state, searchTerm) {
-			state.discoverySearchTerm = searchTerm;
+			state.discoverySearchTerm = typeof searchTerm === 'string' ? searchTerm : '';
 		},
 		setInitialProcess(state, process) {
 			state.initialProcess = process;
@@ -76,7 +76,7 @@ export default {
 		setCollectionPreview(state, collectionID) {
 			state.collectionPreview = collectionID;
 			if (!state.discoverySearchTerm) {
-				state.discoverySearchTerm = collectionID;
+				state.discoverySearchTerm = typeof collectionID === 'string' ? collectionID : '';
 			}
 		},
 		openModal(state) {
