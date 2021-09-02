@@ -135,7 +135,16 @@ export default {
 	.v-step {
 		background-color: $mainColor;
 		color: white;
+		border: 2px solid white;
 	}
+	/*
+	// If the little arrow should have a border too:
+	.v-step[data-popper-placement=left] .v-step__arrow--dark:before {
+		border-top: 2px solid white;
+		border-right: 2px solid white;
+	}
+	// likewise for popper-placement=right, top, bottom
+	*/
 	.v-step__header {
 		background-color: rgba(0,0,0,0.2);
 	}
