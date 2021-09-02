@@ -49,6 +49,15 @@ export default {
 				'ide-viewer': {
 					title: 'Data Viewer',
 					content: 'This area is for previewing collections or inspecting the results of batch jobs, web services or other computations. It will also be used to display log messages, if available.'
+				},
+
+				'connect-url': {
+					title: 'URL input',
+					content: `Paste the URL of the server you wish to connect to into this field. If you don't know any URL, you may head over to <a href="https://hub.openeo.org/">openEO Hub</a> to discover available servers.`
+				},
+				'connect-history': {
+					title: 'History of URLs',
+					content: 'Clicking on this icon will open a window that displays all URLs that you have connected to in the past (provided your browser permits storing in Local Storage).'
 				}
 			}
 		};
@@ -75,6 +84,10 @@ export default {
 						steps.push('ide-workspace');
 					}
 					steps.push('ide-viewer');
+					break;
+				case 'connect':
+					steps.push('connect-url');
+					steps.push('connect-history');
 					break;
 				default:
 					if (this.value !== null) {
@@ -131,6 +144,9 @@ export default {
 	}
 	.v-step__arrow--dark:before {
 		background-color: $mainColor;
+	}
+	.v-step a {
+		color: black;
 	}
 }
 </style>

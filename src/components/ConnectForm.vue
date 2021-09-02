@@ -2,6 +2,7 @@
 	<div class="connectPage">
 		<Logo />
 		<div class="connectContainer">
+			<div class="helpBtn" @click="showHelp" title="Show help"><i class="fas fa-question fa-fw"></i> Help</div>
 			<div v-if="httpsUrl" class="message error">
 				<i class="fas fa-shield-alt"></i>
 				<span>You are using an <strong>insecure</strong> HTTP connection, which is not encrypted. Please use HTTPS if possible.<br />
@@ -17,8 +18,8 @@
 					<div class="row">
 						<label for="serverUrl">URL:</label>
 						<div class="input">
-							<input type="url" id="serverUrl" v-model.lazy.trim="serverUrl" :disabled="autoConnect" />
-							<button v-if="allowOtherServers" type="button" @click="showServerSelector" title="Select previously used server"><i class="fas fa-book"></i></button>
+							<input type="url" id="serverUrl" class="tour-connect-url" v-model.lazy.trim="serverUrl" :disabled="autoConnect" />
+							<button v-if="allowOtherServers" type="button" @click="showServerSelector" title="Select previously used server" class="tour-connect-history"><i class="fas fa-book"></i></button>
 						</div>
 					</div>
 					<div class="row">
@@ -222,6 +223,10 @@ export default {
 		...Utils.mapActions(['connect', 'discover', 'logout']),
 		...Utils.mapMutations(['reset']),
 		...Utils.mapMutations('editor', ['addServer', 'removeServer']),
+
+		showHelp() {
+			this.emit('showTour', 'connect');
+		},
 
 		historyNavigate(evt) {
 			if (!Utils.isObject(evt.state) || evt.state.reset) {
@@ -434,6 +439,10 @@ export default {
 	border-radius: 3em;
 	padding: 2.5em 3em;
 	font-family: 'Ubuntu', sans-serif;
+}
+.connectContainer .helpBtn {
+	float: right;
+	cursor: pointer;
 }
 header {
 	text-align: center;
