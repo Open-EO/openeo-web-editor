@@ -27,7 +27,7 @@ export default {
 //				highlight: true, // Doesn't always work?
 				labels: {
 					buttonSkip: 'Skip tour', //'Skip tour (ESC)', - don't promote ESC key right now due to bug https://github.com/pulsardev/vue-tour/issues/202
-					buttonPrevious: 'Previous ⇦',
+					buttonPrevious: '⇦ Previous',
 					buttonNext: 'Next ⇨',
 					buttonStop: 'Finish' //'Finish (ESC)',
 				}
@@ -44,11 +44,11 @@ export default {
 				},
 				'ide-workspace': {
 					title: 'User Workspace',
-					content: 'In this area you can find your personal workspace, which lists your stored batch jobs, web services and files.'
+					content: 'In this area you can find your personal workspace, which lists your stored batch jobs, web services, custom processes and files.'
 				},
 				'ide-viewer': {
 					title: 'Data Viewer',
-					content: 'This area you can use to preview collections or inspect the results of batch jobs, web services or other computations. It will also be used to display log messages, if available.'
+					content: 'This area is for previewing collections or inspecting the results of batch jobs, web services or other computations. It will also be used to display log messages, if available.'
 				}
 			}
 		};
