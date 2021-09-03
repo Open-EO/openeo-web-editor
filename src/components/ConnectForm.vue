@@ -164,11 +164,13 @@ export default {
 			if (newVal) {
 				this.emit('title', 'Connect to server');
 			}
+			this.emit('stopTour');
 		},
 		showLoginForm(newVal) {
 			if (newVal) {
 				this.emit('title', 'Log in');
 			}
+			this.emit('stopTour');
 		}
 	},
 	data() {

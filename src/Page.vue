@@ -89,12 +89,14 @@ export default {
 		this.listen('showWebEditorInfo', this.showWebEditorInfo);
 		this.listen('title', this.setTitle);
 		this.listen('showTour', where => this.tourType = where);
+		this.listen('stopTour', this.stopTour);
 	},
 	watch: {
 		isDiscovered(newVal) {
 			if (newVal) {
 				this.skipLogin = false;
 			}
+			this.stopTour();
 		},
 		title(newTitle) {
 			document.title = newTitle;
@@ -116,6 +118,9 @@ export default {
 			}
 			this.title = title;
 		},
+		stopTour() {
+			this.tourType = null;
+		},
 		showModal(component, props = {}, events = {}, id = null) {
 			this.modals.push({
 				component,
@@ -123,12 +128,14 @@ export default {
 				events,
 				id: id || "modal_" + Date.now()
 			});
+			this.stopTour();
 		},
 		hideModal(modal) {
 			let id = Utils.isObject(modal) ? modal.id : modal;
 			let index = this.modals.findIndex(other => other.id === id);
 			if (typeof index !== 'undefined') {
 				this.modals.splice(index, 1);
+				this.stopTour();
 			}
 		},
 		showListModal(title, list, listActions) {

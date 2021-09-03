@@ -61,6 +61,9 @@ export default {
 			if (value !== null) {
       			this.$tours['tour'].start();
 			}
+			else {
+      			this.$tours['tour'].finish();
+			}
 		}
 	},
 	computed: {
