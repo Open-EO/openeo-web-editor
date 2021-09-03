@@ -58,6 +58,31 @@ export default {
 				'connect-history': {
 					title: 'History of URLs',
 					content: 'Clicking on this icon will open a window that displays all URLs that you have connected to in the past (provided your browser permits storing in Local Storage).'
+				},
+
+				'login-options': {
+					target: '#credentials > .tabsHeader',
+					title: 'Login Options',
+					content: `You have several ways of authenticating with the server. The standard method is OpenID Connect (OIDC). If supported, you will see a button for each available OIDC provider here. Click on one to open its login form.`
+				},
+				'login-internal': {
+					target: '#credentials > .tabsHeader > button[title=Internal]',
+					title: 'User/Password',
+					content: `Some servers support basic authentication with a simple username-password combination. This method is discouraged and generally only used for internal development purposes (hence the name of this button). We suggest to use OpenID Connect if you can.`
+				},
+				'login-without': {
+					target: '#credentials > .tabsHeader > button[title="No credentials"]',
+					title: 'Without login',
+					content: `It is possible to proceed without any authentication, however, usually this means that you won't able to actually submit calculations etc. You can think of it as an "discovery only" mode.`
+				},
+				'login-credentials': {
+					target: '.tabContent:not([style*="display: none"]) .input',  // select first visible input
+					title: 'Credentials of your account',
+					content: `Enter your authentication information here. If you don't have an account yet, you have to register directly with the provider (this is not possible via openEO). The same applies if you forgot your password.`
+				},
+				'login-switch': {
+					title: 'Wrong server?',
+					content: `If you chose the wrong server, this link takes you back to the previous step so you can choose a different server URL.`
 				}
 			}
 		};
@@ -89,6 +114,13 @@ export default {
 					steps.push('connect-url');
 					steps.push('connect-history');
 					break;
+				case 'login':
+					steps.push(['login-options', 'left']);
+					steps.push(['login-internal', 'top']);
+					steps.push(['login-without', 'top']);
+					steps.push(['login-credentials', 'right']);
+					steps.push('login-switch');
+					break;
 				default:
 					if (this.value !== null) {
 						Utils.error(this, 'Sorry, no tour available yet.');
@@ -104,7 +136,7 @@ export default {
 				}
 				let data = this.entries[entry[0]];
 				let obj = {
-					target: `.tour-${entry[0]}`,
+					target: data.target || `.tour-${entry[0]}`,
 					header: {
 						title: data.title,
 					},

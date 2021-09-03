@@ -84,7 +84,7 @@
 							</form>
 						</template>
 					</Tabs>
-					<div v-if="allowOtherServers" class="switch"><a @click="switchServer()">Switch server</a></div>
+					<div v-if="allowOtherServers" class="switch tour-login-switch"><a @click="switchServer()">Switch server</a></div>
 				</div>
 			</transition>
 		</div>
@@ -225,7 +225,11 @@ export default {
 		...Utils.mapMutations('editor', ['addServer', 'removeServer']),
 
 		showHelp() {
-			this.emit('showTour', 'connect');
+			if (!this.isConnected) {
+				this.emit('showTour', 'connect');
+			} else {
+				this.emit('showTour', 'login');
+			}
 		},
 
 		historyNavigate(evt) {
