@@ -111,6 +111,13 @@ export default class Python extends Exporter {
 		this.addCode(`${variable} = ${builderName}(${args.join(', ')})`);
 	}
 
+	generateMissingParameter(parameter) {
+		this.comment(parameter.description);
+		let paramName = this.var(parameter.name, 'param');
+		let value = typeof parameter.default !== 'undefined' ? value : null;
+		this.addCode(`${paramName} = ${this.e(value)}`);
+	}
+
 	async generateCallback(callback, parameters, variable) {
 		let params = this.generateFunctionParams(parameters);
 		if (params.length === 0) {

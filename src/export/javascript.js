@@ -137,6 +137,13 @@ export default class JavaScript extends Exporter {
 		}
 	}
 
+	generateMissingParameter(parameter) {
+		this.comment(parameter.description);
+		let paramName = this.var(parameter.name, 'param');
+		let value = typeof parameter.default !== 'undefined' ? value : null;
+		this.addCode(`let ${paramName} = ${this.e(value)};`);
+	}
+
 	async generateCallback(callback, parameters, variable) {
 		if (this.generateFormula && callback && callback.isMath()) {
 			let formula = callback.toFormulaString();

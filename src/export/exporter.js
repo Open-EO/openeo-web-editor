@@ -19,6 +19,7 @@ export default class Exporter extends ProcessGraph {
 		this.indent = 0;
 		this.code = [];
 		this.allowEmpty();
+		this.fillUndefinedParameters();
 	}
 
 	// inherited from ProcessGraph
@@ -55,6 +56,8 @@ export default class Exporter extends ProcessGraph {
 	generateBuilder() {}
 
 	generateMetadata(/*key, value*/) {}
+
+	generateMissingParameter() {}
 
 	async generateFunction(/*node*/) {}
 
@@ -186,7 +189,7 @@ export default class Exporter extends ProcessGraph {
 		let callback = node.getArgument(key);
 		let parameters = callback.getCallbackParameters();
 		await callback.execute(parameters);
-		let fnName = this.var(`fn_${node.id}`);
+		let fnName = this.var(node.id, 'fn');
 		let replacement = await this.generateCallback(callback, parameters, fnName);
 		return replacement ? replacement : fnName;
 	}
@@ -231,12 +234,12 @@ export default class Exporter extends ProcessGraph {
 		}
 	}
 
-	var(id) {
+	var(id, prefix = "datacube") {
 		if (this.isKeyword(id)) {
 			return `${id}_`;
 		}
 		if (!id.match(/^[a-z_]\w*$/)) {
-			return `datacube${id}`;
+			return `${prefix}${id}`;
 		}
 		else {
 			return id;
@@ -282,6 +285,14 @@ export default class Exporter extends ProcessGraph {
 			this.generateMetadata();
 			this.newLine();
 		}
+		let params = this.getProcessParameters();
+		if (params.length > 0) {
+			this.comment('ToDo: Here you need to set values for the parameters');
+			for(let param of params) {
+				this.generateMissingParameter(param);
+			}
+			this.newLine();
+		}
 		await this.execute();
 		if (!callback) {
 			this.newLine();
@@ -289,6 +300,13 @@ export default class Exporter extends ProcessGraph {
 		}
 		this.generateResult(this.getResultNode(), callback);
 		return this.code.join('').trim();
+	}
+
+	async execute() {
+		await this.validate();
+		this.reset();
+		await this.executeNodes(this.getStartNodes());
+		return this.getResultNode();
 	}
 
 	isMath() {

@@ -70,6 +70,13 @@ export default class R extends Exporter {
 		this.addCode(`${variable} = p$${node.process_id}(${args.join(', ')})`);
 	}
 
+	generateMissingParameter(parameter) {
+		this.comment(parameter.description);
+		let paramName = this.var(parameter.name, 'param');
+		let value = typeof parameter.default !== 'undefined' ? value : null;
+		this.addCode(`${paramName} = ${this.e(value)}`);
+	}
+
 	async generateCallback(callback, parameters, variable) {
 		let isMathFormula = false;
 		if (isMathFormula) {
