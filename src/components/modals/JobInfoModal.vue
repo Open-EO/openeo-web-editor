@@ -38,6 +38,7 @@ export default {
 		Editor,
 		Item: () => import('@openeo/vue-components/components/Item.vue'),
 		Job,
+		MapViewer: () => import('../MapViewer.vue'),
 		Modal
 	},
 	computed: {
