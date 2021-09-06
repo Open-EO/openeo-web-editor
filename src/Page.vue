@@ -31,6 +31,7 @@ export default {
 		ConnectForm,
 		IDE: () => import('./components/IDE.vue'),
 		CollectionModal: () => import('./components/modals/CollectionModal.vue'),
+		DownloadAssets: () => import('./components/modals/DownloadAssets.vue'),
 		ExportCode: () => import('./components/modals/ExportCode.vue'),
 		ExpressionModal: () => import('./components/modals/ExpressionModal.vue'),
 		FileFormatModal: () => import('./components/modals/FileFormatModal.vue'),

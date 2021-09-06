@@ -309,25 +309,12 @@ export default {
 		async downloadResults(job) {	
 			// Doesn't need to go through job store as it doesn't change job-related data
 			try {
-				let stac = await job.getResultsAsStac();
-				if(Utils.size(stac.assets) == 0) {
+				let result = await job.getResultsAsStac();
+				if(Utils.size(result.assets) == 0) {
 					Utils.error(this, 'No results available for job "' + Utils.getResourceTitle(job) + '".');
 					return;
 				}
-				// ToDo: This can be formatted much nicer and more useful...
-				this.emit(
-					'showListModal', 
-					'Download results',
-					Object.values(stac.assets).map(a => a.href),
-					[
-						{
-							callback: url => {
-								window.open(url, '_blank');
-								return false; // Don't close the modal by default to allow downloading multiple files
-							}
-						}
-					]
-				);
+				this.emit('showModal', 'DownloadAssets', {job, result});
 			} catch(error) {
 				Utils.exception(this, error, 'Download Result Error: ' + Utils.getResourceTitle(job));
 			}
