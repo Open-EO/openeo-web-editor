@@ -11,7 +11,6 @@ import Collection from 'ol/Collection';
 import Feature from 'ol/Feature';
 import LayerGroup from 'ol/layer/Group';
 import { fromExtent as PolygonFromExtent } from 'ol/geom/Polygon';
-import { fromLonLat } from 'ol/proj';
 import Projection from 'ol/proj/Projection';
 import {register} from 'ol/proj/proj4';
 import TileLayer from 'ol/layer/Tile';
@@ -80,7 +79,7 @@ export default {
 		},
 
 		addRectangle(w, e, n, s) {
-			let extent = [...fromLonLat([w, s]), ...fromLonLat([e, n])];
+			let extent = [...this.fromLonLat([w, s]), ...this.fromLonLat([e, n])];
 			let layer = new VectorLayer({
 				title: "Extent",
 				displayInLayerSwitcher: false,
@@ -230,7 +229,7 @@ export default {
 			// Fit to extent of collection
 			try {
 				let bbox = Utils.extentToBBox(collection.extent.spatial.bbox[0]);
-				let extent = [...fromLonLat([bbox.west, bbox.south]), ...fromLonLat([bbox.east, bbox.north])];
+				let extent = [...this.fromLonLat([bbox.west, bbox.south]), ...this.fromLonLat([bbox.east, bbox.north])];
 				let extentLayer = new VectorLayer({
 					title: "Extent",
 					noSwitcherDelete: true,

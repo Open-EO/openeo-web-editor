@@ -13,7 +13,8 @@ const getDefaultState = () => {
 		hightestModalZIndex: 1000,
 		epsgCodes: [],
 		initialProcess: null,
-		initialNode: null
+		initialNode: null,
+		collectionPreview: null
 	};
 };
 
@@ -64,13 +65,19 @@ export default {
 	},
 	mutations: {
 		setDiscoverySearchTerm(state, searchTerm) {
-			state.discoverySearchTerm = searchTerm;
+			state.discoverySearchTerm = typeof searchTerm === 'string' ? searchTerm : '';
 		},
 		setInitialProcess(state, process) {
 			state.initialProcess = process;
 		},
 		setInitialNode(state, node) {
 			state.initialNode = node;
+		},
+		setCollectionPreview(state, collectionID) {
+			state.collectionPreview = collectionID;
+			if (!state.discoverySearchTerm) {
+				state.discoverySearchTerm = typeof collectionID === 'string' ? collectionID : '';
+			}
 		},
 		openModal(state) {
 			state.hightestModalZIndex = state.hightestModalZIndex + 1;

@@ -3,8 +3,8 @@
 		<div class="sourceHeader">
 			<strong v-if="title">{{ title }}</strong>
 			<div class="sourceToolbar">
-				<span class="sepr" v-if="editable">
-					<button type="button" @click="confirmClear" title="New script / Clear current script"><i class="fas fa-file"></i></button>
+				<span class="sepr">
+					<button type="button" v-if="editable" @click="confirmClear" title="New script / Clear current script"><i class="fas fa-file"></i></button>
 					<slot name="file-toolbar"></slot>
 				</span>
 				<span class="sepr" v-if="editable">
@@ -99,6 +99,9 @@ export default {
 				case 'markdown':
 					options.mode = 'text/x-markdown';
 					break;
+				case 'javascript':
+					options.mode = 'text/javascript';
+					break;
 				case 'json':
 				case 'processgraph':
 					Object.assign(options, {
@@ -121,7 +124,7 @@ export default {
 		}
 	},
 	watch: {
-		value() {
+		async value() {
 			if (this.emitValue !== this.value) {
 				this.updateContent();
 				this.editor.clearHistory();
@@ -131,12 +134,13 @@ export default {
 			for(var key in this.editorOptions) {
 				this.editor.setOption(key, this.editorOptions[key]);
 			}
+			this.updateContent();
 		}
 	},
 	mounted() {
 		this.editor = CodeMirror(document.getElementById(this.id), this.editorOptions);
 		this.editor.setSize(null, "100%");
-		if (this.languageString 	=== 'processgraph') {
+		if (this.languageString === 'processgraph') {
 			this.editor.on("change", () => this.updateState());
 		}
 		this.updateContent();
@@ -270,7 +274,7 @@ export default {
 .sourceCodeEditor {
 	flex-grow: 1;
 	height: 100%;
-	overflow: auto;
+	overflow: hidden;
 }
 </style>
 <style>

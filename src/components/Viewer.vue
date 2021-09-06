@@ -8,7 +8,7 @@
 			</Tab>
 		</template>
 		<template #dynamic="{ tab }">
-			<LogViewer v-if="tab.icon === 'fa-bug' || tab.icon === 'fa-bomb'" :data="tab.data" />
+			<LogViewer v-if="logViewerIcons.includes(tab.icon)" :data="tab.data" />
 			<ImageViewer v-else-if="tab.icon === 'fa-image'" :data="tab.data" />
 			<DataViewer v-else :data="tab.data" />
 		</template>
@@ -52,7 +52,12 @@ export default {
 	data() {
 		return {
 			tabCounter: {},
-			mapActive: false
+			mapActive: false,
+			logViewerIcons: [
+				'fa-bug',
+				'fa-bomb',
+				'fa-tasks'
+			]
 		}
 	},
 	computed: {
@@ -60,9 +65,17 @@ export default {
 	},
 	methods: {
 		...Utils.mapActions(['describeCollection']),
-		showCollectionPreview(collection) {
+		async showCollectionPreview(collection) {
+			if (typeof collection === 'string') {
+				try {
+					collection = await this.describeCollection(collection);
+				} catch (error) {
+					Utils.error(this, "Sorry, can't load collection '" + collection + "'.");
+					return;
+				}
+			}
 			this.showMapViewer();
-			this.$refs.mapViewer.addCollection(collection);
+			await this.$refs.mapViewer.addCollection(collection);
 		},
 		showWebService(service) {
 			this.showMapViewer();

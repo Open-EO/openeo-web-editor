@@ -31,6 +31,7 @@ export default {
 		ConnectForm,
 		IDE: () => import('./components/IDE.vue'),
 		CollectionModal: () => import('./components/modals/CollectionModal.vue'),
+		ExportCode: () => import('./components/modals/ExportCode.vue'),
 		ExpressionModal: () => import('./components/modals/ExpressionModal.vue'),
 		FileFormatModal: () => import('./components/modals/FileFormatModal.vue'),
 		ImportProcessModal: () => import('./components/modals/ImportProcessModal.vue'),
@@ -58,6 +59,7 @@ export default {
 		this.addProcessNamespacesToRequest(Utils.param('namespaces'));
 		this.setInitialProcess(Utils.param('process'));
 		this.setInitialNode(Utils.param('edit-node'));
+		this.setCollectionPreview(Utils.param('preview-collection'));
 
 		if (Utils.param('discover')) {
 			this.skipLogin = true;
@@ -87,12 +89,14 @@ export default {
 		this.listen('showWebEditorInfo', this.showWebEditorInfo);
 		this.listen('title', this.setTitle);
 		this.listen('showTour', where => this.tourType = where);
+		this.listen('stopTour', this.stopTour);
 	},
 	watch: {
 		isDiscovered(newVal) {
 			if (newVal) {
 				this.skipLogin = false;
 			}
+			this.stopTour();
 		},
 		title(newTitle) {
 			document.title = newTitle;
@@ -106,13 +110,16 @@ export default {
 	methods: {
 		...Utils.mapActions(['describeAccount', 'describeCollection', 'loadProcess']),
 		...Utils.mapMutations(['startActiveRequest', 'endActiveRequest', 'addProcessNamespacesToRequest']),
-		...Utils.mapMutations('editor', ['setInitialProcess', 'setInitialNode']),
+		...Utils.mapMutations('editor', ['setInitialProcess', 'setInitialNode', 'setCollectionPreview']),
 		setTitle(subtitle) {
 			var title = `${this.$config.serviceName} ${this.$config.appName}`;
 			if (subtitle) {
 				title += ": " + subtitle;
 			}
 			this.title = title;
+		},
+		stopTour() {
+			this.tourType = null;
 		},
 		showModal(component, props = {}, events = {}, id = null) {
 			this.modals.push({
@@ -121,12 +128,14 @@ export default {
 				events,
 				id: id || "modal_" + Date.now()
 			});
+			this.stopTour();
 		},
 		hideModal(modal) {
 			let id = Utils.isObject(modal) ? modal.id : modal;
 			let index = this.modals.findIndex(other => other.id === id);
 			if (typeof index !== 'undefined') {
 				this.modals.splice(index, 1);
+				this.stopTour();
 			}
 		},
 		showListModal(title, list, listActions) {
