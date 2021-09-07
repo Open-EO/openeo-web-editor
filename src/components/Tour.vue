@@ -118,15 +118,19 @@ export default {
 					if (!this.$config.serverUrl) {  // aka `if (allowOtherServers)`
 						steps.push(['connect-url', 'top']);
 						steps.push(['connect-history', 'right']);
-					} else {
+					} else {  // fixed server URL use case
 						steps.push(['connect-retry', 'bottom']);
 					}
 					break;
 				case 'login':
 					steps.push(['login-options', 'left']);
-					steps.push(['login-internal', 'top']);
+					if (document.querySelector(this.entries['login-internal'].target) !== null) {  // server has basic auth
+						steps.push(['login-internal', 'top']);
+					}
 					steps.push(['login-without', 'top']);
-					steps.push(['login-credentials', 'right']);
+					if (document.querySelector(this.entries['login-credentials'].target) !== null) {  // some login field is shown
+						steps.push(['login-credentials', 'right']);
+					}
 					if (!this.$config.serverUrl) {  // aka `if (allowOtherServers)`
 						steps.push('login-switch');
 					}

@@ -448,6 +448,7 @@ export default {
 	float: right;
 	cursor: pointer;
 	color: $linkColor;
+	margin-left: 1rem;
 }
 header {
 	text-align: center;
