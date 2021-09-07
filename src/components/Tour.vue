@@ -59,6 +59,10 @@ export default {
 					title: 'Previously used servers',
 					content: 'Clicking here will show a list of all servers that you have been connected to on this computer in the past.'
 				},
+				'connect-retry': {
+					title: 'Connect button',
+					content: 'The Web Editor tries to connect to the server automatically (you will see a spinning icon next to "Connect"). If the attempt fails, this can mean that the server is currently offline. You may click the button again to retry, or come back later. If the issue persists, please contact the server provider.'
+				},
 
 				'login-options': {
 					target: '#credentials > .tabsHeader',
@@ -111,15 +115,21 @@ export default {
 					steps.push('ide-viewer');
 					break;
 				case 'connect':
-					steps.push('connect-url');
-					steps.push('connect-history');
+					if (!this.$config.serverUrl) {  // aka `if (allowOtherServers)`
+						steps.push(['connect-url', 'top']);
+						steps.push(['connect-history', 'right']);
+					} else {
+						steps.push(['connect-retry', 'bottom']);
+					}
 					break;
 				case 'login':
 					steps.push(['login-options', 'left']);
 					steps.push(['login-internal', 'top']);
 					steps.push(['login-without', 'top']);
 					steps.push(['login-credentials', 'right']);
-					steps.push('login-switch');
+					if (!this.$config.serverUrl) {  // aka `if (allowOtherServers)`
+						steps.push('login-switch');
+					}
 					break;
 				default:
 					if (this.value !== null) {

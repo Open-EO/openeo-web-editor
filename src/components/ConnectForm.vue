@@ -23,7 +23,7 @@
 						</div>
 					</div>
 					<div class="row">
-						<button type="submit" class="connectBtn" :class="{loading: loading}"><i class="fas fa-spinner fa-spin fa-lg"></i> Connect</button>
+						<button type="submit" class="connectBtn tour-connect-retry" :class="{loading: loading}"><i class="fas fa-spinner fa-spin fa-lg"></i> Connect</button>
 					</div>
 				</form>
 				<div v-else-if="showLoginForm" class="login">
@@ -281,7 +281,7 @@ export default {
 
 		showErrors(error) {
 			// ToDo: Show Modal with Logs component?
-			alert(`Close this popup and press the 'F12' key to open the Browser console for more details.`);
+			alert(`Close this popup and press the 'F12' key (Chrome) or 'Ctrl+Shift+K' (Firefox) to open the Browser console for more details.`);
 		},
 
 		async submitForm() {
