@@ -52,28 +52,28 @@ export default {
 				},
 
 				'connect-url': {
-					title: 'URL input',
-					content: `Paste the URL of the server you wish to connect to into this field. If you don't know any URL, you may head over to <a href="https://hub.openeo.org/">openEO Hub</a> to discover available servers.`
+					title: 'Provide server address',
+					content: `Enter the address of the server you wish to connect to here. If you don't know any URL, you may head over to <a href="https://hub.openeo.org/" target="_blank">openEO Hub</a> to discover available servers.`
 				},
 				'connect-history': {
-					title: 'History of URLs',
-					content: 'Clicking on this icon will open a window that displays all URLs that you have connected to in the past (provided your browser permits storing in Local Storage).'
+					title: 'Previously used servers',
+					content: 'Clicking here will show a list of all servers that you have been connected to on this computer in the past.'
 				},
 
 				'login-options': {
 					target: '#credentials > .tabsHeader',
 					title: 'Login Options',
-					content: `You have several ways of authenticating with the server. The standard method is OpenID Connect (OIDC). If supported, you will see a button for each available OIDC provider here. Click on one to open its login form.`
+					content: `You have several ways of authenticating with the server. Select the one you have credentials for. Usually, the first option is what you are supposed to use. If you don't know what to select, please ask your service provider for details or select "No credentials" to just have a (read-only) look at the service offerings.`
 				},
 				'login-internal': {
 					target: '#credentials > .tabsHeader > button[title=Internal]',
-					title: 'User/Password',
-					content: `Some servers support basic authentication with a simple username-password combination. This method is discouraged and generally only used for internal development purposes (hence the name of this button). We suggest to use OpenID Connect if you can.`
+					title: 'Internal',
+					content: `Some servers support an additional authentication method, which is best-suited and recommended for development and testing purposes only. You just need to provide your username and password here, but usually, you'd want to select one of the other options, if available.`
 				},
 				'login-without': {
 					target: '#credentials > .tabsHeader > button[title="No credentials"]',
 					title: 'Without login',
-					content: `It is possible to proceed without any authentication, however, usually this means that you won't able to actually submit calculations etc. You can think of it as an "discovery only" mode.`
+					content: `It is possible to proceed without logging in, however, this means that you can only <em>explore</em> the service offerings but won't be able to actually access the actual EO data, submit calculations or store any data.`
 				},
 				'login-credentials': {
 					target: '.tabContent:not([style*="display: none"]) .input',  // select first visible input
@@ -82,7 +82,7 @@ export default {
 				},
 				'login-switch': {
 					title: 'Wrong server?',
-					content: `If you chose the wrong server, this link takes you back to the previous step so you can choose a different server URL.`
+					content: `If you chose the wrong server, this link takes you back to the previous step so you can choose a different server.`
 				}
 			}
 		};
