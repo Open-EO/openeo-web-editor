@@ -191,5 +191,8 @@ export default {
 	.v-step a {
 		color: black;
 	}
+	.v-step a:hover {
+		text-decoration: underline;
+	}
 }
 </style>

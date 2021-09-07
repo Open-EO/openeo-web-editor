@@ -447,6 +447,7 @@ export default {
 .connectContainer .helpBtn {
 	float: right;
 	cursor: pointer;
+	color: $linkColor;
 }
 header {
 	text-align: center;
