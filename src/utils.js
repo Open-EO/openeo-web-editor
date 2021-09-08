@@ -30,18 +30,9 @@ class Utils extends VueUtils {
 			}
 			message = error.message;
 
-			let log = {
-				id: error.id,
-				code: error.code,
-				level: 'error',
-				message: error.message,
-				time: new Date().toISOString(),
-				data: error,
-				links: error.links
-			};
 			buttons.push({
 				text: 'Show Details',
-				action: () => vm.$root.$emit('viewLogs', [log], 'Error', 'fa-bomb')
+				action: () => vm.$root.$emit('showError', error)
 			});
 		}
 		else if (typeof error === 'string') {

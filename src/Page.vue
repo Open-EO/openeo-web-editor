@@ -31,7 +31,9 @@ export default {
 		ConnectForm,
 		IDE: () => import('./components/IDE.vue'),
 		CollectionModal: () => import('./components/modals/CollectionModal.vue'),
-		ExportCode: () => import('./components/modals/ExportCode.vue'),
+		DownloadAssetsModal: () => import('./components/modals/DownloadAssetsModal.vue'),
+		ErrorModal: () => import('./components/modals/ErrorModal.vue'),
+		ExportCodeModal: () => import('./components/modals/ExportCodeModal.vue'),
 		ExpressionModal: () => import('./components/modals/ExpressionModal.vue'),
 		FileFormatModal: () => import('./components/modals/FileFormatModal.vue'),
 		ImportProcessModal: () => import('./components/modals/ImportProcessModal.vue'),
@@ -81,6 +83,7 @@ export default {
 		});
 	},
 	mounted() {
+		this.listen('showError', this.showError);
 		this.listen('showModal', this.showModal);
 		this.listen('showListModal', this.showListModal);
 		this.listen('showCollection', this.showCollection);
@@ -89,12 +92,14 @@ export default {
 		this.listen('showWebEditorInfo', this.showWebEditorInfo);
 		this.listen('title', this.setTitle);
 		this.listen('showTour', where => this.tourType = where);
+		this.listen('stopTour', this.stopTour);
 	},
 	watch: {
 		isDiscovered(newVal) {
 			if (newVal) {
 				this.skipLogin = false;
 			}
+			this.stopTour();
 		},
 		title(newTitle) {
 			document.title = newTitle;
@@ -116,6 +121,9 @@ export default {
 			}
 			this.title = title;
 		},
+		stopTour() {
+			this.tourType = null;
+		},
 		showModal(component, props = {}, events = {}, id = null) {
 			this.modals.push({
 				component,
@@ -123,12 +131,14 @@ export default {
 				events,
 				id: id || "modal_" + Date.now()
 			});
+			this.stopTour();
 		},
 		hideModal(modal) {
 			let id = Utils.isObject(modal) ? modal.id : modal;
 			let index = this.modals.findIndex(other => other.id === id);
 			if (typeof index !== 'undefined') {
 				this.modals.splice(index, 1);
+				this.stopTour();
 			}
 		},
 		showListModal(title, list, listActions) {
@@ -136,6 +146,9 @@ export default {
 		},
 		showWebEditorInfo() {
 			this.showModal('WebEditorModal');
+		},
+		showError(error) {
+			this.showModal('ErrorModal', {error});
 		},
 		async showCollection(id) {
 			try {

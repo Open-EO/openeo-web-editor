@@ -6,10 +6,12 @@
 </template>
 
 <script>
+import EventBusMixin from './EventBusMixin.vue';
 import Utils from '../utils.js';
 
 export default {
 	name: 'FullscreenButton',
+	mixins: [EventBusMixin],
 	props: {
 		element: {
 			required: true
@@ -78,6 +80,7 @@ export default {
 			}
 
 			this.$emit('changed', this.isFullscreen);
+			this.emit('stopTour');
 		},
 	}
 };
