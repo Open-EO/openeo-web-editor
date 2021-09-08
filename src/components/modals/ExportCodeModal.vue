@@ -29,7 +29,7 @@ import Python from '../../export/python';
 import R from '../../export/r';
 
 export default {
-	name: 'ExportCode',
+	name: 'ExportCodeModal',
 	components: {
 		Modal,
 		TextEditor

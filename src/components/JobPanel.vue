@@ -314,7 +314,7 @@ export default {
 					Utils.error(this, 'No results available for job "' + Utils.getResourceTitle(job) + '".');
 					return;
 				}
-				this.emit('showModal', 'DownloadAssets', {job, result});
+				this.emit('showModal', 'DownloadAssetsModal', {job, result});
 			} catch(error) {
 				Utils.exception(this, error, 'Download Result Error: ' + Utils.getResourceTitle(job));
 			}

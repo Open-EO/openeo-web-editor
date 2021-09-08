@@ -11,7 +11,7 @@
 import Modal from './Modal.vue';
 
 export default {
-	name: 'DownloadAssets',
+	name: 'DownloadAssetsModal',
 	components: {
 		StacAsset: () => import('@openeo/vue-components/components/internal/StacAsset.vue'),
 		Modal
@@ -31,7 +31,3 @@ export default {
 	}
 }
 </script>
-
-<style lang="scss">
-
-</style>

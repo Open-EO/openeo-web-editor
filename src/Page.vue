@@ -31,8 +31,9 @@ export default {
 		ConnectForm,
 		IDE: () => import('./components/IDE.vue'),
 		CollectionModal: () => import('./components/modals/CollectionModal.vue'),
-		DownloadAssets: () => import('./components/modals/DownloadAssets.vue'),
-		ExportCode: () => import('./components/modals/ExportCode.vue'),
+		DownloadAssetsModal: () => import('./components/modals/DownloadAssetsModal.vue'),
+		ErrorModal: () => import('./components/modals/ErrorModal.vue'),
+		ExportCodeModal: () => import('./components/modals/ExportCodeModal.vue'),
 		ExpressionModal: () => import('./components/modals/ExpressionModal.vue'),
 		FileFormatModal: () => import('./components/modals/FileFormatModal.vue'),
 		ImportProcessModal: () => import('./components/modals/ImportProcessModal.vue'),
@@ -82,6 +83,7 @@ export default {
 		});
 	},
 	mounted() {
+		this.listen('showError', this.showError);
 		this.listen('showModal', this.showModal);
 		this.listen('showListModal', this.showListModal);
 		this.listen('showCollection', this.showCollection);
@@ -144,6 +146,9 @@ export default {
 		},
 		showWebEditorInfo() {
 			this.showModal('WebEditorModal');
+		},
+		showError(error) {
+			this.showModal('ErrorModal', {error});
 		},
 		async showCollection(id) {
 			try {

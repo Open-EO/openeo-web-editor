@@ -148,7 +148,7 @@ export default {
 		},
 
 		async exportCode() {
-			this.emit('showModal', 'ExportCode');
+			this.emit('showModal', 'ExportCodeModal');
 		},
 
 		async validateProcess() {
