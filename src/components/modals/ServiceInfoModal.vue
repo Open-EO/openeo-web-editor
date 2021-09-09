@@ -1,5 +1,5 @@
 <template>
-	<Modal minWidth="85%" :title="title" @closed="$emit('closed')">
+	<Modal width="80%" :title="title" @closed="$emit('closed')">
 		<Service :service="service" :currency="currency">
 			<template #process-graph>
 				<Editor :value="service.process" :editable="false" class="infoViewer" id="servicePgViewer" />

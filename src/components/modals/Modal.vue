@@ -31,13 +31,9 @@ export default {
 		},
 		minWidth: {
 			type: String,
-			default: "30%"
+			default: null
 		},
-		maxWidth: {
-			type: String,
-			default: "85%"
-		},
-		minHeight: {
+		width: {
 			type: String,
 			default: "auto"
 		},
@@ -57,10 +53,11 @@ export default {
 		...Utils.mapState('editor', ['hightestModalZIndex']),
 		style() {
 			let style = {
-				'min-width': this.minWidth,
-				'max-width': this.maxWidth,
-				'min-height': this.minHeight
+				'width': this.width
 			};
+			if (this.minWidth) {
+				style['min-width'] = this.minWidth;
+			}
 			if (Array.isArray(this.position)) {
 				style.position = 'absolute';
 				style.left = this.position[0] + 'px';
@@ -157,7 +154,11 @@ export default {
 .modal .modal-container {
     background-color: #fff;
     border: 1px solid #fff;
+	min-height: 200px;
+	min-width: 300px;
+	width: 70%;
 	max-height: 96%;
+	max-width: 96%;
 	display: flex;
 	flex-direction: column;
 	box-shadow: 8px 8px 8px 0px rgba(0,0,0,0.3);

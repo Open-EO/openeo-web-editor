@@ -1,5 +1,5 @@
 <template>
-	<Modal minWidth="75%" maxWidth="75%" :title="title" @closed="$emit('closed')">
+	<Modal width="60%" :title="title" @closed="$emit('closed')">
 		<div class="vue-component server-info">
 			<Capabilities :capabilities="capabilities" :url="url" />
 

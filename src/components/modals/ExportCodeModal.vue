@@ -1,5 +1,5 @@
 <template>
-	<Modal minWidth="70%" title="Export as Source Code" @closed="$emit('closed')">
+	<Modal width="80%" title="Export as Source Code" @closed="$emit('closed')">
 		<section class="exportCode">
 			<h3>Choose Programming Language</h3>
 			<input type="radio" v-model="language" id="js" value="JavaScript" /><label for="js">JavaScript</label>

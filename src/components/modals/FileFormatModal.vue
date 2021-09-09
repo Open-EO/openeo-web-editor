@@ -1,5 +1,5 @@
 <template>
-	<Modal ref="modal" :title="title" @closed="$emit('closed')">
+	<Modal ref="modal" width="50%" :title="title" @closed="$emit('closed')">
 		<FileFormat :id="id" :format="format" :type="type"></FileFormat>
 	</Modal>
 </template>
