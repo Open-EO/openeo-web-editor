@@ -1,5 +1,5 @@
 <template>
-	<Modal :title="title" @closed="$emit('closed')" @shown="expand">
+	<Modal width="50%" :title="title" @closed="$emit('closed')" @shown="expand">
 		<ul class="error-modal">
 			<Log :log="log" ref="log"  />
 		</ul>

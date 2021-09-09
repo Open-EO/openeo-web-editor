@@ -98,17 +98,16 @@ export default {
 					break;
 				case 'markdown':
 					options.mode = 'text/x-markdown';
+					options.lineWrapping = true;
 					break;
 				case 'javascript':
 					options.mode = 'text/javascript';
 					break;
 				case 'json':
 				case 'processgraph':
-					Object.assign(options, {
-						mode: "application/json",
-						gutters: ["CodeMirror-lint-markers"],
-						lint: true
-					});
+					options.mode = 'application/json';
+					options.gutters = ['CodeMirror-lint-markers'];
+					options.lint = true;
 					break;
 			}
 			return options;
@@ -280,6 +279,9 @@ export default {
 <style>
 .textEditor.math .cm-operator {
 	margin: 0 0.2em;
+}
+.textEditor.markdown .CodeMirror-wrap pre {
+    word-break: break-word;
 }
 .CodeMirror-placeholder {
 	opacity: 0.5;

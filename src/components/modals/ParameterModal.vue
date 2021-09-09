@@ -1,5 +1,5 @@
 <template>
-	<Modal :show="show" minWidth="60%" maxWidth="90%" minHeight="75%" :title="title" @closed="$emit('closed')">
+	<Modal :show="show" minWidth="60%" width="90%" :title="title" @closed="$emit('closed')">
 		<template #default>
 			<p v-if="parameters.length === 0">No editable parameters available.</p>
 			<form v-else id="parameterModal" @submit.prevent="save">

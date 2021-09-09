@@ -186,7 +186,6 @@ export default class JavaScript extends Exporter {
 	getArrayElementPlaceholder(node) {
 		if (node.process_id === 'array_element') {
 			if (node.getArgumentType('data') === 'parameter') {
-				debugger;
 				let parameter = node.getRawArgument('data').from_parameter;
 				let index = this.getCallbackParameters().findIndex(param => param.name === parameter);
 				if (index >= 0) {

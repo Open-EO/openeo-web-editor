@@ -1,5 +1,5 @@
 <template>
-	<Modal :title="title" @closed="$emit('closed')">
+	<Modal width="50%" :title="title" @closed="$emit('closed')">
 		<div class="processParameterModal">
 			<p class="message info" v-if="udp">
 				<i class="fas fa-info-circle"></i>

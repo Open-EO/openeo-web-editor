@@ -1,5 +1,5 @@
 <template>
-	<Modal :show="show" minWidth="70%" title="Formula Editor" @closed="$emit('closed')">
+	<Modal :show="show" width="80%" title="Formula Editor" @closed="$emit('closed')">
 		<template #default>
 			<div class="content">
 				<TextEditor ref="editor" id="input" class="editor" v-model="input" language="math" placeholder="e.g. x * 2.5 / (x - y)" @drop="onDrop" @dragover="allowDrop" />

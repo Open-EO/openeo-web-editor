@@ -1,5 +1,5 @@
 <template>
-	<Modal :title="title" @closed="$emit('closed')">
+	<Modal width="80%" :title="title" @closed="$emit('closed')">
 		<UdfRuntime :id="id" :runtime="data" :version="version"></UdfRuntime>
 	</Modal>
 </template>
