@@ -2,6 +2,7 @@
 	<div class="connectPage">
 		<Logo />
 		<div class="connectContainer">
+			<div class="helpBtn" @click="showHelp" title="Show help"><i class="fas fa-question fa-fw"></i> Help</div>
 			<div v-if="httpsUrl" class="message error">
 				<i class="fas fa-shield-alt"></i>
 				<span>You are using an <strong>insecure</strong> HTTP connection, which is not encrypted. Please use HTTPS if possible.<br />
@@ -17,12 +18,12 @@
 					<div class="row">
 						<label for="serverUrl">URL:</label>
 						<div class="input">
-							<input type="url" id="serverUrl" v-model.lazy.trim="serverUrl" :disabled="autoConnect" />
-							<button v-if="allowOtherServers" type="button" @click="showServerSelector" title="Select previously used server"><i class="fas fa-book"></i></button>
+							<input type="url" id="serverUrl" class="tour-connect-url" v-model.lazy.trim="serverUrl" :disabled="autoConnect" />
+							<button v-if="allowOtherServers" type="button" @click="showServerSelector" title="Select previously used server" class="tour-connect-history"><i class="fas fa-book"></i></button>
 						</div>
 					</div>
 					<div class="row">
-						<button type="submit" class="connectBtn" :class="{loading: loading}"><i class="fas fa-spinner fa-spin fa-lg"></i> Connect</button>
+						<button type="submit" class="connectBtn tour-connect-retry" :class="{loading: loading}"><i class="fas fa-spinner fa-spin fa-lg"></i> Connect</button>
 					</div>
 				</form>
 				<div v-else-if="showLoginForm" class="login">
@@ -83,7 +84,7 @@
 							</form>
 						</template>
 					</Tabs>
-					<div v-if="allowOtherServers" class="switch"><a @click="switchServer()">Switch server</a></div>
+					<div v-if="allowOtherServers" class="switch tour-login-switch"><a @click="switchServer()">Switch server</a></div>
 				</div>
 			</transition>
 		</div>
@@ -212,7 +213,6 @@ export default {
 		}
 	},
 	mounted() {
-		this.listen('viewLogs', this.showErrors);
 		window.onpopstate = evt => this.historyNavigate(evt);
 		window.history.replaceState({reset: true, serverUrl: this.serverUrl}, "");
 		this.initProviders();
@@ -224,6 +224,14 @@ export default {
 		...Utils.mapActions(['connect', 'discover', 'logout']),
 		...Utils.mapMutations(['reset']),
 		...Utils.mapMutations('editor', ['addServer', 'removeServer']),
+
+		showHelp() {
+			if (!this.isConnected) {
+				this.emit('showTour', 'connect');
+			} else {
+				this.emit('showTour', 'login');
+			}
+		},
 
 		historyNavigate(evt) {
 			if (!Utils.isObject(evt.state) || evt.state.reset) {
@@ -270,11 +278,6 @@ export default {
 
 		providerSelected(tab) {
 			this.provider = tab.data;
-		},
-
-		showErrors(error) {
-			// ToDo: Show Modal with Logs component?
-			alert(`Close this popup and press the 'F12' key to open the Browser console for more details.`);
 		},
 
 		async submitForm() {
@@ -436,6 +439,15 @@ export default {
 	border-radius: 3em;
 	padding: 2.5em 3em;
 	font-family: 'Ubuntu', sans-serif;
+}
+.connectContainer .helpBtn {
+	float: right;
+	cursor: pointer;
+	color: $linkColor;
+	margin-left: 1rem;
+}
+.connectContainer .helpBtn:hover {
+	color: black;
 }
 header {
 	text-align: center;

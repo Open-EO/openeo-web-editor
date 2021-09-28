@@ -153,7 +153,7 @@ export default class JavaScript extends Exporter {
 		else {
 			let params = this.generateFunctionParams(parameters);
 			this.newLine();
-			this.addCode(`let ${variable} = function(${params}) {`);
+			this.addCode(`let ${variable} = function(${params.join(', ')}) {`);
 			this.indent++;
 			this.addCode(await callback.toCode(true));
 			this.indent--;
@@ -186,7 +186,6 @@ export default class JavaScript extends Exporter {
 	getArrayElementPlaceholder(node) {
 		if (node.process_id === 'array_element') {
 			if (node.getArgumentType('data') === 'parameter') {
-				debugger;
 				let parameter = node.getRawArgument('data').from_parameter;
 				let index = this.getCallbackParameters().findIndex(param => param.name === parameter);
 				if (index >= 0) {

@@ -1,5 +1,5 @@
 <template>
-	<Modal :minWidth="minWidth" :title="process.id" @closed="$emit('closed')">
+	<Modal :width="minWidth" :title="process.id" @closed="$emit('closed')">
 		<div class="docgen">
 			<!-- ToDo: Implement processUrl -->
 			<!-- ToDo: Show info (badge?) that process is custom -->
@@ -33,7 +33,7 @@ export default {
 	computed: {
 		minWidth() {
 			if (Utils.isObject(this.process) && this.process.process_graph) {
-				return "85%";
+				return "80%";
 			}
 			else {
 				return "50%";

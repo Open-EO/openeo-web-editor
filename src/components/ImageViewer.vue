@@ -131,11 +131,13 @@ export default {
 	height: 100%;
 	text-align: center;
 	background-color: #eee;
+	overflow: auto;
 }
 .toolbar {
 	z-index: 1;
     position: sticky;
 	top: 0;
+	left: 0;
 	width: 100%;
 	padding: 1em;
 	box-sizing: border-box;

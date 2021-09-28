@@ -1,5 +1,5 @@
 <template>
-	<Modal minWidth="40%" title="Estimate for Batch Job" @closed="$emit('closed')">
+	<Modal width="40%" title="Estimate for Batch Job" @closed="$emit('closed')">
 		<JobEstimate :estimate="estimate" :currency="currency" />
 
 		<section class="vue-component basedata" v-if="job">

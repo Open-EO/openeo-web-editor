@@ -1,5 +1,5 @@
 <template>
-	<Modal :title="title" @closed="$emit('closed')">
+	<Modal width="60%" :title="title" @closed="$emit('closed')">
 		<ul class="list">
 			<StacAsset v-for="(asset, id) in result.assets" :key="id" :asset="asset" :id="id" :context="data" />
 		</ul>
@@ -11,7 +11,7 @@
 import Modal from './Modal.vue';
 
 export default {
-	name: 'DownloadAssets',
+	name: 'DownloadAssetsModal',
 	components: {
 		StacAsset: () => import('@openeo/vue-components/components/internal/StacAsset.vue'),
 		Modal
@@ -31,7 +31,3 @@ export default {
 	}
 }
 </script>
-
-<style lang="scss">
-
-</style>

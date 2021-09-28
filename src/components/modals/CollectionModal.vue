@@ -1,5 +1,5 @@
 <template>
-	<Modal minWidth="80%" :title="collection.id" @closed="$emit('closed')">
+	<Modal width="80%" :title="collection.id" @closed="$emit('closed')">
 		<div class="docgen">
 			<Collection :data="collection">
 				<template #spatial-extents="p">
@@ -10,7 +10,7 @@
 			<section v-if="currentItems">
 				<Items :items="currentItems">
 					<template #item-location="p">
-						<MapViewer :id="String(Date.now())" :geoJson="p.geometry"></MapViewer>
+						<MapViewer :id="mapViewerId" :geoJson="p.geometry"></MapViewer>
 					</template>
 				</Items>
 				<div class="pagination">
@@ -52,6 +52,9 @@ export default {
 	computed: {
 		...Utils.mapState(['connection']),
 		...Utils.mapGetters(['supports']),
+		mapViewerId() {
+			return 'map_' + this.collection.id;
+		},
 		bbox() {
 			try {
 				return this.collection.extent.spatial.bbox[0];
