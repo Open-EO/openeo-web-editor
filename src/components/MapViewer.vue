@@ -6,13 +6,10 @@
 import MapMixin from './MapMixin.vue';
 import Utils from '../utils.js';
 
-import proj4 from 'proj4';
 import Collection from 'ol/Collection';
 import Feature from 'ol/Feature';
 import LayerGroup from 'ol/layer/Group';
 import { fromExtent as PolygonFromExtent } from 'ol/geom/Polygon';
-import Projection from 'ol/proj/Projection';
-import {register} from 'ol/proj/proj4';
 import TileLayer from 'ol/layer/Tile';
 import GeoTIFF from 'ol/source/GeoTIFF';
 import GlTileLayer from 'ol/layer/WebGLTile';
@@ -162,30 +159,18 @@ export default {
 		},
 
 		updateGeoTiffLayer(url, title = null) {
-			var layer = new GlTileLayer({
+			let source = new GeoTIFF({
+				sources: [{ url }],
+			});
+			let layer = new GlTileLayer({
 				id: url,
 				title: title ? title : 'GeoTiff',
-				source: new GeoTIFF({
-					sources: [
-						{
-							url
-						},
-					],
-				})
+				source
 			});
-
-			proj4.defs('EPSG:32632', '+proj=utm +zone=32 +datum=WGS84 +units=m +no_defs');
-			register(proj4);
-
-			const projection = new Projection({
-				code: 'EPSG:32632'
-			});
-
-			this.map.getView().set('projection', projection);
-
 			this.addLayerToMap(layer);
+			// ToDo: Create view from STAC metadata if getView is not getting enough metadata from the source
+			this.map.setView(source.getView());
 			return layer;
-			// ToDo: Implement full/native GTiff support
 		},
 
 		async addCollection(collection) {
