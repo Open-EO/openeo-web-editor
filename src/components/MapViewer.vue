@@ -158,18 +158,36 @@ export default {
 			return null;
 		},
 
-		updateGeoTiffLayer(url, title = null) {
+		async updateGeoTiffLayer(url, title = null) {
+			// ToDo: Read more details from STAC metadata
+			let min = Number.parseFloat(prompt("Please input minimum value", 0));
+			let max = Number.parseFloat(prompt("Please input minimum value", 255));
+			let nodata = Number.parseFloat(prompt("Please input no-data value (or leave empty for none)", ""));
 			let source = new GeoTIFF({
-				sources: [{ url }],
+				sources: [{ url, min, max, nodata }],
 			});
+			let view = await source.getView();
 			let layer = new GlTileLayer({
 				id: url,
 				title: title ? title : 'GeoTiff',
 				source
 			});
+
+			layer.setExtent(view.extent);
+			this.map.getView().set('projection', view.projection);
+			this.map.getView().fit(view.extent, this.fitOptions);
+
+			this.map.on('singleclick', evt => {
+				const pixel = this.map.getEventPixel(evt.originalEvent);
+				console.log(evt);
+			/*	this.map.forEachLayerAtPixel(pixel, layer => {
+					console.log(pixel, evt.pixel);
+					console.log(layer);
+				}); */
+			});
+
 			this.addLayerToMap(layer);
-			// ToDo: Create view from STAC metadata if getView is not getting enough metadata from the source
-			this.map.setView(source.getView());
+
 			return layer;
 		},
 

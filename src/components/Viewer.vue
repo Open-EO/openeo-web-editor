@@ -113,11 +113,9 @@ export default {
 		},
 		showJobResults(item, job) {
 			for(var key in item.assets) {
-				if (key === "out") {
-					continue; // Ignore VITOs strange out file.
-				}
 				var asset = item.assets[key];
-				this.showViewer(asset, this.makeTitle(key, job.id, true));
+				let jobTitle = Utils.getResourceTitle(job, true);
+				this.showViewer(asset, this.makeTitle(asset.title, jobTitle, true));
 			}
 		},
 		showLogs(resource, defaultTitle = 'Logs', faIcon = 'fa-bug') {
@@ -221,7 +219,7 @@ export default {
 				case 'image/tiff':
 					if (data.url && data.parameters.application === 'geotiff') {
 						this.showMapViewer();
-						this.$refs.mapViewer.updateGeoTiffLayer(data.url, this.makeTitle(title, "GeoTiff"));
+						await this.$refs.mapViewer.updateGeoTiffLayer(data.url, this.makeTitle(title, "GeoTiff"));
 						break;
 					}
 					// else: Default behavior
