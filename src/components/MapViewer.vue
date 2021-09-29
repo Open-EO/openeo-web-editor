@@ -7,6 +7,7 @@ import MapMixin from './MapMixin.vue';
 import Utils from '../utils.js';
 
 import Collection from 'ol/Collection';
+import {Control} from 'ol/control';
 import Feature from 'ol/Feature';
 import LayerGroup from 'ol/layer/Group';
 import { fromExtent as PolygonFromExtent } from 'ol/geom/Polygon';
@@ -24,6 +25,43 @@ import Swipe from 'ol-ext/control/Swipe';
 
 import 'ol-ext/control/Timeline.css';
 import Timeline from 'ol-ext/control/Timeline';
+
+// Workaround for https://github.com/openlayers/openlayers/issues/12833
+HTMLCanvasElement.prototype.getContext = (function (origFn) {
+  return function (type, attributes) {
+    if (
+      ["experimental-webgl", "webgl", "webkit-3d", "moz-webgl"].includes(type)
+    ) {
+      attributes = Object.assign({}, attributes, {
+        preserveDrawingBuffer: true
+      });
+    }
+    return origFn.call(this, type, attributes);
+  };
+})(HTMLCanvasElement.prototype.getContext);
+
+
+class TextControl extends Control {
+  constructor(opt_options) {
+    const options = opt_options || {};
+
+    const element = document.createElement('div');
+    element.className = 'value ol-unselectable ol-control';
+
+    super({
+      element: element,
+      target: options.target,
+    });
+  }
+
+  setValue(value) {
+	  this.element.innerHTML = value;
+  }
+
+  setTitle(value) {
+	  this.element.title = value;
+  }
+}
 
 export default {
 	name: 'MapViewer',
@@ -66,8 +104,32 @@ export default {
 			}
 
 			let layers = this.map.getLayers();
-			layers.on('add', () => this.toggleSwipeControl());
-			layers.on('remove', () => this.toggleSwipeControl());
+			layers.on('add', evt => {
+				this.toggleSwipeControl();
+
+				let layer = evt.element;
+				let events = layer.get('events');
+				for(let event in events) {
+					this.map.on(event, events[event]);
+				}
+				let controls = layer.get('controls');
+				for(let control of controls) {
+					this.map.addControl(control);
+				}
+			});
+			layers.on('remove', evt => {
+				this.toggleSwipeControl();
+
+				let layer = evt.element;
+				let events = layer.get('events');
+				for(let event in events) {
+					this.map.un(event, events[event]);
+				}
+				let controls = layer.get('controls');
+				for(let control of controls) {
+					this.map.removeControl(control);
+				}
+			});
 
 			if (this.$listeners && this.$listeners.drop) {
 				this.map.getViewport().addEventListener('dragover', event => event.preventDefault());
@@ -108,7 +170,7 @@ export default {
 		},
 
 		toggleSwipeControl() {
-			var shownLayers = this.getVisibleLayers();
+			var shownLayers = this.getVisibleLayers().filter(layer => !(layer instanceof GlTileLayer)); // Swipe Control errors for GlTileLayers
 			if (shownLayers.length === 2) {
 				if (this.swipe.control === null) {
 					this.swipe.control = new Swipe();
@@ -160,9 +222,9 @@ export default {
 
 		async updateGeoTiffLayer(url, title = null) {
 			// ToDo: Read more details from STAC metadata
-			let min = Number.parseFloat(prompt("Please input minimum value", 0));
-			let max = Number.parseFloat(prompt("Please input minimum value", 255));
-			let nodata = Number.parseFloat(prompt("Please input no-data value (or leave empty for none)", ""));
+			let min = Number.parseFloat(prompt("Please input the minimum value", 0));
+			let max = Number.parseFloat(prompt("Please input the maximum value", 255));
+			let nodata = Number.parseFloat(prompt("Please input the no-data value or leave empty for none", ""));
 			let source = new GeoTIFF({
 				sources: [{ url, min, max, nodata }],
 			});
@@ -177,14 +239,20 @@ export default {
 			this.map.getView().set('projection', view.projection);
 			this.map.getView().fit(view.extent, this.fitOptions);
 
-			this.map.on('singleclick', evt => {
-				const pixel = this.map.getEventPixel(evt.originalEvent);
-				console.log(evt);
-			/*	this.map.forEachLayerAtPixel(pixel, layer => {
-					console.log(pixel, evt.pixel);
-					console.log(layer);
-				}); */
+			let textControl = new TextControl();
+			layer.set('events', {
+				singleclick: evt => {
+					const pixel = this.map.getEventPixel(evt.originalEvent);
+					const data = new Uint8Array(4);
+					const gl = layer.getRenderer().helper.getGL();
+					gl.readPixels(pixel[0], pixel[1], 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, data);
+					let value = Utils.displayRGBA(data, min, max, nodata, 5);
+					textControl.setValue(`Estimated Pixel Value: ${value}`);
+					textControl.setTitle(`Coordinate: ${evt.coordinate.join(', ')}`);
+				}
 			});
+			// ToDo: This is shown twice if multiple GeoTiffs are shown
+			layer.set('controls', [textControl]);
 
 			this.addLayerToMap(layer);
 
@@ -416,3 +484,10 @@ export default {
 </script>
 
 <style src="./MapMixin.css"></style>
+
+<style>
+.ol-control.value {
+	top: 0.5em;
+	left: 3em;
+}
+</style>

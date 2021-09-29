@@ -97,24 +97,8 @@ export default {
 				let yScale = this.img.naturalHeight / size.height;
 				let x = event.offsetX * xScale;
 				let y = event.offsetY * yScale;
-				let [r,g,b,a] = this.context.getImageData(Math.ceil(x), Math.ceil(y), 1, 1).data;
-				if (a === 0) {
-					// Transparent (no-data?)
-					this.value = 'no data';
-				}
-				else if (r == g && g === b) {
-					if (a === 255) {
-						// Grayscale
-						this.value = r;
-					}
-					else {
-						// Grayscale with Alpha
-						this.value = `${r}, Alpha: ${a}`;
-					}
-				}
-				else {
-					this.value = `Red: ${r}, Green: ${g}, Blue: ${b}, Alpha: ${a}`;
-				}
+				let rgba = this.context.getImageData(Math.ceil(x), Math.ceil(y), 1, 1).data;
+				this.value = Utils.displayRGBA(rgba);
 			} catch (error) {
 				this.value = 'n/a';
 				console.log(error);

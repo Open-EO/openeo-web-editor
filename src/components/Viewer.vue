@@ -115,7 +115,7 @@ export default {
 			for(var key in item.assets) {
 				var asset = item.assets[key];
 				let jobTitle = Utils.getResourceTitle(job, true);
-				this.showViewer(asset, this.makeTitle(asset.title, jobTitle, true));
+				this.showViewer(asset, this.makeTitle(jobTitle, asset.title, true));
 			}
 		},
 		showLogs(resource, defaultTitle = 'Logs', faIcon = 'fa-bug') {

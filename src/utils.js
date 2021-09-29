@@ -16,6 +16,40 @@ class Utils extends VueUtils {
 		return null;
 	}
 
+	static displayRGBA(value, min = 0, max = 255, nodata = null, precision = null) {
+		let rgba = Array.from(value);
+		let a = rgba.pop();
+		if (Number.isFinite(min) && Number.isFinite(max) && min !== 0 && max !== 255) {
+			rgba = rgba.map(x => {
+				// Linear scaling to original range
+				x = (x / 255) * (max - min) + min;
+				// Round values
+				if (precision !== null) {
+					x = x.toFixed(precision);
+				}
+				return x;
+			});
+		}
+		let [r,g,b] = rgba;
+		if (a === 0 || r === nodata || g === nodata || b === nodata) {
+			// Transparent (no-data)
+			return 'no data';
+		}
+		else if (r == g && g === b) {
+			if (a === 255) {
+				// Grayscale
+				return r;
+			}
+			else {
+				// Grayscale with Alpha
+				return `${r}, Alpha: ${a}`;
+			}
+		}
+		else {
+			return `Red: ${r}, Green: ${g}, Blue: ${b}, Alpha: ${a}`;
+		}
+	}
+
 	static exception(vm, error, alt) {
 		console.error(error);
 		var buttons = [];
