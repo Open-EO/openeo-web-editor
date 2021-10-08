@@ -175,6 +175,14 @@ export default {
 		}
 	},
 	data() {
+		var w = 500, h = 500, l = 50, t = 50; // default sizes and positions
+		if (window.screen && window.screen.availWidth > 0 && window.screen.availHeight > 0) {
+			// try to use 80% of av. screen width (and height)
+			w = Math.max(window.screen.availWidth * 0.8, w);
+			h = Math.max(window.screen.availHeight * 0.8, h);
+			l = window.screen.availWidth * 0.1;
+			t = window.screen.availHeight * 0.1;
+		}
 		return {
 			serverUrl: this.$config.serverUrl,
 			allowOtherServers: !this.$config.serverUrl,
@@ -187,7 +195,7 @@ export default {
 			userOidcClientId: '',
 			oidcOptions: {
 				automaticSilentRenew: true,
-				popupWindowFeatures: 'location=no,toolbar=no,width=750,height=550,left=50,top=50'
+				popupWindowFeatures: `location=no,toolbar=no,width=${w},height=${h},left=${l},top=${t}`
 			},
 			oidcRedirectUrl: OidcProvider.redirectUrl
 		};
