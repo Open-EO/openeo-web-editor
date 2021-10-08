@@ -85,7 +85,8 @@ export default (namespace, singular, plural) => {
 						}
 					} catch(error) {
 						if (!isUpdate) {
-							table.setNoData(error);
+							Utils.exception(this, error);
+							table.setNoData("Sorry, unable to load data from the server.");
 						}
 						else {
 							console.log(error);
