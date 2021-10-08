@@ -47,6 +47,10 @@
 								</template>
 								<div class="row bottom">
 									<TermsOfServiceConsent />
+									<div class="row help">
+										<i class="fas fa-window-restore"></i>
+										<span>Clicking the button below may open a new window for login.</span>
+									</div>
 									<button type="submit" class="connectBtn" :class="{loading: loading}"><i class="fas fa-spinner fa-spin fa-lg"></i><i class="fab fa-openid"></i> Log in with {{ tab.name }}</button>
 								</div>
 							</form>
@@ -495,7 +499,7 @@ input, button {
 	width: 100%;
 	margin: 0;
 	margin-top: 0.5em;
-	padding: 0.3em 1.33em 0.3em 0;
+	padding: 5px 1.33em 5px 0;
 }
 .fa-spinner {
 	visibility: hidden;
