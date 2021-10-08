@@ -1,8 +1,9 @@
 <template>
 	<div class="datatypeEditor fieldValue temporalPicker">
 		<template v-if="type === 'temporal-interval'">
-			<DatePicker v-model="dateTimes[0]" :get-classes="getRangeClasses" :default-value="dateTimes[0] || new Date()" :disabled-date="disabledStartDate" :disabled-time="disabledStartTime" :placeholder="label[0]" :type="pickerType" :value-type="formatApi"></DatePicker>
-			<DatePicker v-model="dateTimes[1]" :get-classes="getRangeClasses" :default-value="dateTimes[1] || new Date()" :disabled-date="disabledEndDate" :disabled-time="disabledEndTime" :placeholder="label[1]" :type="pickerType" :value-type="formatApi"></DatePicker>
+			<DatePicker v-model="dateTimes[0]" :get-classes="getRangeClasses" :default-value="defaultStart" :disabled-date="disabledStartDate" :disabled-time="disabledStartTime" :placeholder="label[0]" :type="pickerType" :value-type="formatApi"></DatePicker>
+			&nbsp;
+			<DatePicker v-model="dateTimes[1]" :get-classes="getRangeClasses" :default-value="defaultEnd" :disabled-date="disabledEndDate" :disabled-time="disabledEndTime" :placeholder="label[1]" :type="pickerType" :value-type="formatApi"></DatePicker>
 		</template>
 		<DatePicker v-else :key="type" v-model="dateTimes" :disabled ="!editable" :placeholder="label" :format="formatUi" :type="pickerType" :showSecond="false" :value-type="formatApi"></DatePicker>
 	</div>
@@ -30,6 +31,12 @@ export default {
 		}
 	},
 	computed: {
+		defaultStart() {
+			return this.newDate(this.dateTimes[0] || Date.now());
+		},
+		defaultEnd() {
+			return this.newDate(this.dateTimes[1] || Date.now());
+		},
 		formatApi() {
 			switch(this.type) {
 				case 'date':
@@ -103,10 +110,13 @@ export default {
 		}
 	},
 	methods: {
+		newDate(date) {
+			return new Date(date).setHours(0, 0, 0, 0);
+		},
 		getRangeClasses(cellDate, currentDates, classnames) {
 			const classes = [];
-			const start = this.dateTimes[0] && new Date(this.dateTimes[0]).setHours(0, 0, 0, 0);
-			const end = this.dateTimes[1] && new Date(this.dateTimes[1]).setHours(0, 0, 0, 0);
+			const start = this.dateTimes[0] && this.newDate(this.dateTimes[0]);
+			const end = this.dateTimes[1] && this.newDate(this.dateTimes[1]);
 			if (
 				!/disabled|active|not-current-month/.test(classnames) &&
 				start && end &&
@@ -117,18 +127,10 @@ export default {
 			return classes;
 		},
 		disabledStartDate(date) {
-			return (
-				this.dateTimes[1] &&
-				new Date(date).setHours(0, 0, 0, 0) >
-				new Date(this.dateTimes[1]).setHours(0, 0, 0, 0)
-			);
+			return (this.dateTimes[1] && this.newDate(date) > this.newDate(this.dateTimes[1]));
 		},
 		disabledEndDate(date) {
-			return (
-				this.dateTimes[0] &&
-				new Date(date).setHours(0, 0, 0, 0) <
-				new Date(this.dateTimes[0]).setHours(0, 0, 0, 0)
-			);
+			return (this.dateTimes[0] && this.newDate(date) < this.newDate(this.dateTimes[0]));
 		},
 		disabledStartTime(date) {
 			return this.dateTimes[1] && date > this.dateTimes[1];

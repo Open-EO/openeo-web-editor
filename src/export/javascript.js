@@ -153,7 +153,7 @@ export default class JavaScript extends Exporter {
 		else {
 			let params = this.generateFunctionParams(parameters);
 			this.newLine();
-			this.addCode(`let ${variable} = function(${params}) {`);
+			this.addCode(`let ${variable} = function(${params.join(', ')}) {`);
 			this.indent++;
 			this.addCode(await callback.toCode(true));
 			this.indent--;

@@ -11,8 +11,14 @@ Vue.use(Snotify);
 Vue.config.productionTip = false;
 Vue.config.errorHandler = function (err, vm, info) {
 	console.error(err, info);
-	if ((err instanceof Error || typeof err === 'string') && vm && vm.$snotify) {
-		vm.$snotify.error(err.message || err, 'Fatal error', Config.snotifyDefaults);
+	if (!vm || !vm.$snotify) {
+		return;
+	}
+	if (err instanceof Error) {
+		vm.$snotify.exception(err, 'Error', Config.snotifyDefaults);
+	}
+	else if (typeof err === 'string') {
+		vm.$snotify.error(err, 'Error', Config.snotifyDefaults);
 	}
 };
 

@@ -85,7 +85,7 @@ export default class R extends Exporter {
 		else {
 			let params = this.generateFunctionParams(parameters);
 			this.newLine();
-			this.addCode(`${variable} = function(${params}) {`);
+			this.addCode(`${variable} = function(${params.join(', ')}) {`);
 			this.indent++;
 			this.addCode(await callback.toCode(true));
 			this.indent--;
