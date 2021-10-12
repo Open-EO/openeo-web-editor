@@ -14,6 +14,7 @@
 			<button title="Cancel processing" @click="cancelJob(p.row)" v-show="supports('stopJob') && isJobActive(p.row)"><i class="fas fa-stop-circle"></i></button>
 			<button title="Download" @click="downloadResults(p.row)" v-show="supports('downloadResults') && hasResults(p.row)"><i class="fas fa-download"></i></button>
 			<button title="View results" @click="viewResults(p.row, true)" v-show="supports('downloadResults') && hasResults(p.row)"><i class="fas fa-eye"></i></button>
+			<button title="Open in QGIS" @click="openQGIS(p.row)" v-show="supports('downloadResults') && hasResults(p.row)"><img class="fas" src="../assets/qgis-icon.svg" alt="Open in QGIS" height="12" /></button>
 			<button title="View logs" @click="showLogs(p.row)" v-show="supports('debugJob')"><i class="fas fa-bug"></i></button>
 		</template>
 	</DataTable>
@@ -24,6 +25,7 @@ import EventBusMixin from './EventBusMixin.vue';
 import WorkPanelMixin from './WorkPanelMixin';
 import Utils from '../utils.js';
 import { Job } from '@openeo/js-client';
+import qgisExport from '../qgis';
 
 const WorkPanelMixinInstance = WorkPanelMixin('jobs', 'batch job', 'batch jobs');
 
@@ -293,31 +295,27 @@ export default {
 				Utils.exception(this, error, 'Cancel Job Error: ' + Utils.getResourceTitle(job));
 			}
 		},
-		async viewResults(job) {			
+		async getResults(job, callback) {
 			// Doesn't need to go through job store as it doesn't change job-related data
 			try {
-				let stac = await job.getResultsAsStac()
-				if(Utils.size(stac.assets) == 0) {
-					Utils.error(this, 'No results available for job "' + Utils.getResourceTitle(job) + '".');
-					return;
-				}
-				this.emit('viewJobResults', stac, job);
-			} catch(error) {
-				Utils.exception(this, error, 'View Result Error: ' + Utils.getResourceTitle(job));
-			}
-		},
-		async downloadResults(job) {	
-			// Doesn't need to go through job store as it doesn't change job-related data
-			try {
-				let result = await job.getResultsAsStac();
+				let result = await job.getResultsAsStac()
 				if(Utils.size(result.assets) == 0) {
 					Utils.error(this, 'No results available for job "' + Utils.getResourceTitle(job) + '".');
 					return;
 				}
-				this.emit('showModal', 'DownloadAssetsModal', {job, result});
+				callback(result, job);
 			} catch(error) {
-				Utils.exception(this, error, 'Download Result Error: ' + Utils.getResourceTitle(job));
+				Utils.exception(this, error, 'Result Error: ' + Utils.getResourceTitle(job));
 			}
+		},
+		async viewResults(job) {
+			await this.getResults(job, (result, job) => this.emit('viewJobResults', result, job));
+		},
+		async downloadResults(job) {
+			await this.getResults(job, (result, job) => this.emit('showModal', 'DownloadAssetsModal', {job, result}));
+		},
+		async openQGIS(job) {
+			await this.getResults(job, (result, job) => qgisExport(result, job, this));
 		},
 		hasResults(job) {
 			return (typeof job.status !== 'string' || job.status.toLowerCase() == 'finished');
