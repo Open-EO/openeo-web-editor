@@ -320,7 +320,7 @@ export default {
 					}
 
           if (this.$config.autoConnectProvider) {
-            const provider = this.oidcProviders.find(p => p.id === this.$config.autoConnectProvider);
+            const provider = this.oidcProviders.find(p => p.getId() === this.$config.autoConnectProvider);
             this.providerSelected({data: provider});
             await this.initDiscovery(provider);
           }
