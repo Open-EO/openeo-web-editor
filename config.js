@@ -40,6 +40,9 @@ export default {
 	// Key is the OIDC provider id, value is the client ID
 	oidcClientIds: {},
 
+	// Auto connect to a certain provider
+	autoConnectProvider: undefined,
+
 	// Show a warning if HTTP is used instead of HTTPS
 	showHttpWarning: true,
 
