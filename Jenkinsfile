@@ -1,8 +1,7 @@
 pipeline {
-
     agent {
       node {
-        label node_label
+        label 'devdmz'
       }
     }
     environment {
@@ -10,7 +9,6 @@ pipeline {
       base_repo = 'https://github.com/JanssenBrm/openeo-web-editor.git'
       base_branch = 'master'
       base_dir = 'openeo-web-editor'
-      node_label = 'devdmz'
       tag_version = true
       wipeout_workspace = true
       BRANCH_NAME        = "${env.BRANCH_NAME}"
