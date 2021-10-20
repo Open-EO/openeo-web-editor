@@ -1,26 +1,18 @@
-@Library('lib')_
-
-def config = [:]
-body.resolveStrategy = Closure.DELEGATE_FIRST
-body.delegate = config
-body()
-
-
-def package_name = 'openeo-vito-webeditor'
-def base_repo = 'https://github.com/JanssenBrm/openeo-web-editor.git'
-def base_branch = 'master'
-def base_dir = 'openeo-web-editor'
-def node_label = 'devdmz'
-def tag_version = true
-def wipeout_workspace = true
-
 pipeline {
+
     agent {
       node {
         label node_label
       }
     }
     environment {
+      package_name = 'openeo-vito-webeditor'
+      base_repo = 'https://github.com/JanssenBrm/openeo-web-editor.git'
+      base_branch = 'master'
+      base_dir = 'openeo-web-editor'
+      node_label = 'devdmz'
+      tag_version = true
+      wipeout_workspace = true
       BRANCH_NAME        = "${env.BRANCH_NAME}"
       BUILD_NUMBER       = "${env.BUILD_NUMBER}"
       BUILD_URL          = "${env.BUILD_URL}"
