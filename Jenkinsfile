@@ -14,7 +14,6 @@ pipeline {
       BRANCH_NAME        = "${env.BRANCH_NAME}"
       BUILD_NUMBER       = "${env.BUILD_NUMBER}"
       BUILD_URL          = "${env.BUILD_URL}"
-      DATE               = utils.getDate()
       JOB_BASE_NAME      = "${env.JOB_BASE_NAME}"
       JOB_NAME           = "${env.JOB_NAME}"
       JOB_URL            = "${env.JOB_URL}"
