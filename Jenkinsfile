@@ -1,3 +1,4 @@
+@Library('lib')_
 pipeline {
     agent {
       node {
