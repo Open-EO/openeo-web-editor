@@ -2,7 +2,7 @@ export default {
 	// Set this to connect to a back-end automatically when opening the Web Editor,
 	// so you could set this to https://example.com and then the Web Editor connects
 	// to the corresponding back-end automatically.
-	serverUrl: 'https://openeo.vito.be',
+	serverUrl: '',
 
 	// The name of the service
 	serviceName: 'openEO',
@@ -38,12 +38,10 @@ export default {
 	processNamespaces: [],
 
 	// Key is the OIDC provider id, value is the client ID
-	oidcClientIds: {
-		'keycloak': 'marketplace-openeo-client'
-	},
+	oidcClientIds: {},
 
 	// Auto connect to a certain provider
-	autoConnectProvider: 'oidc.keycloak',
+	autoConnectProvider: undefined,
 
 	// Hide providers in the login screen
 	hideProviders: [],
