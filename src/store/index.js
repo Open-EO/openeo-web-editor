@@ -145,7 +145,8 @@ export default new Vuex.Store({
 
 			// Request auth provider list
 			try {
-				var providers = await connection.listAuthProviders();
+				var providers = (await connection.listAuthProviders())
+					.filter(p => !Config.hideProviders || !Config.hideProviders.includes(p.getId()));
 				cx.commit('authProviders', providers);
 			} catch (error) {
 				cx.commit('setConnectionError', error);
