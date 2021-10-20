@@ -318,6 +318,12 @@ export default {
 					if (skipLogin) {
 						await this.initDiscovery();
 					}
+
+          if (this.$config.autoConnectProvider) {
+            const provider = this.oidcProviders.find(p => p.id === this.$config.autoConnectProvider);
+            this.providerSelected({data: provider});
+            await this.initDiscovery(provider);
+          }
 				}
 				else {
 					Utils.exception(this, this.connectionError);
