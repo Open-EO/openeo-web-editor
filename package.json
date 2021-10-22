@@ -55,6 +55,7 @@
     "ol": "^6.0.0",
     "ol-ext": "^3.2.3",
     "splitpanes": "^2.3.6",
+    "v-clipboard": "^2.2.3",
     "vue": "^2.6.12",
     "vue-multiselect": "^2.1.6",
     "vue-snotify": "^3.2.1",
