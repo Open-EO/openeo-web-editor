@@ -130,10 +130,18 @@ export default {
 				case 'output-format':
 				case 'service-type':
 					for(let key in state) {
-						data.push({
-							id: key.toUpperCase(),
-							label: (state[key].title || key.toUpperCase()) // show title if available, otherwise upper-cased key - uppercase mostly for services
-						});
+						let id = key.toUpperCase(); // uppercase mostly for services
+						// show title if available...
+						let label = state[key].title;
+						// otherwise upper-cased key...
+						if (!label) {
+							label = id;
+						}
+						// and if title is different from key, also show key
+						else if (id !== label.toUpperCase()) {
+							label = `${label} - ${id}`;
+						}
+						data.push({id, label});
 					}
 					return data.sort(this.sortByLabel);
 				case 'billing-plan':
