@@ -31,8 +31,8 @@ Shows the Blob object in the viewer.
 ### viewLink(Object $data, $title = null)
 Shows the link in the viewer. A link object must contain href and type properties and may contain a title.
 
-### viewSyncResult(object $process)
-Executes the custom process and shows the result.
+### viewSyncResult(object $result)
+Shows the result of a synchronous job.
 
 ### viewJobResults(object $jobResult, object $job = null)
 Shows data from a job result document.

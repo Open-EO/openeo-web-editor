@@ -63,13 +63,15 @@ export default {
 				}
 			},
 			watchers: {},
-			jobUpdater: null
+			jobUpdater: null,
+			runId: 0
 		};
 	},
 	mounted() {
 		this.listen('replaceProcess', this.replaceProcess);
 	},
 	computed: {
+		...Utils.mapState(['connection']),
 		...Utils.mapGetters(['supports', 'supportsBilling', 'supportsBillingPlans']),
 		...Utils.mapGetters('editor', ['hasProcess']),
 		...Utils.mapState('editor', ['process'])
@@ -106,8 +108,41 @@ export default {
 		showInEditor(job) {
 			this.refreshElement(job, updatedJob => this.emit('editProcess', updatedJob));
 		},
-		executeProcess() {
-			this.emit('viewSyncResult', this.process);
+		async executeProcess() {
+			let snotifyConfig = {
+				timeout: 0,
+				type: 'async',
+				buttons: [{
+//					text: 'Cancel',
+					text: 'Close',
+					action: toast => {
+						// ToDo: Cancel request https://github.com/Open-EO/openeo-js-client/issues/54
+						this.$snotify.remove(toast.id, true);
+					}
+				}]
+			};
+			try {
+				this.runId++;
+				let toast = this.$snotify.async("A process is currently executed synchronously...", `Run / Preview #${this.runId}`, null, snotifyConfig);
+				let result = await this.connection.computeResult(this.process);
+				this.emit('viewSyncResult', result);
+				this.$snotify.remove(toast.id, true);
+			} catch(error) {
+				let title = "Processing Error";
+				if (typeof error.message === 'string' && error.message.length > this.$config.snotifyDefaults.bodyMaxLength) {
+					this.emit('viewLogs', [{
+						id: error.id || "unknown",
+						code: error.code || undefined,
+						level: 'error',
+						message: error.message,
+						links: error.links || []
+					}]);
+					Utils.error(this, "Synchronous processing failed. Please see the logs for details.", title);
+				}
+				else {
+					Utils.exception(this, error, title);
+				}
+			}
 		},
 		jobCreated(job) {
 			var buttons = [];
