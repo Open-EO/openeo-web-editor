@@ -87,29 +87,11 @@ export default {
 		showMapViewer() {
 			this.$refs.tabs.selectTab('mapView');
 		},
-		async showSyncResults(pg) {
-			try {
-				let result = await this.connection.computeResult(pg);
-				if (Array.isArray(result.logs) && result.logs.length > 0) {
-					this.showLogs(result.logs);
-				}
-				this.showViewer(result.data);
-			} catch(error) {
-				let title = "Processing Error";
-				if (typeof error.message === 'string' && error.message.length > this.$config.snotifyDefaults.bodyMaxLength) {
-					this.showLogs([{
-						id: error.id || "unknown",
-						code: error.code || undefined,
-						level: 'error',
-						message: error.message,
-						links: error.links || []
-					}]);
-					Utils.error(this, "Synchronous processing failed. Please see the logs for details.", title);
-				}
-				else {
-					Utils.exception(this, error, title);
-				}
+		showSyncResults(result) {
+			if (Array.isArray(result.logs) && result.logs.length > 0) {
+				this.showLogs(result.logs);
 			}
+			this.showViewer(result.data);
 		},
 		showJobResults(item, job) {
 			for(var key in item.assets) {

@@ -330,6 +330,7 @@ h3.aboutPage {
 		display: block;
 		height: 100%;
 		margin-right: 0.5em;
+		margin-top: 1px;
 	}
 
 	&.info {

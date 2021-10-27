@@ -5,8 +5,10 @@ import store from './store/index';
 import Config from '../config';
 import Page from './Page.vue';
 import filters from './filters';
+import Clipboard from 'v-clipboard';
 
 Vue.use(Snotify);
+Vue.use(Clipboard)
 
 Vue.config.productionTip = false;
 Vue.config.errorHandler = function (err, vm, info) {
