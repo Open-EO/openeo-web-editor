@@ -32,7 +32,7 @@ export default {
 					hide: true
 				},
 				title: {
-					name: 'Title',
+					name: 'Web Service',
 					computedValue: row => Utils.getResourceTitle(row),
 					edit: this.updateTitle
 				},
