@@ -162,7 +162,7 @@ export default {
 				sourceOpts.features = (new GeoJSON()).readFeatures(
 					geojson,
 					{
-						featureProjection: this.osm.getProjection()
+						featureProjection: this.map.getView().getProjection()
 					}
 				);
 			}

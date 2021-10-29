@@ -115,7 +115,7 @@ export default {
 					olFeatures[i],
 					{
 						dataProjection: 'EPSG:4326',
-						featureProjection: this.osm.getProjection()
+						featureProjection: this.map.getView().getProjection()
 					}
 				));
 			}
