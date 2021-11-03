@@ -114,7 +114,7 @@ export default class Python extends Exporter {
 	generateMissingParameter(parameter) {
 		this.comment(parameter.description);
 		let paramName = this.var(parameter.name, 'param');
-		let value = typeof parameter.default !== 'undefined' ? value : null;
+		let value = typeof parameter.default !== 'undefined' ? parameter.default : null;
 		this.addCode(`${paramName} = ${this.e(value)}`);
 	}
 
