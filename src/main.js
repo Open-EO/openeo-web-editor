@@ -17,7 +17,7 @@ Vue.config.errorHandler = function (err, vm, info) {
 		return;
 	}
 	if (err instanceof Error) {
-		vm.$snotify.exception(err, 'Error', Config.snotifyDefaults);
+		vm.$snotify.error(err.message, 'Error', Config.snotifyDefaults);
 	}
 	else if (typeof err === 'string') {
 		vm.$snotify.error(err, 'Error', Config.snotifyDefaults);
