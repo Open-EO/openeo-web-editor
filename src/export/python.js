@@ -89,13 +89,13 @@ export default class Python extends Exporter {
 				if (this.hasCallbackParameter(node) || node.process_id === 'save_result') {
 					builderName = `${dcName}.${node.process_id}`;
 					addProcessToArguments = false;
+					// If we call the process directly on a new data cube with dcName
+					// we need to remove the argument that is passing this data
+					filterDcName = (key, value) => Utils.isObject(value) && value.from_node && this.var(value.from_node) === dcName;
 				}
 				else {
 					builderName = `${dcName}.process`;
 				}
-				// If we call the process directly on a new data cube with dcName
-				// we need to remove the argument that is passing this data
-				filterDcName = (key, value) => Utils.isObject(value) && value.from_node && this.var(value.from_node) === dcName;
 			}
 		}
 		let args = await this.generateArguments(node, false, filterDcName);
