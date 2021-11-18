@@ -1,3 +1,4 @@
+import { ProcessSchema } from "@openeo/js-commons";
 import Utils from "../utils";
 import Exporter from "./exporter";
 
@@ -51,9 +52,20 @@ export default class R extends Exporter {
 
 	generateBuilder() {
 		this.addCode(`p = processes()`);
+		return 'p';
 	}
 
-	generateMetadataEntry(key, value) {
+	getMetadataPosition() {
+		return "end";
+	}
+
+	generateMetadataEntry(variable, key, value) {
+		switch(key) {
+			case 'id':
+			case 'summary':
+			case 'description':
+				setDescription
+		}
 		this.comment(`${key}: ${this.e(value)}`);
 	}
 

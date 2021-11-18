@@ -41,7 +41,11 @@ export default class Python extends Exporter {
 
 	generateBuilder() {}
 
-	generateMetadataEntry(key, value) {
+	getMetadataPosition() {
+		return "end";
+	}
+
+	generateMetadataEntry(variable, key, value) {
 		this.comment(`${key}: ${this.e(value)}`);
 	}
 

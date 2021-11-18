@@ -116,10 +116,11 @@ export default class JavaScript extends Exporter {
 
 	generateBuilder() {
 		this.addCode(`let builder = await connection.buildProcess();`);
+		return 'builder';
 	}
 
-	generateMetadataEntry(key, value) {
-		this.addCode(`builder.${key} = ${this.e(value)};`);
+	generateMetadataEntry(variable, key, value) {
+		this.addCode(`${variable}.${key} = ${this.e(value)};`);
 	}
 
 	async generateFunction(node) {

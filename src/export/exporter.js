@@ -55,7 +55,7 @@ export default class Exporter extends ProcessGraph {
 
 	generateBuilder() {}
 
-	generateMetadata(/*key, value*/) {}
+	generateMetadataEntry(/*variable, key, value*/) {}
 
 	generateMissingParameter() {}
 
@@ -125,7 +125,11 @@ export default class Exporter extends ProcessGraph {
 		}
 	}
 
-	generateMetadata() {
+	getMetadataPosition() {
+		return "start";
+	}
+
+	generateMetadata(variable) {
 		let hasComment = false;
 		for(let key in this.process) {
 			if (key === 'process_graph') {
@@ -146,7 +150,7 @@ export default class Exporter extends ProcessGraph {
 				this.comment(`Set the metadata for the process`);
 				hasComment = true;
 			}
-			this.generateMetadataEntry(key, val);
+			this.generateMetadataEntry(variable, key, val);
 		}
 	}
 
@@ -281,8 +285,10 @@ export default class Exporter extends ProcessGraph {
 			this.generateConnection();
 			this.generateAuthentication();
 			this.newLine();
-			this.generateBuilder();
-			this.generateMetadata();
+			let builderVar = this.generateBuilder();
+			if (this.getMetadataPosition() === "start") {
+				this.generateMetadata(builderVar);
+			}
 			this.newLine();
 		}
 		let params = this.getProcessParameters();
@@ -299,6 +305,9 @@ export default class Exporter extends ProcessGraph {
 			this.comment(`The process can be executed synchronously (see below), as batch job or as web service now`);
 		}
 		this.generateResult(this.getResultNode(), callback);
+		if (!callback && this.getMetadataPosition() === "end") {
+			this.generateMetadata();
+		}
 		return this.code.join('').trim();
 	}
 
