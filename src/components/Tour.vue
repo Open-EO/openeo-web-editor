@@ -21,7 +21,8 @@ export default {
 		return {
 			callbacks: {
 				onSkip: this.onEnd,
-				onFinish: this.onEnd
+				onFinish: this.onEnd,
+				onStop: this.onEnd
 			},
 			options: {
 //				highlight: true, // Doesn't always work?
