@@ -121,12 +121,12 @@ export default {
 					}
 				}]
 			};
+			let toast;
 			try {
 				this.runId++;
-				let toast = this.$snotify.async("A process is currently executed synchronously...", `Run / Preview #${this.runId}`, null, snotifyConfig);
+				toast = this.$snotify.async("A process is currently executed synchronously...", `Run / Preview #${this.runId}`, null, snotifyConfig);
 				let result = await this.connection.computeResult(this.process);
 				this.emit('viewSyncResult', result);
-				this.$snotify.remove(toast.id, true);
 			} catch(error) {
 				let title = "Processing Error";
 				if (typeof error.message === 'string' && error.message.length > this.$config.snotifyDefaults.bodyMaxLength) {
@@ -141,6 +141,10 @@ export default {
 				}
 				else {
 					Utils.exception(this, error, title);
+				}
+			} finally {
+				if (toast) {
+					this.$snotify.remove(toast.id, true);
 				}
 			}
 		},
