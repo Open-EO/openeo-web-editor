@@ -5,8 +5,10 @@ import store from './store/index';
 import Config from '../config';
 import Page from './Page.vue';
 import filters from './filters';
+import Clipboard from 'v-clipboard';
 
 Vue.use(Snotify);
+Vue.use(Clipboard)
 
 Vue.config.productionTip = false;
 Vue.config.errorHandler = function (err, vm, info) {
@@ -15,7 +17,7 @@ Vue.config.errorHandler = function (err, vm, info) {
 		return;
 	}
 	if (err instanceof Error) {
-		vm.$snotify.exception(err, 'Error', Config.snotifyDefaults);
+		vm.$snotify.error(err.message, 'Error', Config.snotifyDefaults);
 	}
 	else if (typeof err === 'string') {
 		vm.$snotify.error(err, 'Error', Config.snotifyDefaults);

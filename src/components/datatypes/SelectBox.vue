@@ -130,10 +130,18 @@ export default {
 				case 'output-format':
 				case 'service-type':
 					for(let key in state) {
-						data.push({
-							id: key.toUpperCase(),
-							label: (state[key].title || key.toUpperCase()) // show title if available, otherwise upper-cased key - uppercase mostly for services
-						});
+						let id = key.toUpperCase(); // uppercase mostly for services
+						// show title if available...
+						let label = state[key].title;
+						// otherwise upper-cased key...
+						if (!label) {
+							label = id;
+						}
+						// and if title is different from key, also show key
+						else if (id !== label.toUpperCase()) {
+							label = `${label} - ${id}`;
+						}
+						data.push({id, label});
 					}
 					return data.sort(this.sortByLabel);
 				case 'billing-plan':
@@ -314,15 +322,26 @@ export default {
 
 <style src="vue-multiselect/dist/vue-multiselect.min.css"></style>
 
-<style scoped>
+<style lang="scss">
+@import '../../../theme.scss';
+
 .select-container {
 	display: flex;
 	flex-grow: 1;
-}
-.select-container > div {
-	flex-grow: 1;
-}
-.select-container > button {
-	margin-left: 10px;
+
+	> div {
+		flex-grow: 1;
+	}
+
+	> button {
+		margin-left: 10px;
+	}
+
+	.multiselect__option--selected.multiselect__option--highlight {
+		background: $mainColor;
+	}
+	.multiselect__option--highlight, .multiselect__option--highlight:after {
+		background: $mainColor;
+	}
 }
 </style>

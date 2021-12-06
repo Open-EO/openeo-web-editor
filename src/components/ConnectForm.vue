@@ -362,6 +362,9 @@ export default {
 				else if (authType === 'oidc' && error.name === 'ErrorResponse' && typeof error.error_description === 'string') {
 					Utils.error(this, error.error_description.replace(/\+/g, ' '));
 				}
+				else if (authType === 'oidc' && (error.message == 'Network Error' || error.name == 'NetworkError')) {
+					Utils.error(this, 'Sorry, the authentication server is not available right now.');
+				}
 				else {
 					Utils.exception(this, error);
 				}

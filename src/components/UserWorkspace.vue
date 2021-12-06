@@ -1,6 +1,6 @@
 <template>
 	<Tabs id="userContent" ref="tabs">
-		<Tab v-if="showJobs" id="jobs" name="Batch Jobs" icon="fa-tasks" @show="onShow" @hide="onHide">
+		<Tab v-if="showJobs" id="jobs" name="Data Processing" icon="fa-tasks" @show="onShow" @hide="onHide">
 			<JobPanel />
 		</Tab>
 		<Tab v-if="showServices" id="services" name="Web Services" icon="fa-cloud" @show="onShow" @hide="onHide">

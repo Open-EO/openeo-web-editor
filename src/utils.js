@@ -39,8 +39,17 @@ class Utils extends VueUtils {
 			message = error; 
 			title = alt; 
 		}
+		buttons.push({
+			text: 'Copy',
+			action: toast => {
+				let success = vm.$clipboard(message);
+				let button = toast.config.buttons.find(btn => btn.text === 'Copy');
+				if (button) {
+					button.text = success ? "✔️ Copied" : "❌ Failed";
+				}
+			}
+		});
 		var typeDefaults =  {
-			closeOnClick: false, 
 			buttons
 		}; 
 		vm.$snotify.error(message, title, Object.assign({}, vm.$config.snotifyDefaults, typeDefaults)); 
@@ -59,7 +68,6 @@ class Utils extends VueUtils {
 	}
 	static confirm(vm, message, buttons = []) {
 		var typeDefaults =  {
-			closeOnClick: false, 
 			buttons: buttons
 		}; 
 		vm.$snotify.confirm(message, null, Object.assign({}, vm.$config.snotifyDefaults, typeDefaults)); 
