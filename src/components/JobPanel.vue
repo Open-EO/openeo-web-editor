@@ -124,7 +124,7 @@ export default {
 			let toast;
 			try {
 				this.runId++;
-				let message = "A processz is currently executed synchronously...";
+				let message = "A process is currently executed synchronously...";
 				let title = `Run / Preview #${this.runId}`;
 				let endlessPromise = () => new Promise(() => {}); // Pass a promise to snotify that never resolves as we manually close the toast
 				toast = this.$snotify.async(message, title, endlessPromise, snotifyConfig);
