@@ -35,7 +35,6 @@ const getDefaultState = () => {
 		isAuthenticated: false,
 		userInfo: {},
 		connectionError: null,
-		discoveryErrors: [],
 		authProviders: [],
 		fileFormats: {},
 		serviceTypes: {},
@@ -152,7 +151,12 @@ export default new Vuex.Store({
 				return false;
 			}
 
-			connection.on('authProviderChanged', provider => cx.commit('authenticated', provider !== null));
+			connection.on('authProviderChanged', async (provider) => {
+				cx.commit('authenticated', provider !== null);
+				if (cx.state.discoveryCompleted) {
+					await cx.dispatch('discover', true);
+				}
+			});
 			connection.on('processesChanged', () => cx.commit('updateProcesses'));
 
 			// Only commit the connection change after requesting the auth providers
@@ -162,79 +166,85 @@ export default new Vuex.Store({
 			return true;
 		},
 
-		async discover(cx) {
-			var promises = [];
-			var capabilities = cx.state.connection.capabilities();
+		async discover(cx, refresh = false) {
+			let promises = [];
+			let errors = [];
+			let capabilities = cx.state.connection.capabilities();
 
 			// Request collections
 			if (capabilities.hasFeature('listCollections')) {
 				promises.push(cx.state.connection.listCollections()
 					.then(response => cx.commit('collections', response))
-					.catch(error => cx.commit('addDiscoveryError', error)));
+					.catch(error => errors.push(error)));
 			}
 			else {
-				cx.commit('addDiscoveryError', new Error("Collections not supported by the server."));
+				errors.push(new Error("Collections not supported by the server."));
 			}
 
-			// Request processes
-			if (capabilities.hasFeature('listProcesses')) {
-				promises.push(cx.state.connection.listProcesses()
-					.catch(error => cx.commit('addDiscoveryError', error)));
-			}
-			else {
-				cx.commit('addDiscoveryError', new Error("Pre-defined processes not supported by the server."));
-			}
-
-			// Request processes from namespaces
-			if (cx.state.processNamespaces.length > 0) {
-				for(let namespace of cx.state.processNamespaces) {
-					promises.push(cx.state.connection.listProcesses(namespace)
-						.catch(error => cx.commit('addDiscoveryError', error)));
+			if (!refresh) { // Only load on first discovery, otherwise the JS client already refreshes the data
+				// Request processes
+				if (capabilities.hasFeature('listProcesses')) {
+					promises.push(cx.state.connection.listProcesses()
+						.catch(error => errors.push(error)));
 				}
-			}
+				else {
+					errors.push(new Error("Pre-defined processes not supported by the server."));
+				}
 
-			// Request custom processes
-			if (capabilities.hasFeature('listUserProcesses') && cx.state.connection.isAuthenticated()) {
-				promises.push(cx.dispatch('userProcesses/list')
-					.catch(error => cx.commit('addDiscoveryError', error)));
+				// Request processes from namespaces
+				if (cx.state.processNamespaces.length > 0) {
+					for(let namespace of cx.state.processNamespaces) {
+						promises.push(cx.state.connection.listProcesses(namespace)
+							.catch(error => errors.push(error)));
+					}
+				}
+
+				// Request custom processes
+				if (capabilities.hasFeature('listUserProcesses') && cx.state.connection.isAuthenticated()) {
+					promises.push(cx.dispatch('userProcesses/list')
+						.catch(error => errors.push(error)));
+				}
 			}
 
 			// Request supported output formats
 			if (capabilities.hasFeature('listFileTypes')) {
 				promises.push(cx.state.connection.listFileTypes()
 					.then(response => cx.commit('fileFormats', response))
-					.catch(error => cx.commit('addDiscoveryError', error)));
+					.catch(error => errors.push(error)));
 			}
 
 			// Request supported service types
 			if (capabilities.hasFeature('listServiceTypes')) {
 				promises.push(cx.state.connection.listServiceTypes()
 					.then(response => cx.commit('serviceTypes', response))
-					.catch(error => cx.commit('addDiscoveryError', error)));
+					.catch(error => errors.push(error)));
 			}
 
 			// Request supported UDF runtimes
 			if (capabilities.hasFeature('listUdfRuntimes')) {
 				promises.push(cx.state.connection.listUdfRuntimes()
 					.then(response => cx.commit('udfRuntimes', response))
-					.catch(error => cx.commit('addDiscoveryError', error)));
+					.catch(error => errors.push(error)));
 			}
 
 			// Request user account information
 			var promise = cx.dispatch('describeAccount')
-				.catch(error => cx.commit('addDiscoveryError', error));
+				.catch(error => errors.push(error));
 			promises.push(promise);
 
 			await Promise.all(promises);
 
 			// Request initial process
-			try {
-				await cx.dispatch('editor/loadInitialProcess');
-			} catch (error) {
-				cx.commit('addDiscoveryError', error)
+			if (!refresh) {
+				try {
+					await cx.dispatch('editor/loadInitialProcess');
+				} catch (error) {
+					errors.push(error)
+				}
 			}
 
 			cx.commit('discoveryCompleted');
+			return errors;
 		},
 
 		// Request user account info
@@ -354,9 +364,6 @@ export default new Vuex.Store({
 		},
 		setConnectionError(state, error) {
 			state.connectionError = error;
-		},
-		addDiscoveryError(state, error) {
-			state.discoveryErrors.push(error);
 		},
 		authenticated(state, isAuthenticated) {
 			state.isAuthenticated = isAuthenticated;
