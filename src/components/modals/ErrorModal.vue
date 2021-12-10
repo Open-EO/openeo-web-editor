@@ -25,13 +25,6 @@ export default {
 		}
 	},
 	computed: {
-		expand() {
-			this.$nextTick(() => { // Expand the log details
-				if (this.$refs.log && !this.$refs.log.expanded) {
-					this.$refs.log.toggle();
-				}
-			});
-		},
 		log() {
 			return {
 				id: this.error.id,
@@ -51,6 +44,15 @@ export default {
 			else {
 				return "Error";
 			}
+		}
+	},
+	methods: {
+		expand() {
+			this.$nextTick(() => { // Expand the log details
+				if (this.$refs.log && !this.$refs.log.expanded) {
+					this.$refs.log.toggle();
+				}
+			});
 		}
 	}
 }
