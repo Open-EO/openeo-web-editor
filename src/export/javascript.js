@@ -140,7 +140,7 @@ export default class JavaScript extends Exporter {
 	generateMissingParameter(parameter) {
 		this.comment(parameter.description);
 		let paramName = this.var(parameter.name, 'param');
-		let value = typeof parameter.default !== 'undefined' ? value : null;
+		let value = typeof parameter.default !== 'undefined' ? parameter.default : null;
 		this.addCode(`let ${paramName} = ${this.e(value)};`);
 	}
 

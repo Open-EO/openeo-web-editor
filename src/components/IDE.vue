@@ -1,6 +1,6 @@
 <template>
 	<div id="wrapper">
-		<div id="ide">
+		<div id="ide" :class="{authenticated: isAuthenticated}">
 			<header class="navbar">
 				<Logo />
 				<ul id="menu">
@@ -10,12 +10,12 @@
 				</ul>
 			</header>
 			<Splitpanes class="default-theme" @resize="resized" @pane-maximize="resized">
-				<Pane id="discovery" :size="splitpaneSize[0]">
+				<Pane id="discovery" :size="splitpaneSizeH[0]">
 					<DiscoveryToolbar class="toolbar tour-ide-discovery" :onAddProcess="insertProcess" :collectionPreview="true" :persist="true" />
 				</Pane>
-				<Pane id="workspace" :size="splitpaneSize[1]">
+				<Pane id="workspace" :size="splitpaneSizeH[1]">
 					<Splitpanes class="default-theme" horizontal @resize="resized" @pane-maximize="resized">
-						<Pane id="editor" size="50">
+						<Pane id="editor" :size="splitpaneSizeV[0]">
 							<Editor ref="editor" class="mainEditor tour-ide-editor" id="main" :value="process" @input="updateEditor" :title="contextTitle">
 								<template #file-toolbar>
 									<button type="button" @click="importProcess" title="Import process from external source"><i class="fas fa-cloud-download-alt"></i></button>
@@ -25,12 +25,16 @@
 								</template>
 							</Editor>
 						</Pane>
-						<Pane id="user" size="50" v-if="isAuthenticated">
-							<UserWorkspace class="userContent tour-ide-workspace" />
+						<Pane id="user" :size="splitpaneSizeV[1]">
+							<UserWorkspace v-if="isAuthenticated" class="userContent tour-ide-workspace" />
+							<div v-else class="message info" title="Login is required to interact with the server.">
+								<i class="fas fa-sign-in-alt"></i>
+								<span class="login-message"><strong><a @click="login">Log in</a></strong> is required to interact with the server.</span>
+							</div>
 						</Pane>
 					</Splitpanes>
 				</Pane>
-				<Pane id="viewer" :size="splitpaneSize[2]">
+				<Pane id="viewer" :size="splitpaneSizeH[2]">
 					<Viewer class="tour-ide-viewer" />
 				</Pane>
 			</Splitpanes>
@@ -93,18 +97,27 @@ export default {
 		validateSupported() {
 			return this.supports('validateProcess');
 		},
-		splitpaneSize() {
+		splitpaneSizeH() {
 			if (this.isAuthenticated) {
 				return [20,50,30];
 			}
 			else {
 				return [20,40,40];
 			}
+		},
+		splitpaneSizeV() {
+			if (this.isAuthenticated) {
+				return [50,50];
+			}
+			else {
+				return [99,1];
+			}
 		}
 	},
 	async mounted() {
 		this.listen('showDataForm', this.showDataForm);
 		this.listen('editProcess', this.editProcess);
+		this.listen('showLogin', this.login);
 
 		this.resizeListener = event => this.resized(event);
 		window.addEventListener('resize', this.resizeListener);
@@ -130,10 +143,15 @@ export default {
 	},
 	methods: {
 		...Utils.mapActions(['describeAccount']),
+		...Utils.mapMutations(['discoveryCompleted']),
 		...Utils.mapMutations('editor', ['setContext', 'setProcess', 'setCollectionPreview']),
 
 		resized(event) {
 			this.emit('windowResized', event);
+		},
+
+		login() {
+			this.discoveryCompleted(false);
 		},
 
 		importProcess() {
@@ -272,8 +290,10 @@ export default {
 		padding: 5px 1em;
 	}
 }
-#editor, #user {
-	width: 100%;
+#user {
+	min-height: 2.5em;
+}
+#editor, .authenticated #user {
 	min-height: 150px;
 }
 #editor {
@@ -286,6 +306,12 @@ export default {
 
 #user {
 	padding-top: 0.5rem;
+
+	.login-message {
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
 }
 #ide header.navbar {
 	width: 100%;

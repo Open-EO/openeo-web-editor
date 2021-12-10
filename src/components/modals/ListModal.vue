@@ -1,6 +1,6 @@
 <template>
 	<Modal :show="show" :title="title" @closed="$emit('closed')">
-		<strong class="listEmpty" v-if="listCount == 0">Sorry, no data available.</strong>
+		<strong class="listEmpty" v-if="listCount == 0">No data available.</strong>
 		<ul class="modal-list" v-else>
 			<li v-for="(item, key) in listItems" :key="key" @click="doMainListAction(item, key)">
 				<strong>{{ Array.isArray(listItems) ? item : key }}</strong>

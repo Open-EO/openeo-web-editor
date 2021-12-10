@@ -1,8 +1,8 @@
 <template>
 	<DataTable ref="table" :data="data" :columns="columns" class="JobPanel">
 		<template slot="toolbar">
-			<button title="Add new job for batch processing" @click="createJobFromScript()" v-show="supportsCreate" :disabled="!this.hasProcess"><i class="fas fa-plus"></i> Create</button>
-			<button title="Run process and view results synchronously" @click="executeProcess" v-show="supports('computeResult')" :disabled="!this.hasProcess"><i class="fas fa-play"></i> Run now</button>
+			<button title="Add new job for batch processing" @click="createJobFromScript()" v-show="supportsCreate" :disabled="!this.hasProcess"><i class="fas fa-plus"></i> Create Batch Job</button>
+			<button title="Run the process directly and view the results without storing them permanently" @click="executeProcess" v-show="supports('computeResult')" :disabled="!this.hasProcess"><i class="fas fa-play"></i> Run / Preview</button>
 		</template>
 		<template #actions="p">
 			<button title="Details" @click="showJobInfo(p.row)" v-show="supportsRead"><i class="fas fa-info"></i></button>
@@ -23,7 +23,7 @@
 import EventBusMixin from './EventBusMixin.vue';
 import WorkPanelMixin from './WorkPanelMixin';
 import Utils from '../utils.js';
-import { Job } from '@openeo/js-client';
+import { AbortController, Job } from '@openeo/js-client';
 
 const WorkPanelMixinInstance = WorkPanelMixin('jobs', 'batch job', 'batch jobs');
 
@@ -39,7 +39,7 @@ export default {
 					hide: true
 				},
 				title: {
-					name: 'Title',
+					name: 'Batch Job',
 					computedValue: row => Utils.getResourceTitle(row),
 					edit: this.updateTitle
 				},
@@ -63,13 +63,15 @@ export default {
 				}
 			},
 			watchers: {},
-			jobUpdater: null
+			jobUpdater: null,
+			runId: 0
 		};
 	},
 	mounted() {
 		this.listen('replaceProcess', this.replaceProcess);
 	},
 	computed: {
+		...Utils.mapState(['connection']),
 		...Utils.mapGetters(['supports', 'supportsBilling', 'supportsBillingPlans']),
 		...Utils.mapGetters('editor', ['hasProcess']),
 		...Utils.mapState('editor', ['process'])
@@ -106,8 +108,51 @@ export default {
 		showInEditor(job) {
 			this.refreshElement(job, updatedJob => this.emit('editProcess', updatedJob));
 		},
-		executeProcess() {
-			this.emit('viewSyncResult', this.process);
+		async executeProcess() {
+			let abortController = new AbortController();
+			let snotifyConfig = {
+				timeout: 0,
+				type: 'async',
+				buttons: [{
+					text: 'Cancel',
+					action: toast => {
+						abortController.abort();
+						this.$snotify.remove(toast.id, true);
+					}
+				}]
+			};
+			let toast;
+			try {
+				this.runId++;
+				let message = "A process is currently executed synchronously...";
+				let title = `Run / Preview #${this.runId}`;
+				let endlessPromise = () => new Promise(() => {}); // Pass a promise to snotify that never resolves as we manually close the toast
+				toast = this.$snotify.async(message, title, endlessPromise, snotifyConfig);
+				let result = await this.connection.computeResult(this.process, null, null, abortController);
+				this.emit('viewSyncResult', result);
+			} catch(error) {
+				let title = "Processing Error";
+				if (axios.isCancel(error)) {
+					// Do nothing, we expected the cancellation
+				}
+				else if (typeof error.message === 'string' && error.message.length > this.$config.snotifyDefaults.bodyMaxLength) {
+					this.emit('viewLogs', [{
+						id: error.id || "unknown",
+						code: error.code || undefined,
+						level: 'error',
+						message: error.message,
+						links: error.links || []
+					}]);
+					Utils.error(this, "Synchronous processing failed. Please see the logs for details.", title);
+				}
+				else {
+					Utils.exception(this, error, title);
+				}
+			} finally {
+				if (toast) {
+					this.$snotify.remove(toast.id, true);
+				}
+			}
 		},
 		jobCreated(job) {
 			var buttons = [];

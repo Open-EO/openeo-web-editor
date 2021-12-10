@@ -49,10 +49,12 @@
 </template>
 
 <script>
+import EventBusMixin from './EventBusMixin.vue';
 import Utils from '../utils.js';
 
 export default {
 	name: 'UserMenu',
+	mixins: [EventBusMixin],
 	computed: {
 		...Utils.mapState(['userInfo', 'isAuthenticated']),
 		...Utils.mapGetters(['currency', 'capabilities']),
@@ -113,7 +115,6 @@ export default {
 	methods: {
 		...Utils.mapActions({logoutUser: 'logout'}),
 		...Utils.mapMutations('editor', {resetEditor: 'reset'}),
-		...Utils.mapMutations(['discoveryCompleted']),
 		async logout() {
 			await this.logoutUser(false);
 			Utils.ok(this, 'Logout successful.');
@@ -124,7 +125,7 @@ export default {
 			window.history.pushState({}, "", "?");
 		},
 		login() {
-			this.discoveryCompleted(false);
+			this.emit('showLogin');
 		},
 		formatMegabyte(num) {
 			var gb = 1024*1024*1024;
