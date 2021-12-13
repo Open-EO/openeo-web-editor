@@ -12,7 +12,7 @@ import { fromLonLat } from 'ol/proj';
 import TileLayer from 'ol/layer/Tile';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
-import OSM from 'ol/source/OSM';
+import XYZ from 'ol/source/XYZ';
 
 import 'ol-ext/control/LayerSwitcher.css';
 import LayerSwitcher from 'ol-ext/control/LayerSwitcher';
@@ -51,7 +51,7 @@ export default {
 		return {
 			map: null,
 			baseLayer: null,
-			osm: null,
+			basemap: null,
 			progress: null,
 			fitOptions: {
 				padding: [30,30,30,30]
@@ -79,9 +79,13 @@ export default {
 				return;
 			}
 			this.progress = new Progress();
-			this.osm = new OSM();
+			let basemapOptions = Object.assign({
+				opaque: true,
+				attributionsCollapsible: false
+			}, this.$config.basemap);
+			this.basemap = new XYZ(basemapOptions);
 			this.baseLayer = new TileLayer({
-				source: this.trackTileProgress(this.osm),
+				source: this.trackTileProgress(this.basemap),
 				baseLayer: true,
 				title: "OpenStreetMap",
 				noSwitcherDelete: true
