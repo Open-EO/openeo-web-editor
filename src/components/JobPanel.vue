@@ -23,7 +23,7 @@
 import EventBusMixin from './EventBusMixin.vue';
 import WorkPanelMixin from './WorkPanelMixin';
 import Utils from '../utils.js';
-import { Job } from '@openeo/js-client';
+import { AbortController, Job } from '@openeo/js-client';
 
 const WorkPanelMixinInstance = WorkPanelMixin('jobs', 'batch job', 'batch jobs');
 
@@ -109,14 +109,14 @@ export default {
 			this.refreshElement(job, updatedJob => this.emit('editProcess', updatedJob));
 		},
 		async executeProcess() {
+			let abortController = new AbortController();
 			let snotifyConfig = {
 				timeout: 0,
 				type: 'async',
 				buttons: [{
-//					text: 'Cancel',
-					text: 'Close',
+					text: 'Cancel',
 					action: toast => {
-						// ToDo: Cancel request https://github.com/Open-EO/openeo-js-client/issues/54
+						abortController.abort();
 						this.$snotify.remove(toast.id, true);
 					}
 				}]
@@ -124,15 +124,18 @@ export default {
 			let toast;
 			try {
 				this.runId++;
-				let message = "A processz is currently executed synchronously...";
+				let message = "A process is currently executed synchronously...";
 				let title = `Run / Preview #${this.runId}`;
 				let endlessPromise = () => new Promise(() => {}); // Pass a promise to snotify that never resolves as we manually close the toast
 				toast = this.$snotify.async(message, title, endlessPromise, snotifyConfig);
-				let result = await this.connection.computeResult(this.process);
+				let result = await this.connection.computeResult(this.process, null, null, abortController);
 				this.emit('viewSyncResult', result);
 			} catch(error) {
 				let title = "Processing Error";
-				if (typeof error.message === 'string' && error.message.length > this.$config.snotifyDefaults.bodyMaxLength) {
+				if (axios.isCancel(error)) {
+					// Do nothing, we expected the cancellation
+				}
+				else if (typeof error.message === 'string' && error.message.length > this.$config.snotifyDefaults.bodyMaxLength) {
 					this.emit('viewLogs', [{
 						id: error.id || "unknown",
 						code: error.code || undefined,

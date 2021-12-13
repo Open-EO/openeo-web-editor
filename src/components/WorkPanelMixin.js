@@ -1,7 +1,7 @@
 import DataTable from '@openeo/vue-components/components/DataTable.vue';
 import Utils from '../utils.js';
 
-export default (namespace, singular, plural) => {
+export default (namespace, singular, plural, loadInitially = true) => {
 	return {
 		components: {
 			DataTable
@@ -14,7 +14,9 @@ export default (namespace, singular, plural) => {
 			};
 		},
 		mounted() {
-			this.updateData();
+			if (loadInitially) {
+				this.updateData();
+			}
 		},
 		beforeDestroy() {
 			this.stopSyncTimer();

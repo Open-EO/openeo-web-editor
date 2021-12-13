@@ -120,7 +120,7 @@ export default {
 		}
 	},
 	computed: {
-		...Utils.mapState(['connectionError', 'discoveryErrors', 'authProviders', 'isAuthenticated']),
+		...Utils.mapState(['connectionError', 'authProviders', 'isAuthenticated']),
 		...Utils.mapGetters(['isConnected', 'isDiscovered', 'title']),
 		...Utils.mapState('editor', ['storedServers']),
 		isLocal() {
@@ -368,8 +368,8 @@ export default {
 				return;
 			}
 			
-			await this.discover();
-			for(var error of this.discoveryErrors) {
+			let discoveryErrors = await this.discover();
+			for(var error of discoveryErrors) {
 				Utils.exception(this, error);
 			}
 

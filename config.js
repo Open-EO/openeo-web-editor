@@ -34,6 +34,16 @@ export default {
 		'wmts'
 	],
 
+	// Configure the (base)map
+	basemap: {
+		// Templated URI for the XYZ basemap.
+		url: 'https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+		// Attributon for the basemap. HTML is allowed.
+		attributions: '&#169; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors.',
+		// Maximum zoom level
+		maxZoom: 19
+	},
+
 	// Additional process namespaces to load by default
 	processNamespaces: [],
 
