@@ -37,11 +37,11 @@ export default {
 	// Configure the (base)map
 	basemap: {
 		// Templated URI for the XYZ basemap.
-		url: 'https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+		url: 'https://api.mapbox.com/styles/v1/mapbox/light-v10/tiles/{z}/{x}/{y}?access_token=pk.eyJ1Ijoib3BlbmVvLXBsYXRmb3JtLXd3dSIsImEiOiJja3g0ejcweDYyMDJwMnlwemoxNWZzODhkIn0.laahiz1GmTRq-XhZ29eaDQ',
 		// Attributon for the basemap. HTML is allowed.
-		attributions: '&#169; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors.',
+		attributions: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> <strong><a href="https://www.mapbox.com/map-feedback/" target="_blank">Improve this map</a></strong>',
 		// Maximum zoom level
-		maxZoom: 19
+		maxZoom: 22
 	},
 
 	// Additional process namespaces to load by default
