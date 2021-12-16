@@ -2,21 +2,21 @@ export default {
 	// Set this to connect to a back-end automatically when opening the Web Editor,
 	// so you could set this to https://example.com and then the Web Editor connects
 	// to the corresponding back-end automatically.
-	serverUrl: '',
+	serverUrl: 'https://openeo.cloud',
 
 	// The name of the service
-	serviceName: 'openEO',
+	serviceName: 'openEO Platform',
 	// The name of the app
-	appName: 'Web Editor',
+	appName: 'Editor',
 
 	// Skip login and automatically load up the "discovery mode"
-	skipLogin: false,
+	skipLogin: true,
 
 	// A message shown on the login page
 	loginMessage: '',
 
 	// The logo to show
-	logo: './logo.png',
+	logo: 'https://openeo.cloud/wp-content/themes/openeo_platform/images/logo-pages.svg',
 
 	// Defaults for notifications
 	snotifyDefaults: {
@@ -37,15 +37,14 @@ export default {
 	// Configure the (base)maps
 	basemaps: [
 		{
-			// Title for the basemap
-			title: "OpenStreetMap",
-			// Templated URI for the XYZ basemap.
-			url: 'https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-			// Attributon for the basemap. HTML is allowed.
-			attributions: '&#169; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors.',
-			// Maximum zoom level
-			maxZoom: 19
-		}
+      title: 'Mapbox Light',
+      // Templated URI for the XYZ basemap.
+      url: 'https://api.mapbox.com/styles/v1/mapbox/light-v10/tiles/{z}/{x}/{y}?access_token=pk.eyJ1Ijoib3BlbmVvLXBsYXRmb3JtLXd3dSIsImEiOiJja3g0ejcweDYyMDJwMnlwemoxNWZzODhkIn0.laahiz1GmTRq-XhZ29eaDQ',
+      // Attributon for the basemap. HTML is allowed.
+      attributions: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> <strong><a href="https://www.mapbox.com/map-feedback/" target="_blank">Improve this map</a></strong>',
+      // Maximum zoom level
+      maxZoom: 22
+    }
 	],
 
 	// Additional process namespaces to load by default
