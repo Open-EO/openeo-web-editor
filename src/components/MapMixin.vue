@@ -92,18 +92,20 @@ export default {
 				attributionsCollapsible: false
 			};
 			this.baseLayers = [];
-			let hasDefault = false;
-			for(let opts of this.$config.basemaps) {
-				let basemap = new XYZ(Object.assign({}, basemapOptions, opts));
-				let baselayer = new TileLayer({
-					source: this.trackTileProgress(basemap),
-					baseLayer: true,
-					title: opts.title,
-					noSwitcherDelete: true,
-					visible: !hasDefault
-				});
-				this.baseLayers.push(baselayer);
-				hasDefault = true;
+			if (Array.isArray(this.$config.basemaps)) {
+				let hasDefault = false;
+				for(let opts of this.$config.basemaps) {
+					let basemap = new XYZ(Object.assign({}, basemapOptions, opts));
+					let baselayer = new TileLayer({
+						source: this.trackTileProgress(basemap),
+						baseLayer: true,
+						title: opts.title,
+						noSwitcherDelete: true,
+						visible: !hasDefault
+					});
+					this.baseLayers.push(baselayer);
+					hasDefault = true;
+				}
 			}
 			let center = [this.center[1], this.center[0]];
 			var mapOptions = {

@@ -18,6 +18,11 @@ You can also build the files yourself and deploy them to any web host:
     * Development: Run the development server by executing `npm start`.
     * Deployment: Build the project by executing `npm run build`. Afterwards upload the content of the `dist` folder to your server.
 
+### Breaking changes
+
+* Please note that in v0.9.8 and v0.9.9 the config file structure has changed slightly.
+  You need to add the new `basemaps` property to your config file. Otherwise, you won't see a basemap any more.
+
 ### Query Parameters
 
 You can use some query parameters to set initial state to the Editor.
