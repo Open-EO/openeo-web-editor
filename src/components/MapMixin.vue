@@ -50,7 +50,7 @@ export default {
 	data() {
 		return {
 			map: null,
-			baseLayer: null,
+			baseLayers: [],
 			basemap: null,
 			progress: null,
 			fitOptions: {
@@ -79,17 +79,6 @@ export default {
 				return;
 			}
 			this.progress = new Progress();
-			let basemapOptions = Object.assign({
-				opaque: true,
-				attributionsCollapsible: false
-			}, this.$config.basemap);
-			this.basemap = new XYZ(basemapOptions);
-			this.baseLayer = new TileLayer({
-				source: this.trackTileProgress(this.basemap),
-				baseLayer: true,
-				title: "OpenStreetMap",
-				noSwitcherDelete: true
-			});
 			var customControls = [
 				new FullScreen(),
 				new ScaleLine(),
@@ -98,12 +87,28 @@ export default {
 			if (showLayerSwitcher) {
 				customControls.push(new LayerSwitcher({trash: this.removableLayers}));
 			}
+			let basemapOptions = {
+				opaque: true,
+				attributionsCollapsible: false
+			};
+			this.baseLayers = [];
+			let hasDefault = false;
+			for(let opts of this.$config.basemaps) {
+				let basemap = new XYZ(Object.assign({}, basemapOptions, opts));
+				let baselayer = new TileLayer({
+					source: this.trackTileProgress(basemap),
+					baseLayer: true,
+					title: opts.title,
+					noSwitcherDelete: true,
+					visible: !hasDefault
+				});
+				this.baseLayers.push(baselayer);
+				hasDefault = true;
+			}
 			let center = [this.center[1], this.center[0]];
 			var mapOptions = {
 				target: this.id,
-				layers: [
-					this.baseLayer
-				],
+				layers: this.baseLayers,
 				view: new View({
 					center: projection === 'EPSG:3857' ? fromLonLat(center) : center,
 					zoom: this.zoom,

@@ -34,15 +34,18 @@ export default {
 		'wmts'
 	],
 
-	// Configure the (base)map
-	basemap: {
-		// Templated URI for the XYZ basemap.
-		url: 'https://api.mapbox.com/styles/v1/mapbox/light-v10/tiles/{z}/{x}/{y}?access_token=pk.eyJ1Ijoib3BlbmVvLXBsYXRmb3JtLXd3dSIsImEiOiJja3g0ejcweDYyMDJwMnlwemoxNWZzODhkIn0.laahiz1GmTRq-XhZ29eaDQ',
-		// Attributon for the basemap. HTML is allowed.
-		attributions: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> <strong><a href="https://www.mapbox.com/map-feedback/" target="_blank">Improve this map</a></strong>',
-		// Maximum zoom level
-		maxZoom: 22
-	},
+	// Configure the (base)maps
+	basemaps: [
+		{
+      title: 'Mapbox Light',
+      // Templated URI for the XYZ basemap.
+      url: 'https://api.mapbox.com/styles/v1/mapbox/light-v10/tiles/{z}/{x}/{y}?access_token=pk.eyJ1Ijoib3BlbmVvLXBsYXRmb3JtLXd3dSIsImEiOiJja3g0ejcweDYyMDJwMnlwemoxNWZzODhkIn0.laahiz1GmTRq-XhZ29eaDQ',
+      // Attributon for the basemap. HTML is allowed.
+      attributions: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> <strong><a href="https://www.mapbox.com/map-feedback/" target="_blank">Improve this map</a></strong>',
+      // Maximum zoom level
+      maxZoom: 22
+    }
+	],
 
 	// Additional process namespaces to load by default
 	processNamespaces: [],
