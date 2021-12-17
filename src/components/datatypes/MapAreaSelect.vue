@@ -37,7 +37,7 @@ export default {
 	},
 	methods: {
 		renderMap() {
-			this.createMap(false, 'EPSG:4326');
+			this.createMap(true, 'EPSG:4326');
 
 			this.areaSelect = new AreaSelect(this.map, this.editable);
 			if (this.value !== null) {

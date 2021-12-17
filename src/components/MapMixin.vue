@@ -12,7 +12,7 @@ import { fromLonLat } from 'ol/proj';
 import TileLayer from 'ol/layer/Tile';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
-import OSM from 'ol/source/OSM';
+import XYZ from 'ol/source/XYZ';
 
 import 'ol-ext/control/LayerSwitcher.css';
 import LayerSwitcher from 'ol-ext/control/LayerSwitcher';
@@ -50,8 +50,8 @@ export default {
 	data() {
 		return {
 			map: null,
-			baseLayer: null,
-			osm: null,
+			baseLayers: [],
+			basemap: null,
 			progress: null,
 			fitOptions: {
 				padding: [30,30,30,30]
@@ -79,13 +79,6 @@ export default {
 				return;
 			}
 			this.progress = new Progress();
-			this.osm = new OSM();
-			this.baseLayer = new TileLayer({
-				source: this.trackTileProgress(this.osm),
-				baseLayer: true,
-				title: "OpenStreetMap",
-				noSwitcherDelete: true
-			});
 			var customControls = [
 				new FullScreen(),
 				new ScaleLine(),
@@ -94,12 +87,30 @@ export default {
 			if (showLayerSwitcher) {
 				customControls.push(new LayerSwitcher({trash: this.removableLayers}));
 			}
+			let basemapOptions = {
+				opaque: true,
+				attributionsCollapsible: false
+			};
+			this.baseLayers = [];
+			if (Array.isArray(this.$config.basemaps)) {
+				let hasDefault = false;
+				for(let opts of this.$config.basemaps) {
+					let basemap = new XYZ(Object.assign({}, basemapOptions, opts));
+					let baselayer = new TileLayer({
+						source: this.trackTileProgress(basemap),
+						baseLayer: true,
+						title: opts.title,
+						noSwitcherDelete: true,
+						visible: !hasDefault
+					});
+					this.baseLayers.push(baselayer);
+					hasDefault = true;
+				}
+			}
 			let center = [this.center[1], this.center[0]];
 			var mapOptions = {
 				target: this.id,
-				layers: [
-					this.baseLayer
-				],
+				layers: this.baseLayers,
 				view: new View({
 					center: projection === 'EPSG:3857' ? fromLonLat(center) : center,
 					zoom: this.zoom,

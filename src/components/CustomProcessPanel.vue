@@ -19,7 +19,7 @@ import { UserProcess } from '@openeo/js-client';
 
 export default {
 	name: 'CustomProcessPanel',
-	mixins: [WorkPanelMixin('userProcesses', 'custom process', 'custom processes'), EventBusMixin],
+	mixins: [WorkPanelMixin('userProcesses', 'custom process', 'custom processes', false), EventBusMixin],
 	data() {
 		return {
 			columns: {
