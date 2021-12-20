@@ -22,6 +22,7 @@
 									<button type="button" v-show="saveSupported" :disabled="!hasProcess" @click="saveProcess" :title="'Save to ' + contextTitle"><i class="fas fa-save"></i></button>
 									<button type="button" @click="exportCode" :disabled="!hasProcess" title="Export into another programming language"><i class="fas fa-file-export"></i></button>
 									<button type="button" v-show="validateSupported" :disabled="!hasProcess" @click="validateProcess" title="Validate process on server-side"><i class="fas fa-tasks"></i></button>
+									<button type="button" v-show="visualizeProcessSupported" :disabled="!hasProcess" @click="visualizeProcess" title="Show on map"><i class="fas fa-eye"></i></button>
 								</template>
 							</Editor>
 						</Pane>
@@ -96,6 +97,9 @@ export default {
 		},
 		validateSupported() {
 			return this.supports('validateProcess');
+		},
+		visualizeProcessSupported() {
+			return !!this.$config["visualizeProcessGraphUrl"];
 		},
 		splitpaneSizeH() {
 			if (this.isAuthenticated) {
@@ -188,6 +192,10 @@ export default {
 			} catch (error) {
 				Utils.exception(this, error, "Validation rejected");
 			}
+		},
+
+		visualizeProcess() {
+			this.emit('visualizeProcess', this.process)
 		},
 
 		updateEditor(value) {

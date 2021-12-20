@@ -48,6 +48,8 @@ export default {
 		this.listen('removeWebService', this.removeWebService);
 
 		this.listen('showCollectionPreview', this.showCollectionPreview);
+
+		this.listen('visualizeProcess', this.visualizeProcess);
 	},
 	data() {
 		return {
@@ -64,6 +66,12 @@ export default {
 		...Utils.mapState(['connection'])
 	},
 	methods: {
+		async visualizeProcess(process) {
+			var connection = await OpenEO.connect(this.$config["visualizeProcessGraphUrl"], {addNamespaceToProcess: true})
+			var service = await connection.createService(process, 'wmts')
+			this.showMapViewer();
+			this.$refs.mapViewer.showWebService(service);
+		},
 		...Utils.mapActions(['describeCollection']),
 		async showCollectionPreview(collection) {
 			if (typeof collection === 'string') {

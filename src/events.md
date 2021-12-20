@@ -43,6 +43,9 @@ Shows a web service on the map.
 ### removeWebService(string $id)
 Removes a web service from the map.
 
+### visualizeProcess(object $process)
+Visualizes a process graph on the map.
+
 ## UI
 
 ### windowResized()

@@ -55,6 +55,9 @@ export default {
 
 	// refresh interval for jobs/user data/services etc. in minutes - doesn't apply to logs.
 	// It's recommended to use a value between 1 and 5 minutes.
-	dataRefreshInterval: 2
+	dataRefreshInterval: 2,
+
+	// URL of the backend for visualizing process graphs
+	visualizeProcessGraphUrl: ''
 	
 };

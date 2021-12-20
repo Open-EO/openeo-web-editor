@@ -256,6 +256,10 @@ export default {
 		async updateWMTSLayer(service, layerNames = [], time = undefined, prefix = "Service") {
 			this.removeLayerFromMap(service.id);
 
+			if (service.configuration && service.configuration.layer) {
+				layerNames = [service.configuration.layer]
+			}
+
 			if (!this.WMTSCapabilities[service.url]) {
 				let url = new URL(service.url);
 				url.searchParams.set('service', 'wmts');
@@ -297,6 +301,11 @@ export default {
 						options.dimensions = {};
 					}
 					options.dimensions.time = time;
+				}
+				if (service.configuration && service.configuration.evalscripturl) {
+					options.tileLoadFunction = function(imageTile, src) {
+						imageTile.getImage().src = src + Object.entries(service.configuration).map(([name, value]) => `&${name}=${encodeURIComponent(value)}`).join('')
+					}
 				}
 				source = new WMTS(options);
 				var mapLayer = new TileLayer({
