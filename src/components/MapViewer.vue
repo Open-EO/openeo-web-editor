@@ -440,6 +440,12 @@ export default {
 				title,
 				layers: layerCollection
 			});
+			group.on('change:visible',  () => {
+				if (this.timeline && this.timeline.element) {
+					// Remove time selector on Map if not required any more https://github.com/Open-EO/openeo-web-editor/issues/207
+					this.timeline.element.style.display = group.getVisible() ? 'block' : 'none';
+				}
+			});
 			this.addLayerToMap(group);
 
 			if (this.timeline) {
