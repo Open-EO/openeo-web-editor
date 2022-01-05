@@ -3,17 +3,22 @@
 </template>
 
 <script>
-import MapMixin from './MapMixin.vue';
+import MapMixin from './maps/MapMixin.vue';
 import Utils from '../utils.js';
+import TextControl from './maps/textControl';
+
+import proj4 from 'proj4';
 
 import Collection from 'ol/Collection';
-import {Control} from 'ol/control';
+import { applyTransform } from 'ol/extent';
 import Feature from 'ol/Feature';
 import LayerGroup from 'ol/layer/Group';
 import { fromExtent as PolygonFromExtent } from 'ol/geom/Polygon';
 import TileLayer from 'ol/layer/Tile';
+import { fromLonLat, get as getProjection, getTransform } from 'ol/proj';
+import { register } from 'ol/proj/proj4';
 import GeoTIFF from 'ol/source/GeoTIFF';
-import GlTileLayer from 'ol/layer/WebGLTile';
+import WebGLTileLayer from 'ol/layer/WebGLTile';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import XYZ from 'ol/source/XYZ';
@@ -26,56 +31,9 @@ import Swipe from 'ol-ext/control/Swipe';
 import 'ol-ext/control/Timeline.css';
 import Timeline from 'ol-ext/control/Timeline';
 
-// Workaround for https://github.com/openlayers/openlayers/issues/12833
-HTMLCanvasElement.prototype.getContext = (function (origFn) {
-  return function (type, attributes) {
-    if (
-      ["experimental-webgl", "webgl", "webkit-3d", "moz-webgl"].includes(type)
-    ) {
-      attributes = Object.assign({}, attributes, {
-        preserveDrawingBuffer: true
-      });
-    }
-    return origFn.call(this, type, attributes);
-  };
-})(HTMLCanvasElement.prototype.getContext);
-
-
-class TextControl extends Control {
-  constructor(opt_options) {
-    const options = opt_options || {};
-
-    const element = document.createElement('div');
-    element.className = 'value ol-unselectable ol-control';
-
-    super({
-      element: element,
-      target: options.target,
-    });
-  }
-
-  setValue(value) {
-	  this.element.innerHTML = value;
-  }
-
-  setTitle(value) {
-	  this.element.title = value;
-  }
-}
-
 export default {
 	name: 'MapViewer',
 	mixins: [MapMixin],
-	props: {
-		extents: { // Array of Array (WGS84: west, south, east, north)
-			type: Array,
-			default: () => null
-		},
-		geoJson: {
-			type: Object,
-			default: () => null
-		}
-	},
 	data() {
 		return {
 			WMTSCapabilities: {},
@@ -89,45 +47,41 @@ export default {
 	},
 	methods: {
 		renderMap() {
-			let showExtents = Array.isArray(this.extents) && this.extents.length > 0;
-			this.createMap(!showExtents);
-
-			if (showExtents) {
-				for(let extent of this.extents) {
-					var bbox = Utils.extentToBBox(extent);
-					this.addRectangle(bbox.west, bbox.east, bbox.north, bbox.south);
-				}
-			}
-
-			if (Utils.isObject(this.geoJson)) {
-				this.geoJsonLayer = this.addGeoJson(this.geoJson);
-			}
+			this.createMap(true);
 
 			let layers = this.map.getLayers();
 			layers.on('add', evt => {
+				let layer = evt.element;
+
 				this.toggleSwipeControl();
 
-				let layer = evt.element;
 				let events = layer.get('events');
 				for(let event in events) {
 					this.map.on(event, events[event]);
 				}
+
 				let controls = layer.get('controls');
-				for(let control of controls) {
-					this.map.addControl(control);
+				if (Array.isArray(controls)) {
+					for(let control of controls) {
+						this.map.addControl(control);
+					}
 				}
 			});
 			layers.on('remove', evt => {
+				let layer = evt.element;
+
 				this.toggleSwipeControl();
 
-				let layer = evt.element;
 				let events = layer.get('events');
 				for(let event in events) {
 					this.map.un(event, events[event]);
 				}
+
 				let controls = layer.get('controls');
-				for(let control of controls) {
-					this.map.removeControl(control);
+				if (Array.isArray(controls)) {
+					for(let control of controls) {
+						this.map.removeControl(control);
+					}
 				}
 			});
 
@@ -137,40 +91,9 @@ export default {
 			}
 		},
 
-		addRectangle(w, e, n, s) {
-			let extent = [...this.fromLonLat([w, s]), ...this.fromLonLat([e, n])];
-			let layer = new VectorLayer({
-				title: "Extent",
-				displayInLayerSwitcher: false,
-				source: new VectorSource({
-					features: [
-						new Feature(PolygonFromExtent(extent))
-					],
-					projection: "EPSG:4326",
-					wrapX: false
-				})
-			});
-			this.map.addLayer(layer);
-			this.map.getView().fit(extent, this.fitOptions);
-			// ToDo: The Collection component has some smart fitting behavior in setMapSize()
-			// Implement something similar here, too.
-		},
-
-		async showWebService(service) {
-			switch(service.type.toLowerCase()) {
-				case 'xyz':
-					this.updateXYZLayer(service);
-					break;
-				case 'wmts':
-					await this.updateWMTSLayer(service);
-					break;
-				default:
-					Utils.error(this, 'Sorry, the service type is not supported by the map.');
-			}
-		},
-
 		toggleSwipeControl() {
-			var shownLayers = this.getVisibleLayers().filter(layer => !(layer instanceof GlTileLayer)); // Swipe Control errors for GlTileLayers
+			// Swipe Control errors for WebGLTileLayer: https://github.com/Viglino/ol-ext/issues/723
+			var shownLayers = this.getVisibleLayers().filter(layer => !(layer instanceof WebGLTileLayer));
 			if (shownLayers.length === 2) {
 				if (this.swipe.control === null) {
 					this.swipe.control = new Swipe();
@@ -220,43 +143,175 @@ export default {
 			return null;
 		},
 
-		async updateGeoTiffLayer(url, title = null) {
-			// ToDo: Read more details from STAC metadata
-			let min = Number.parseFloat(prompt("Please input the minimum value", 0));
-			let max = Number.parseFloat(prompt("Please input the maximum value", 255));
-			let nodata = Number.parseFloat(prompt("Please input the no-data value or leave empty for none", ""));
-			let source = new GeoTIFF({
-				sources: [{ url, min, max, nodata }],
-			});
+		fromLonLat(coords) {
+			return fromLonLat(coords, this.map.getView().getProjection());
+		},
+
+		async showWebService(service) {
+			switch(service.type.toLowerCase()) {
+				case 'xyz':
+					this.updateXYZLayer(service);
+					break;
+				case 'wmts':
+					await this.updateWMTSLayer(service);
+					break;
+				default:
+					Utils.error(this, 'Sorry, this web service type is not supported.');
+			}
+		},
+
+		async updateGeoTiffLayer(data, title = "GeoTiff", context = null) {
+			// ToDos:
+			// - Handle CRS (e.g. UTM)
+			// - Pass in overviews
+			// - Handle multiple bands
+			let min, max, nodata;
+			const NAN = Number.NAN; // ToDo: Check whether Number.NAN works with OL
+
+			// Try to get metadata from first band
+			if (Array.isArray(data['raster:bands']) && data['raster:bands'].length === 1 && Utils.isObject(data['raster:bands'][0])) {
+				let band = data['raster:bands'][0];
+				nodata = typeof nodata === "string" && nodata.toLowerCase() === "nan" ? NAN : band.nodata;
+				if (Utils.isObject(band.statistics)) {
+					min = band.statistics.minimum;
+					max = band.statistics.maximum;
+				}
+				else if (typeof band.data_type === 'string') {
+					if (band.data_type.startsWith('uint')) {
+						min = 0;
+					}
+					if (band.data_type === 'uint8') {
+						max = 255;
+					}
+					else if (band.data_type === 'int8') {
+						max = 127;
+					}
+					// else: let openlayers choose
+				}
+			}
+
+			// Set options for GeoTIFF source
+			let options = { min, max, nodata };
+			if(data.blob instanceof Blob) {
+				options.url = URL.createObjectURL(data.blob);
+			}
+			else {
+				options.url = data.url;
+			}
+
+			// Create source and automatically derive view from it
+			let source = new GeoTIFF({ sources: [options] });
 			let view = await source.getView();
-			let layer = new GlTileLayer({
-				id: url,
-				title: title ? title : 'GeoTiff',
+
+			// Load projection from GeoTiff / database
+			let projection = await this.loadProjection(view.projection.getCode());
+			// Get projection details from STAC Item (todo: add collection support)
+			if (!projection && context && Utils.isObject(context.properties)) {
+				if (context.properties['proj:epsg']) {
+					projection = this.loadProjection(context.properties['proj:epsg']);
+				}
+				else if (context.properties['proj:wkt2']) {
+					projection = this.addProjection(context.id, context.properties['proj:wkt2']);
+				}
+			}
+			if (projection) {
+				view.projection = projection;
+			}
+			else {
+				throw new Error("The projection is not supported.");
+			}
+
+			let layer = new WebGLTileLayer({
+				id: options.url,
+				title,
 				source
 			});
 
-			layer.setExtent(view.extent);
-			this.map.getView().set('projection', view.projection);
-			this.map.getView().fit(view.extent, this.fitOptions);
-
-			let textControl = new TextControl();
-			layer.set('events', {
-				singleclick: evt => {
-					const pixel = this.map.getEventPixel(evt.originalEvent);
-					const data = new Uint8Array(4);
-					const gl = layer.getRenderer().helper.getGL();
-					gl.readPixels(pixel[0], pixel[1], 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, data);
-					let value = Utils.displayRGBA(data, min, max, nodata, 5);
-					textControl.setValue(`Estimated Pixel Value: ${value}`);
-					textControl.setTitle(`Coordinate: ${evt.coordinate.join(', ')}`);
-				}
-			});
-			// ToDo: This is shown twice if multiple GeoTiffs are shown
-			layer.set('controls', [textControl]);
+			let fromLonLat = getTransform(view.projection, this.map.getView().getProjection());
+			let extent = applyTransform(view.extent, fromLonLat);
+			this.map.getView().fit(extent, this.getFitOptions(10));
 
 			this.addLayerToMap(layer);
 
 			return layer;
+		},
+
+		async loadProjection(crs) {
+			let code, id;
+			if (typeof crs === 'string' && crs.match(/^EPSG:\d+$/i)) {
+				code = crs.toUpperCase();
+				id = crs.substr(5);
+			}
+			else if (Number.isInteger(crs)) {
+				code = `EPSG:${crs}`
+				id = String(crs);
+			}
+			else {
+				return null;
+			}
+
+			// Get projection from cache
+			let projection = getProjection(code);
+			if (projection) {
+				return projection;
+			}
+
+			// Get projection from database
+			let proj = await import('../assets/epsg-proj.json');
+			if (id in proj) {
+				return this.addProjection(code, proj[id]);
+			}
+
+			// No projection found
+			return null;
+		},
+
+		addProjection(code, meta) {
+			try {
+				proj4.defs(code, meta);
+				register(proj4);
+				return getProjection(code);
+			} catch (error) {
+				console.error(error);
+				return null;
+			}
+		},
+
+		addTextControl(layer) {
+			let textControl = new TextControl();
+			layer.set('events', {
+				singleclick: evt => {
+				const pixel = this.map.getEventPixel(evt.originalEvent);
+					this.map.forEachLayerAtPixel(pixel, (layer, data) => {
+						console.log(data);
+						let value = Utils.displayRGBA(data, min, max, nodata, 5);
+						textControl.setValue(`Estimated Pixel Value: ${value}`);
+						textControl.setTitle(`Coordinate: ${evt.coordinate.join(', ')}`);
+					});
+				}
+			});
+			// ToDo: This is shown twice if multiple GeoTiffs are shown
+			layer.set('controls', [textControl]);
+		},
+
+		getOptionsFromUser(min, max, nodata) {
+			if (typeof min !== 'number') {
+				min = Number.parseFloat(prompt("Please input the minimum value", min));
+			}
+			if (typeof max !== 'number') {
+				max = Number.parseFloat(prompt("Please input the maximum value", max));
+			}
+			nodata = prompt("Please input the no-data value (NaN is allowed, too)", nodata);
+			if (typeof nodata !== 'string' || nodata.trim().length === 0) {
+				nodata = undefined;
+			}
+			else if (nodata.toLowerCase() === "nan") {
+				nodata = Number.NaN;
+			}
+			else {
+				nodata = Number.parseFloat(nodata);
+			}
+			return { min, max, nodata }
 		},
 
 		async addCollection(collection) {
@@ -322,7 +377,7 @@ export default {
 
 				layer.getLayers().push(extentLayer);
 
-				this.map.getView().fit(extent, this.fitOptions);
+				this.map.getView().fit(extent, this.getFitOptions(10));
 			} catch (error) {
 				console.log(error);
 			}
@@ -489,11 +544,16 @@ export default {
 }
 </script>
 
-<style src="./MapMixin.css"></style>
+<style src="./maps/MapMixin.css"></style>
 
 <style>
 .ol-control.value {
 	top: 0.5em;
 	left: 3em;
+}
+.ol-control.ol-timeline .timeline-date-label {
+	width: 7em;
+    font-size: 0.8em;
+    font-weight: normal;
 }
 </style>

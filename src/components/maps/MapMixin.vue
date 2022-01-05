@@ -1,23 +1,18 @@
 <script>
-import EventBusMixin from './EventBusMixin.vue';
-import Utils from '../utils.js';
+import EventBusMixin from '../EventBusMixin.vue';
 
 import 'ol/ol.css';
 import { defaults as defaultControls, FullScreen, ScaleLine } from 'ol/control';
-import { isEmpty as extentIsEmpty } from 'ol/extent';
-import GeoJSON from 'ol/format/GeoJSON';
 import Map from 'ol/Map';
 import View from 'ol/View';
 import { fromLonLat } from 'ol/proj';
 import TileLayer from 'ol/layer/Tile';
-import VectorLayer from 'ol/layer/Vector';
-import VectorSource from 'ol/source/Vector';
 import XYZ from 'ol/source/XYZ';
 
 import 'ol-ext/control/LayerSwitcher.css';
 import LayerSwitcher from 'ol-ext/control/LayerSwitcher';
 
-import Progress from './openlayers/progress';
+import Progress from './progress';
 
 export default {
 	mixins: [EventBusMixin],
@@ -52,10 +47,7 @@ export default {
 			map: null,
 			baseLayers: [],
 			basemap: null,
-			progress: null,
-			fitOptions: {
-				padding: [30,30,30,30]
-			}
+			progress: null
 		};
 	},
 	watch: {
@@ -72,7 +64,7 @@ export default {
 				this.$nextTick(() => this.renderMap());
 			}
 		},
-		createMap(showLayerSwitcher = false, projection = 'EPSG:3857') {
+		createMap(showLayerSwitcher = true, projection = 'EPSG:3857') {
 			if (this.map !== null) {
 				this.map.updateSize();
 				this.map.render();
@@ -89,7 +81,8 @@ export default {
 			}
 			let basemapOptions = {
 				opaque: true,
-				attributionsCollapsible: false
+				attributionsCollapsible: false,
+				wrapX: false
 			};
 			this.baseLayers = [];
 			if (Array.isArray(this.$config.basemaps)) {
@@ -112,7 +105,7 @@ export default {
 				target: this.id,
 				layers: this.baseLayers,
 				view: new View({
-					center: projection === 'EPSG:3857' ? fromLonLat(center) : center,
+					center: fromLonLat(center, projection),
 					zoom: this.zoom,
 					showFullExtent: true,
 					projection
@@ -128,13 +121,6 @@ export default {
 			this.map = new Map(mapOptions);
 
 			this.listen('windowResized', this.updateMapSize);
-		},
-
-		fromLonLat(coords) {
-			if (this.map && this.map.getView().getProjection().getCode() === 'EPSG:3857') {
-				return fromLonLat(coords);
-			}
-			return coords;
 		},
 
 		onShow() {
@@ -167,27 +153,17 @@ export default {
 			return shownLayers;
 		},
 
-		addGeoJson(geojson) {
-			var sourceOpts = {};
-			if (Utils.detectGeoJson(geojson)) {
-				sourceOpts.features = (new GeoJSON()).readFeatures(
-					geojson,
-					{
-						featureProjection: this.map.getView().getProjection()
-					}
-				);
+		getFitOptions(paddingPc = 25) {
+			let fitOptions = {};
+			// Make a bigger extent visible so that user can get a better overview
+			var size = this.map.getSize();
+			if (size && paddingPc > 0) {
+				fitOptions.padding = [size[0]*paddingPc/100, size[1]*paddingPc/100, size[0]*paddingPc/100, size[1]*paddingPc/100];
 			}
-			var source = new VectorSource(sourceOpts);
-			var layer = new VectorLayer({
-				title: "GeoJSON",
-				source: source
-			});
-			this.map.addLayer(layer);
-			var extent = source.getExtent();
-			if (!extentIsEmpty(extent)) {
-				this.map.getView().fit(extent, this.fitOptions);
+			else {
+				fitOptions.padding = [30,30,30,30];
 			}
-			return layer;
+			return fitOptions;
 		},
 
 		trackTileProgress(source) {

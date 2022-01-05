@@ -187,13 +187,18 @@ class Utils extends VueUtils {
 	}
 
 	static extentToBBox(extent) {
-		var hasZ = extent.length > 4;
-        return {
+		var hasZ = extent.length >= 6;
+        let obj = {
 			west: extent[0],
 			east: extent[hasZ ? 3 : 2],
 			south: extent[1],
 			north: extent[hasZ ? 4 : 3]
 		};
+		if (hasZ) {
+			obj.base = extent[2];
+			obj.height = extent[5];
+		}
+		return obj;
 	}
 	static sortById(a, b) {
 		return VueUtils.compareStringCaseInsensitive(a.id, b.id);

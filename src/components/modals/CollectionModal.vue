@@ -4,13 +4,13 @@
 			<Collection :data="collection">
 				<template #spatial-extents="p">
 					<span v-if="p.worldwide" class="worldwide"><i class="fas fa-globe"></i> Worldwide</span>
-					<MapViewer v-else class="map" id="collectionMap" :show="showMap" :extents="p.extents"></MapViewer>
+					<MapExtentViewer v-else class="map" id="collectionMap" :show="showMap" :footprint="p.extents"></MapExtentViewer>
 				</template>
 			</Collection>
 			<section v-if="currentItems">
 				<Items :items="currentItems">
 					<template #item-location="p">
-						<MapViewer :id="mapViewerId" :geoJson="p.geometry"></MapViewer>
+						<MapExtentViewer :id="mapViewerId" :footprint="p.geometry"></MapExtentViewer>
 					</template>
 				</Items>
 				<div class="pagination">
@@ -23,7 +23,6 @@
 </template>
 
 <script>
-import MapViewer from '../MapViewer.vue';
 import Modal from './Modal.vue';
 import Collection from '@openeo/vue-components/components/Collection.vue';
 import Utils from '../../utils.js';
@@ -31,7 +30,7 @@ import Utils from '../../utils.js';
 export default {
 	name: 'CollectionModal',
 	components: {
-		MapViewer,
+		MapExtentViewer: () => import('../maps/MapExtentViewer.vue'),
 		Modal,
 		Collection,
 		Items: () => import('@openeo/vue-components/components/Items.vue')

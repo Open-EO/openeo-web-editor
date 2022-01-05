@@ -20,6 +20,7 @@
 	left: 1px;
 	top: 1px;
 }
+
 /* Customize scale line control */
 .ol-scale-line {
 	background-color: rgba(0,60,136,.5);
@@ -28,6 +29,7 @@
 	color: #fff;
 	border-color: #fff;
 }
+
 /* Make sure the swipe control is behind the other controls */
 .ol-unselectable,
 .ol-control {
@@ -39,6 +41,7 @@
 .ol-swipe {
 	z-index: 0 !important;
 }
+
 /* Loading progress control */
 .ol-progress-control {
 	opacity: 1;
@@ -66,10 +69,4 @@
 	background-color: #fff;
 	height: 10px;
 	width: 0;
-}
-
-.ol-control.ol-timeline .timeline-date-label {
-	width: 7em;
-    font-size: 0.8em;
-    font-weight: normal;
 }

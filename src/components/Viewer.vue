@@ -38,9 +38,6 @@ export default {
 		MapViewer
 	},
 	mounted() {
-		this.listen('viewBlob', this.showViewer);
-		this.listen('viewLink', this.showViewer);
-
 		this.listen('viewSyncResult', this.showSyncResults);
 		this.listen('viewJobResults', this.showJobResults);
 		this.listen('viewWebService', this.showWebService);
@@ -91,13 +88,13 @@ export default {
 			if (Array.isArray(result.logs) && result.logs.length > 0) {
 				this.showLogs(result.logs);
 			}
-			this.showViewer(result.data);
+			this.showViewer(result.data, result.type, null, true);
 		},
-		showJobResults(item, job) {
-			for(var key in item.assets) {
-				var asset = item.assets[key];
+		showJobResults(stac, job) {
+			for(var key in stac.assets) {
+				var asset = stac.assets[key];
 				let jobTitle = Utils.getResourceTitle(job, true);
-				this.showViewer(asset, this.makeTitle(jobTitle, asset.title, true));
+				this.showViewer(asset, asset.type, this.makeTitle(jobTitle, asset.title, true), false, stac);
 			}
 		},
 		showLogs(resource, defaultTitle = 'Logs', faIcon = 'fa-bug') {
@@ -162,67 +159,69 @@ export default {
 				return title;
 			}
 		},
-		async showViewer(meta, title = null) {
+		async showViewer(meta, type, title = null, sync = false, context = null) {
 			var data = {};
-			if (Utils.isObject(meta) && typeof meta.href === 'string' && typeof meta.type === 'string') {
-				data.type = meta.type;
-				data.url = meta.href;
+			if (Utils.isObject(meta) && typeof meta.href === 'string') {
+				Object.assign(data, meta, { url: meta.href });
 			}
 			else if (meta instanceof Blob) {
-				data.type = meta.type;
 				data.blob = meta;
-			}
-			else {
-				Utils.error(this, "Sorry, invalid data received.");
-			}
-
-			if (typeof data.type !== 'string' || data.type.indexOf('/') === -1 || data.type.indexOf('*') !== -1) {
-				Utils.error(this, "Sorry, can't detect content type.");
 			}
 
 			try {
-				let mime = contentType.parse(data.type);
+				let mime = contentType.parse(type);
 				data.type = mime.type;
 				data.parameters = mime.parameters;
-			} catch (error) {}
+			} catch (error) {
+				data.type = type;
+				console.log(error);
+			}
 
+			// Try to show the file
+			let shown = false;
 			switch(data.type) {
 				case 'image/png':
 				case 'image/jpg':
 				case 'image/jpeg':
 				case 'image/gif':
 					this.$refs.tabs.addTab(this.makeTitle(title, "Image"), "fa-image", data, null, true, true);
+					shown = true;
 					break;
 				case 'application/json':
 				case 'text/plain':
 				case 'text/csv':
 					this.$refs.tabs.addTab(this.makeTitle(title, "Data"), "fa-database", data, null, true, true);
+					shown = true;
 					break;
 				case 'image/tiff':
-					if (data.url && data.parameters.application === 'geotiff') {
+					if (data.parameters.application === 'geotiff') {
 						this.showMapViewer();
-						await this.$refs.mapViewer.updateGeoTiffLayer(data.url, this.makeTitle(title, "GeoTiff"));
-						break;
+						await this.$refs.mapViewer.updateGeoTiffLayer(data, this.makeTitle(title, "GeoTiff"), context);
+						shown = true;
 					}
-					// else: Default behavior
-				default:
-					if (data.blob instanceof Blob) {
-						OpenEO.Environment.saveToFile(data.blob, Utils.makeFileName("result", data.type));
-						break;
-					}
-					else if (data.url) {
-						try {
-							let response = await this.connection._get(data.url, "", "blob");
-							let filename = Utils.getFileNameFromURL(data.url);
-							if (response.data instanceof Blob) {
-								OpenEO.Environment.saveToFile(response.data, Utils.makeFileName(filename, data.type));
-								break;
-							}
-						} catch (error) {
-							console.error(error);
+					break;
+			}
+
+			if (sync || !shown) {
+				if (data.blob instanceof Blob) {
+					OpenEO.Environment.saveToFile(data.blob, Utils.makeFileName("result", data.type));
+					return;
+				}
+				else if (data.url) {
+					try {
+						let response = await this.connection._get(data.url, "", "blob");
+						let filename = Utils.getFileNameFromURL(data.url);
+						if (response.data instanceof Blob) {
+							OpenEO.Environment.saveToFile(response.data, Utils.makeFileName(filename, data.type));
+							return;
 						}
+					} catch (error) {
+						Utils.exception(this, error, "Sorry, can't load data from URL.");
+						return;
 					}
-					Utils.error(this, 'Sorry, content type not supported by the viewer and can\'t be downloaded.');
+				}
+
+				Utils.exception(this, 'Sorry, this type of data is not supported by the editor and can\'t be downloaded.');
 			}
 		}
 	}

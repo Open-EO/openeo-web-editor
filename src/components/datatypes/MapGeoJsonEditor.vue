@@ -3,7 +3,8 @@
 </template>
 
 <script>
-import MapMixin from '../MapMixin.vue';
+import MapMixin from '../maps/MapMixin.vue';
+import GeoJsonMixin from '../maps/GeoJsonMixin.vue';
 
 import GeoJSON from 'ol/format/GeoJSON';
 import Snap from 'ol/interaction/Snap';
@@ -17,7 +18,7 @@ import UndoRedo from 'ol-ext/interaction/UndoRedo';
 
 export default {
 	name: 'MapGeoJsonEditor',
-	mixins: [MapMixin],
+	mixins: [MapMixin, GeoJsonMixin],
 	props: {
 		value: {
 			type: Object,
@@ -36,7 +37,7 @@ export default {
 			}
 		},
 		renderMap() {
-			this.createMap(true, 'EPSG:4326');
+			this.createMap(false, 'EPSG:4326');
 
 			if (!this.editable) {
 				this.geoJsonLayer = this.addGeoJson(this.value);
@@ -143,4 +144,4 @@ export default {
 }
 </script>
 
-<style src="../MapMixin.css"></style>
+<style src="../maps/MapMixin.css"></style>

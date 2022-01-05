@@ -12,13 +12,13 @@
 			<Collection v-if="resultType === 'Collection'" :data="result">
 				<template #title><span class="hidden" /></template>
 				<template #spatial-extents="p">
-					<MapViewer id="jobMap" :show="showMap" :extents="p.extents"></MapViewer>
+					<MapExtentViewer id="jobMap" :show="showMap" :footprint="p.extents"></MapExtentViewer>
 				</template>
 			</Collection>
 			<Item v-else :data="result">
 				<template #title><span class="hidden" /></template>
 				<template #location="p">
-					<MapViewer id="jobMap" :show="showMap" :geoJson="p.geometry" :extents="p.bbox"></MapViewer>
+					<MapExtentViewer id="jobMap" :show="showMap" :footprint="p.geometry || p.bbox"></MapExtentViewer>
 				</template>
 			</Item>
 		</section>
@@ -38,7 +38,7 @@ export default {
 		Editor,
 		Item: () => import('@openeo/vue-components/components/Item.vue'),
 		Job,
-		MapViewer: () => import('../MapViewer.vue'),
+		MapExtentViewer: () => import('../maps/MapExtentViewer.vue'),
 		Modal
 	},
 	computed: {
