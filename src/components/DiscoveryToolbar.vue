@@ -10,7 +10,6 @@
 							<small v-if="item.title" :title="item.title">{{ item.title }}</small>
 						</div>
 						<button v-if="hasCollectionPreview(item)" class="discovery-button" type="button" @click="showCollectionPreview(item)" title="View on map"><i class="fas fa-map"></i></button>
-						<button v-if="supportsLoadCollection" class="discovery-button" type="button" @click="insertCollection(item)" title="Insert"><i class="fas fa-plus"></i></button>
 					</div>
 				</template>
 			</Collections>
@@ -24,7 +23,6 @@
 							<strong :title="item.id">{{ item.id }}</strong>
 							<small v-if="item.summary" :title="item.summary">{{ item.summary }}</small>
 						</div>
-						<button class="discovery-button" type="button" @click="insertProcess(item)" title="Insert"><i class="fas fa-plus"></i></button>
 					</div>
 				</template>
 			</Processes>
@@ -36,7 +34,6 @@
 							<strong :title="summary.identifier">{{ summary.identifier }} ({{ item.default }})</strong>
 							<small v-if="summary.summary" :title="summary.summary">{{ summary.summary }}</small>
 						</div>
-						<button v-if="supportsRunUdf" class="discovery-button" type="button" @click="insertUdf(summary.identifier, item.default)" title="Insert"><i class="fas fa-plus"></i></button>
 					</div>
 				</template>
 			</UdfRuntimes>
@@ -48,7 +45,6 @@
 							<strong :title="item.name">{{ item.name }}</strong>
 							<small v-if="item.title" :title="item.title">{{ item.title }}</small>
 						</div>
-						<button v-if="supportsSaveResult" class="discovery-button" type="button" @click="insertFileFormat(item)" title="Insert"><i class="fas fa-plus"></i></button>
 					</div>
 				</template>
 			</FileFormats>
@@ -200,22 +196,6 @@ export default {
 						arguments: {format: data.name, options: {}}
 					};
 			}
-		},
-		insertCollection(collection) {
-			let node = this.getNode('collection', collection);
-			this.onAddProcess(node);
-		},
-		insertProcess(process) {
-			let node = this.getNode('process', process);
-			this.onAddProcess(node);
-		},
-		insertUdf(runtime, version) {
-			let node = this.getNode('udf', {runtime, version});
-			this.onAddProcess(node);
-		},
-		insertFileFormat(format) {
-			let node = this.getNode('fileformat', format);
-			this.onAddProcess(node);
 		}
 	}
 }
@@ -276,49 +256,57 @@ export default {
 	cursor: pointer;
 	user-select: none;
 	font-size: 0.9em;
-}
-.discovery-info {
-	flex-grow: 1;
-	padding: 5px;
-	width: 100%;
-	overflow: hidden; 
-	position: relative;
-}
-.discovery-info:hover {
-	background-color: #eee;
-}
-.discovery-entity strong {
-	display: block;
-	font-weight: normal;
-	white-space: nowrap;
-	width: 100%;
-	overflow: hidden; 
-	text-overflow: ellipsis;
-	color: $linkColor;
-}
-.discovery-info:hover strong {
-	color: #000;
-}
-.discovery-entity small {
-	margin-top: 0.25em;
-	display: block;
-}
-.discovery-button {
-	display: block;
-	margin: 0;
-	padding: 5px;
-	background-color: #fff;
-	color: #aaa;
-	border: 0;
-	border-left: 1px solid #ddd;
-}
-.discovery-button:hover {
-	background-color: #eee;
-	color: #000;
-}
-.custom-process {
-	position: absolute;
-	top: 7px;
-	right: 5px;
+
+	strong {
+		display: block;
+		font-weight: normal;
+		white-space: nowrap;
+		width: 100%;
+		overflow: hidden; 
+		text-overflow: ellipsis;
+		color: $linkColor;
+	}
+
+	small {
+		margin-top: 0.25em;
+		display: block;
+	}
+
+	.discovery-info {
+		flex-grow: 1;
+		padding: 5px;
+		width: 100%;
+		overflow: hidden; 
+		position: relative;
+
+		&:hover {
+			background-color: #eee;
+
+			strong {
+				color: #000;
+			}
+		}
+	}
+
+	.discovery-button {
+		display: block;
+		margin: 0;
+		padding: 5px;
+		background-color: #fff;
+		color: #aaa;
+		border: 0;
+		border-left: 1px solid #ddd;
+
+		&:hover {
+			background-color: #eee;
+			color: #000;
+		}
+	}
+
+	.custom-process {
+		position: absolute;
+		top: 7px;
+		right: 5px;
+	}
 }
 </style>
