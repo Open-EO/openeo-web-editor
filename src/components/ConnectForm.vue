@@ -343,7 +343,7 @@ export default {
 					if (this.oidcClientId) {
 						this.provider.setClientId(this.oidcClientId);
 					}
-					await provider.login(this.oidcOptions);
+					await provider.login(this.oidcOptions, true);
 					provider.addListener('AccessTokenExpired', () => Utils.warn(this, "User session has expired, please login again."));
 					provider.addListener('SilentRenewError', () => Utils.error(this, "You'll be switching to Guest mode in less than a minute.", "Session renewal failed"));
 				}
