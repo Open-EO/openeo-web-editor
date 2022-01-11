@@ -52,10 +52,10 @@ class Utils extends VueUtils {
 		var typeDefaults =  {
 			buttons
 		}; 
-		vm.$snotify.error(message, title, Object.assign({}, vm.$config.snotifyDefaults, typeDefaults)); 
+		vm.$snotify.singleError(message, title, Object.assign({}, vm.$config.snotifyDefaults, typeDefaults)); 
 	} 
 	static error(vm, message, title = null) {
-		vm.$snotify.error(message, title, vm.$config.snotifyDefaults); 
+		vm.$snotify.singleError(message, title, vm.$config.snotifyDefaults); 
 	}
 	static warn(vm, message, title = null) {
 		vm.$snotify.warning(message, title, vm.$config.snotifyDefaults);
