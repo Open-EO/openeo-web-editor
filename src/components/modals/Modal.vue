@@ -1,7 +1,7 @@
 <template>
 	<div class="modal" @mousedown="backgroundClose" :style="{'z-index': zIndex}">
 		<div ref="container" class="modal-container" :style="style">
-			<header class="modal-header" @mousedown.prevent.stop="startMove">
+			<header class="modal-header" @mousedown="startMove">
 				<slot name="header">
 					<h2>{{ title }}</h2>
 					<span class="close" @click="close"><i class="fa fa-times" aria-hidden="true"></i></span>
@@ -93,13 +93,18 @@ export default {
 			this.$emit('closed');
 		},
 		startMove(event) {
-			this.dragPosition = [
-				event.clientX,
-				event.clientY
-			];
+			if (event.target.tagName !== 'H2') {
+				this.dragPosition = [
+					event.clientX,
+					event.clientY
+				];
 
-			document.addEventListener('mousemove', this.move);
-			document.addEventListener('mouseup', this.stopMove);
+				document.addEventListener('mousemove', this.move);
+				document.addEventListener('mouseup', this.stopMove);
+
+				event.preventDefault();
+				event.stopPropagation();
+			}
 		},
 		stopMove() {
 			document.removeEventListener('mousemove', this.move);
@@ -174,16 +179,18 @@ export default {
 	padding: 1rem;
 	display: flex;
 	align-items: center;
+	justify-content: space-between;
     cursor: move;
 }
 
 .modal .modal-header h2 {
 	display: inline-block;
-	flex-grow: 1;
 	margin: 0;
+	margin-left: -0.5rem;
+	padding: 0.5rem;
 	font-size: 1.5rem;
 	border: 0;
-	padding: 0;
+	cursor: text;
 }
 
 .modal .modal-content {

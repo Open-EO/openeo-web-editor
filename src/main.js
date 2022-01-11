@@ -8,7 +8,17 @@ import filters from './filters';
 import Clipboard from 'v-clipboard';
 
 Vue.use(Snotify);
-Vue.use(Clipboard)
+Vue.use(Clipboard);
+
+// Don't show too many repetitive error messages
+Vue.prototype.$snotify.singleError = function () {
+	let message = arguments[0];
+	if (message !== this.lastMessage) {
+		this.lastMessage = message;
+		this.error(...arguments);
+		setTimeout(() => this.lastMessage = null, 1000);
+	}
+};
 
 Vue.config.productionTip = false;
 Vue.config.errorHandler = function (err, vm, info) {
@@ -16,11 +26,17 @@ Vue.config.errorHandler = function (err, vm, info) {
 	if (!vm || !vm.$snotify) {
 		return;
 	}
+
+	let message;
 	if (err instanceof Error) {
-		vm.$snotify.error(err.message, 'Error', Config.snotifyDefaults);
+		message = err.message;
 	}
 	else if (typeof err === 'string') {
-		vm.$snotify.error(err, 'Error', Config.snotifyDefaults);
+		message = err;
+	}
+
+	if (message) {
+		vm.$snotify.singleError(message, 'Error', Config.snotifyDefaults);
 	}
 };
 

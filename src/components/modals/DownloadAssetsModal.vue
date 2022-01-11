@@ -1,7 +1,7 @@
 <template>
 	<Modal width="60%" :title="title" @closed="$emit('closed')">
 		<ul class="list">
-			<StacAsset v-for="(asset, id) in result.assets" :key="id" :asset="asset" :id="id" :context="data" />
+			<StacAsset v-for="(asset, id) in result.assets" :key="id" :asset="asset" :id="id" :context="result" />
 		</ul>
 	</Modal>
 </template>
