@@ -6,6 +6,7 @@
 import MapMixin from './maps/MapMixin.vue';
 import Utils from '../utils.js';
 import TextControl from './maps/textControl';
+import ProjGeoTiff from './maps/projGeoTiff';
 
 import proj4 from 'proj4';
 
@@ -18,7 +19,6 @@ import TileLayer from 'ol/layer/Tile';
 import { fromLonLat, get as getProjection, getTransform } from 'ol/proj';
 import { register } from 'ol/proj/proj4';
 import GeoTIFF from 'ol/source/GeoTIFF';
-import WebGLTileLayer from 'ol/layer/WebGLTile';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import XYZ from 'ol/source/XYZ';
@@ -42,7 +42,8 @@ export default {
 				left: null,
 				right: null
 			},
-			timeline: null
+			timeline: null,
+			textControl: null
 		}
 	},
 	methods: {
@@ -93,7 +94,7 @@ export default {
 
 		toggleSwipeControl() {
 			// Swipe Control errors for WebGLTileLayer: https://github.com/Viglino/ol-ext/issues/723
-			var shownLayers = this.getVisibleLayers().filter(layer => !(layer instanceof WebGLTileLayer));
+			var shownLayers = this.getVisibleLayers();
 			if (shownLayers.length === 2) {
 				if (this.swipe.control === null) {
 					this.swipe.control = new Swipe();
@@ -162,16 +163,14 @@ export default {
 
 		async updateGeoTiffLayer(data, title = "GeoTiff", context = null) {
 			// ToDos:
-			// - Handle CRS (e.g. UTM)
 			// - Pass in overviews
 			// - Handle multiple bands
 			let min, max, nodata;
-			const NAN = Number.NAN; // ToDo: Check whether Number.NAN works with OL
 
 			// Try to get metadata from first band
 			if (Array.isArray(data['raster:bands']) && data['raster:bands'].length === 1 && Utils.isObject(data['raster:bands'][0])) {
 				let band = data['raster:bands'][0];
-				nodata = typeof nodata === "string" && nodata.toLowerCase() === "nan" ? NAN : band.nodata;
+				nodata = typeof nodata === "string" && nodata.toLowerCase() === "nan" ? Number.NAN : band.nodata;
 				if (Utils.isObject(band.statistics)) {
 					min = band.statistics.minimum;
 					max = band.statistics.maximum;
@@ -200,8 +199,8 @@ export default {
 			}
 
 			// Create source and automatically derive view from it
-			let source = new GeoTIFF({ sources: [options] });
-			let view = await source.getView();
+			let geotiff = new GeoTIFF({ sources: [options] });
+			let view = await geotiff.getView();
 
 			// Load projection from GeoTiff / database
 			let projection = await this.loadProjection(view.projection.getCode());
@@ -214,23 +213,21 @@ export default {
 					projection = this.addProjection(context.id, context.properties['proj:wkt2']);
 				}
 			}
-			if (projection) {
-				view.projection = projection;
-			}
-			else {
+			if (!projection) {
 				throw new Error("The projection is not supported.");
 			}
 
-			let layer = new WebGLTileLayer({
+			let source = new ProjGeoTiff({projection}, geotiff);
+			let layer = new TileLayer({
 				id: options.url,
 				title,
 				source
 			});
 
-			let fromLonLat = getTransform(view.projection, this.map.getView().getProjection());
-			let extent = applyTransform(view.extent, fromLonLat);
-			this.map.getView().fit(extent, this.getFitOptions(10));
+			let fromLonLat = getTransform(projection, this.map.getView().getProjection());
+			this.map.getView().fit(applyTransform(view.extent, fromLonLat), this.getFitOptions(10));
 
+//			this.addTextControl(layer, min, max, nodata);
 			this.addLayerToMap(layer);
 
 			return layer;
@@ -277,21 +274,20 @@ export default {
 			}
 		},
 
-		addTextControl(layer) {
-			let textControl = new TextControl();
+		addTextControl(layer, min, max, nodata) {
+			this.textControl = new TextControl();
+			this.textControl.setValue('Estimated Pixel Value: -');
 			layer.set('events', {
 				singleclick: evt => {
-				const pixel = this.map.getEventPixel(evt.originalEvent);
-					this.map.forEachLayerAtPixel(pixel, (layer, data) => {
-						console.log(data);
+					const pixel = this.map.getEventPixel(evt.originalEvent);
+					this.map.forEachLayerAtPixel(pixel, (_, data) => {
 						let value = Utils.displayRGBA(data, min, max, nodata, 5);
-						textControl.setValue(`Estimated Pixel Value: ${value}`);
-						textControl.setTitle(`Coordinate: ${evt.coordinate.join(', ')}`);
+						this.textControl.setValue(`Estimated Pixel Value: ${value}`);
+						this.textControl.setTitle(`Coordinate: ${evt.coordinate.join(', ')}`);
 					});
 				}
 			});
-			// ToDo: This is shown twice if multiple GeoTiffs are shown
-			layer.set('controls', [textControl]);
+			layer.set('controls', [this.textControl]);
 		},
 
 		getOptionsFromUser(min, max, nodata) {

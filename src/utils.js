@@ -18,6 +18,9 @@ class Utils extends VueUtils {
 
 	static displayRGBA(value, min = 0, max = 255, nodata = null, precision = null) {
 		let rgba = Array.from(value);
+		if (rgba.length === 0) {
+			return '-';
+		}
 		let a = rgba.pop();
 		if (Number.isFinite(min) && Number.isFinite(max) && min !== 0 && max !== 255) {
 			rgba = rgba.map(x => {

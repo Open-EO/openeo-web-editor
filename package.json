@@ -53,7 +53,7 @@
     "core-js": "^3.7.0",
     "jsonlint-mod": "^1.7.6",
     "ol": "^6.10.0",
-    "ol-ext": "^3.2.6",
+    "ol-ext": "^3.2.20",
     "proj4": "^2.7.5",
     "splitpanes": "^2.3.6",
     "v-clipboard": "^2.2.3",
