@@ -435,7 +435,7 @@ export default {
 				let newData = Utils.pickFromObject(data, ['id', 'summary', 'description', 'categories', 'experimental', 'deprecated', 'exception', 'examples', 'links']);
 				if (typeof newData.description === 'string' || Utils.isObject(newData.schema)) {
 					newData.returns = {
-						description: newData.returns_description,
+						description: data.returns_description,
 						schema: data.returns_schema
 					};
 				}
