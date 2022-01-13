@@ -442,6 +442,23 @@ export default {
 				
 				let process = this.$refs.blocks.export(true);
 				let newProcess = Object.assign({}, process, newData);
+				const defaults = {
+					id: "",
+					summary: "",
+					description: "",
+					categories: [],
+					experimental: false,
+					deprecated: false,
+					examples: [],
+					links: [],
+					process_graph: {},
+				};
+				// Clean up some defaults / empty values
+				for(let key in defaults) {
+					if (Utils.equals(defaults[key], newProcess[key])) {
+						delete newProcess[key];
+					}
+				}
 				this.commit(newProcess);
 			});
 		},
