@@ -13,7 +13,7 @@
 					<button type="button" @click="$refs.blocks.deleteSelected()" :disabled="!hasSelection" title="Delete selected elements"><i class="fas fa-trash"></i></button>
 				</span>
 				<span class="sepr" v-if="editable">
-					<button type="button" v-if="!parent" @click="() => editProcess(value)" title="Edit Process Metadata"><i class="fas fa-sliders-h"></i></button>
+					<button type="button" v-if="!parent" @click="() => editProcess(value)" title="Edit Process Metadata"><i class="fas fa-edit"></i></button>
 					<button type="button" @click="addParameter" title="Add Parameter"><i class="fas fa-parking"></i></button>
 					<button type="button" v-if="supportsMath" :class="{highlightFormula: isMath}" @click="showExpressionModal" title="Insert/Edit formula"><i class="fas fa-square-root-alt"></i></button>
 				</span>
