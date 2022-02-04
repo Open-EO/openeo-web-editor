@@ -34,6 +34,7 @@ export default {
 				title: {
 					name: 'Web Service',
 					computedValue: row => Utils.getResourceTitle(row),
+					format: value => Utils.formatIdOrTitle(value),
 					edit: this.updateTitle
 				},
 				type: {
@@ -239,6 +240,9 @@ export default {
 			}
 		},
 		async deleteService(service) {
+			if (!confirm(`Do you really want to delete the service "${Utils.getResourceTitle(service)}"?`)) {
+				return;
+			}
 			try {
 				await this.delete({data: service});
 				this.emit('removeWebService', service.id);
