@@ -132,22 +132,21 @@ export default {
 				let result = await this.connection.computeResult(this.process, null, null, abortController);
 				this.emit('viewSyncResult', result);
 			} catch(error) {
-				let title = "Processing Error";
 				if (axios.isCancel(error)) {
 					// Do nothing, we expected the cancellation
 				}
-				else if (typeof error.message === 'string' && error.message.length > this.$config.snotifyDefaults.bodyMaxLength) {
+				else if (typeof error.message === 'string' && Utils.isObject(error.response) && [400,500].includes(error.response.status)) {
 					this.emit('viewLogs', [{
-						id: error.id || "unknown",
-						code: error.code || undefined,
+						id: error.id,
+						code: error.code,
 						level: 'error',
 						message: error.message,
 						links: error.links || []
 					}]);
-					Utils.error(this, "Synchronous processing failed. Please see the logs for details.", title);
+					Utils.error(this, "Synchronous processing failed. Please see the logs for details.", "Processing Error");
 				}
 				else {
-					Utils.exception(this, error, title);
+					Utils.exception(this, error, "Server Error");
 				}
 			} finally {
 				if (toast) {
