@@ -1,6 +1,6 @@
 {
   "name": "@openeo/web-editor",
-  "version": "0.10.2",
+  "version": "0.10.3",
   "apiVersions": [
     "1.0.0-rc.2",
     "1.0.0",

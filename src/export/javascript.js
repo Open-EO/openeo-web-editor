@@ -264,11 +264,16 @@ export default class JavaScript extends Exporter {
 			
 			// Check whether brackets are required
 			if (
-				!parentOperator // No brackets on top-level
-				|| (weakOps.includes(parentOperator) && weakOps.includes(operator)) // If operators are both weak, no brackets required
-				|| (strongOps.includes(parentOperator) && strongOps.includes(operator)) // If operators are both strong, no brackets required
-				|| operator === '^' // No brackets required for power, it's the strongest operation
-				|| (weakOps.includes(parentOperator) && strongOps.includes(operator)) // If the parent operation is a weak operation (+/-) and this is a strong operation, no brackets required
+				// No brackets on top-level
+				!parentOperator
+				// If operators are both weak, no brackets required
+				|| (weakOps.includes(parentOperator) && weakOps.includes(operator))
+				// If operators are both strong, no brackets required -> not correct, x/(a*b) needs it, see https://github.com/Open-EO/openeo-web-editor/issues/235
+//				|| (strongOps.includes(parentOperator) && strongOps.includes(operator))
+				// No brackets required for power, it's the strongest operation
+				|| operator === '^'
+				// If the parent operation is a weak operation (+/-) and this is a strong operation, no brackets required
+				|| (weakOps.includes(parentOperator) && strongOps.includes(operator))
 			) {
 				return formula;
 			}
