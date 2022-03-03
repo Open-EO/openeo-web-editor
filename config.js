@@ -34,6 +34,16 @@ export default {
 		'wmts'
 	],
 
+	// List of supported batch job sharing services
+	supportedBatchJobSharingServices: [
+		'TwitterShare'
+	],
+
+	// List of supported web service sharing services
+	supportedWebServiceSharingServices: [
+		'TwitterShare'
+	],
+
 	// Configure the (base)maps
 	basemaps: [
 		{

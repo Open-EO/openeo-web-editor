@@ -13,6 +13,7 @@
 			<button title="Start processing" @click="queueJob(p.row)" v-show="supports('startJob') && isJobInactive(p.row)"><i class="fas fa-play-circle"></i></button>
 			<button title="Cancel processing" @click="cancelJob(p.row)" v-show="supports('stopJob') && isJobActive(p.row)"><i class="fas fa-stop-circle"></i></button>
 			<button title="Download" @click="downloadResults(p.row)" v-show="supports('downloadResults') && hasResults(p.row)"><i class="fas fa-download"></i></button>
+			<button title="Export / Share" @click="shareResults(p.row)" v-show="canShare && supports('downloadResults') && hasResults(p.row)"><i class="fas fa-share"></i></button>
 			<button title="View results" @click="viewResults(p.row, true)" v-show="supports('downloadResults') && hasResults(p.row)"><i class="fas fa-eye"></i></button>
 			<button title="View logs" @click="showLogs(p.row)" v-show="supports('debugJob')"><i class="fas fa-bug"></i></button>
 		</template>
@@ -75,7 +76,10 @@ export default {
 		...Utils.mapState(['connection']),
 		...Utils.mapGetters(['supports', 'supportsBilling', 'supportsBillingPlans']),
 		...Utils.mapGetters('editor', ['hasProcess']),
-		...Utils.mapState('editor', ['process'])
+		...Utils.mapState('editor', ['process']),
+		canShare() {
+			return Array.isArray(this.$config.supportedBatchJobSharingServices) && this.$config.supportedBatchJobSharingServices.length > 0;
+		}
 	},
 	watch: {
 		data: {
@@ -344,7 +348,7 @@ export default {
 				Utils.exception(this, error, 'Cancel Job Error: ' + Utils.getResourceTitle(job));
 			}
 		},
-		async viewResults(job) {			
+		async viewResults(job) {
 			// Doesn't need to go through job store as it doesn't change job-related data
 			try {
 				let stac = await job.getResultsAsStac()
@@ -357,7 +361,7 @@ export default {
 				Utils.exception(this, error, 'View Result Error: ' + Utils.getResourceTitle(job));
 			}
 		},
-		async downloadResults(job) {	
+		async downloadResults(job) {
 			// Doesn't need to go through job store as it doesn't change job-related data
 			try {
 				let result = await job.getResultsAsStac();
@@ -368,6 +372,11 @@ export default {
 				this.emit('showModal', 'DownloadAssetsModal', {job, result});
 			} catch(error) {
 				Utils.exception(this, error, 'Download Result Error: ' + Utils.getResourceTitle(job));
+			}
+		},
+		shareResults(job) {
+			if (this.canShare) {
+				this.emit('showModal', 'ShareModal', {context: job});
 			}
 		},
 		hasResults(job) {
