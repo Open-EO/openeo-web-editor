@@ -31,7 +31,10 @@ export default {
 		Tab
 	},
 	props: {
-		id: String,
+		id: {
+			type: String,
+			default: () => `editor_${Date.now()}`
+		},
 		editable: {
 			type: Boolean,
 			default: true
