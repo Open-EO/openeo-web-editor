@@ -72,13 +72,11 @@ export default {
 				return;
 			}
 
-			switch(this.data.status.toLowerCase()) {
-				case 'running':
-				case 'queued':
-					this.startWatcher();
-				break;
-				default:
-					this.stopWatcher();
+			if (Utils.isActiveJobStatusCode(this.data.status)) {
+				this.startWatcher();
+			}
+			else {
+				this.stopWatcher();
 			}
 		},
 		startWatcher() {

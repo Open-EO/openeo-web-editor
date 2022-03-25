@@ -7,13 +7,13 @@
 		<template #actions="p">
 			<button title="Details" @click="showJobInfo(p.row)" v-show="supportsRead"><i class="fas fa-info"></i></button>
 			<button title="Estimate" @click="estimateJob(p.row)" v-show="supports('estimateJob')"><i class="fas fa-file-invoice-dollar"></i></button>
-			<button title="Edit metadata" @click="editMetadata(p.row)" v-show="supportsUpdate && isJobInactive(p.row)"><i class="fas fa-edit"></i></button>
-			<button title="Edit process" @click="showInEditor(p.row)" v-show="supportsRead && isJobInactive(p.row)"><i class="fas fa-project-diagram"></i></button>
+			<button title="Edit metadata" @click="editMetadata(p.row)" v-show="supportsUpdate" :disabled="!isJobInactive(p.row)"><i class="fas fa-edit"></i></button>
+			<button title="Edit process" @click="showInEditor(p.row)" v-show="supportsRead"><i class="fas fa-project-diagram"></i></button>
 			<button title="Delete" @click="deleteJob(p.row)" v-show="supportsDelete"><i class="fas fa-trash"></i></button>
 			<button title="Start processing" @click="queueJob(p.row)" v-show="supports('startJob') && isJobInactive(p.row)"><i class="fas fa-play-circle"></i></button>
 			<button title="Cancel processing" @click="cancelJob(p.row)" v-show="supports('stopJob') && isJobActive(p.row)"><i class="fas fa-stop-circle"></i></button>
-			<button title="Download" @click="downloadResults(p.row)" v-show="supports('downloadResults') && hasResults(p.row)"><i class="fas fa-download"></i></button>
-			<button title="View results" @click="viewResults(p.row, true)" v-show="supports('downloadResults') && hasResults(p.row)"><i class="fas fa-eye"></i></button>
+			<button title="Download" @click="downloadResults(p.row)" v-show="supports('downloadResults') && mayHaveResults(p.row)"><i class="fas fa-download"></i></button>
+			<button title="View results" @click="viewResults(p.row, true)" v-show="supports('downloadResults') && mayHaveResults(p.row)"><i class="fas fa-eye"></i></button>
 			<button title="View logs" @click="showLogs(p.row)" v-show="supports('debugJob')"><i class="fas fa-bug"></i></button>
 		</template>
 	</DataTable>
@@ -83,11 +83,8 @@ export default {
 				// Update Watchers
 				this.watchers = {};
 				for(let job of updatedJobs) {
-					switch(job.status.toLowerCase()) {
-						case 'running':
-						case 'queued':
-							this.watchers[job.id] = job;
-							break;
+					if (Utils.isActiveJobStatusCode(job.status)) {
+						this.watchers[job.id] = job;
 					}
 				}
 			},
@@ -326,12 +323,18 @@ export default {
 			}
 		},
 		async queueJob(job) {
-			try {
-				let updatedJob = await this.queue({data: job});
-				Utils.ok(this, 'Job "' + Utils.getResourceTitle(updatedJob) + '" successfully queued.');
-			} catch(error) {
-				Utils.exception(this, error, 'Queue Job Error: ' + Utils.getResourceTitle(job));
-			}
+			this.refreshElement(job, async (updatedJob) => {
+				if (updatedJob.status === 'finished' && !confirm(`The batch job "${Utils.getResourceTitle(updatedJob)}" has already finished with results. Queueing the job again may discard all previous results! Do you really want to queue it again?`)) {
+					return;
+				}
+				
+				try {
+					let updatedJob = await this.queue({data: job});
+					Utils.ok(this, 'Job "' + Utils.getResourceTitle(updatedJob) + '" successfully queued.');
+				} catch(error) {
+					Utils.exception(this, error, 'Queue Job Error: ' + Utils.getResourceTitle(job));
+				}
+			});
 		},
 		async cancelJob(job) {
 			if (!confirm(`Do you really want to cancel the execution of batch job "${file.path}"?`)) {
@@ -370,23 +373,14 @@ export default {
 				Utils.exception(this, error, 'Download Result Error: ' + Utils.getResourceTitle(job));
 			}
 		},
-		hasResults(job) {
-			return (typeof job.status !== 'string' || job.status.toLowerCase() == 'finished');
+		mayHaveResults(job) {
+			return (typeof job.status !== 'string' || job.status.toLowerCase() == 'finished'); // todo: We may also want to check for canceled or errored here.
 		},
 		isJobInactive(job) {
-			return (typeof job.status !== 'string' || !this.isActiveStatusCode(job.status));
+			return Utils.isActiveJobStatusCode(job.status) !== true;
 		},
 		isJobActive(job) {
-			return (typeof job.status !== 'string' || this.isActiveStatusCode(job.status));
-		},
-		isActiveStatusCode(status) {
-			switch (status.toLowerCase()) {
-				case 'running':
-				case 'queued':
-					return true;
-				default:
-					return false;
-			}
+			return Utils.isActiveJobStatusCode(job.status) !== false;
 		}
 	}
 }

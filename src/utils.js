@@ -16,6 +16,19 @@ class Utils extends VueUtils {
 		return null;
 	}
 
+	static isActiveJobStatusCode(status) {
+		if (typeof status !== 'string') {
+			return null;
+		}
+		switch (status.toLowerCase()) {
+			case 'running':
+			case 'queued':
+				return true;
+			default:
+				return false;
+		}
+	}
+
 	static exception(vm, error, alt) {
 		console.error(error);
 		var buttons = [];
