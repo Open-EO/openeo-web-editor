@@ -87,6 +87,8 @@ export default ({namespace, listFn, createFn, updateFn, deleteFn, readFn, readFn
 		mutations: {
 			// ToDo: Use Vue.observable on all JS client objects?
 			data(state, data) {
+				// This also overrides data that had been requested before and is more complete, see https://github.com/Open-EO/openeo-web-editor/issues/234
+				// So for all complete entities, only update fields that exist in the new object
 				state[namespace] = data.map(d => Vue.observable(d));
 			},
 			upsert(state, data) {

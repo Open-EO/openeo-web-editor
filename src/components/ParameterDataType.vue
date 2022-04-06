@@ -37,7 +37,7 @@
 		<!-- GeoJSON -->
 		<MapGeoJsonEditor v-else-if="type === 'geojson'" v-model="state" :key="type" :id="name + '_geojson'" :editable="editable" class="geoJsonEditor"></MapGeoJsonEditor>
 		<!-- Process Editor -->
-		<Editor v-else-if="type === 'process-graph'" class="callbackEditor" :id="name" :editable="editable" :parent="parent" :parentSchema="schema" :showDiscoveryToolbar="true" v-model="state" :defaultValue="editorDefaultValue" />
+		<Editor v-else-if="type === 'process-graph'" class="callbackEditor" :editable="editable" :parent="parent" :parentSchema="schema" :showDiscoveryToolbar="true" v-model="state" :defaultValue="editorDefaultValue" />
 		<!-- Output format options -->
 		<FileFormatOptionsEditor v-else-if="type === 'output-format-options' || type === 'input-format-options'" ref="fileFormatOptionsEditor" :type="type" v-model="state" :format="dependency"></FileFormatOptionsEditor>
 		<!-- Budget -->

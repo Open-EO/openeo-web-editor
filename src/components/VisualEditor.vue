@@ -13,7 +13,7 @@
 					<button type="button" @click="$refs.blocks.deleteSelected()" :disabled="!hasSelection" title="Delete selected elements"><i class="fas fa-trash"></i></button>
 				</span>
 				<span class="sepr" v-if="editable">
-					<button type="button" v-if="!parent" @click="() => editProcess(value)" title="Edit Process Metadata"><i class="fas fa-sliders-h"></i></button>
+					<button type="button" v-if="!parent" @click="() => editProcess(value)" title="Edit Process Metadata"><i class="fas fa-edit"></i></button>
 					<button type="button" @click="addParameter" title="Add Parameter"><i class="fas fa-parking"></i></button>
 					<button type="button" v-if="supportsMath" :class="{highlightFormula: isMath}" @click="showExpressionModal" title="Insert/Edit formula"><i class="fas fa-square-root-alt"></i></button>
 				</span>
@@ -435,13 +435,30 @@ export default {
 				let newData = Utils.pickFromObject(data, ['id', 'summary', 'description', 'categories', 'experimental', 'deprecated', 'exception', 'examples', 'links']);
 				if (typeof newData.description === 'string' || Utils.isObject(newData.schema)) {
 					newData.returns = {
-						description: newData.returns_description,
+						description: data.returns_description,
 						schema: data.returns_schema
 					};
 				}
 				
 				let process = this.$refs.blocks.export(true);
 				let newProcess = Object.assign({}, process, newData);
+				const defaults = {
+					id: "",
+					summary: "",
+					description: "",
+					categories: [],
+					experimental: false,
+					deprecated: false,
+					examples: [],
+					links: [],
+					process_graph: {},
+				};
+				// Clean up some defaults / empty values
+				for(let key in defaults) {
+					if (Utils.equals(defaults[key], newProcess[key])) {
+						delete newProcess[key];
+					}
+				}
 				this.commit(newProcess);
 			});
 		},

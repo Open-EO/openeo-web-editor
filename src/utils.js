@@ -53,6 +53,19 @@ class Utils extends VueUtils {
 		}
 	}
 
+	static isActiveJobStatusCode(status) {
+		if (typeof status !== 'string') {
+			return null;
+		}
+		switch (status.toLowerCase()) {
+			case 'running':
+			case 'queued':
+				return true;
+			default:
+				return false;
+		}
+	}
+
 	static exception(vm, error, alt) {
 		console.error(error);
 		var buttons = [];
@@ -269,6 +282,21 @@ class Utils extends VueUtils {
 		return Math.random().toString(36).substr(2, 9);
 	}
 
+	static formatIdOrTitle(value) {
+		if (typeof value !== 'string') {
+			return value;
+		}
+		else if (value.startsWith('#')) {
+			return `<em class="id">${value}</em>`;
+	}
+		else if (value === 'Unnamed') {
+			return `<em class="unnamed">${value}</em>`;
+		}
+		else {
+			return value;
+		}
+	}
+
 	static getResourceTitle(obj, showType = false) {
 		let title = '';
 		if (showType) {
@@ -289,7 +317,14 @@ class Utils extends VueUtils {
 			title += obj.title;
 		}
 		else if (obj.id) {
-			title += "#" + obj.id.toUpperCase().substr(-6);
+			let id = new String(obj.id);
+			if (id.length > 10) {
+				title += obj.id.substr(0, 5) + '…' + obj.id.substr(-5);
+			}
+			else {
+				title = obj.id
+			}
+			title = '#' + title;
 		}
 		else {
 			title += "Unnamed";

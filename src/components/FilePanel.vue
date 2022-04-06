@@ -133,6 +133,9 @@ export default {
 			file.downloadFile(file.path);
 		},
 		deleteFile(file) {
+			if (!confirm(`Do you really want to delete the file "${file.path}"?`)) {
+				return;
+			}
 			this.delete({data: file})
 				.catch(error => Utils.exception(this, error, 'Delete File Error: ' + file.path));
 		}

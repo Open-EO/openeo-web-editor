@@ -80,7 +80,7 @@ export default {
 			// If not replacing: Add all array_element calls for labels to the list so that we don't get duplicate array_element calls
 			for(let id in this.process.getNodes()) {
 				let node = this.process.getNode(id);
-				if (node.process_id === 'array_element' && node.getRawArgument("label")) {
+				if (node.process_id === 'array_element') {
 					let placeholder = this.process.getArrayElementPlaceholder(node);
 					this.arrayElements[placeholder] = {from_node: node.id};
 				}
@@ -239,7 +239,7 @@ export default {
 				let count = prefix ? prefix[0].length : 0;
 				if (count > 0) {
 					let ref = value.substring(count);
-					if (!(ref in this.arrayElements)) {
+					if (!(value in this.arrayElements)) {
 						// ToDo: Check whether label is really supported - see implementation for supportsArrayElement()
 						let args = {
 							data: {

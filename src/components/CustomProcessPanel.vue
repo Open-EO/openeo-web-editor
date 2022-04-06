@@ -121,6 +121,9 @@ export default {
 			}
 		},
 		deleteProcess(process) {
+			if (!confirm(`Do you really want to delete the process "${Utils.getResourceTitle(process)}"?`)) {
+				return;
+			}
 			this.delete({data: process})
 				.catch(error => Utils.exception(this, error, 'Delete Process Error' + (process.id ? `: ${process.id}` : '')));
 		}

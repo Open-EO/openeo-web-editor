@@ -31,7 +31,10 @@ export default {
 		Tab
 	},
 	props: {
-		id: String,
+		id: {
+			type: String,
+			default: () => `editor_${Date.now()}`
+		},
 		editable: {
 			type: Boolean,
 			default: true
@@ -127,26 +130,28 @@ export default {
 </script>
 
 <style lang="scss">
-.sourceHeader {
-	padding: 5px;
-	border-bottom: 1px solid #ddd;
-	display: flex;
-	justify-content: flex-end;
-	background-color: #fff;
+.editor {
+	.sourceHeader {
+		padding: 5px;
+		border-bottom: 1px solid #ddd;
+		display: flex;
+		justify-content: flex-end;
+		background-color: #fff;
 
-	strong {
-		display: block;
-		margin: auto 0;
-		flex-grow: 1;
+		strong {
+			display: block;
+			margin: auto 0;
+			flex-grow: 1;
+		}
 	}
-}
-.sourceToolbar {
-	text-align: right;
-}
-.textEditorTab.textEditor {
-	border: 0;
-}
-.editor .vue-component.tabs.boxed > .tabsBody > .tabContent {
-	overflow: hidden;
+	.sourceToolbar {
+		text-align: right;
+	}
+	.textEditorTab.textEditor {
+		border: 0;
+	}
+	&.vue-component.tabs.boxed > .tabsBody > .tabContent {
+		overflow: hidden;
+	}
 }
 </style>

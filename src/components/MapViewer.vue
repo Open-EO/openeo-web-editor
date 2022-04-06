@@ -336,10 +336,13 @@ export default {
 					break;
 				case 'wmts':
 					let layers = [];
-					if (link['wmts:layer']) {
+					if (typeof link['wmts:layer'] === 'string') {
 						layers.push(link['wmts:layer']);
 					}
-					layer = await this.updateWMTSLayer(service, layers);
+					else if (Array.isArray(typeof link['wmts:layer'])) {
+						layers = layers.concat(link['wmts:layer']);
+					}
+					layer = await this.updateWMTSLayer(service, layers, link['wmts:dimensions']);
 					break;
 				default:
 					Utils.error(this, 'Sorry, the service type is not supported by the map.');
@@ -392,7 +395,7 @@ export default {
 			return timeDimension.Value.sort();
 		},
 
-		async updateWMTSLayer(service, layerNames = [], time = undefined, prefix = "Service") {
+		async updateWMTSLayer(service, layerNames = [], dimensions = null, prefix = "Service") {
 			this.removeLayerFromMap(service.id);
 
 			if (!this.WMTSCapabilities[service.url]) {
@@ -431,11 +434,8 @@ export default {
 						maxDate = max;
 					}
 				}
-				if (time) {
-					if (!Utils.isObject(options.dimensions)) {
-						options.dimensions = {};
-					}
-					options.dimensions.time = time;
+				if (Utils.isObject(dimensions)) {
+					Object.assign(options.dimensions, dimensions);
 				}
 				source = new WMTS(options);
 				var mapLayer = new TileLayer({
