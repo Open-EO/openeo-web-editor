@@ -15,8 +15,8 @@ export default class R extends Exporter {
 		return this.copyProcessGraphInstanceProperties(pg);
 	}
 
-	isKeyword(keyword) {
-		return KEYWORDS.includes(keyword.toLowerCase());
+	getKeywords() {
+		return KEYWORDS;
 	}
 
 	makeNull() {

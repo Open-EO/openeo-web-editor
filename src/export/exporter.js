@@ -18,6 +18,7 @@ export default class Exporter extends ProcessGraph {
 		this.connection = connection;
 		this.indent = 0;
 		this.code = [];
+		this.fnCounter = 1;
 		this.allowEmpty();
 		this.fillUndefinedParameters();
 	}
@@ -39,10 +40,14 @@ export default class Exporter extends ProcessGraph {
 		return new ProcessImpl(process, this);
 	}
 
+	isKeyword(keyword) {
+		return this.getKeywords().includes(keyword.toLowerCase());
+	}
+
 	// Methods to be implemented by sub-class
 
-	isKeyword(/*keyword*/) {
-		return false;
+	getKeywords() {
+		return [];
 	}
 
 	comment(/*comment*/) {}
@@ -189,7 +194,7 @@ export default class Exporter extends ProcessGraph {
 		let callback = node.getArgument(key);
 		let parameters = callback.getCallbackParameters();
 		await callback.execute(parameters);
-		let fnName = this.var(node.id, 'fn');
+		let fnName = this.var(`${key}${this.fnCounter++}`, 'fn_');
 		let replacement = await this.generateCallback(callback, parameters, fnName);
 		return replacement ? replacement : fnName;
 	}
@@ -235,6 +240,7 @@ export default class Exporter extends ProcessGraph {
 	}
 
 	var(id, prefix = "datacube") {
+		id = String(id);
 		if (this.isKeyword(id)) {
 			return `${id}_`;
 		}

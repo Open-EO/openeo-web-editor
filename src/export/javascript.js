@@ -94,8 +94,8 @@ export default class JavaScript extends Exporter {
 		super.parse();
 	}
 
-	isKeyword(keyword) {
-		return KEYWORDS.includes(keyword.toLowerCase());
+	getKeywords() {
+		return KEYWORDS;
 	}
 
 	comment(comment) {

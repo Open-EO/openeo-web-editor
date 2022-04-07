@@ -18,8 +18,8 @@ export default class Python extends Exporter {
 		return this.copyProcessGraphInstanceProperties(pg);
 	}
 
-	isKeyword(keyword) {
-		return KEYWORDS.includes(keyword.toLowerCase());
+	getKeywords() {
+		return KEYWORDS;
 	}
 
 	comment(comment) {
