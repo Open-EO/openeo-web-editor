@@ -14,13 +14,11 @@ import LayerSwitcher from 'ol-ext/control/LayerSwitcher';
 
 import Progress from './progress';
 
+let idCounter = 1;
+
 export default {
 	mixins: [EventBusMixin],
 	props: {
-		id: {
-			type: String,
-			required: true
-		},
 		center: { // WGS84: lat, lon
 			type: Array,
 			default: () => [0,0]
@@ -45,6 +43,7 @@ export default {
 	data() {
 		return {
 			map: null,
+			id: `map_viewer_` + idCounter++,
 			baseLayers: [],
 			basemap: null,
 			progress: null

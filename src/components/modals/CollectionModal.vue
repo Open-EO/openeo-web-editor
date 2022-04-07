@@ -4,13 +4,13 @@
 			<Collection :data="collection">
 				<template #spatial-extents="p">
 					<span v-if="p.worldwide" class="worldwide"><i class="fas fa-globe"></i> Worldwide</span>
-					<MapExtentViewer v-else class="map" id="collectionMap" :show="showMap" :footprint="p.extents"></MapExtentViewer>
+					<MapExtentViewer v-else class="map" :show="showMap" :footprint="p.extents"></MapExtentViewer>
 				</template>
 			</Collection>
 			<section v-if="currentItems">
 				<Items :items="currentItems">
 					<template #item-location="p">
-						<MapExtentViewer :id="mapViewerId" :footprint="p.geometry"></MapExtentViewer>
+						<MapExtentViewer :footprint="p.geometry"></MapExtentViewer>
 					</template>
 				</Items>
 				<div class="pagination">
@@ -51,9 +51,6 @@ export default {
 	computed: {
 		...Utils.mapState(['connection']),
 		...Utils.mapGetters(['supports']),
-		mapViewerId() {
-			return 'map_' + this.collection.id;
-		},
 		bbox() {
 			try {
 				return this.collection.extent.spatial.bbox[0];

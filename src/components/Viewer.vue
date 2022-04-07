@@ -1,14 +1,9 @@
 <template>
-	<Tabs id="viewerContent" ref="tabs">
-		<template #default>
-			<Tab id="mapView" name="Map" icon="fa-map" :selected="true" @show="onShow" @hide="onHide">
-				<template #default="{ tab }">
-					<MapViewer id="mapCanvas" ref="mapViewer" :show="tab.active" :center="[50.1725, 9.15]" :zoom="6" :removableLayers="true" @drop="onDrop($event)" />
-				</template>
-			</Tab>
-		</template>
+	<Tabs id="viewerContent" ref="tabs" @empty="onTabsEmpty">
+		<template #empty>Nothing to show right now...</template>
 		<template #dynamic="{ tab }">
-			<LogViewer v-if="logViewerIcons.includes(tab.icon)" :data="tab.data" />
+			<MapViewer v-if="tab.icon === 'fa-map'" class="mapCanvas" ref="mapViewer" @show="onShow" @hide="onHide" :show="tab.active" :center="mapCenter" :zoom="6" :removableLayers="true" @drop="onDrop($event)" />
+			<LogViewer v-else-if="logViewerIcons.includes(tab.icon)" :data="tab.data" />
 			<ImageViewer v-else-if="tab.icon === 'fa-image'" :data="tab.data" />
 			<DataViewer v-else :data="tab.data" />
 		</template>
@@ -19,7 +14,6 @@
 import EventBusMixin from './EventBusMixin.vue';
 import Utils from '../utils.js';
 import Tabs from '@openeo/vue-components/components/Tabs.vue';
-import Tab from '@openeo/vue-components/components/Tab.vue';
 import DataViewer from './DataViewer.vue';
 import ImageViewer from './ImageViewer.vue';
 import LogViewer from './LogViewer.vue';
@@ -30,12 +24,16 @@ export default {
 	name: 'Viewer',
 	mixins: [EventBusMixin],
 	components: {
-		Tab,
 		Tabs,
 		DataViewer,
 		ImageViewer,
 		LogViewer,
 		MapViewer
+	},
+	created() {
+		if ("geolocation" in navigator) {
+			navigator.geolocation.getCurrentPosition(position => this.mapCenter = [position.coords.latitude, position.coords.longitude]);
+		}
 	},
 	mounted() {
 		this.listen('viewSyncResult', this.showSyncResults);
@@ -50,6 +48,7 @@ export default {
 		return {
 			tabCounter: {},
 			mapActive: false,
+			mapCenter: [50.1725, 9.15],
 			logViewerIcons: [
 				'fa-bug',
 				'fa-bomb',
@@ -71,18 +70,31 @@ export default {
 					return;
 				}
 			}
-			this.showMapViewer();
-			await this.$refs.mapViewer.addCollection(collection);
+			this.showMapViewer(collection, async tab => await tab.addCollection(collection));
+			;
 		},
 		showWebService(service) {
-			this.showMapViewer();
-			this.$refs.mapViewer.showWebService(service);
+			this.showMapViewer(service, tab => tab.showWebService(service));
 		},
 		removeWebService(id) {
-			this.$refs.mapViewer.removeLayerFromMap(id);
+			let tab = this.$refs.tabs.getTab(id);
+			if (tab) {
+				this.$refs.tabs.closeTab(tab);
+			}
 		},
-		showMapViewer() {
-			this.$refs.tabs.selectTab('mapView');
+		showMapViewer(resource, onShow) {
+			let first = false;
+			this.$refs.tabs.addTab(
+				"Map", "fa-map", resource, null, true, true,
+				tab => {
+					if (onShow && first) {
+						onShow();
+						first = true;
+					}
+					this.onShow(tab)
+				},
+				tab => this.onHide(tab)
+			);
 		},
 		showSyncResults(result) {
 			if (Array.isArray(result.logs) && result.logs.length > 0) {
@@ -137,6 +149,9 @@ export default {
 			else if (typeof tab.onHide === 'function') {
 				tab.onHide();
 			}
+		},
+		onTabsEmpty(hasNone) {
+			this.$emit('empty', hasNone);
 		},
 		uniqueTitle(title) {
 			if (!this.tabCounter[title]) {
@@ -195,8 +210,10 @@ export default {
 					break;
 				case 'image/tiff':
 					if (data.parameters.application === 'geotiff') {
+						let tabTitle = this.makeTitle(title, "GeoTiff");
 						this.showMapViewer();
-						await this.$refs.mapViewer.updateGeoTiffLayer(data, this.makeTitle(title, "GeoTiff"), context);
+						// TODO
+						await this.$refs.mapViewer.updateGeoTiffLayer(data, tabTitle, context);
 						shown = true;
 					}
 					break;
@@ -228,8 +245,13 @@ export default {
 }
 </script>
 
-<style>
-#mapCanvas {
+<style lang="scss">
+.mapCanvas {
 	height: 100%;
+}
+#viewerContent .tabsEmpty {
+	height: 100%;
+	padding: 1rem;
+	margin: auto;
 }
 </style>
