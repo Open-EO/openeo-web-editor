@@ -25,9 +25,6 @@ import XYZ from 'ol/source/XYZ';
 import WMTSCapabilities from 'ol/format/WMTSCapabilities';
 import WMTS, {optionsFromCapabilities} from 'ol/source/WMTS';
 
-import 'ol-ext/control/Swipe.css';
-import Swipe from 'ol-ext/control/Swipe';
-
 import 'ol-ext/control/Timeline.css';
 import Timeline from 'ol-ext/control/Timeline';
 
@@ -37,11 +34,6 @@ export default {
 	data() {
 		return {
 			WMTSCapabilities: {},
-			swipe: {
-				control: null,
-				left: null,
-				right: null
-			},
 			timeline: null,
 			textControl: null
 		}
@@ -53,8 +45,6 @@ export default {
 			let layers = this.map.getLayers();
 			layers.on('add', evt => {
 				let layer = evt.element;
-
-				this.toggleSwipeControl();
 
 				let events = layer.get('events');
 				for(let event in events) {
@@ -70,8 +60,6 @@ export default {
 			});
 			layers.on('remove', evt => {
 				let layer = evt.element;
-
-				this.toggleSwipeControl();
 
 				let events = layer.get('events');
 				for(let event in events) {
@@ -92,39 +80,10 @@ export default {
 			}
 		},
 
-		toggleSwipeControl() {
-			// Swipe Control errors for WebGLTileLayer: https://github.com/Viglino/ol-ext/issues/723
-			var shownLayers = this.getVisibleLayers();
-			if (shownLayers.length === 2) {
-				if (this.swipe.control === null) {
-					this.swipe.control = new Swipe();
-					this.map.addControl(this.swipe.control);
-				}
-				if (this.swipe.left !== shownLayers[0]) {
-					this.swipe.control.addLayer(shownLayers[0]);
-					this.swipe.left = shownLayers[0];
-				}
-				if (this.swipe.right !== shownLayers[1]) {
-					this.swipe.control.addLayer(shownLayers[1], true);
-					this.swipe.right = shownLayers[1];
-				}
-			}
-			else {
-				this.map.removeControl(this.swipe.control);
-				this.swipe.control = null;
-				this.swipe.left = null;
-				this.swipe.right = null;
-			}
-		},
-
 		addLayerToMap(layer) {
 			layer.set('userLayer', true);
 
 			this.map.addLayer(layer);
-
-			layer.on('change', () => this.toggleSwipeControl());
-			layer.on('change:visible', () => this.toggleSwipeControl());
-			layer.on('change:zIndex', () => this.toggleSwipeControl());
 		},
 
 		removeLayerFromMap(id) {

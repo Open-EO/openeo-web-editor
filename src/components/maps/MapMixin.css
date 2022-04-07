@@ -30,16 +30,12 @@
 	border-color: #fff;
 }
 
-/* Make sure the swipe control is behind the other controls */
 .ol-unselectable,
 .ol-control {
 	z-index: 2;
 }
 .ol-control.ol-timeline {
 	z-index: 1;
-}
-.ol-swipe {
-	z-index: 0 !important;
 }
 
 /* Loading progress control */
