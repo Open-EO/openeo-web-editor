@@ -337,7 +337,7 @@ export default {
 			});
 		},
 		async cancelJob(job) {
-			if (!confirm(`Do you really want to cancel the execution of batch job "${file.path}"?`)) {
+			if (!confirm(`Do you really want to cancel the execution of batch job "${Utils.getResourceTitle(job)}"?`)) {
 				return;
 			}
 			try {
