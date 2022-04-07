@@ -281,6 +281,12 @@ export default new Vuex.Store({
 		},
 
 		async logout(cx, disconnect = false) {
+			if (disconnect) {
+				// Remove listeners, we don't need them anymore if we connect anyway
+				cx.state.connection.off('authProviderChanged');
+				cx.state.connection.off('processesChanged');
+			}
+
 			if (cx.state.isAuthenticated) {
 				// Logout (mostly for OIDC)
 				var authProvider = cx.state.connection.getAuthProvider();

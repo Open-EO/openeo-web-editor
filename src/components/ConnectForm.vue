@@ -321,7 +321,7 @@ export default {
 				if (await this.connect(serverUrl)) {
 					this.addServer(serverUrl);
 					if (!programmatically) {
-						window.history.pushState({reset: true, serverUrl: this.serverUrl, autoConnect: true}, "", this.makeUrl());
+						window.history.pushState({reset: true, serverUrl: this.serverUrl, autoConnect: true, skipLogin}, "", this.makeUrl());
 					}
 					if (skipLogin) {
 						await this.initDiscovery();
