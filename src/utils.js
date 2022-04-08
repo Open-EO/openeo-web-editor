@@ -1,5 +1,5 @@
 import VueUtils from '@openeo/vue-components/utils';
-import { Job, Service, UserProcess } from '@openeo/js-client';
+import { Job, Service, UserFile, UserProcess } from '@openeo/js-client';
 import { mapState, mapActions, mapMutations, mapGetters } from 'vuex';
 import contentType from 'content-type';
 import Config from '../config';
@@ -298,28 +298,24 @@ class Utils extends VueUtils {
 	}
 
 	static getResourceTitle(obj, showType = false) {
-		let title = '';
-		if (showType) {
-			if (obj instanceof Job) {
-				title += 'Job: ';
-			}
-			else if (obj instanceof Service) {
-				title = 'Service: ';
-			}
-			else if (obj instanceof UserProcess) {
-				title += 'Process: ';
-			}
-		}
+		let title;
+		let isObj = Utils.isObject(obj);
 		if (obj instanceof UserProcess) {
-			title += obj.id;
+			title = obj.id;
 		}
-		else if (obj.title) {
-			title += obj.title;
+		else if (obj instanceof UserFile) {
+			title = obj.path;
 		}
-		else if (obj.id) {
+		else if (isObj && typeof obj.stac_version === 'string') {
+			title = obj.id;
+		}
+		else if (isObj && obj.title) {
+			title = obj.title;
+		}
+		else if (isObj && obj.id) {
 			let id = new String(obj.id);
 			if (id.length > 10) {
-				title += obj.id.substr(0, 5) + '…' + obj.id.substr(-5);
+				title = obj.id.substr(0, 5) + '…' + obj.id.substr(-5);
 			}
 			else {
 				title = obj.id
@@ -327,7 +323,32 @@ class Utils extends VueUtils {
 			title = '#' + title;
 		}
 		else {
-			title += "Unnamed";
+			title = "Unnamed";
+		}
+		if (showType) {
+			let type;
+			if (typeof showType === 'string') {
+				type = showType;
+			}
+			else if (obj instanceof Job) {
+				type = 'Job';
+			}
+			else if (obj instanceof Service) {
+				type = 'Service';
+			}
+			else if (obj instanceof UserProcess) {
+				type = 'Process';
+			}
+			else if (obj instanceof UserFile) {
+				type = 'File';
+			}
+			else if (isObj && typeof obj.stac_version === 'string') {
+				type = 'Collection';
+			}
+
+			if (type) {
+				title = `${title} (${type})`;
+			}
 		}
 		return title;
 	}

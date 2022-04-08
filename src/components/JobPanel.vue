@@ -237,12 +237,17 @@ export default {
 			];
 			this.emit('showDataForm', "Create new batch job", fields, data => this.createJob(this.process, data));
 		},
-		deleteJob(job) {
+		async deleteJob(job) {
 			if (!confirm(`Do you really want to delete the batch job "${Utils.getResourceTitle(job)}"?`)) {
 				return;
 			}
-			this.delete({data: job})
-				.catch(error => Utils.exception(this, error, 'Delete Job Error: ' + Utils.getResourceTitle(job)));
+
+			try {
+				await this.delete({data: job});
+				this.emit('removeBatchJob', job.id);
+			} catch(error) {
+				Utils.exception(this, error, 'Delete Job Error: ' + Utils.getResourceTitle(job));
+			}
 		},
 		executeWatchers() {
 			for(var i in this.watchers) {

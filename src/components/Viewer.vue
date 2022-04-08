@@ -1,13 +1,15 @@
 <template>
-	<Tabs id="viewerContent" ref="tabs" @empty="onTabsEmpty">
-		<template #empty>Nothing to show right now...</template>
-		<template #dynamic="{ tab }">
-			<MapViewer v-if="tab.icon === 'fa-map'" class="mapCanvas" ref="mapViewer" @show="onShow" @hide="onHide" :show="tab.active" :center="mapCenter" :zoom="6" :removableLayers="true" @drop="onDrop($event)" />
-			<LogViewer v-else-if="logViewerIcons.includes(tab.icon)" :data="tab.data" />
-			<ImageViewer v-else-if="tab.icon === 'fa-image'" :data="tab.data" />
-			<DataViewer v-else :data="tab.data" />
-		</template>
-	</Tabs>
+	<div class="viewerContainer" @drop="onDrop" @dragover="allowDrop">
+		<Tabs id="viewerTabs" ref="tabs" @empty="onTabsEmpty">
+			<template #empty>Nothing to show right now...</template>
+			<template #dynamic="{ tab }">
+				<MapViewer v-if="tab.icon === 'fa-map'" class="mapCanvas" @show="onShow" @hide="onHide" :show="tab.active" :center="userLocation" :zoom="4" :removableLayers="true" />
+				<LogViewer v-else-if="logViewerIcons.includes(tab.icon)" :data="tab.data" />
+				<ImageViewer v-else-if="tab.icon === 'fa-image'" :data="tab.data" />
+				<DataViewer v-else :data="tab.data" />
+			</template>
+		</Tabs>
+	</div>
 </template>
 
 <script>
@@ -30,25 +32,19 @@ export default {
 		LogViewer,
 		MapViewer
 	},
-	created() {
-		if ("geolocation" in navigator) {
-			navigator.geolocation.getCurrentPosition(position => this.mapCenter = [position.coords.latitude, position.coords.longitude]);
-		}
-	},
 	mounted() {
 		this.listen('viewSyncResult', this.showSyncResults);
 		this.listen('viewJobResults', this.showJobResults);
 		this.listen('viewWebService', this.showWebService);
-		this.listen('viewLogs', this.showLogs);
-		this.listen('removeWebService', this.removeWebService);
-
 		this.listen('showCollectionPreview', this.showCollectionPreview);
+		this.listen('viewLogs', this.showLogs);
+		this.listen('removeWebService', this.closeTabWithLogs);
+		this.listen('removeBatchJob', this.closeTabWithLogs);
 	},
 	data() {
 		return {
-			tabCounter: {},
-			mapActive: false,
-			mapCenter: [50.1725, 9.15],
+			tabTitleCounter: {},
+			tabIdCounter: 0,
 			logViewerIcons: [
 				'fa-bug',
 				'fa-bomb',
@@ -57,7 +53,10 @@ export default {
 		}
 	},
 	computed: {
-		...Utils.mapState(['connection'])
+		...Utils.mapState(['connection', 'userLocation']),
+		nextTabId() {
+			return `viewer~${this.tabIdCounter}`;
+		}
 	},
 	methods: {
 		...Utils.mapActions(['describeCollection']),
@@ -70,111 +69,77 @@ export default {
 					return;
 				}
 			}
-			this.showMapViewer(collection, async tab => await tab.addCollection(collection));
-			;
+			this.showMapViewer(collection, `collection~${collection.id}`, async tab => await this.callChildFunction(tab, 'addCollection', collection), null, true);
 		},
 		showWebService(service) {
-			this.showMapViewer(service, tab => tab.showWebService(service));
+			this.showMapViewer(service, service.id, async tab => await this.callChildFunction(tab, 'showWebService', service));
 		},
-		removeWebService(id) {
+		showSyncResults(result) {
+			let title = this.makeTitle("Result");
+			this.showViewer(result.data, result.type, title, null, true);
+			if (Array.isArray(result.logs) && result.logs.length > 0) {
+				this.showLogs(result.logs, title, false);
+			}
+		},
+		showJobResults(stac, job) {
+			// ToDo: Put all GeoTiffs on a single map
+			for(var key in stac.assets) {
+				var asset = stac.assets[key];
+				let jobTitle = Utils.getResourceTitle(job, true);
+				this.showViewer(asset, asset.type, this.makeTitle(jobTitle, asset.title), job.id, false, stac);
+			}
+		},
+		showLogs(resource, defaultTitle = 'Logs', selectTab = true, faIcon = 'fa-bug') {
+			let title = Array.isArray(resource) ? defaultTitle : Utils.getResourceTitle(resource, "Logs");
+			let id = Array.isArray(resource) ? null : `logs~${resource.id}`;
+			this.$refs.tabs.addTab(
+				title, faIcon, resource, id, selectTab, true,
+				tab => this.onShow(tab),
+				tab => this.onHide(tab)
+			);
+		},
+		closeTabWithLogs(id) {
+			this.closeTab(id);
+			this.closeTab(`logs~${id}`);
+		},
+		closeTab(id) {
 			let tab = this.$refs.tabs.getTab(id);
 			if (tab) {
 				this.$refs.tabs.closeTab(tab);
 			}
 		},
-		showMapViewer(resource, onShow) {
-			let first = false;
+		showMapViewer(resource, id = null, onInit = null, title = null, reUseExistingTab = false) {
+			console.log(arguments);
+			if (!title) {
+				title = Utils.getResourceTitle(resource, true);
+			}
+			if (!id) {
+				id = this.nextTabId;
+				this.tabIdCounter++;
+				if (reUseExistingTab) {
+					throw new Error("Tabs without id can't be re-used");
+				}
+			}
+			else if (reUseExistingTab) {
+				let tab = this.$refs.tabs.getTab(id);
+				if (tab) {
+					return this.$refs.tabs.selectTab(tab);
+				}
+			}
+			let firstCall = true;
 			this.$refs.tabs.addTab(
-				"Map", "fa-map", resource, null, true, true,
+				title, "fa-map", resource, id, true, true,
 				tab => {
-					if (onShow && first) {
-						onShow();
-						first = true;
+					if (onInit && firstCall) {
+						onInit(tab);
+						firstCall = false;
 					}
-					this.onShow(tab)
+					this.onShow(tab);
 				},
 				tab => this.onHide(tab)
 			);
 		},
-		showSyncResults(result) {
-			if (Array.isArray(result.logs) && result.logs.length > 0) {
-				this.showLogs(result.logs);
-			}
-			this.showViewer(result.data, result.type, null, true);
-		},
-		showJobResults(stac, job) {
-			for(var key in stac.assets) {
-				var asset = stac.assets[key];
-				let jobTitle = Utils.getResourceTitle(job, true);
-				this.showViewer(asset, asset.type, this.makeTitle(jobTitle, asset.title, true), false, stac);
-			}
-		},
-		showLogs(resource, defaultTitle = 'Logs', faIcon = 'fa-bug') {
-			let title = Array.isArray(resource) ? defaultTitle : Utils.getResourceTitle(resource, true);
-			this.$refs.tabs.addTab(
-				title, faIcon, resource, null, true, true,
-				tab => this.onShow(tab),
-				tab => this.onHide(tab)
-			);
-		},
-		async onDrop(event) {
-			var json = event.dataTransfer.getData("application/vnd.openeo-node");
-			if (!json) {
-				return;
-			}
-			let node = JSON.parse(json);
-			if (node.process_id === 'load_collection') {
-				event.preventDefault();
-				let id = Utils.isObject(node.arguments) ? node.arguments.id : null;
-				try {
-					let collection = await this.describeCollection(id);
-					this.showCollectionPreview(collection);
-				} catch (error) {
-					Utils.error(this, "Sorry, can't load collection details for '" + id + "'.");
-				}
-			}
-		},
-		onShow(tab) {
-			if (tab.$children.length && typeof tab.$children[0].onShow === 'function') {
-				tab.$children[0].onShow();
-			}
-			else if (typeof tab.onShow === 'function') {
-				tab.onShow();
-			}
-		},
-		onHide(tab) {
-			if (tab.$children.length && typeof tab.$children[0].onHide === 'function') {
-				tab.$children[0].onHide();
-			}
-			else if (typeof tab.onHide === 'function') {
-				tab.onHide();
-			}
-		},
-		onTabsEmpty(hasNone) {
-			this.$emit('empty', hasNone);
-		},
-		uniqueTitle(title) {
-			if (!this.tabCounter[title]) {
-				this.tabCounter[title] = 1;
-				return title;
-			}
-			else {
-				this.tabCounter[title]++;
-				return title + " (" + this.tabCounter[title] + ")";
-			}
-		},
-		makeTitle(title, type, inc = false) {
-			if (!title) {
-				return this.uniqueTitle(type);
-			}
-			else if (inc) {
-				return this.uniqueTitle(title);
-			}
-			else {
-				return title;
-			}
-		},
-		async showViewer(meta, type, title = null, sync = false, context = null) {
+		async showViewer(meta, type, title = null, id = null, synchronous = false, context = null) {
 			var data = {};
 			if (Utils.isObject(meta) && typeof meta.href === 'string') {
 				Object.assign(data, meta, { url: meta.href });
@@ -199,27 +164,37 @@ export default {
 				case 'image/jpg':
 				case 'image/jpeg':
 				case 'image/gif':
-					this.$refs.tabs.addTab(this.makeTitle(title, "Image"), "fa-image", data, null, true, true);
+					if (!title) {
+						title = this.makeTitle("Image");
+					}
+					this.$refs.tabs.addTab(title, "fa-image", data, id, true, true);
 					shown = true;
 					break;
 				case 'application/json':
 				case 'text/plain':
 				case 'text/csv':
-					this.$refs.tabs.addTab(this.makeTitle(title, "Data"), "fa-database", data, null, true, true);
+					if (!title) {
+						title = this.makeTitle("Data");
+					}
+					this.$refs.tabs.addTab(title, "fa-database", data, id, true, true);
 					shown = true;
 					break;
 				case 'image/tiff':
+					if (!title) {
+						title = this.makeTitle("GeoTiff");
+					}
+					if (id === null && Utils.isObject(id)) {
+						id = context.id;
+					}
 					if (data.parameters.application === 'geotiff') {
-						let tabTitle = this.makeTitle(title, "GeoTiff");
-						this.showMapViewer();
-						// TODO
-						await this.$refs.mapViewer.updateGeoTiffLayer(data, tabTitle, context);
+						let initTiff = async tab => await this.callChildFunction(tab, 'updateGeoTiffLayer', data, title, context);
+						this.showMapViewer(context, id, initTiff, title, false);
 						shown = true;
 					}
 					break;
 			}
 
-			if (sync || !shown) {
+			if (synchronous || !shown) {
 				if (data.blob instanceof Blob) {
 					OpenEO.Environment.saveToFile(data.blob, Utils.makeFileName("result", data.type));
 					return;
@@ -240,16 +215,82 @@ export default {
 
 				Utils.exception(this, 'Sorry, this type of data is not supported by the editor and can\'t be downloaded.');
 			}
+		},
+		async callChildFunction(tab, fn, ...args) {
+			let result;
+			if (tab.$children.length === 1 && typeof tab.$children[0][fn] === 'function') {
+				result = tab.$children[0][fn](...args);
+			}
+			else if (typeof tab[fn] === 'function') {
+				result = tab[fn](...args);
+			}
+			else {
+				return Promise.reject();
+			}
+			if (result instanceof Promise) {
+				result = await result;
+			}
+			return result;
+		},
+		async onDrop(event) {
+			var json = event.dataTransfer.getData("application/vnd.openeo-node");
+			if (!json) {
+				return;
+			}
+			let node = JSON.parse(json);
+			if (node.process_id === 'load_collection') {
+				event.preventDefault();
+				let id = Utils.isObject(node.arguments) ? node.arguments.id : null;
+				try {
+					let collection = await this.describeCollection(id);
+					this.showCollectionPreview(collection);
+				} catch (error) {
+					Utils.error(this, "Sorry, can't load collection details for '" + id + "'.");
+				}
+			}
+		},
+		allowDrop(event) {
+			event.preventDefault();
+		},
+		onShow(tab) {
+			this.callChildFunction(tab, 'onShow');
+		},
+		onHide(tab) {
+			this.callChildFunction(tab, 'onHide');
+		},
+		onTabsEmpty(hasNone) {
+			this.$emit('empty', hasNone);
+		},
+		uniqueTitle(title) {
+			if (!this.tabTitleCounter[title]) {
+				this.tabTitleCounter[title] = 1;
+				return title;
+			}
+			else {
+				this.tabTitleCounter[title]++;
+				return title + " (" + this.tabTitleCounter[title] + ")";
+			}
+		},
+		makeTitle(title, type, unique = true) {
+			if (!title) {
+				return this.uniqueTitle(type);
+			}
+			else if (unique) {
+				return this.uniqueTitle(title);
+			}
+			else {
+				return title;
+			}
 		}
 	}
 }
 </script>
 
 <style lang="scss">
-.mapCanvas {
+.mapCanvas, .viewerContainer {
 	height: 100%;
 }
-#viewerContent .tabsEmpty {
+.viewerContainer .tabsEmpty {
 	height: 100%;
 	padding: 1rem;
 	margin: auto;
