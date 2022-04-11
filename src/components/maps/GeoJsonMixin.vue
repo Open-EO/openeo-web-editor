@@ -10,23 +10,31 @@ import VectorSource from 'ol/source/Vector';
 export default {
 	methods: {
 		addGeoJson(geojson, title = "GeoJSON") {
-			var sourceOpts = {};
-			if (Utils.detectGeoJson(geojson)) {
-				sourceOpts.features = (new GeoJSON()).readFeatures(
-					geojson,
-					{
-						featureProjection: this.map.getView().getProjection()
-					}
-				);
+			let source;
+			if (geojson instanceof VectorSource) {
+				source = geojson;
 			}
-			var source = new VectorSource(sourceOpts);
-			var layer = new VectorLayer({title, source});
+			else {
+				source = this.createGeoJsonSource(geojson, this.map.getView().getProjection());
+			}
+
+			let layer = new VectorLayer({title, source});
 			this.map.addLayer(layer);
-			var extent = source.getExtent();
+			let extent = source.getExtent();
 			if (!extentIsEmpty(extent)) {
 				this.map.getView().fit(extent, this.getFitOptions());
 			}
 			return layer;
+		},
+		createGeoJsonSource(geojson, projection = undefined) {
+			let features = [];
+			if (Utils.detectGeoJson(geojson)) {
+				features = (new GeoJSON()).readFeatures(geojson, { featureProjection: projection })
+			}
+			return new VectorSource({
+				features,
+				wrapX: false
+			});
 		}
 	}
 };

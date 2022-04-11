@@ -3,7 +3,7 @@
 		<Tabs id="viewerTabs" ref="tabs" @empty="onTabsEmpty">
 			<template #empty>Nothing to show right now...</template>
 			<template #dynamic="{ tab }">
-				<MapViewer v-if="tab.icon === 'fa-map'" class="mapCanvas" @show="onShow" @hide="onHide" :show="tab.active" :center="userLocation" :zoom="4" :removableLayers="true" />
+				<MapViewer v-if="tab.icon === 'fa-map'" class="mapCanvas" @show="onShow" @hide="onHide" :data="tab.data" :removableLayers="true" />
 				<LogViewer v-else-if="logViewerIcons.includes(tab.icon)" :data="tab.data" />
 				<ImageViewer v-else-if="tab.icon === 'fa-image'" :data="tab.data" />
 				<DataViewer v-else :data="tab.data" />
@@ -21,7 +21,8 @@ import ImageViewer from './ImageViewer.vue';
 import LogViewer from './LogViewer.vue';
 import MapViewer from './MapViewer.vue'
 import contentType from 'content-type';
-import { OpenEO } from '@openeo/js-client';
+import { OpenEO, Service } from '@openeo/js-client';
+
 export default {
 	name: 'Viewer',
 	mixins: [EventBusMixin],
@@ -69,10 +70,34 @@ export default {
 					return;
 				}
 			}
-			this.showMapViewer(collection, `collection~${collection.id}`, async tab => await this.callChildFunction(tab, 'addCollection', collection), null, true);
+
+			let link = Utils.getPreviewLinkFromSTAC(collection);
+			if (!link) {
+				Utils.error(this, 'No visualizations found for collection');
+			}
+
+			let service = new Service(null, `collection-preview~${collection.id}`);
+			service.url = link.href;
+			service.type = link.rel.toLowerCase();
+			service.attributes = {
+				bbox: Utils.extentToBBox(collection.extent.spatial.bbox[0])
+			};
+			if (link.rel.toLowerCase() === 'wmts') {
+				if (typeof link['wmts:layer'] === 'string') {
+					service.attributes.layers = [
+						link['wmts:layer']
+					];
+				}
+				else if (Array.isArray(link['wmts:layer'])) {
+					service.attributes.layers = link['wmts:layer'];
+				}
+				service.attributes.dimensions = link['wmts:dimensions'];
+			}
+
+			this.showMapViewer(service, service.id, Utils.getResourceTitle(collection, true), true);
 		},
 		showWebService(service) {
-			this.showMapViewer(service, service.id, async tab => await this.callChildFunction(tab, 'showWebService', service));
+			this.showMapViewer(service, service.id);
 		},
 		showSyncResults(result) {
 			let title = this.makeTitle("Result");
@@ -108,8 +133,7 @@ export default {
 				this.$refs.tabs.closeTab(tab);
 			}
 		},
-		showMapViewer(resource, id = null, onInit = null, title = null, reUseExistingTab = false) {
-			console.log(arguments);
+		showMapViewer(resource, id = null, title = null, reUseExistingTab = false) {
 			if (!title) {
 				title = Utils.getResourceTitle(resource, true);
 			}
@@ -126,16 +150,9 @@ export default {
 					return this.$refs.tabs.selectTab(tab);
 				}
 			}
-			let firstCall = true;
 			this.$refs.tabs.addTab(
 				title, "fa-map", resource, id, true, true,
-				tab => {
-					if (onInit && firstCall) {
-						onInit(tab);
-						firstCall = false;
-					}
-					this.onShow(tab);
-				},
+				tab => this.onShow(tab),
 				tab => this.onHide(tab)
 			);
 		},
@@ -180,13 +197,13 @@ export default {
 					shown = true;
 					break;
 				case 'image/tiff':
-					if (!title) {
-						title = this.makeTitle("GeoTiff");
-					}
-					if (id === null && Utils.isObject(id)) {
-						id = context.id;
-					}
 					if (data.parameters.application === 'geotiff') {
+						if (!title) {
+							title = this.makeTitle("GeoTiff");
+						}
+						if (id === null && Utils.isObject(id)) {
+							id = context.id;
+						}
 						let initTiff = async tab => await this.callChildFunction(tab, 'updateGeoTiffLayer', data, title, context);
 						this.showMapViewer(context, id, initTiff, title, false);
 						shown = true;

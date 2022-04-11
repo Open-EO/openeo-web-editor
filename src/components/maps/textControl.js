@@ -20,4 +20,4 @@ export default class TextControl extends Control {
 	setTitle(value) {
 		this.element.title = value;
 	}
-  }
+}

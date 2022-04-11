@@ -12,13 +12,13 @@
 			<Collection v-if="resultType === 'Collection'" :data="result">
 				<template #title><span class="hidden" /></template>
 				<template #spatial-extents="p">
-					<MapExtentViewer class="jobMap" :show="showMap" :footprint="p.extents"></MapExtentViewer>
+					<MapExtentViewer class="jobMap" :footprint="p.extents"></MapExtentViewer>
 				</template>
 			</Collection>
 			<Item v-else :data="result">
 				<template #title><span class="hidden" /></template>
 				<template #location="p">
-					<MapExtentViewer class="jobMap" :show="showMap" :footprint="p.geometry || p.bbox"></MapExtentViewer>
+					<MapExtentViewer class="jobMap" :footprint="p.geometry || p.bbox"></MapExtentViewer>
 				</template>
 			</Item>
 		</section>
@@ -66,16 +66,6 @@ export default {
 			type: Object,
 			default: null
 		}
-	},
-	data() {
-		return {
-			showMap: false
-		};
-	},
-	mounted() {
-		this.$nextTick(() => {
-			this.showMap = true;
-		});
 	}
 }
 </script>

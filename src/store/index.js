@@ -43,6 +43,7 @@ const getDefaultState = () => {
 		collections: [],
 		processNamespaces: Config.processNamespaces || [],
 		userLocation: [49.8, 9.9], // Default to the center of the EU in Wuerzburg: https://en.wikipedia.org/wiki/Geographical_midpoint_of_Europe#Geographic_centre_of_the_European_Union
+		locationZoom: 4 // Should show most of Europe
 	};
 };
 
@@ -322,6 +323,7 @@ export default new Vuex.Store({
 	mutations: {
 		userLocation(state, location) {
 			state.userLocation = location;
+			state.locationZoom = 6;
 		},
 		discoveryCompleted(state, completed = true) {
 			state.discoveryCompleted = completed;

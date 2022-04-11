@@ -4,7 +4,7 @@
 			<Collection :data="collection">
 				<template #spatial-extents="p">
 					<span v-if="p.worldwide" class="worldwide"><i class="fas fa-globe"></i> Worldwide</span>
-					<MapExtentViewer v-else class="map" :show="showMap" :footprint="p.extents"></MapExtentViewer>
+					<MapExtentViewer v-else class="map" :footprint="p.extents"></MapExtentViewer>
 				</template>
 			</Collection>
 			<section v-if="currentItems">
@@ -37,7 +37,6 @@ export default {
 	},
 	data() {
 		return {
-			showMap: false,
 			items: [],
 			itemsPage: 0,
 			itemsIterator: null
@@ -72,10 +71,6 @@ export default {
 		}
 	},
 	async mounted() {
-		this.$nextTick(() => {
-			this.showMap = true;
-		});
-
 		if (this.supports('listCollectionItems')) {
 			await this.nextItems();
 			// Always request a page in advance so that we know whether a next page is available.

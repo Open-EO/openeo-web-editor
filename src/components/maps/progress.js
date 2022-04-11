@@ -51,10 +51,9 @@ export default class Progress {
 	}
 	
 	getControl() {
-		var c = new Control({
+		return new Control({
 			element: this.el
 		});
-		return c;
 	}
 
 }

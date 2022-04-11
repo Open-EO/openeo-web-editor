@@ -6,8 +6,10 @@
 import MapMixin from '../maps/MapMixin.vue';
 import Utils from '../../utils.js';
 import ExtentInteraction from 'ol/interaction/Extent';
+import { transformExtent } from 'ol/proj';
 import { containsXY } from 'ol/extent';
 import { createDefaultStyle } from 'ol/style/Style';
+import TextControl from '../maps/textControl';
 
 export default {
 	name: 'MapAreaSelect',
@@ -22,33 +24,44 @@ export default {
 		}
 	},
 	data() {
-		let extent;
-		if (Utils.isObject(this.value)) {
+		let extent = null;
+		if (Utils.isObject(this.value) && "west" in this.value && "south" in this.value && "east" in this.value && "north" in this.value) {
 			extent = [this.value.west, this.value.south, this.value.east, this.value.north];
 		}
-		else {
+		else if (Array.isArray(this.value) && value.length >= 4) {
 			extent = this.value;
 		}
+
 		return {
 			interaction: null,
+			textControl: null,
 			extent
 		};
 	},
+	computed: {
+		returnAsObject() {
+			return !Array.isArray(this.value); // Only return as array if value given in prop is also an array
+		},
+		projectedExtent() {
+			if (this.extent) {
+				return transformExtent(this.extent, 'EPSG:4326', this.map.getView().getProjection());
+			}
+			return null;
+		},
+		bbox() {
+			return Utils.extentToBBox(this.extent);
+		}
+	},
 	methods: {
 		update(event) {
-			let extent = event.extent;
-			this.extent = extent;
-
-			if (extent && !Array.isArray(this.value)) {
-				extent = {
-					west: extent[0],
-					south: extent[1],
-					east: extent[2],
-					north: extent[3]
-				};
+			if (event.extent) {
+				this.extent = transformExtent(event.extent, this.map.getView().getProjection(), 'EPSG:4326');
 			}
-
-			this.$emit('input', extent);
+			else {
+				this.extent = null;
+			}
+			this.updateTextControl();
+			this.$emit('input', this.returnAsObject ? this.bbox : this.extent);
 		},
 		ensureValidExtent(extent) {
 			if (!extent) {
@@ -61,8 +74,18 @@ export default {
 				Math.min(extent[3], 90)
 			];
 		},
+		updateTextControl() {
+			this.textControl.setValue(this.extent ? 'Click inside the bounding box to remove it.' : 'Click on the map to add a bounding box.');
+		},
 		renderMap() {
-			this.createMap(false, 'EPSG:4326');
+			let isWebMercatorCompatible = Utils.isBboxInWebMercator(this.bbox) !== false;
+			
+			this.createMap(isWebMercatorCompatible ? 'EPSG:3857' : 'EPSG:4326');
+			this.addBasemaps();
+
+			this.textControl = new TextControl();
+			this.updateTextControl();
+			this.map.addControl(this.textControl);
 
 			let condition = (event) => {
 				if (!this.editable) {
@@ -86,7 +109,7 @@ export default {
 						this.interaction.setExtent(mouseExtent);
 						return false;
 					}
-					else if (containsXY(this.extent, ...event.coordinate)) {
+					else if (containsXY(this.projectedExtent, ...event.coordinate)) {
 						this.interaction.setExtent(null);
 						this.interaction.vertexOverlay_.getSource().clear();
 						this.interaction.vertexFeature_ = null;
@@ -99,14 +122,14 @@ export default {
 			};
 
 			this.interaction = new ExtentInteraction({
-				extent: this.extent,
+				extent: this.projectedExtent,
 				condition,
 				boxStyle: createDefaultStyle(),
 				pixelTolerance: 15
 			});
 
-			let oldImplementation = this.interaction.setExtent.bind(this.interaction);
-			this.interaction.setExtent = extent => oldImplementation(this.ensureValidExtent(extent));
+			// let oldImplementation = this.interaction.setExtent.bind(this.interaction);
+			// this.interaction.setExtent = extent => oldImplementation(this.ensureValidExtent(extent));
 			if (this.editable) {
 				this.interaction.on('extentchanged', this.update);
 			}
@@ -114,9 +137,9 @@ export default {
 			this.map.addInteraction(this.interaction);
 
 			// If not ediable, make a bigger extent visible so that user can get a better overview
-			if (this.extent) {
+			if (this.projectedExtent) {
 				var fitOptions = this.getFitOptions(this.editable ? 10 : 33);
-				this.map.getView().fit(this.extent, fitOptions);
+				this.map.getView().fit(this.projectedExtent, fitOptions);
 			}
 		}
 	}

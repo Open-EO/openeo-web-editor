@@ -202,7 +202,20 @@ class Utils extends VueUtils {
 		return (VueUtils.hasText(url) && url.match(/^https?:\/\//i) !== null);
 	}
 
+	static isBboxInWebMercator(bboxes) {
+		if (!bboxes) {
+			return null;
+		}
+		if (!Array.isArray(bboxes)) {
+			bboxes = [bboxes];
+		}
+		let maxBounds = {south: -85.06, north: 85.06}; // Max. south/north bounds for Web Mercator
+		return !bboxes.find(bbox => bbox.south < maxBounds.south || bbox.north > maxBounds.north);
+	}
 	static extentToBBox(extent) {
+		if (!Array.isArray(extent)) {
+			return null;
+		}
 		var hasZ = extent.length >= 6;
         let obj = {
 			west: extent[0],

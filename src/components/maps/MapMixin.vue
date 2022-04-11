@@ -1,5 +1,6 @@
 <script>
 import EventBusMixin from '../EventBusMixin.vue';
+import Utils from '../../utils.js';
 
 import 'ol/ol.css';
 import { defaults as defaultControls, FullScreen, ScaleLine } from 'ol/control';
@@ -19,14 +20,6 @@ let idCounter = 1;
 export default {
 	mixins: [EventBusMixin],
 	props: {
-		center: { // WGS84: lat, lon
-			type: Array,
-			default: () => [0,0]
-		},
-		zoom: {
-			type: Number,
-			default: 1
-		},
 		show: {
 			type: Boolean,
 			default: true
@@ -43,27 +36,39 @@ export default {
 	data() {
 		return {
 			map: null,
-			id: `map_viewer_` + idCounter++,
-			baseLayers: [],
-			basemap: null,
+			id: `map_` + idCounter++,
 			progress: null
 		};
 	},
 	watch: {
-		show() {
-			this.showMap();
+		async show() {
+			await this.showMap();
 		}
 	},
-	mounted() {
-		this.showMap();
+	computed: {
+		...Utils.mapState(['userLocation', 'locationZoom']),
+	},
+	async mounted() {
+		await this.showMap();
 	},
 	methods: {
-		showMap() {
+		async showMap() {
 			if (this.show) {
-				this.$nextTick(() => this.renderMap());
+				await this.$nextTick();
+				await this.renderMap();
 			}
 		},
-		createMap(showLayerSwitcher = true, projection = 'EPSG:3857') {
+		createMap(view = 'EPSG:3857') {
+			if (!(view instanceof View)) {
+				let projection = view;
+				view = new View({
+					center: fromLonLat([this.userLocation[1], this.userLocation[0]], projection),
+					zoom: this.locationZoom,
+					showFullExtent: true,
+					projection
+				})
+			}
+
 			if (this.map !== null) {
 				this.map.updateSize();
 				this.map.render();
@@ -75,40 +80,9 @@ export default {
 				new ScaleLine(),
 				this.progress.getControl()
 			];
-			if (showLayerSwitcher) {
-				customControls.push(new LayerSwitcher({trash: this.removableLayers}));
-			}
-			let basemapOptions = {
-				opaque: true,
-				attributionsCollapsible: false,
-				wrapX: false
-			};
-			this.baseLayers = [];
-			if (Array.isArray(this.$config.basemaps)) {
-				let hasDefault = false;
-				for(let opts of this.$config.basemaps) {
-					let basemap = new XYZ(Object.assign({}, basemapOptions, opts));
-					let baselayer = new TileLayer({
-						source: this.trackTileProgress(basemap),
-						baseLayer: true,
-						title: opts.title,
-						noSwitcherDelete: true,
-						visible: !hasDefault
-					});
-					this.baseLayers.push(baselayer);
-					hasDefault = true;
-				}
-			}
-			let center = [this.center[1], this.center[0]];
 			var mapOptions = {
 				target: this.id,
-				layers: this.baseLayers,
-				view: new View({
-					center: fromLonLat(center, projection),
-					zoom: this.zoom,
-					showFullExtent: true,
-					projection
-				})
+				view
 			};
 			if (!this.editable) {
 				mapOptions.interactions = [];
@@ -120,6 +94,68 @@ export default {
 			this.map = new Map(mapOptions);
 
 			this.listen('windowResized', this.updateMapSize);
+			
+			let layers = this.map.getLayers();
+			layers.on('add', evt => {
+				let layer = evt.element;
+
+				let events = layer.get('events');
+				for(let event in events) {
+					this.map.on(event, events[event]);
+				}
+
+				let controls = layer.get('controls');
+				if (Array.isArray(controls)) {
+					for(let control of controls) {
+						this.map.addControl(control);
+					}
+				}
+			});
+			layers.on('remove', evt => {
+				let layer = evt.element;
+
+				let events = layer.get('events');
+				for(let event in events) {
+					this.map.un(event, events[event]);
+				}
+
+				let controls = layer.get('controls');
+				if (Array.isArray(controls)) {
+					for(let control of controls) {
+						this.map.removeControl(control);
+					}
+				}
+			});
+		},
+
+		addLayerSwitcher() {
+			this.map.addControl(new LayerSwitcher({trash: this.removableLayers}));
+		},
+
+		addBasemaps() {
+			let basemapOptions = {
+				opaque: true,
+				attributionsCollapsible: false,
+				wrapX: false
+			};
+			let baselayers = [];
+			if (Array.isArray(this.$config.basemaps)) {
+				let hasDefault = false;
+				for(let opts of this.$config.basemaps) {
+					let basemap = new XYZ(Object.assign({}, basemapOptions, opts));
+					let baselayer = new TileLayer({
+						source: this.trackTileProgress(basemap),
+						baseLayer: true,
+						title: opts.title,
+						noSwitcherDelete: true,
+						visible: !hasDefault
+					});
+					baselayers.push(baselayer);
+					this.map.addLayer(baselayer);
+					hasDefault = true;
+				}
+			}
+			return baselayers;
 		},
 
 		onShow() {
@@ -132,6 +168,7 @@ export default {
 		// To be overridden by implementing components.
 		renderMap() {
 			this.createMap();
+			this.addBasemaps();
 		},
 
 		async updateMapSize() {
