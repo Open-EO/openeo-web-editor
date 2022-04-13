@@ -25,7 +25,7 @@ export default {
 		}
 	},
 	methods: {
-		renderMap() {
+		async renderMap() {
 			let isBBox = Array.isArray(this.footprint) && this.footprint.length > 0;
 			let isGeoJson = Utils.detectGeoJson(this.footprint);
 
@@ -48,7 +48,7 @@ export default {
 				}
 			}
 
-			this.createMap(isWebMercatorCompatible ? "EPSG:3857" : "EPSG:4326");
+			await this.createMap(isWebMercatorCompatible ? "EPSG:3857" : "EPSG:4326");
 			this.addBasemaps();
 			if (isBBox) {
 				value.forEach(bbox => this.addRectangle(bbox.west, bbox.east, bbox.north, bbox.south));

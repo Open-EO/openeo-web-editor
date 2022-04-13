@@ -11,8 +11,6 @@ import WMTS, {optionsFromCapabilities} from 'ol/source/WMTS';
 import 'ol-ext/control/Timeline.css';
 import Timeline from 'ol-ext/control/Timeline';
 
-import { Service } from '@openeo/js-client';
-
 export default {
 	data() {
 		return {
@@ -20,20 +18,9 @@ export default {
 			timeline: null,
 		}
 	},
-	computed: {
-		isWebService() {
-			return this.data instanceof Service;
-		},
-		webServiceType() {
-			if (this.isWebService) {
-				return this.data.type.toLowerCase();
-			}
-			return null;
-		}
-	},
 	methods: {
 		async addWebService(service) {
-			switch(this.webServiceType) {
+			switch(service.type.toLowerCase()) {
 				case 'xyz':
 					return this.updateXYZLayer(service);
 				case 'wmts':
@@ -74,11 +61,7 @@ export default {
 		},
 
 		async updateWMTSLayer(service, prefix = "Service") {
-			this.removeLayerFromMap(service.id);
-
 			let attrs = service.attributes || {};
-
-			this.progress.addLoading();
 
 			let capabilities = await this.initWMTSLayer(service);
 			if (!capabilities) {
@@ -195,14 +178,10 @@ export default {
 				});
 			}
 
-			this.progress.addLoaded();
-
 			return group;
 		},
 
 		updateXYZLayer(service, prefix = "Service") {
-			this.removeLayerFromMap(service.id);
-
 			// Replace/add a query parameter with a unique ID so that OpenLayers doesn't load tiles from cache
 			let url = Utils.replaceParam(service.url, '__editorSessionId', new Date().getTime()).replace(/%7B/g, '{').replace(/%7D/g, '}');
 			let title = Utils.getResourceTitle(service, prefix);

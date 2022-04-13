@@ -6,8 +6,8 @@
 </template>
 
 <script>
-import Utils from '../utils.js';
-import EventBusMixin from './EventBusMixin.vue';
+import Utils from '../../utils.js';
+import EventBusMixin from '../EventBusMixin.vue';
 import Logs from '@openeo/vue-components/components/Logs.vue';
 
 export default {

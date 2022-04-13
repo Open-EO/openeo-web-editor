@@ -17,6 +17,10 @@ class Utils extends VueUtils {
 	}
 
 	static displayRGBA(value, min = 0, max = 255, nodata = null, precision = null) {
+		let NA = 'no data';
+		if (typeof value === 'undefined' || value === null) {
+			return NA;
+		}
 		let rgba = Array.from(value);
 		if (rgba.length === 0) {
 			return '-';
@@ -33,10 +37,19 @@ class Utils extends VueUtils {
 				return x;
 			});
 		}
-		let [r,g,b] = rgba;
+		let r, g, b;
+		if (rgba.length >= 3) {
+			[r,g,b] = rgba;
+		}
+		else if (rgba.length === 1) {
+			r = g = b = rgba[0];
+		}
+		else {
+			r = g = b = nodata;
+		}
 		if (a === 0 || r === nodata || g === nodata || b === nodata) {
 			// Transparent (no-data)
-			return 'no data';
+			return NA;
 		}
 		else if (r == g && g === b) {
 			if (a === 255) {
@@ -122,13 +135,7 @@ class Utils extends VueUtils {
 		}; 
 		vm.$snotify.confirm(message, null, Object.assign({}, vm.$config.snotifyDefaults, typeDefaults)); 
 	}
-
-	static blobToText(blob, callback) {
-		var reader = new FileReader(); 
-		reader.onload = callback; 
-		reader.readAsText(blob.blob); 
-	}
-
+	
 	static isChildOfModal(that) {
 		return that.$parent && that.$parent.$options.name == 'Modal'; 
 	}

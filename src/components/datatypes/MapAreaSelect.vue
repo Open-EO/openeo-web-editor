@@ -77,10 +77,10 @@ export default {
 		updateTextControl() {
 			this.textControl.setValue(this.extent ? 'Click inside the bounding box to remove it.' : 'Click on the map to add a bounding box.');
 		},
-		renderMap() {
+		async renderMap() {
 			let isWebMercatorCompatible = Utils.isBboxInWebMercator(this.bbox) !== false;
 			
-			this.createMap(isWebMercatorCompatible ? 'EPSG:3857' : 'EPSG:4326');
+			await this.createMap(isWebMercatorCompatible ? 'EPSG:3857' : 'EPSG:4326');
 			this.addBasemaps();
 
 			this.textControl = new TextControl();

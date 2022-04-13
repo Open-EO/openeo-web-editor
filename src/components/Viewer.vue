@@ -3,10 +3,12 @@
 		<Tabs id="viewerTabs" ref="tabs" @empty="onTabsEmpty">
 			<template #empty>Nothing to show right now...</template>
 			<template #dynamic="{ tab }">
-				<MapViewer v-if="tab.icon === 'fa-map'" class="mapCanvas" @show="onShow" @hide="onHide" :data="tab.data" :removableLayers="true" />
-				<LogViewer v-else-if="logViewerIcons.includes(tab.icon)" :data="tab.data" />
-				<ImageViewer v-else-if="tab.icon === 'fa-image'" :data="tab.data" />
-				<DataViewer v-else :data="tab.data" />
+				<LogViewer v-if="logViewerIcons.includes(tab.icon)" :data="tab.data" />
+				<component v-else-if="tab.data.component" :is="tab.data.component" v-on="tab.data.events" v-bind="tab.data.props" @show="onShow" @hide="onHide" />
+				<div v-else>
+					Sorry, the viewer doesn't support showing the data. Instead, you can download the data by clicking the link below.<br />
+					<a :href="tab.data.getUrl()" download>Download</a>
+				</div>
 			</template>
 		</Tabs>
 	</div>
@@ -16,22 +18,19 @@
 import EventBusMixin from './EventBusMixin.vue';
 import Utils from '../utils.js';
 import Tabs from '@openeo/vue-components/components/Tabs.vue';
-import DataViewer from './DataViewer.vue';
-import ImageViewer from './ImageViewer.vue';
-import LogViewer from './LogViewer.vue';
-import MapViewer from './MapViewer.vue'
-import contentType from 'content-type';
-import { OpenEO, Service } from '@openeo/js-client';
+import { Service } from '@openeo/js-client';
+import FormatRegistry from '../formats/formatRegistry';
 
 export default {
 	name: 'Viewer',
 	mixins: [EventBusMixin],
 	components: {
 		Tabs,
-		DataViewer,
-		ImageViewer,
-		LogViewer,
-		MapViewer
+		DataViewer: () => import('./viewer/DataViewer.vue'),
+		TableViewer: () => import('./viewer/TableViewer.vue'),
+		ImageViewer: () => import('./viewer/ImageViewer.vue'),
+		LogViewer: () => import('./viewer/LogViewer.vue'),
+		MapViewer: () => import('./viewer/MapViewer.vue')
 	},
 	mounted() {
 		this.listen('viewSyncResult', this.showSyncResults);
@@ -44,6 +43,7 @@ export default {
 	},
 	data() {
 		return {
+			registry: new FormatRegistry(),
 			tabTitleCounter: {},
 			tabIdCounter: 0,
 			logViewerIcons: [
@@ -97,22 +97,7 @@ export default {
 			this.showMapViewer(service, service.id, Utils.getResourceTitle(collection, true), true);
 		},
 		showWebService(service) {
-			this.showMapViewer(service, service.id);
-		},
-		showSyncResults(result) {
-			let title = this.makeTitle("Result");
-			this.showViewer(result.data, result.type, title, null, true);
-			if (Array.isArray(result.logs) && result.logs.length > 0) {
-				this.showLogs(result.logs, title, false);
-			}
-		},
-		showJobResults(stac, job) {
-			// ToDo: Put all GeoTiffs on a single map
-			for(var key in stac.assets) {
-				var asset = stac.assets[key];
-				let jobTitle = Utils.getResourceTitle(job, true);
-				this.showViewer(asset, asset.type, this.makeTitle(jobTitle, asset.title), job.id, false, stac);
-			}
+			this.showMapViewer(service, service.id, null, true);
 		},
 		showLogs(resource, defaultTitle = 'Logs', selectTab = true, faIcon = 'fa-bug') {
 			let title = Array.isArray(resource) ? defaultTitle : Utils.getResourceTitle(resource, "Logs");
@@ -132,6 +117,24 @@ export default {
 			if (tab) {
 				this.$refs.tabs.closeTab(tab);
 			}
+		},
+		showSyncResults(result) {
+			let title = this.makeTitle("Result");
+			// result.data should always be a blob
+			let files = this.registry.createFilesFromBlob(result.data);
+			// Download files to disc so that nothing gets lost
+			files.forEach(file => file.download());
+			// Show the data in the viewer
+			this.showViewer(files, title).finally(() => {
+				// Open the log files after the data tab has been opened -> it's in finally to spawn after the data tab
+				if (Array.isArray(result.logs) && result.logs.length > 0) {
+					this.showLogs(result.logs, title, false);
+				}
+			});
+		},
+		showJobResults(stac, job) {
+			let files = this.registry.createFilesFromSTAC(stac, job);
+			this.showViewer(files);
 		},
 		showMapViewer(resource, id = null, title = null, reUseExistingTab = false) {
 			if (!title) {
@@ -156,81 +159,26 @@ export default {
 				tab => this.onHide(tab)
 			);
 		},
-		async showViewer(meta, type, title = null, id = null, synchronous = false, context = null) {
-			var data = {};
-			if (Utils.isObject(meta) && typeof meta.href === 'string') {
-				Object.assign(data, meta, { url: meta.href });
-			}
-			else if (meta instanceof Blob) {
-				data.blob = meta;
-			}
-
-			try {
-				let mime = contentType.parse(type);
-				data.type = mime.type;
-				data.parameters = mime.parameters;
-			} catch (error) {
-				data.type = type;
-				console.log(error);
-			}
-
-			// Try to show the file
-			let shown = false;
-			switch(data.type) {
-				case 'image/png':
-				case 'image/jpg':
-				case 'image/jpeg':
-				case 'image/gif':
-					if (!title) {
-						title = this.makeTitle("Image");
+		async showViewer(files, title = null) {
+			for(let file of files) {
+				try {
+					let context = file.getContext();
+					let id = context ? context.id : null;
+					if (!title && context) {
+						title = Utils.getResourceTitle(context, true);
 					}
-					this.$refs.tabs.addTab(title, "fa-image", data, id, true, true);
-					shown = true;
-					break;
-				case 'application/json':
-				case 'text/plain':
-				case 'text/csv':
-					if (!title) {
-						title = this.makeTitle("Data");
+					else if (!title) {
+						title = this.makeTitle("Untitled");
 					}
-					this.$refs.tabs.addTab(title, "fa-database", data, id, true, true);
-					shown = true;
-					break;
-				case 'image/tiff':
-					if (data.parameters.application === 'geotiff') {
-						if (!title) {
-							title = this.makeTitle("GeoTiff");
-						}
-						if (id === null && Utils.isObject(id)) {
-							id = context.id;
-						}
-						let initTiff = async tab => await this.callChildFunction(tab, 'updateGeoTiffLayer', data, title, context);
-						this.showMapViewer(context, id, initTiff, title, false);
-						shown = true;
-					}
-					break;
-			}
-
-			if (synchronous || !shown) {
-				if (data.blob instanceof Blob) {
-					OpenEO.Environment.saveToFile(data.blob, Utils.makeFileName("result", data.type));
-					return;
+					await file.getData(this.connection);
+					this.$refs.tabs.addTab(
+						title, file.getIcon(), file, id, true, true,
+						tab => this.onShow(tab),
+						tab => this.onHide(tab)
+					);
+				} catch (error) {
+					Utils.exception(this, error, "Viewer Error");
 				}
-				else if (data.url) {
-					try {
-						let response = await this.connection._get(data.url, "", "blob");
-						let filename = Utils.getFileNameFromURL(data.url);
-						if (response.data instanceof Blob) {
-							OpenEO.Environment.saveToFile(response.data, Utils.makeFileName(filename, data.type));
-							return;
-						}
-					} catch (error) {
-						Utils.exception(this, error, "Sorry, can't load data from URL.");
-						return;
-					}
-				}
-
-				Utils.exception(this, 'Sorry, this type of data is not supported by the editor and can\'t be downloaded.');
 			}
 		},
 		async callChildFunction(tab, fn, ...args) {
@@ -304,7 +252,7 @@ export default {
 </script>
 
 <style lang="scss">
-.mapCanvas, .viewerContainer {
+.map-viewer, .viewerContainer {
 	height: 100%;
 }
 .viewerContainer .tabsEmpty {

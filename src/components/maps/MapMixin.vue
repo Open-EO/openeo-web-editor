@@ -2,11 +2,14 @@
 import EventBusMixin from '../EventBusMixin.vue';
 import Utils from '../../utils.js';
 
+import proj4 from 'proj4';
 import 'ol/ol.css';
 import { defaults as defaultControls, FullScreen, ScaleLine } from 'ol/control';
 import Map from 'ol/Map';
 import View from 'ol/View';
-import { fromLonLat } from 'ol/proj';
+import { fromLonLat, get as getProjection } from 'ol/proj';
+import Projection from 'ol/proj/Projection';
+import { register } from 'ol/proj/proj4';
 import TileLayer from 'ol/layer/Tile';
 import XYZ from 'ol/source/XYZ';
 
@@ -58,15 +61,32 @@ export default {
 				await this.renderMap();
 			}
 		},
-		createMap(view = 'EPSG:3857') {
-			if (!(view instanceof View)) {
-				let projection = view;
-				view = new View({
-					center: fromLonLat([this.userLocation[1], this.userLocation[0]], projection),
-					zoom: this.locationZoom,
-					showFullExtent: true,
-					projection
-				})
+		async createMap(opts = 'EPSG:3857') {
+			let view;
+			let viewOpts = {
+				showFullExtent: true
+			};
+			if (typeof opts === 'string') { // A projection
+				let projection = await this.loadProjection(opts);
+				if (projection) {
+					viewOpts.projection = projection;
+				}
+			}
+			else if (opts instanceof View) {
+				view = opts;
+			}
+			else if (Utils.isObject(opts)) {
+				viewOpts = opts;
+			}
+
+			if (!view) {
+				view = new View(viewOpts);
+				if (!view.getCenter()) {
+					view.setCenter(fromLonLat([this.userLocation[1], this.userLocation[0]], view.getProjection()));
+				}
+				if (!view.getZoom()) {
+					view.setZoom(this.locationZoom);
+				}
 			}
 
 			if (this.map !== null) {
@@ -166,8 +186,8 @@ export default {
 		},
 
 		// To be overridden by implementing components.
-		renderMap() {
-			this.createMap();
+		async renderMap() {
+			await this.createMap();
 			this.addBasemaps();
 		},
 
@@ -178,6 +198,25 @@ export default {
 			}
 		},
 
+		addLayerToMap(layer) {
+			layer.set('userLayer', true);
+			this.map.addLayer(layer);
+		},
+		removeLayerFromMap(id) {
+			let layer = this.getLayerFromMap(id);
+			if (layer) {
+				this.map.removeLayer(layer);
+			}
+		},
+		getLayerFromMap(id) {
+			let layers = this.map.getLayers().getArray();
+			for(let layer of layers) {
+				if (layer.get('id') === id) {
+					return layer;
+				}
+			}
+			return null;
+		},
 		getVisibleLayers() {
 			let shownLayers = [];
 			let layers = this.map.getLayers().getArray();
@@ -213,8 +252,54 @@ export default {
 				this.progress.addLoaded();
 			});
 			return source;
-		}
+		},
 
+		async loadProjection(crs) {
+			if (crs instanceof Projection) {
+				return crs;
+			}
+			let code, id;
+			if (typeof crs === 'string' && crs.match(/^EPSG:\d+$/i)) {
+				code = crs.toUpperCase();
+				id = crs.substr(5);
+			}
+			else if (Number.isInteger(crs)) {
+				code = `EPSG:${crs}`
+				id = String(crs);
+			}
+			else {
+				return null;
+			}
+
+			// Get projection from cache
+			let projection = getProjection(code);
+			if (projection) {
+				return projection;
+			}
+
+			// Get projection from database
+			let proj = await import('../../assets/epsg-proj.json');
+			if (id in proj) {
+				return this.addProjection(code, proj[id]);
+			}
+
+			// No projection found
+			return null;
+		},
+
+		addProjection(code, meta) {
+			try {
+				proj4.defs(code, meta);
+				register(proj4);
+				return getProjection(code);
+			} catch (error) {
+				console.error(error);
+				return null;
+			}
+		},
+		fromLonLat(coords) {
+			return fromLonLat(coords, this.map.getView().getProjection());
+		}
 	}
 }
 </script>

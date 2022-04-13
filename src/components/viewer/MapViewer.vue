@@ -8,21 +8,25 @@
 </template>
 
 <script>
-import Utils from '../utils.js';
-import GeoTiffMixin from './maps/GeoTiffMixin.vue';
-import MapMixin from './maps/MapMixin.vue';
-import ProjectionMixin from './maps/ProjectionMixin.vue';
-import WebServiceMixin from './maps/WebServiceMixin.vue';
+import Utils from '../../utils.js';
+import GeoTIFF from '../../formats/geotiff';
+import GeoJSON from '../../formats/geojson';
+
+import GeoJsonMixin from '../maps/GeoJsonMixin.vue';
+import GeoTiffMixin from '../maps/GeoTiffMixin.vue';
+import MapMixin from '../maps/MapMixin.vue';
+import WebServiceMixin from '../maps/WebServiceMixin.vue';
+
+import { Service } from '@openeo/js-client';
 
 import Feature from 'ol/Feature';
-import GeoTIFF from 'ol/source/GeoTIFF';
 import { fromExtent as PolygonFromExtent } from 'ol/geom/Polygon';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 
 export default {
 	name: 'MapViewer',
-	mixins: [GeoTiffMixin, MapMixin, ProjectionMixin, WebServiceMixin],
+	mixins: [GeoJsonMixin, GeoTiffMixin, MapMixin, WebServiceMixin],
 	props: {
 		data: {}
 	},
@@ -31,28 +35,53 @@ export default {
 			loading: true
 		};
 	},
+	computed: {
+		...Utils.mapState(['connection']),
+		isWebService() {
+			return this.data instanceof Service && typeof this.data.type === 'string';
+		},
+		isGeoTiff() {
+			return this.data instanceof GeoTIFF;
+		},
+		isGeoJson() {
+			return this.data instanceof GeoJSON;
+		}
+	},
 	methods: {
 		async renderMap() {
 			try {
 				let view;
-				if (this.isGeoTiff) {
-					// Create source and automatically derive view from it
-					let geotiff = new GeoTIFF({ sources: [{
-						url: this.data.blob instanceof Blob ? URL.createObjectURL(this.data.blob) : this.data.url
-					}] });
-					view = await geotiff.getView();
+				if (this.isGeoJson) {
+					// No preparation needed
 				}
-				else if (this.webServiceType === 'wmts') {
+				else if (this.isGeoTiff) {
+					await this.data.getData(this.connection);
+					view = this.data.getView();
+				}
+				else if (this.isWebService && this.data.type.toLowerCase() === 'wmts') {
 					let capabilities = await this.initWMTSLayer(this.data);
 					// ToDo: This assumes Web Mercator is always available, better check the capabilities...
 					view = 'EPSG:3857';
 				}
+				else {
+					throw new Error("Sorry, the given data can't be shown on a web map.");
+				}
 
-				this.createMap(view);
+				await this.createMap(view);
 				this.addLayerSwitcher();
-				this.addBasemaps();
 
-				if (this.isWebService) {
+				if (this.isGeoJson) {
+					this.addBasemaps();
+					this.addGeoJson(await this.data.getData(this.connection));
+				}
+				else if (this.isGeoTiff) {
+					if ([3857, 4326].includes(view.projection.getCode())) {
+						this.addBasemaps();
+					}
+					this.addGeoTiff(this.data);
+				}
+				else if (this.isWebService) {
+					this.addBasemaps();
 					this.addWebService(this.data);
 				}
 
@@ -65,26 +94,6 @@ export default {
 			}
 
 			this.loading = false;
-		},
-
-		addLayerToMap(layer) {
-			layer.set('userLayer', true);
-			this.map.addLayer(layer);
-		},
-		removeLayerFromMap(id) {
-			let layer = this.getLayerFromMap(id);
-			if (layer) {
-				this.map.removeLayer(layer);
-			}
-		},
-		getLayerFromMap(id) {
-			let layers = this.map.getLayers().getArray();
-			for(let layer of layers) {
-				if (layer.get('id') === id) {
-					return layer;
-				}
-			}
-			return null;
 		},
 
 		async addCollection() {
@@ -124,7 +133,7 @@ export default {
 }
 </script>
 
-<style src="./maps/MapMixin.css"></style>
+<style src="../maps/MapMixin.css"></style>
 
 <style lang="scss">
 .map-viewer {

@@ -33,7 +33,7 @@ export default {
 		};
 	},
 	methods: {
-		renderMap() {
+		async renderMap() {
 			let isWebMercatorCompatible = true;
 			if (this.value) {
 				let source = this.createGeoJsonSource(this.value);
@@ -43,7 +43,7 @@ export default {
 				}
 			}
 
-			this.createMap(isWebMercatorCompatible ? 'EPSG:3857' : 'EPSG:4326');
+			await this.createMap(isWebMercatorCompatible ? 'EPSG:3857' : 'EPSG:4326');
 			this.addBasemaps();
 
 			if (!this.editable) {
