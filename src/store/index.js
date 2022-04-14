@@ -41,7 +41,9 @@ const getDefaultState = () => {
 		udfRuntimes: {},
 		processesUpdated: 0,
 		collections: [],
-		processNamespaces: Config.processNamespaces || []
+		processNamespaces: Config.processNamespaces || [],
+		userLocation: [49.8, 9.9], // Default to the center of the EU in Wuerzburg: https://en.wikipedia.org/wiki/Geographical_midpoint_of_Europe#Geographic_centre_of_the_European_Union
+		locationZoom: 4 // Should show most of Europe
 	};
 };
 
@@ -127,6 +129,17 @@ export default new Vuex.Store({
 		}
 	},
 	actions: {
+		async initUserLocation(cx) {
+			if ("geolocation" in navigator) {
+				navigator.geolocation.getCurrentPosition(
+					position => cx.commit('userLocation', [position.coords.latitude, position.coords.longitude]),
+					error => console.warn(error),
+					{
+						maximumAge: Infinity
+					}
+				);
+			}
+		},
 		async connect(cx, url) {
 			await cx.dispatch('logout');
 
@@ -308,6 +321,10 @@ export default new Vuex.Store({
 		}
 	},
 	mutations: {
+		userLocation(state, location) {
+			state.userLocation = location;
+			state.locationZoom = 6;
+		},
 		discoveryCompleted(state, completed = true) {
 			state.discoveryCompleted = completed;
 		},

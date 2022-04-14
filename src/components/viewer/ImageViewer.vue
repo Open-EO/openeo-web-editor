@@ -10,8 +10,8 @@
 </template>
 
 <script>
-import FullscreenButton from './FullscreenButton.vue';
-import Utils from '../utils';
+import FullscreenButton from '../FullscreenButton.vue';
+import Utils from '../../utils';
 
 export default {
 	name: 'ImageViewer',
@@ -20,6 +20,7 @@ export default {
 	},
 	props: {
 		data: {
+			type: Object,
 			required: true
 		}
 	},
@@ -33,13 +34,9 @@ export default {
 			value: '-'
 		};
 	},
-	mounted() {
-		if (this.data.blob) {
-			this.showImageBlob(this.data.blob);
-		}
-		else if (this.data.url) {
-			this.showImage(this.data.url);
-		}
+	async created() {
+		this.img = await this.data.getData();
+		this.img.onload = this.imageLoaded.bind(this);
 	},
 	computed: {
 		title() {
@@ -61,16 +58,6 @@ export default {
 		}
 	},
 	methods: {
-		showImage(src) {
-			this.loaded = false;
-			this.img = new Image();
-			this.img.crossOrigin = "Anonymous";
-			this.img.onload = this.imageLoaded.bind(this)
-			this.img.src = src;
-		},
-		showImageBlob(data) {
-			this.showImage(URL.createObjectURL(data));
-		},
 		imageLoaded() {
 			this.loaded = true;
 			
@@ -97,24 +84,8 @@ export default {
 				let yScale = this.img.naturalHeight / size.height;
 				let x = event.offsetX * xScale;
 				let y = event.offsetY * yScale;
-				let [r,g,b,a] = this.context.getImageData(Math.ceil(x), Math.ceil(y), 1, 1).data;
-				if (a === 0) {
-					// Transparent (no-data?)
-					this.value = 'no data';
-				}
-				else if (r == g && g === b) {
-					if (a === 255) {
-						// Grayscale
-						this.value = r;
-					}
-					else {
-						// Grayscale with Alpha
-						this.value = `${r}, Alpha: ${a}`;
-					}
-				}
-				else {
-					this.value = `Red: ${r}, Green: ${g}, Blue: ${b}, Alpha: ${a}`;
-				}
+				let rgba = this.context.getImageData(Math.ceil(x), Math.ceil(y), 1, 1).data;
+				this.value = Utils.displayRGBA(rgba);
 			} catch (error) {
 				this.value = 'n/a';
 				console.log(error);

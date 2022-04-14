@@ -101,7 +101,6 @@ export default {
 			);
 		},
 		addProcess(process) {
-			console.log(process);
 			this.create({parameters: [process.id, process]})
 				.catch(error => Utils.exception(this, error, 'Store Process Error' + (process.id ? `: ${process.id}` : '')));
 		},

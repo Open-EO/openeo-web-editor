@@ -34,8 +34,8 @@
 						</Pane>
 					</Splitpanes>
 				</Pane>
-				<Pane id="viewer" :size="splitpaneSizeH[2]">
-					<Viewer class="tour-ide-viewer" />
+				<Pane id="viewer" :class="{empty: !showViewer}" :size="splitpaneSizeH[2]">
+					<Viewer class="tour-ide-viewer" @empty="onViewerEmpty" />
 				</Pane>
 			</Splitpanes>
 		</div>
@@ -70,6 +70,7 @@ export default {
 	},
 	data() {
 		return {
+			showViewer: false,
 			resizeListener: null,
 			userInfoUpdater: null
 		};
@@ -98,11 +99,11 @@ export default {
 			return this.supports('validateProcess');
 		},
 		splitpaneSizeH() {
-			if (this.isAuthenticated) {
-				return [20,50,30];
+			if (this.showViewer) {
+				return [20, 40, 40];
 			}
 			else {
-				return [20,40,40];
+				return [25, 75, 0];
 			}
 		},
 		splitpaneSizeV() {
@@ -148,6 +149,9 @@ export default {
 
 		resized(event) {
 			this.emit('windowResized', event);
+		},
+		onViewerEmpty(empty) {
+			this.showViewer = !empty;
 		},
 
 		login() {
@@ -275,6 +279,11 @@ export default {
 	min-width: 200px;
 	padding: 1rem;
 	box-sizing: border-box;
+
+	&.empty {
+		min-width: 0;
+		padding: 0;
+	}
 }
 #workspace {
 	min-width: 300px;

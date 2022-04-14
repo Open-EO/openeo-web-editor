@@ -33,9 +33,9 @@
 		<!-- Temporal (date, time, date-time, temporal-interval) -->
 		<TemporalPicker v-else-if="isTemporal" v-model="state" :key="type" :type="type" :editable="editable"></TemporalPicker>
 		<!-- Bounding Box -->
-		<MapAreaSelect v-else-if="type === 'bounding-box'" v-model="state" :key="type" :id="name + '_bbox'" :editable="editable" class="areaSelector"></MapAreaSelect>
+		<MapAreaSelect v-else-if="type === 'bounding-box'" v-model="state" :key="type" :editable="editable" class="areaSelector"></MapAreaSelect>
 		<!-- GeoJSON -->
-		<MapGeoJsonEditor v-else-if="type === 'geojson'" v-model="state" :key="type" :id="name + '_geojson'" :editable="editable" class="geoJsonEditor"></MapGeoJsonEditor>
+		<MapGeoJsonEditor v-else-if="type === 'geojson'" v-model="state" :key="type" :editable="editable" class="geoJsonEditor"></MapGeoJsonEditor>
 		<!-- Process Editor -->
 		<Editor v-else-if="type === 'process-graph'" class="callbackEditor" :editable="editable" :parent="parent" :parentSchema="schema" :showDiscoveryToolbar="true" v-model="state" :defaultValue="editorDefaultValue" />
 		<!-- Output format options -->

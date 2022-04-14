@@ -68,11 +68,8 @@ export default {
 		this.listen('replaceProcess', this.replaceProcess);
 	},
 	methods: {
-		isMapServiceSupported(mapType) {
-			if (typeof mapType !== 'string') {
-				return false;
-			}
-			return this.$config.supportedMapServices.includes(mapType.toLowerCase());
+		isMapServiceSupported(type) {
+			return Utils.isMapServiceSupported(type);
 		},
 		showInEditor(service) {
 			this.refreshElement(service, updatedService => this.emit('editProcess', updatedService));

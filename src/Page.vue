@@ -58,6 +58,7 @@ export default {
 		};
 	},
 	created() {
+		this.initUserLocation();
 		this.addProcessNamespacesToRequest(Utils.param('namespaces'));
 		this.setInitialProcess(Utils.param('process'));
 		this.setInitialNode(Utils.param('edit-node'));
@@ -111,7 +112,7 @@ export default {
 		...Utils.mapState('editor', ['hightestModalZIndex']),
 	},
 	methods: {
-		...Utils.mapActions(['describeAccount', 'describeCollection', 'loadProcess']),
+		...Utils.mapActions(['describeAccount', 'describeCollection', 'loadProcess', 'initUserLocation']),
 		...Utils.mapMutations(['startActiveRequest', 'endActiveRequest', 'addProcessNamespacesToRequest']),
 		...Utils.mapMutations('editor', ['setInitialProcess', 'setInitialNode', 'setCollectionPreview']),
 		setTitle(subtitle) {
