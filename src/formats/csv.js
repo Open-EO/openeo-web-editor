@@ -13,7 +13,13 @@ class CSV extends SupportedFormat {
 
 	async parseData(data) {
 		if (typeof data === 'string') {
-			return this.parseCSV(data.trim());
+			// Parse CSV
+			let array = this.parseCSV(data.trim());
+			// Convert values into numbers, if possible
+			return array.map(row => row.map(col => {
+				let num = Number.parseFloat(col);
+				return Number.isNaN(num) ? col : num;
+			}));
 		}
 		return data;
 	}
@@ -32,22 +38,40 @@ class CSV extends SupportedFormat {
 			// If the current character is a quotation mark, and we're inside a
 			// quoted field, and the next character is also a quotation mark,
 			// add a quotation mark to the current column and skip the next character
-			if (cc == '"' && quote && nc == '"') { arr[row][col] += cc; ++c; continue; }
+			if (cc == '"' && quote && nc == '"') {
+				arr[row][col] += cc; ++c;
+				continue;
+			}
 	
 			// If it's just one quotation mark, begin/end quoted field
-			if (cc == '"') { quote = !quote; continue; }
+			if (cc == '"') {
+				quote = !quote;
+				continue;
+			}
 	
 			// If it's a elimiter and we're not in a quoted field, move on to the next column
-			if (this.delim.includes(cc) && !quote) { ++col; continue; }
+			if (this.delim.includes(cc) && !quote) {
+				++col;
+				continue;
+			}
 	
 			// If it's a newline (CRLF) and we're not in a quoted field, skip the next character
 			// and move on to the next row and move to column 0 of that new row
-			if (cc == '\r' && nc == '\n' && !quote) { ++row; col = 0; ++c; continue; }
+			if (cc == '\r' && nc == '\n' && !quote) {
+				++row; col = 0; ++c;
+				continue;
+			}
 	
 			// If it's a newline (LF or CR) and we're not in a quoted field,
 			// move on to the next row and move to column 0 of that new row
-			if (cc == '\n' && !quote) { ++row; col = 0; continue; }
-			if (cc == '\r' && !quote) { ++row; col = 0; continue; }
+			if (cc == '\n' && !quote) {
+				++row; col = 0;
+				continue;
+			}
+			if (cc == '\r' && !quote) {
+				++row; col = 0;
+				continue;
+			}
 	
 			// Otherwise, append the current character to the current column
 			arr[row][col] += cc;
