@@ -58,10 +58,12 @@ export default {
 					await this.data.getData(this.connection);
 					view = this.data.getView();
 				}
-				else if (this.isWebService && this.data.type.toLowerCase() === 'wmts') {
-					let capabilities = await this.initWMTSLayer(this.data);
-					// ToDo: This assumes Web Mercator is always available, better check the capabilities...
-					view = 'EPSG:3857';
+				else if (this.isWebService && Utils.isMapServiceSupported(this.data.type)) {
+					if (this.data.type.toLowerCase() === 'wmts') {
+						let capabilities = await this.initWMTSLayer(this.data);
+						// ToDo: This assumes Web Mercator is always available, better check the capabilities...
+						view = 'EPSG:3857';
+					}
 				}
 				else {
 					throw new Error("Sorry, the given data can't be shown on a web map.");
@@ -75,12 +77,12 @@ export default {
 					this.addGeoJson(await this.data.getData(this.connection));
 				}
 				else if (this.isGeoTiff) {
-					if ([3857, 4326].includes(view.projection.getCode())) {
+					if (view.projection && ['EPSG:3857', 'EPSG:4326'].includes(view.projection.getCode())) {
 						this.addBasemaps();
 					}
 					this.addGeoTiff(this.data);
 				}
-				else if (this.isWebService) {
+				else if (this.isWebService && Utils.isMapServiceSupported(this.data.type)) {
 					this.addBasemaps();
 					this.addWebService(this.data);
 				}

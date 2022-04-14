@@ -16,6 +16,13 @@ class Utils extends VueUtils {
 		return null;
 	}
 
+	static isMapServiceSupported(mapType) {
+		if (typeof mapType !== 'string') {
+			return false;
+		}
+		return Config.supportedMapServices.includes(mapType.toLowerCase());
+	}
+
 	static displayRGBA(value, min = 0, max = 255, nodata = null, precision = null) {
 		let NA = 'no data';
 		if (typeof value === 'undefined' || value === null) {

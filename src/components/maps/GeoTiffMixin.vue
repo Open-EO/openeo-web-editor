@@ -69,13 +69,13 @@ export default {
 				source: geotiff
 			});
 
-			this.addTextControl(layer, nodata);
+			this.addTextControl(layer);
 			this.addLayerToMap(layer);
 
 			return layer;
 		},
 
-		addTextControl(layer, nodata) {
+		addTextControl(layer) {
 			this.textControl = new TextControl();
 			this.textControl.setValue('Pixel Value: -');
 			layer.set('events', {

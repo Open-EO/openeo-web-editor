@@ -4,10 +4,14 @@
 			<template #empty>Nothing to show right now...</template>
 			<template #dynamic="{ tab }">
 				<LogViewer v-if="logViewerIcons.includes(tab.icon)" :data="tab.data" />
-				<component v-else-if="tab.data.component" :is="tab.data.component" v-on="tab.data.events" v-bind="tab.data.props" @show="onShow" @hide="onHide" />
-				<div v-else>
-					Sorry, the viewer doesn't support showing the data. Instead, you can download the data by clicking the link below.<br />
-					<a :href="tab.data.getUrl()" download>Download</a>
+				<MapViewer v-else-if="tab.icon === 'fa-map'" :data="tab.data" :removableLayers="isCollectionPreview(tab.data)" @show="onShow" @hide="onHide" /> <!-- for services -->
+				<component v-else-if="tab.data.component" :is="tab.data.component" v-on="tab.data.events" v-bind="tab.data.props" @show="onShow" @hide="onHide" /> <!-- for file formats -->
+				<div class="unsupported" v-else>
+					Sorry, the viewer doesn't support showing this type of data.
+					<template v-if="isFormat(tab.data)">
+						Instead, you can download the data by clicking the link below.<br />
+						<a :href="tab.data.getUrl()" download>Download</a>
+					</template>
 				</div>
 			</template>
 		</Tabs>
@@ -20,6 +24,7 @@ import Utils from '../utils.js';
 import Tabs from '@openeo/vue-components/components/Tabs.vue';
 import { Service } from '@openeo/js-client';
 import FormatRegistry from '../formats/formatRegistry';
+import { Format } from '../formats/format';
 
 export default {
 	name: 'Viewer',
@@ -61,6 +66,12 @@ export default {
 	},
 	methods: {
 		...Utils.mapActions(['describeCollection']),
+		isCollectionPreview(data) {
+			return (data instanceof Service && Utils.isObject(data.attributes) && data.attributes.preview === true);
+		},
+		isFormat(data) {
+			return (data instanceof Format);
+		},
 		async showCollectionPreview(collection) {
 			if (typeof collection === 'string') {
 				try {
@@ -80,6 +91,7 @@ export default {
 			service.url = link.href;
 			service.type = link.rel.toLowerCase();
 			service.attributes = {
+				preview: true,
 				bbox: Utils.extentToBBox(collection.extent.spatial.bbox[0])
 			};
 			if (link.rel.toLowerCase() === 'wmts') {
@@ -255,9 +267,14 @@ export default {
 .map-viewer, .viewerContainer {
 	height: 100%;
 }
-.viewerContainer .tabsEmpty {
-	height: 100%;
-	padding: 1rem;
-	margin: auto;
+.viewerContainer {
+	.unsupported {
+		padding: 1em;
+	}
+	.tabsEmpty {
+		height: 100%;
+		padding: 1rem;
+		margin: auto;
+	}
 }
 </style>
