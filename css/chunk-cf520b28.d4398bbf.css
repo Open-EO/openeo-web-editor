@@ -1,0 +1,1 @@
+.chart{padding:.5em;margin:auto;box-sizing:border-box}.chart,.tableViewer{width:100%;height:100%;overflow:auto}.tableViewer>table{width:100%}.tableViewer>table>thead{position:sticky;top:0;background:#eee;z-index:1}.tableViewer>table>thead th{border-top:0}.tableViewer>table>tbody td.number{text-align:right}.tableViewer>table>tbody th{text-align:left}
