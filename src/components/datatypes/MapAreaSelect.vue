@@ -1,5 +1,8 @@
 <template>
-	<div :id="id"></div>
+	<div :id="id">
+		<ProgressControl ref="progress" :map="map" />
+		<TextControl :text="help" :map="map" />
+	</div>
 </template>
 
 <script>
@@ -9,11 +12,14 @@ import ExtentInteraction from 'ol/interaction/Extent';
 import { transformExtent } from 'ol/proj';
 import { containsXY } from 'ol/extent';
 import { createDefaultStyle } from 'ol/style/Style';
-import TextControl from '../maps/textControl';
+import TextControl from '../maps/TextControl.vue';
 
 export default {
 	name: 'MapAreaSelect',
 	mixins: [MapMixin],
+	components: {
+		TextControl
+	},
 	props: {
 		// Either Object or Array, doesn't support the z-axis
 		// Array is always in WGS84 with the following elements: 0 => west, 1 => south, 2 => east, 3 => north
@@ -34,7 +40,6 @@ export default {
 
 		return {
 			interaction: null,
-			textControl: null,
 			extent
 		};
 	},
@@ -50,6 +55,9 @@ export default {
 		},
 		bbox() {
 			return Utils.extentToBBox(this.extent);
+		},
+		help() {
+			return this.extent ? 'Click inside the bounding box to remove it.' : 'Click on the map to add a bounding box.';
 		}
 	},
 	methods: {
@@ -60,7 +68,6 @@ export default {
 			else {
 				this.extent = null;
 			}
-			this.updateTextControl();
 			this.$emit('input', this.returnAsObject ? this.bbox : this.extent);
 		},
 		ensureValidExtent(extent) {
@@ -74,18 +81,11 @@ export default {
 				Math.min(extent[3], 90)
 			];
 		},
-		updateTextControl() {
-			this.textControl.setValue(this.extent ? 'Click inside the bounding box to remove it.' : 'Click on the map to add a bounding box.');
-		},
 		async renderMap() {
 			let isWebMercatorCompatible = Utils.isBboxInWebMercator(this.bbox) !== false;
 			
 			await this.createMap(isWebMercatorCompatible ? 'EPSG:3857' : 'EPSG:4326');
 			this.addBasemaps();
-
-			this.textControl = new TextControl();
-			this.updateTextControl();
-			this.map.addControl(this.textControl);
 
 			let condition = (event) => {
 				if (!this.editable) {

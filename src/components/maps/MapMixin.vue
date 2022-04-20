@@ -16,11 +16,14 @@ import XYZ from 'ol/source/XYZ';
 import 'ol-ext/control/LayerSwitcher.css';
 import LayerSwitcher from 'ol-ext/control/LayerSwitcher';
 
-import Progress from './progress';
+import ProgressControl from './ProgressControl.vue';
 
 let idCounter = 1;
 
 export default {
+	components: {
+		ProgressControl
+	},
 	mixins: [EventBusMixin],
 	props: {
 		show: {
@@ -39,8 +42,7 @@ export default {
 	data() {
 		return {
 			map: null,
-			id: `map_` + idCounter++,
-			progress: null
+			id: `map_` + idCounter++
 		};
 	},
 	watch: {
@@ -94,11 +96,9 @@ export default {
 				this.map.render();
 				return;
 			}
-			this.progress = new Progress();
 			var customControls = [
 				new FullScreen(),
-				new ScaleLine(),
-				this.progress.getControl()
+				new ScaleLine()
 			];
 			var mapOptions = {
 				target: this.id,
@@ -123,13 +123,6 @@ export default {
 				for(let event in events) {
 					this.map.on(event, events[event]);
 				}
-
-				let controls = layer.get('controls');
-				if (Array.isArray(controls)) {
-					for(let control of controls) {
-						this.map.addControl(control);
-					}
-				}
 			});
 			layers.on('remove', evt => {
 				let layer = evt.element;
@@ -137,13 +130,6 @@ export default {
 				let events = layer.get('events');
 				for(let event in events) {
 					this.map.un(event, events[event]);
-				}
-
-				let controls = layer.get('controls');
-				if (Array.isArray(controls)) {
-					for(let control of controls) {
-						this.map.removeControl(control);
-					}
 				}
 			});
 		},
@@ -242,15 +228,17 @@ export default {
 		},
 
 		trackTileProgress(source) {
-			source.on('tileloadstart', () => {
-				this.progress.addLoading();
-			});
-			source.on('tileloadend', () => {
-				this.progress.addLoaded();
-			});
-			source.on('tileloaderror', () => {
-				this.progress.addLoaded();
-			});
+			if (this.$refs.progress) {
+				source.on('tileloadstart', () => {
+					this.$refs.progress.addLoading();
+				});
+				source.on('tileloadend', () => {
+					this.$refs.progress.addLoaded();
+				});
+				source.on('tileloaderror', () => {
+					this.$refs.progress.addLoaded();
+				});
+			}
 			return source;
 		},
 

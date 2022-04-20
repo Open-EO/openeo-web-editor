@@ -37,32 +37,3 @@
 .ol-control.ol-timeline {
 	z-index: 1;
 }
-
-/* Loading progress control */
-.ol-progress-control {
-	opacity: 0;
-	transition: opacity 0.4s;
-	bottom: calc(22px + 1em);
-    left: 8px;
-	position: absolute;
-	background-color: rgba(0,60,136,.5);
-	border-radius: 4px;
-	padding: 2px;
-	width: 150px;
-	text-align: center;
-}
-.ol-progress-control .progress-label {
-	font-size: 10px;
-	color: #fff;
-	margin-top: 2px;
-}
-.ol-progress-control .progress-bar {
-	border-radius: 4px;
-	border: 1px solid #fff;
-	height: 10px;
-}
-.ol-progress-control .progress-bar-inner {
-	background-color: #fff;
-	height: 10px;
-	width: 0;
-}

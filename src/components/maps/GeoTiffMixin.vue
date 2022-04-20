@@ -1,15 +1,20 @@
 <script>
 import Utils from '../../utils.js';
 
-import TextControl from './textControl';
+import TextControl from '../maps/TextControl.vue';
+
 import GeoTIFF from 'ol/source/GeoTIFF';
 import TileLayer from 'ol/layer/WebGLTile';
 
 export default {
+	components: {
+		TextControl
+	},
 	data() {
 		return {
-			textControl: null
-		}
+			textControlText: 'Pixel Value: -',
+			textControlTooltip: null
+		};
 	},
 	methods: {
 		async addGeoTiff(data, title = "GeoTiff", context = null) {
@@ -69,24 +74,20 @@ export default {
 				source: geotiff
 			});
 
-			this.addTextControl(layer);
 			this.addLayerToMap(layer);
 
 			return layer;
 		},
 
 		addTextControl(layer) {
-			this.textControl = new TextControl();
-			this.textControl.setValue('Pixel Value: -');
 			layer.set('events', {
 				pointermove: evt => {
 					let data = layer.getData(evt.pixel);
 					let value = Utils.displayRGBA(data);
-					this.textControl.setValue(`Pixel Value: ${value}`);
-					this.textControl.setTitle(`Coordinate: ${evt.coordinate.join(', ')}`);
+					this.textControlText = `Pixel Value: ${value}`;
+					this.textControlTooltip = `Coordinate: ${evt.coordinate.join(', ')}`;
 				}
 			});
-			layer.set('controls', [this.textControl]);
 		},
 
 		getOptionsFromUser(min, max, nodata) {

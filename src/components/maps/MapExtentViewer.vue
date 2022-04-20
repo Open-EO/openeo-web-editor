@@ -1,5 +1,7 @@
 <template>
-	<div :id="id"></div>
+	<div :id="id">
+		<ProgressControl ref="progress" :map="map" />
+	</div>
 </template>
 
 <script>

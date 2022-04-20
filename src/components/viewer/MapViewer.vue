@@ -1,5 +1,7 @@
 <template>
 	<div :id="id" class="map-viewer">
+		<ProgressControl ref="progress" :map="map" />
+		<TextControl v-if="textControlText" :text="textControlText" :tooltip="textControlTooltip" />
 		<div v-if="loading" class="map-loading">
 			<i class="fas fa-spinner fa-spin"></i>
 			<span>Loading map...</span>
