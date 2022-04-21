@@ -1,13 +1,15 @@
 <script>
 import Utils from '../../utils.js';
 
-import TextControl from '../maps/TextControl.vue';
+import TextControl from './TextControl.vue';
+import ChannelControl from './ChannelControl.vue';
 
 import GeoTIFF from 'ol/source/GeoTIFF';
 import TileLayer from 'ol/layer/WebGLTile';
 
 export default {
 	components: {
+		ChannelControl,
 		TextControl
 	},
 	data() {

@@ -141,7 +141,6 @@ export default {
 						borderWidth: 1
 					};
 				});
-				console.log(labels, datasets);
 				return { labels, datasets };
 			}
 			else { // rows
