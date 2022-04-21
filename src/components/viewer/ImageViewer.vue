@@ -85,7 +85,7 @@ export default {
 				let x = event.offsetX * xScale;
 				let y = event.offsetY * yScale;
 				let rgba = this.context.getImageData(Math.ceil(x), Math.ceil(y), 1, 1).data;
-				this.value = Utils.displayRGBA(rgba);
+				this.value = Utils.displayRGBA(rgba, 0, 255, null);
 			} catch (error) {
 				this.value = 'n/a';
 				console.log(error);

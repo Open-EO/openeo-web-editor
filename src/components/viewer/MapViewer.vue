@@ -2,7 +2,7 @@
 	<div :id="id" class="map-viewer">
 		<ProgressControl ref="progress" :map="map" />
 		<TextControl v-if="textControlText" :text="textControlText" :tooltip="textControlTooltip" />
-		<ChannelControl v-if="true || isGeoTiff" />
+		<ChannelControl v-if="isGeoTiff" :bands="bands" :nodata="nodata" @update="updateGeoTiffStyle" />
 		<div v-if="loading" class="map-loading">
 			<i class="fas fa-spinner fa-spin"></i>
 			<span>Loading map...</span>
@@ -24,6 +24,7 @@ import { Service } from '@openeo/js-client';
 
 import Feature from 'ol/Feature';
 import { fromExtent as PolygonFromExtent } from 'ol/geom/Polygon';
+import { isEmpty as extentIsEmpty } from 'ol/extent';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 
@@ -54,12 +55,19 @@ export default {
 		async renderMap() {
 			try {
 				let view;
+				let addBasemap = true;
+				let fit = null;
 				if (this.isGeoJson) {
 					// No preparation needed
 				}
 				else if (this.isGeoTiff) {
 					await this.data.getData(this.connection);
 					view = this.data.getView();
+					addBasemap = view.projection && ['EPSG:3857', 'EPSG:4326'].includes(view.projection.getCode());
+					if (!extentIsEmpty(view.extent) && addBasemap) {
+						fit = view.extent;
+						view = view.projection.getCode();
+					}
 				}
 				else if (this.isWebService && Utils.isMapServiceSupported(this.data.type)) {
 					if (this.data.type.toLowerCase() === 'wmts') {
@@ -74,20 +82,22 @@ export default {
 
 				await this.createMap(view);
 				this.addLayerSwitcher();
+				if (addBasemap) {
+					this.addBasemaps();
+				}
 
 				if (this.isGeoJson) {
-					this.addBasemaps();
 					this.addGeoJson(await this.data.getData(this.connection));
 				}
 				else if (this.isGeoTiff) {
-					if (view.projection && ['EPSG:3857', 'EPSG:4326'].includes(view.projection.getCode())) {
-						this.addBasemaps();
-					}
 					this.addGeoTiff(this.data);
 				}
 				else if (this.isWebService && Utils.isMapServiceSupported(this.data.type)) {
-					this.addBasemaps();
 					this.addWebService(this.data);
+				}
+
+				if (fit) {
+					this.map.getView().fit(fit, this.getFitOptions(5));
 				}
 
 				if (this.$listeners && this.$listeners.drop) {

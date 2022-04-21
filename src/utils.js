@@ -23,7 +23,11 @@ class Utils extends VueUtils {
 		return Config.supportedMapServices.includes(mapType.toLowerCase());
 	}
 
-	static displayRGBA(value, min = 0, max = 255, nodata = null, precision = null) {
+	static parseNodata(value) {
+		return typeof value === "string" && value.toLowerCase() === "nan" ? Number.NaN : value.nodata;
+	}
+
+	static displayRGBA(value, min = null, max = null, nodata = null, precision = null) {
 		let NA = 'no data';
 		if (typeof value === 'undefined' || value === null) {
 			return NA;
