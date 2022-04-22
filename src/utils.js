@@ -24,7 +24,7 @@ class Utils extends VueUtils {
 	}
 
 	static parseNodata(value) {
-		return typeof value === "string" && value.toLowerCase() === "nan" ? Number.NaN : value.nodata;
+		return typeof value === "string" && value.toLowerCase() === "nan" ? Number.NaN : value;
 	}
 
 	static displayRGBA(value, min = null, max = null, nodata = null, precision = null) {
