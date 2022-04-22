@@ -1,15 +1,21 @@
 <script>
 import Utils from '../../utils.js';
+import EventBusMixin from '../EventBusMixin.vue';
 
 import { isEmpty as extentIsEmpty } from 'ol/extent';
+import { singleClick } from 'ol/events/condition';
 import GeoJSON from 'ol/format/GeoJSON';
+import Select from 'ol/interaction/Select';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 
 // Requires the MapMixin to be included, too.
 export default {
+	mixins: [
+		EventBusMixin
+	],
 	methods: {
-		addGeoJson(geojson, title = "GeoJSON") {
+		addGeoJson(geojson, selectable = false, title = "GeoJSON") {
 			let source;
 			if (geojson instanceof VectorSource) {
 				source = geojson;
@@ -24,7 +30,29 @@ export default {
 			if (!extentIsEmpty(extent)) {
 				this.map.getView().fit(extent, this.getFitOptions());
 			}
+
+			if (selectable) {
+				var select = new Select({
+					hitTolerance: 5,
+					multi: false,
+					condition: singleClick,
+					layers: [
+						layer
+					]
+				});
+				select.on('select', this.onSelect);
+				this.map.addInteraction(select);
+			}
+
 			return layer;
+		},
+		onSelect(event) {
+			if (event.selected.length > 0) {
+				let feature = event.selected[0];
+				let props = Utils.omitFromObject(feature.getProperties(), ['geometry']);
+				let title = feature.getId() || "Feature Properties";
+				this.emit('showDataModal', props, title);
+			}
 		},
 		createGeoJsonSource(geojson, projection = undefined) {
 			let features = [];

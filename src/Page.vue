@@ -31,6 +31,7 @@ export default {
 		ConnectForm,
 		IDE: () => import('./components/IDE.vue'),
 		CollectionModal: () => import('./components/modals/CollectionModal.vue'),
+		DataModal: () => import('./components/modals/DataModal.vue'),
 		DownloadAssetsModal: () => import('./components/modals/DownloadAssetsModal.vue'),
 		ErrorModal: () => import('./components/modals/ErrorModal.vue'),
 		ExportCodeModal: () => import('./components/modals/ExportCodeModal.vue'),
@@ -85,6 +86,7 @@ export default {
 	},
 	mounted() {
 		this.listen('showError', this.showError);
+		this.listen('showDataModal', this.showData);
 		this.listen('showModal', this.showModal);
 		this.listen('showListModal', this.showListModal);
 		this.listen('showCollection', this.showCollection);
@@ -165,11 +167,11 @@ export default {
 				process: await this.loadProcess(process)
 			});
 		},
+		async showData(data, title) {
+			this.showModal('DataModal', {data, title});
+		},
 		showProcessParameter(parameter, udp = true) {
-			this.showModal('ProcessParameterModal', {
-				parameter,
-				udp
-			});
+			this.showModal('ProcessParameterModal', {parameter,udp});
 		}
 	}
 }

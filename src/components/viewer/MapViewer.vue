@@ -87,7 +87,7 @@ export default {
 				}
 
 				if (this.isGeoJson) {
-					this.addGeoJson(await this.data.getData(this.connection));
+					this.addGeoJson(await this.data.getData(this.connection), true);
 				}
 				else if (this.isGeoTiff) {
 					this.addGeoTiff(this.data);
