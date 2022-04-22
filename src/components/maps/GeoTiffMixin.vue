@@ -15,10 +15,9 @@ export default {
 	data() {
 		return {
 			textControlText: 'Pixel Value: -',
-			textControlTooltip: null,
 			glTileLayer: null,
 			channels: [],
-			nodata: null,
+			nodata: undefined,
 			bands: [],
 			hasStyle: false
 		}
@@ -35,7 +34,7 @@ export default {
 				vars[`${i}min`] = channel.min;
 				vars[`${i}max`] = channel.max;
 			}
-			vars[`nodata`] = this.nodata;
+			// vars[`nodata`] = this.nodata;
 			return vars;
 		},
 		glStyle() {
@@ -72,8 +71,6 @@ export default {
 			return ['*', ['/', ['-', x, min], ['-', max, min]], 255]; // Linear scaling from min - max to 0 - 255
 		},
 		async addGeoTiff(data, title = "GeoTiff", context = null) {
-			// ToDos:
-			// - Pass in overviews
 			this.bands = [];
 			this.nodata = Utils.parseNodata(data['file:nodata']);
 			if (Array.isArray(data['eo:bands']) && data['eo:bands'].length > 0) {
@@ -104,7 +101,7 @@ export default {
 			let options = {
 				normalize: false,
 				convertToRGB: true,
-				nodata: this.nodata,
+				// nodata: this.nodata,
 				url: data.getUrl()
 			};
 			// Create source and automatically derive view from it
@@ -141,8 +138,8 @@ export default {
 				pointermove: evt => {
 					let data = this.glTileLayer.getData(evt.pixel);
 					let value = Utils.displayRGBA(data);
-					this.textControlText = `Pixel Value: ${value}`;
-					this.textControlTooltip = `Coordinate: ${evt.coordinate.join(', ')}`;
+					let valueText = `Pixel Value: ${value}`;
+					this.textControlText = [valueText, `${valueText} @ ${evt.coordinate.map(x => String(x.toFixed(6)).replace(/0+$/, '')).join(', ')}`];
 				}
 			});
 

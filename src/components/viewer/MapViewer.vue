@@ -1,7 +1,7 @@
 <template>
 	<div :id="id" class="map-viewer">
 		<ProgressControl ref="progress" :map="map" />
-		<TextControl v-if="textControlText" :text="textControlText" :tooltip="textControlTooltip" />
+		<TextControl v-if="textControlText" :text="textControlText" />
 		<ChannelControl v-if="isGeoTiff" :bands="bands" :nodata="nodata" @update="updateGeoTiffStyle" />
 		<div v-if="loading" class="map-loading">
 			<i class="fas fa-spinner fa-spin"></i>
