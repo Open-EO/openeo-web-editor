@@ -35,7 +35,7 @@
 		<!-- Bounding Box -->
 		<MapAreaSelect v-else-if="type === 'bounding-box'" v-model="state" :key="type" :editable="editable" class="areaSelector"></MapAreaSelect>
 		<!-- GeoJSON -->
-		<MapGeoJsonEditor v-else-if="type === 'geojson'" v-model="state" :key="type" :editable="editable" class="geoJsonEditor"></MapGeoJsonEditor>
+		<GeoJsonEditor v-else-if="type === 'geojson'" v-model="state" :key="type" :editable="editable" class="geoJsonEditor"></GeoJsonEditor>
 		<!-- Process Editor -->
 		<Editor v-else-if="type === 'process-graph'" class="callbackEditor" :editable="editable" :parent="parent" :parentSchema="schema" :showDiscoveryToolbar="true" v-model="state" :defaultValue="editorDefaultValue" />
 		<!-- Output format options -->
@@ -73,7 +73,7 @@ import EventBusMixin from './EventBusMixin.vue';
 import ObjectEditor from './datatypes/ObjectEditor.vue';
 import Budget from './datatypes/Budget.vue';
 import MapAreaSelect from './datatypes/MapAreaSelect.vue';
-import MapGeoJsonEditor from './datatypes/MapGeoJsonEditor.vue';
+import GeoJsonEditor from './datatypes/GeoJsonEditor.vue';
 import TextEditor from './TextEditor.vue';
 
 import Utils from '../utils.js';
@@ -85,7 +85,7 @@ export default {
 		ObjectEditor,
 		Budget,
 		MapAreaSelect,
-		MapGeoJsonEditor,
+		GeoJsonEditor,
 		TextEditor,
 		// Asynchronously load the following components to avoid circular references.
 		// See https://vuejs.org/v2/guide/components-edge-cases.html#Circular-References-Between-Components

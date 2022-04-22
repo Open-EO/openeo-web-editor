@@ -1,5 +1,5 @@
 <template>
-	<div :id="id">
+	<div :id="id" class="geojson-map-editor">
 		<ProgressControl ref="progress" :map="map" />
 	</div>
 </template>
@@ -21,7 +21,7 @@ import EditBar from 'ol-ext/control/EditBar';
 import UndoRedo from 'ol-ext/interaction/UndoRedo';
 
 export default {
-	name: 'MapGeoJsonEditor',
+	name: 'GeoJsonMapEditor',
 	mixins: [MapMixin, GeoJsonMixin],
 	props: {
 		value: {
@@ -154,3 +154,9 @@ export default {
 </script>
 
 <style src="../maps/MapMixin.css"></style>
+
+<style lang="scss">
+.geojson-map-editor {
+	height: 100%;
+}
+</style>

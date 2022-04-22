@@ -131,25 +131,6 @@ export default {
 
 <style lang="scss">
 .editor {
-	.sourceHeader {
-		padding: 5px;
-		border-bottom: 1px solid #ddd;
-		display: flex;
-		justify-content: flex-end;
-		background-color: #fff;
-
-		strong {
-			display: block;
-			margin: auto 0;
-			flex-grow: 1;
-		}
-	}
-	.sourceToolbar {
-		text-align: right;
-	}
-	.textEditorTab.textEditor {
-		border: 0;
-	}
 	&.vue-component.tabs.boxed > .tabsBody > .tabContent {
 		overflow: hidden;
 	}
