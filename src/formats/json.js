@@ -1,4 +1,4 @@
-import { Utils } from '@openeo/js-commons';
+import Utils from '../utils';
 import { SupportedFormat } from './format';
 
 class JSON_ extends SupportedFormat {
