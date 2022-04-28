@@ -5,12 +5,8 @@ import GeoTIFFSource from 'ol/source/GeoTIFF';
 class GeoTIFF extends SupportedFormat {
 
 	constructor(asset) {
-		super(asset, "MapViewer", {removableLayers: true});
+		super(asset, "MapViewer", 'fa-map', {removableLayers: true});
 		this.view = null;
-	}
-
-	getIcon() {
-		return 'fa-map';
 	}
 
 	isBinary() {

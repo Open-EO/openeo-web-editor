@@ -3,11 +3,7 @@ import { SupportedFormat } from './format';
 class BrowserImage extends SupportedFormat {
 
 	constructor(asset) {
-		super(asset, "ImageViewer");
-	}
-
-	getIcon() {
-		return 'fa-image';
+		super(asset, 'ImageViewer', 'fa-image');
 	}
 
 	isBinary() {
@@ -16,7 +12,7 @@ class BrowserImage extends SupportedFormat {
 
 	async fetchData() {
 		let img = new Image();
-		img.crossOrigin = "anonymous";
+		img.crossOrigin = 'anonymous';
 		img.src = this.getUrl();
 		return img;
 	}

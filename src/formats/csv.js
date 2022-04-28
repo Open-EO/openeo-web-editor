@@ -3,12 +3,8 @@ import { SupportedFormat } from './format';
 class CSV extends SupportedFormat {
 
 	constructor(asset, delim = [',', ';']) {
-		super(asset, "TableViewer");
+		super(asset, 'TableViewer', 'fa-table');
 		this.delim = delim;
-	}
-
-	getIcon() {
-		return 'fa-table';
 	}
 
 	async parseData(data) {

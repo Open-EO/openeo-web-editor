@@ -13,7 +13,7 @@
 <script>
 import Utils from '../../utils.js';
 import GeoTIFF from '../../formats/geotiff';
-import GeoJSON from '../../formats/geojson';
+import JSON_ from '../../formats/json';
 
 import GeoJsonMixin from '../maps/GeoJsonMixin.vue';
 import GeoTiffMixin from '../maps/GeoTiffMixin.vue';
@@ -48,7 +48,7 @@ export default {
 			return this.data instanceof GeoTIFF;
 		},
 		isGeoJson() {
-			return this.data instanceof GeoJSON;
+			return this.data instanceof JSON_ && this.data.isGeoJson;
 		}
 	},
 	methods: {
