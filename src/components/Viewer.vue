@@ -184,7 +184,7 @@ export default {
 					}
 					await file.getData(this.connection);
 					this.$refs.tabs.addTab(
-						title, file.getIcon(), file, id, true, true,
+						title, file.icon, file, id, true, true,
 						tab => this.onShow(tab),
 						tab => this.onHide(tab)
 					);

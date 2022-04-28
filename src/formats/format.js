@@ -81,7 +81,7 @@ export class Format {
 
 export class SupportedFormat extends Format {
 
-	constructor(asset, component = null, props = {}, events = {}) {
+	constructor(asset, component = null, icon = 'fa-database', props = {}, events = {}) {
 		super(asset);
 		this.loaded = false;
 		this.component = component;
@@ -89,15 +89,12 @@ export class SupportedFormat extends Format {
 		if (!this.props.data) {
 			this.props.data = this;
 		}
+		this.icon = icon;
 		this.events = events;
 	}
 
 	isBinary() {
 		return false;
-	}
-
-	getIcon() {
-		return 'fa-database';
 	}
 
 }

@@ -2,7 +2,6 @@ import contentType from 'content-type';
 
 import BrowserImage from '../formats/browserImage';
 import CSV from '../formats/csv';
-import GeoJSON from '../formats/geojson';
 import GeoTIFF from '../formats/geotiff';
 import JSON_ from '../formats/json';
 import NativeType from './native';
@@ -50,9 +49,8 @@ export default class FormatRegistry {
 					return new BrowserImage(asset);
 				case 'application/json':
 				case 'text/json':
-					return new JSON_(asset);
 				case 'application/geo+json':
-					return new GeoJSON(asset);
+					return new JSON_(asset);
 				case 'text/plain':
 					return new NativeType(asset);
 				case 'text/csv':
@@ -60,8 +58,6 @@ export default class FormatRegistry {
 				case 'text/tab-separated-values':
 					return new TSV(asset);
 				case 'image/tiff':
-					// We should check for the following, but not all back-ends send correct headers...
-					// if (mime.parameters.application === 'geotiff') { ... }
 					return new GeoTIFF(asset);
 			}
 		} catch (error) {
