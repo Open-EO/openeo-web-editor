@@ -13,16 +13,16 @@ class JSON_ extends SupportedFormat {
 	async parseData(data) {
 		if (typeof data === 'string') {
 			try {
-				let json = JSON.parse(data);
-				if (Utils.detectGeoJson(json)) {
-					this.isGeoJson = true;
-					this.component = 'MapViewer';
-					this.icon = 'fa-map';
-				}
+				data = JSON.parse(data);
 			}
 			catch (error) {
 				console.log(error);
 			}
+		}
+		if (Utils.detectGeoJson(data)) {
+			this.isGeoJson = true;
+			this.component = 'MapViewer';
+			this.icon = 'fa-map';
 		}
 		return data;
 	}
