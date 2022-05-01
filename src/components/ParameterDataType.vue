@@ -233,7 +233,7 @@ export default {
 				this.state = this.value;
 			}
 		},
-		async newValue(newVal) {
+		newValue(newVal) {
 			this.$emit('input', newVal);
 		}
 	},

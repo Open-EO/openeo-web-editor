@@ -40,6 +40,12 @@ const TYPE_GROUPS = [
 	'UDF',
 	'Other',
 ];
+const cloneDefault = value => {
+	if (value && typeof value === 'object') {
+		return Utils.deepClone(value);
+	}
+	return value;
+};
 const now = () => new Date().toISOString().replace(/\.\d+/, '');
 const SUPPORTED_TYPES = [
 		// Native types
@@ -134,7 +140,7 @@ export default {
 	},
 	data() {
 		return {
-			state: typeof this.value === 'undefined' ? this.parameter.default : this.value,
+			state: typeof this.value === 'undefined' ? cloneDefault(this.parameter.default) : this.value,
 			selectedType: null,
 			selectedNativeType: null,
 			selectedSchema: null,
@@ -264,8 +270,11 @@ export default {
 				this.state = value;
 			}
 		},
-		state(value) {
-			this.$emit('input', value);
+		state: {
+			deep: true,
+			handler(value) {
+				this.$emit('input', value);
+			}
 		},
 		selectedType(type) {
 			this.$emit('schemaSelected', this.supportedTypes[type]);
@@ -397,7 +406,7 @@ export default {
 				}
 				// Set value from default value
 				else {
-					let defaultValue = this.selectedSchema.default();
+					let defaultValue = cloneDefault(this.selectedSchema.default());
 					try {
 						if (typeof this.state === 'undefined' || await this.isValueInvalid(this.state, this.selectedSchema)) {
 							this.state = defaultValue;
