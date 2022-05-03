@@ -36,7 +36,12 @@ export default {
 	},
 	async created() {
 		this.img = await this.data.getData();
-		this.img.onload = this.imageLoaded.bind(this);
+		if (this.img.complete) {
+			this.imageLoaded();
+		}
+		else {
+			this.img.onload = this.imageLoaded.bind(this);
+		}
 	},
 	computed: {
 		title() {
