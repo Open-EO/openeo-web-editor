@@ -40,6 +40,11 @@ Vue.config.errorHandler = function (err, vm, info) {
 	}
 };
 
+window.addEventListener("unhandledrejection", function(event) {
+	console.error(event.reason);
+	vm.$snotify.singleError(event.reason, 'Error', Config.snotifyDefaults);
+});
+
 Vue.prototype.$config = Config;
 
 for(var name in filters) {
