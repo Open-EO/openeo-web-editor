@@ -109,8 +109,12 @@ export default {
 			let view = await geotiff.getView();
 
 			if (this.bands.length === 0) {
-				this.bands = Utils.range(1, geotiff.bandCount - 1) // -1 => don't take alpha band into consideration
+				this.bands = Utils.range(1, geotiff.bandCount)
 					.map(id => ({ id, min: null, max: null }));
+				// Remove the alpha band if present at the end
+				if (geotiff.addAlpha_) {
+					this.bands.pop();
+				}
 			}
 
 			// Load projection from GeoTiff / database

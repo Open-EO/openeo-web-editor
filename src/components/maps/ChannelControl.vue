@@ -65,6 +65,11 @@ export default {
 			immediate: true,
 			handler() {
 				this.channels = this.bands.slice(0,3).map(band => Object.assign({}, band));
+				// If only two channels are available, add a third one so that we have enough for RGB
+				// If we only have one channel it is grayscale
+				if (this.channels.length === 2) {
+					this.channels.push(Object.assign({}, this.channels[1]));
+				}
 			}
 		},
 		channels: {
