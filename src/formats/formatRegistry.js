@@ -37,29 +37,58 @@ export default class FormatRegistry {
 	}
 
 	createFileFromAsset(asset, stac) {
-		let type = typeof asset.type === 'string' ? asset.type : 'application/octet-stream';
 		try {
-			let mime = contentType.parse(type.toLowerCase());
-			switch(mime.type) {
-				case 'image/png':
-				case 'image/jpg':
-				case 'image/jpeg':
-				case 'image/gif':
-				case 'image/webp':
-					return new BrowserImage(asset);
-				case 'application/json':
-				case 'text/json':
-				case 'application/geo+json':
-					return new JSON_(asset);
-				case 'text/plain':
-					return new NativeType(asset);
-				case 'text/csv':
-					return new CSV(asset);
-				case 'text/tab-separated-values':
-					return new TSV(asset);
-				case 'image/tiff':
-					return new GeoTIFF(asset);
+
+			// Detect by media type
+			if (typeof asset.type === 'string') {
+				let mime = contentType.parse(asset.type.toLowerCase());
+				switch(mime.type) {
+					case 'image/png':
+					case 'image/jpg':
+					case 'image/jpeg':
+					case 'image/gif':
+					case 'image/webp':
+						return new BrowserImage(asset);
+					case 'application/json':
+					case 'text/json':
+					case 'application/geo+json':
+						return new JSON_(asset);
+					case 'text/plain':
+						return new NativeType(asset);
+					case 'text/csv':
+						return new CSV(asset);
+					case 'text/tab-separated-values':
+						return new TSV(asset);
+					case 'image/tiff':
+						return new GeoTIFF(asset);
+				}
 			}
+			
+			// Fallback: Detect by file extension
+			if (typeof asset.href === 'string') {
+				let extension = asset.href.split(/[#?]/)[0].split('.').pop().trim().toLowerCase();
+				switch(extension) {
+					case 'png':
+					case 'jpg':
+					case 'jpeg':
+					case 'gif':
+					case 'webp':
+						return new BrowserImage(asset);
+					case 'json':
+					case 'geojson':
+						return new JSON_(asset);
+					case 'txt':
+						return new NativeType(asset);
+					case 'csv':
+						return new CSV(asset);
+					case 'tsv':
+						return new TSV(asset);
+					case 'tif':
+					case 'tiff':
+						return new GeoTIFF(asset);
+				}
+			}
+
 		} catch (error) {
 			console.log(error);
 		}
