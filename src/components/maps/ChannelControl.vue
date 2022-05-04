@@ -13,7 +13,7 @@
 				<tr v-for="(channel, i) in channels" :key="i">
 					<th v-if="!isGray">{{ labels[i] }}</th>
 					<td v-if="!isGray">
-						<select v-model="channel.id">
+						<select v-model.number="channel.id">
 							<option v-for="band in bands" :key="band.id" :value="band.id">{{ band.name || band.id }}</option>
 						</select>
 					</td>

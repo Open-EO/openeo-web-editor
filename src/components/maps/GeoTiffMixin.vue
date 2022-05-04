@@ -19,7 +19,8 @@ export default {
 			channels: [],
 			nodata: undefined,
 			bands: [],
-			hasStyle: false
+			hasStyle: false,
+			hasAlphaBand: false
 		}
 	},
 	computed: {
@@ -30,7 +31,7 @@ export default {
 			let vars = {};
 			for(let i in this.channels) {
 				let channel = this.channels[i];
-				vars[String(i)] = channel.id;
+				vars[`${i}band`] = channel.id;
 				vars[`${i}min`] = channel.min;
 				vars[`${i}max`] = channel.max;
 			}
@@ -42,28 +43,30 @@ export default {
 			if (this.channels.length === 0) {
 				return null;
 			}
-			if (this.channels.length >= 3) {
+			if (this.channels.length > 1) {
 				color.push(this.getFormula(0));
 				color.push(this.getFormula(1));
 				color.push(this.getFormula(2));
-				color.push(['*', ['band', this.bands.length + 1], 255]);
+				if (this.hasAlphaBand) {
+					color.push(['*', ['band', this.bands.length + 1], 255]);
+				}
 			}
 			else {
 				let formula = this.getFormula(0);
 				color.push(formula);
 				color.push(formula);
 				color.push(formula);
-				color.push(['*', ['band', this.bands.length + 1], 255]);
-				// color.push(['match', ['var', 'nodata'], ['band', 1], 0, 1]);
+				if (this.hasAlphaBand) {
+					color.push(['*', ['band', this.bands.length + 1], 255]);
+				}
 			}
 			return {variables: this.glStyleVars, color};
 		}
 	},
 	methods: {
 		getBandVar(i) {
-			return ['band', ['var', String(i)]];
+			return ['band', ['var', `${i}band`]];
 		},
-
 		getFormula(i) {
 			let min = ['var', `${i}min`];
 			let max = ['var', `${i}max`];
@@ -100,19 +103,24 @@ export default {
 			// Set options for GeoTIFF source
 			let options = {
 				normalize: false,
-				convertToRGB: true,
-				// nodata: this.nodata,
-				url: data.getUrl()
+				// convertToRGB: true,
+				sources: [
+					{
+						url: data.getUrl(),
+						// nodata: this.nodata,
+					}
+				]
 			};
 			// Create source and automatically derive view from it
-			let geotiff = new GeoTIFF({ sources: [options] });
+			let geotiff = new GeoTIFF(options);
 			let view = await geotiff.getView();
+			this.hasAlphaBand = geotiff.addAlpha_;
 
 			if (this.bands.length === 0) {
 				this.bands = Utils.range(1, geotiff.bandCount)
 					.map(id => ({ id, min: null, max: null }));
 				// Remove the alpha band if present at the end
-				if (geotiff.addAlpha_) {
+				if (this.hasAlphaBand) {
 					this.bands.pop();
 				}
 			}
