@@ -146,7 +146,7 @@ export default {
 		},
 		showJobResults(stac, job) {
 			let files = this.registry.createFilesFromSTAC(stac, job);
-			this.showViewer(files);
+			this.showViewer(files, Utils.getResourceTitle(job, true));
 		},
 		showMapViewer(resource, id = null, title = null, reUseExistingTab = false) {
 			if (!title) {

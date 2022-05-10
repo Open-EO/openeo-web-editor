@@ -27,6 +27,11 @@ export default class FormatRegistry {
 			throw new Error("Given data is not a valid Blob");
 		}
 		return this.createFilesFromSTAC({
+			stac_version: "1.0.0",
+			type: "Feature",
+			geometry: null,
+			properties: {},
+			links: [],
 			assets: {
 				result: {
 					href: URL.createObjectURL(data),
@@ -60,7 +65,7 @@ export default class FormatRegistry {
 					case 'text/tab-separated-values':
 						return new TSV(asset);
 					case 'image/tiff':
-						return new GeoTIFF(asset);
+						return new GeoTIFF(asset, stac);
 				}
 			}
 			
@@ -85,7 +90,7 @@ export default class FormatRegistry {
 						return new TSV(asset);
 					case 'tif':
 					case 'tiff':
-						return new GeoTIFF(asset);
+						return new GeoTIFF(asset, stac);
 				}
 			}
 

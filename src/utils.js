@@ -27,7 +27,7 @@ class Utils extends VueUtils {
 		return typeof value === "string" && value.toLowerCase() === "nan" ? Number.NaN : value;
 	}
 
-	static displayRGBA(value, min = null, max = null, nodata = null, precision = null) {
+	static displayRGBA(value, min = null, max = null, nodata = [NaN, null], precision = null) {
 		let NA = 'no data';
 		if (typeof value === 'undefined' || value === null) {
 			return NA;
@@ -36,7 +36,6 @@ class Utils extends VueUtils {
 		if (rgba.length === 0) {
 			return '-';
 		}
-		let a = rgba.pop();
 		if (Number.isFinite(min) && Number.isFinite(max) && min !== 0 && max !== 255) {
 			rgba = rgba.map(x => {
 				// Linear scaling to original range
@@ -48,32 +47,28 @@ class Utils extends VueUtils {
 				return x;
 			});
 		}
-		let r, g, b;
+		let r, g, b, a;
 		if (rgba.length >= 3) {
-			[r,g,b] = rgba;
+			[r, g, b, a] = rgba;
 		}
-		else if (rgba.length === 1) {
+		else if (rgba.length >= 1) {
 			r = g = b = rgba[0];
+			a = rgba[1];
 		}
 		else {
-			r = g = b = nodata;
-		}
-		if (a === 0 || r === nodata || g === nodata || b === nodata) {
-			// Transparent (no-data)
 			return NA;
 		}
-		else if (r == g && g === b) {
-			if (a === 255) {
-				// Grayscale
-				return r;
-			}
-			else {
-				// Grayscale with Alpha
-				return `${r}, Alpha: ${a}`;
-			}
+		// Transparent (no-data)
+		if (a === 0 || nodata.includes(r) || nodata.includes(g) || nodata.includes(b)) {
+			return NA;
 		}
+		// Grayscale
+		else if (r == g && g === b) {
+			return r;
+		}
+		// RGB
 		else {
-			return `Red: ${r}, Green: ${g}, Blue: ${b}, Alpha: ${a}`;
+			return `Red: ${r}, Green: ${g}, Blue: ${b}`;
 		}
 	}
 
@@ -354,7 +349,7 @@ class Utils extends VueUtils {
 			title = '#' + title;
 		}
 		else {
-			title = "Unnamed";
+			title = 'Unnamed';
 		}
 		if (showType) {
 			let type;
@@ -373,8 +368,8 @@ class Utils extends VueUtils {
 			else if (obj instanceof UserFile) {
 				type = 'File';
 			}
-			else if (isObj && typeof obj.stac_version === 'string') {
-				type = 'Collection';
+			else if (isObj && typeof obj.stac_version === 'string' && obj.type === 'Collection') {
+				type = obj.type;
 			}
 
 			if (type) {

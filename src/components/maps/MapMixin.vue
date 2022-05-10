@@ -2,14 +2,13 @@
 import EventBusMixin from '../EventBusMixin.vue';
 import Utils from '../../utils.js';
 
-import proj4 from 'proj4';
 import 'ol/ol.css';
 import { defaults as defaultControls, FullScreen, ScaleLine } from 'ol/control';
 import Map from 'ol/Map';
 import View from 'ol/View';
-import { fromLonLat, get as getProjection } from 'ol/proj';
+import { fromLonLat } from 'ol/proj';
 import Projection from 'ol/proj/Projection';
-import { register } from 'ol/proj/proj4';
+import ProjManager from './projManager';
 import TileLayer from 'ol/layer/Tile';
 import XYZ from 'ol/source/XYZ';
 
@@ -68,11 +67,11 @@ export default {
 			let viewOpts = {
 				showFullExtent: true
 			};
-			if (typeof opts === 'string') { // A projection
-				let projection = await this.loadProjection(opts);
-				if (projection) {
-					viewOpts.projection = projection;
-				}
+			if (typeof opts === 'string') { // A projection code
+				viewOpts.projection = await ProjManager.get(opts);
+			}
+			else if (opts instanceof Projection) {
+				viewOpts.projection = opts;
 			}
 			else if (opts instanceof View) {
 				view = opts;
@@ -242,49 +241,6 @@ export default {
 			return source;
 		},
 
-		async loadProjection(crs) {
-			if (crs instanceof Projection) {
-				return crs;
-			}
-			let code, id;
-			if (typeof crs === 'string' && crs.match(/^EPSG:\d+$/i)) {
-				code = crs.toUpperCase();
-				id = crs.substr(5);
-			}
-			else if (Number.isInteger(crs)) {
-				code = `EPSG:${crs}`
-				id = String(crs);
-			}
-			else {
-				return null;
-			}
-
-			// Get projection from cache
-			let projection = getProjection(code);
-			if (projection) {
-				return projection;
-			}
-
-			// Get projection from database
-			let proj = await import('../../assets/epsg-proj.json');
-			if (id in proj) {
-				return this.addProjection(code, proj[id]);
-			}
-
-			// No projection found
-			return null;
-		},
-
-		addProjection(code, meta) {
-			try {
-				proj4.defs(code, meta);
-				register(proj4);
-				return getProjection(code);
-			} catch (error) {
-				console.error(error);
-				return null;
-			}
-		},
 		fromLonLat(coords) {
 			return fromLonLat(coords, this.map.getView().getProjection());
 		}

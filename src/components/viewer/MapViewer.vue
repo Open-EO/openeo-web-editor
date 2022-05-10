@@ -2,7 +2,7 @@
 	<div :id="id" class="map-viewer">
 		<ProgressControl ref="progress" :map="map" />
 		<TextControl v-if="textControlText" :text="textControlText" />
-		<ChannelControl v-if="isGeoTiff" :bands="bands" :nodata="nodata" @update="updateGeoTiffStyle" />
+		<ChannelControl v-if="isGeoTiff" :bands="bands" @update="updateGeoTiffStyle" />
 		<div v-if="loading" class="map-loading">
 			<i class="fas fa-spinner fa-spin"></i>
 			<span>Loading map...</span>
@@ -15,7 +15,7 @@ import Utils from '../../utils.js';
 import GeoTIFF from '../../formats/geotiff';
 import JSON_ from '../../formats/json';
 
-import GeoJsonMixin from '../maps/GeoJsonMixin.vue';
+import ExtentMixin from '../maps/ExtentMixin.vue';
 import GeoTiffMixin from '../maps/GeoTiffMixin.vue';
 import MapMixin from '../maps/MapMixin.vue';
 import WebServiceMixin from '../maps/WebServiceMixin.vue';
@@ -24,13 +24,12 @@ import { Service } from '@openeo/js-client';
 
 import Feature from 'ol/Feature';
 import { fromExtent as PolygonFromExtent } from 'ol/geom/Polygon';
-import { isEmpty as extentIsEmpty } from 'ol/extent';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 
 export default {
 	name: 'MapViewer',
-	mixins: [GeoJsonMixin, GeoTiffMixin, MapMixin, WebServiceMixin],
+	mixins: [ExtentMixin, GeoTiffMixin, MapMixin, WebServiceMixin],
 	props: {
 		data: {}
 	},
@@ -55,25 +54,21 @@ export default {
 		async renderMap() {
 			try {
 				let view;
-				let addBasemap = true;
-				let fit = null;
+				let data;
 				if (this.isGeoJson) {
-					// No preparation needed
+					data = await this.data.getData(this.connection);
 				}
 				else if (this.isGeoTiff) {
-					await this.data.getData(this.connection);
-					view = this.data.getView();
-					addBasemap = view.projection && ['EPSG:3857', 'EPSG:4326'].includes(view.projection.getCode());
-					if (!extentIsEmpty(view.extent) && addBasemap) {
-						fit = view.extent;
-						view = view.projection.getCode();
+					data = await this.data.getData(this.connection);
+					let projection = data.getProjection();
+					if (projection) {
+						view = projection;
 					}
 				}
 				else if (this.isWebService && Utils.isMapServiceSupported(this.data.type)) {
 					if (this.data.type.toLowerCase() === 'wmts') {
 						let capabilities = await this.initWMTSLayer(this.data);
-						// ToDo: This assumes Web Mercator is always available, better check the capabilities...
-						view = 'EPSG:3857';
+						// ToDo: Right now we assume Web Mercator is always available, better check the capabilities...
 					}
 				}
 				else {
@@ -82,22 +77,24 @@ export default {
 
 				await this.createMap(view);
 				this.addLayerSwitcher();
-				if (addBasemap) {
-					this.addBasemaps();
-				}
 
 				if (this.isGeoJson) {
-					this.addGeoJson(await this.data.getData(this.connection), true);
+					this.addBasemaps();
+					this.addGeoJson(data, true);
 				}
 				else if (this.isGeoTiff) {
-					this.addGeoTiff(this.data);
+					if (['EPSG:3857', 'EPSG:4326'].includes(this.map.getView().getProjection().getCode())) {
+						this.addBasemaps();
+					}
+					this.addGeoTiff(data);
+					let stac = this.data.getContext();
+					if (stac) {
+						this.addExtent(stac);
+					}
 				}
 				else if (this.isWebService && Utils.isMapServiceSupported(this.data.type)) {
+					this.addBasemaps();
 					this.addWebService(this.data);
-				}
-
-				if (fit) {
-					this.map.getView().fit(fit, this.getFitOptions(5));
 				}
 
 				if (this.$listeners && this.$listeners.drop) {

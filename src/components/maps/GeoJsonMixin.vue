@@ -54,7 +54,7 @@ export default {
 				this.emit('showDataModal', props, title);
 			}
 		},
-		createGeoJsonSource(geojson, projection = undefined) {
+		createGeoJsonSource(geojson, projection) {
 			let features = [];
 			if (Utils.detectGeoJson(geojson)) {
 				features = (new GeoJSON()).readFeatures(geojson, { featureProjection: projection })

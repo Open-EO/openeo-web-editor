@@ -1,5 +1,5 @@
 <template>
-	<div class="ol-unselectable ol-control channels">
+	<div v-show="channels.length > 0" class="ol-unselectable ol-control channels">
 		<table>
 			<thead>
 				<tr>
@@ -22,13 +22,6 @@
 				</tr>
 			</tbody>
 		</table>
-		<!--
-		<hr />
-		<div class="nodata-container">
-			<label for="nodata">Nodata</label>
-			<input type="text" placeholder="Default" id="nodata" :value="nodata" @input="setNodata($event.target.value)" />
-		</div>
-		-->
 	</div>
 </template>
 
@@ -44,12 +37,11 @@ export default {
 		bands: {
 			type: Array,
 			default: () => []
-		},
-		nodata: {}
+		}
 	},
 	computed: {
 		isGray() {
-			return this.bands.length <= 1;
+			return this.bands.length === 1;
 		},
 		labels() {
 			return this.isGray ? ['Grayscale'] : ['Red', 'Green', 'Blue'];
@@ -84,44 +76,12 @@ export default {
 	methods: {
 		isValid(value) {
 			return (typeof value === 'number');
-		},
-		setNodata(value) {
-			if (typeof value !== 'string' || value.trim().length === 0) {
-				value = undefined;
-			}
-			else if (value.toLowerCase() === "nan") {
-				value = Number.NaN;
-			}
-			else {
-				value = Number.parseFloat(value);
-				if (Number.isNaN(value)) {
-					value = undefined;
-				}
-			}
-			this.$emit('update', 'nodata', value);
 		}
 	}
 }
 </script>
 
 <style lang="scss">
-.nodata-container {
-	display: flex;
-	padding: 4px;
-
-	hr {
-		margin: 4px;
-	}
-
-	label {
-		margin-right: 0.5em;
-		flex-grow: 1;
-		font-weight: bold;
-	}
-	input {
-		flex-grow: 1;
-	}
-}
 .ol-control.channels {
 	bottom: calc(22px + 1em);
     right: 8px;
