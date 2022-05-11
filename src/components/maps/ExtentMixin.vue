@@ -13,7 +13,7 @@ export default {
 		// data can be:
 		// bbox: Array of Array (west, south, east, north - WGS84) or STAC Collection
 		// geometry: GeoJSON Object (WGS84) or STAC Item
-		async addExtent(data) {
+		async addExtent(data, fill = true) {
 			let footprint = null;
 			if (Utils.isObject(data)) {
 				if (data.type === 'Collection') {
@@ -31,14 +31,14 @@ export default {
 			}
 
 			if (Array.isArray(footprint) && footprint.length > 0) {
-				this.addRectangles(footprint);
+				this.addRectangles(footprint, fill);
 			}
 			else if (footprint) {
-				this.addGeoJson(footprint, false, "Footprint");
+				this.addGeoJson(footprint, false, "Footprint", fill);
 			}
 		},
 
-		addRectangles(rectangles) {
+		addRectangles(rectangles, fill = true) {
 			let mapProj = this.map.getView().getProjection();
 			let features = rectangles.map(bbox => {
 				let polygon = PolygonFromExtent([bbox.west, bbox.south, bbox.east, bbox.north]).transform("EPSG:4326", mapProj);
@@ -54,10 +54,23 @@ export default {
 				displayInLayerSwitcher: false,
 				source
 			});
+			if (!fill) {
+				this.removeLayerFill(layer);
+			}
 			this.map.addLayer(layer);
-			this.map.getView().fit(source.getExtent(), this.getFitOptions());
 			// ToDo: The Collection component has some smart fitting behavior in setMapSize()
 			// Implement something similar here, too.
+			this.map.getView().fit(source.getExtent(), this.getFitOptions());
+			return layer;
+		},
+
+		removeLayerFill(layer) {
+			let style = layer.getStyle();
+			// https://github.com/openlayers/openlayers/issues/10131
+			if (typeof style === 'function') {
+				style = style()[0];
+			}
+			style.setFill(null);
 		}
 
 	}

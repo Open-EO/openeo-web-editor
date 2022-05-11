@@ -24,51 +24,40 @@ class Utils extends VueUtils {
 	}
 
 	static parseNodata(value) {
-		return typeof value === "string" && value.toLowerCase() === "nan" ? Number.NaN : value;
+		if (Array.isArray(value)) {
+			return value.map(nodata => Utils.parseNodata(nodata));
+		}
+		else {
+			return typeof value === "string" && value.toLowerCase() === "nan" ? Number.NaN : value;
+		}
 	}
 
-	static displayRGBA(value, min = null, max = null, nodata = [NaN, null], precision = null) {
+	static displayRGBA(data, nodata = [NaN, null], hasAlpha = true) {
 		let NA = 'no data';
-		if (typeof value === 'undefined' || value === null) {
+		if (typeof data === 'undefined' || data === null) {
 			return NA;
 		}
-		let rgba = Array.from(value);
-		if (rgba.length === 0) {
+		let values = Array.from(data).map(v => parseFloat(v.toFixed(6)));
+		if (values.length === 0) {
 			return '-';
 		}
-		if (Number.isFinite(min) && Number.isFinite(max) && min !== 0 && max !== 255) {
-			rgba = rgba.map(x => {
-				// Linear scaling to original range
-				x = (x / 255) * (max - min) + min;
-				// Round values
-				if (precision !== null) {
-					x = x.toFixed(precision);
-				}
-				return x;
-			});
+
+		let a = 1;
+		if (hasAlpha && data.length > 1) {
+			a = values.pop();
 		}
-		let r, g, b, a;
-		if (rgba.length >= 3) {
-			[r, g, b, a] = rgba;
-		}
-		else if (rgba.length >= 1) {
-			r = g = b = rgba[0];
-			a = rgba[1];
-		}
-		else {
-			return NA;
-		}
+
 		// Transparent (no-data)
-		if (a === 0 || nodata.includes(r) || nodata.includes(g) || nodata.includes(b)) {
+		if (a === 0 || values.find(v => nodata.includes(v)) !== undefined) {
 			return NA;
 		}
-		// Grayscale
-		else if (r == g && g === b) {
-			return r;
+		// Grayscale (all values are the same)
+		else if (values.every(v => v === values[0])) {
+			return values[0];
 		}
-		// RGB
+		// RGB and others
 		else {
-			return `Red: ${r}, Green: ${g}, Blue: ${b}`;
+			return values.join(' | ');
 		}
 	}
 

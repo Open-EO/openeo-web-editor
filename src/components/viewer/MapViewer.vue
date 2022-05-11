@@ -2,7 +2,7 @@
 	<div :id="id" class="map-viewer">
 		<ProgressControl ref="progress" :map="map" />
 		<TextControl v-if="textControlText" :text="textControlText" />
-		<ChannelControl v-if="isGeoTiff" :bands="bands" @update="updateGeoTiffStyle" />
+		<ChannelControl v-if="isGeoTiff && !colorMap" :bands="bands" @update="updateGeoTiffStyle" />
 		<div v-if="loading" class="map-loading">
 			<i class="fas fa-spinner fa-spin"></i>
 			<span>Loading map...</span>
@@ -87,11 +87,11 @@ export default {
 					if (proj.basemap || ['EPSG:3857', 'EPSG:4326'].includes(proj.getCode())) {
 						this.addBasemaps();
 					}
-					this.addGeoTiff(data);
 					let stac = this.data.getContext();
 					if (stac) {
-						this.addExtent(stac);
+						this.addExtent(stac, false);
 					}
+					this.addGeoTiff(data);
 				}
 				else if (this.isWebService && Utils.isMapServiceSupported(this.data.type)) {
 					this.addBasemaps();
@@ -127,13 +127,7 @@ export default {
 					})
 				});
 			
-				let style = extentLayer.getStyle();
-				// https://github.com/openlayers/openlayers/issues/10131
-				if (typeof style === 'function') {
-					style = style()[0];
-				}
-				style.setFill(null);
-
+				this.removeLayerFill(extentLayer);
 				layer.getLayers().push(extentLayer);
 
 				this.map.getView().fit(extent, this.getFitOptions(10));

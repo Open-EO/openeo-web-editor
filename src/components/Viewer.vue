@@ -106,7 +106,8 @@ export default {
 				service.attributes.dimensions = link['wmts:dimensions'];
 			}
 
-			this.showMapViewer(service, service.id, Utils.getResourceTitle(collection, true), true);
+			let title = Utils.getResourceTitle(collection, true);
+			this.showMapViewer(service, service.id, title, true);
 		},
 		showWebService(service) {
 			this.showMapViewer(service, service.id, null, true);
@@ -114,6 +115,15 @@ export default {
 		showLogs(resource, defaultTitle = 'Logs', selectTab = true, faIcon = 'fa-bug') {
 			let title = Array.isArray(resource) ? defaultTitle : Utils.getResourceTitle(resource, "Logs");
 			let id = Array.isArray(resource) ? null : `logs~${resource.id}`;
+
+			if (id) { // Re-use existing tab
+				let tab = this.$refs.tabs.getTab(id);
+				if (tab) {
+					this.$refs.tabs.selectTab(tab);
+					return;
+				}
+			}
+
 			this.$refs.tabs.addTab(
 				title, faIcon, resource, id, selectTab, true,
 				tab => this.onShow(tab),
@@ -146,7 +156,8 @@ export default {
 		},
 		showJobResults(stac, job) {
 			let files = this.registry.createFilesFromSTAC(stac, job);
-			this.showViewer(files, Utils.getResourceTitle(job, true));
+			let title = Utils.getResourceTitle(job, true);
+			this.showViewer(files, title, job.id, true);
 		},
 		showMapViewer(resource, id = null, title = null, reUseExistingTab = false) {
 			if (!title) {
@@ -171,11 +182,25 @@ export default {
 				tab => this.onHide(tab)
 			);
 		},
-		async showViewer(files, title = null) {
+		async showViewer(files, title = null, id = null, reUseExistingTab = false) {
 			for(let file of files) {
 				try {
 					let context = file.getContext();
-					let id = context ? context.id : null;
+					if (!id && context) {
+						id = context.id;
+					}
+
+					if (reUseExistingTab) {
+						if (!id) {
+							throw new Error("Tabs without id can't be re-used");
+						}
+						let tab = this.$refs.tabs.getTab(id);
+						if (tab) {
+							this.$refs.tabs.selectTab(tab);
+							return;
+						}
+					}
+
 					if (!title && context) {
 						title = Utils.getResourceTitle(context, true);
 					}
