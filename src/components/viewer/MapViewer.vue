@@ -83,7 +83,8 @@ export default {
 					this.addGeoJson(data, true);
 				}
 				else if (this.isGeoTiff) {
-					if (['EPSG:3857', 'EPSG:4326'].includes(this.map.getView().getProjection().getCode())) {
+					let proj = this.map.getView().getProjection();
+					if (proj.basemap || ['EPSG:3857', 'EPSG:4326'].includes(proj.getCode())) {
 						this.addBasemaps();
 					}
 					this.addGeoTiff(data);

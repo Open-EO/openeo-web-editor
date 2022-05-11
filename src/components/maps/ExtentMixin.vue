@@ -14,9 +14,17 @@ export default {
 		// bbox: Array of Array (west, south, east, north - WGS84) or STAC Collection
 		// geometry: GeoJSON Object (WGS84) or STAC Item
 		async addExtent(data) {
-			let footprint;
-			if (Utils.isObject(data) && data.type === 'Collection') {
-				footprint = data.extent.spatial.bbox.map(bbox => Utils.extentToBBox(bbox));
+			let footprint = null;
+			if (Utils.isObject(data)) {
+				if (data.type === 'Collection') {
+					footprint = data.extent.spatial.bbox.map(bbox => Utils.extentToBBox(bbox));
+				}
+				else if (data.type !== 'Feature' || data.geometry || data.bbox) {
+					footprint = data;
+				}
+				else {
+					footprint = null;
+				}
 			}
 			else {
 				footprint = data;
@@ -25,7 +33,7 @@ export default {
 			if (Array.isArray(footprint) && footprint.length > 0) {
 				this.addRectangles(footprint);
 			}
-			else {
+			else if (footprint) {
 				this.addGeoJson(footprint, false, "Footprint");
 			}
 		},

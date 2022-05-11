@@ -1,5 +1,5 @@
 import proj4 from 'proj4';
-import { get as getProjection } from 'ol/proj';
+import { get as getProjection, transformExtent } from 'ol/proj';
 import Projection from 'ol/proj/Projection';
 import { register } from 'ol/proj/proj4';
 
@@ -15,11 +15,19 @@ export default class ProjManager {
 		return await ProjManager._load(data);
 	}
 
-	static add(code, meta) {
+	static add(code, meta, extent) {
 		try {
 			proj4.defs(code, meta);
 			register(proj4);
-			return getProjection(code);
+			let projection = getProjection(code);
+			if (Array.isArray(extent)) {
+				extent = transformExtent(extent, 'EPSG:4326', projection);
+				projection.setExtent(extent);
+			}
+			if (meta.includes('+datum=WGS84')) {
+				projection.basemap = true;
+			}
+			return projection;
 		} catch (error) {
 			console.error(error);
 			return null;
@@ -62,7 +70,7 @@ export default class ProjManager {
 		// Get projection from database
 		let proj = await import('../../assets/epsg-proj.json');
 		if (id in proj) {
-			return ProjManager.add(code, proj[id]);
+			return ProjManager.add(code, proj[id][0], proj[id][1]);
 		}
 
 		// No projection found
