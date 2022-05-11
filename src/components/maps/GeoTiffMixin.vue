@@ -76,6 +76,7 @@ export default {
 			this.bands = geotiff.getBands();
 			// Create OL GeoTiff Source
 			this.source = new GeoTIFF({
+				interpolate: false,
 				normalize: false,
 				sources: [
 					{
