@@ -79,7 +79,8 @@ export default {
 			this.layer = new TileLayer({
 				id: geotiff.getUrl(),
 				title,
-				source: this.source
+				source: this.source,
+				cacheSize: 2048 // https://github.com/openlayers/openlayers/issues/13670
 			});
 			this.layer.set('events', {
 				pointermove: evt => {
