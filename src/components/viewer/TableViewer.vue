@@ -164,6 +164,10 @@ export default {
 		if (Array.isArray(array) && array.length > 0) {
 			this.header = array.shift();
 			this.content = array;
+			if (this.content.some(x => typeof x !== 'number')) {
+				this.header.unshift("Row");
+				this.content.forEach((arr, i) => arr.unshift(String(i+1)));
+			}
 		}
 	}
 };

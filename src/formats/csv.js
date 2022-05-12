@@ -13,8 +13,16 @@ class CSV extends SupportedFormat {
 			let array = this.parseCSV(data.trim());
 			// Convert values into numbers, if possible
 			return array.map(row => row.map(col => {
-				let num = Number.parseFloat(col);
-				return Number.isNaN(num) ? col : num;
+				col = col.trim();
+				if (col.length === 0) {
+					return NaN;
+				}
+				else if (!isNaN(col)) { // https://stackoverflow.com/a/35759874/9709414
+					return parseFloat(col);
+				}
+				else {
+					return col;
+				}
 			}));
 		}
 		return data;
