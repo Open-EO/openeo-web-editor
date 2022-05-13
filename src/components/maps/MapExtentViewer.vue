@@ -40,9 +40,9 @@ export default {
 				isWebMercatorCompatible = Utils.isBboxInWebMercator(value) !== false;
 			}
 			else {
-				let source = this.createGeoJsonSource(geojson);
+				let source = this.createGeoJsonSource(data);
 				let extent = source.getExtent();
-				value = geojson;
+				value = data;
 				if (!extentIsEmpty(extent)) {
 					isWebMercatorCompatible = Utils.isBboxInWebMercator(Utils.extentToBBox(extent)) !== false;
 					if (!isWebMercatorCompatible) {
