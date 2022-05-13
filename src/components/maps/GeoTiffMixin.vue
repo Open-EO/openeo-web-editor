@@ -44,20 +44,15 @@ export default {
 			let min = ['var', `${i}min`];
 			let max = ['var', `${i}max`];
 			let x = this.getBandVar(i);
-			return ['*', ['/', ['-', x, min], ['-', max, min]], 255]; // Linear scaling from min - max to 0 - 255
+			let scale = ['*', ['/', ['-', x, min], ['-', max, min]], 255]; // Linear scaling from min - max to 0 - 255
+			return ['clamp', scale, 0, 255]; // clamp values in case we get cales < 0 or > 255
 		},
 		getNoDataFormula() {
 			let band = ['band', this.bands.length + 1];
-			// This is a workaround until I know what the range is... see https://github.com/openlayers/openlayers/issues/13588
-			/*let formula = ['match', band];
-			this.noData.forEach(value => {
-				formula.push(value);
-				formula.push(0);
-			});
-			formula.push(1);
-			return formula; */
-			return ['clamp', band, 0, 1];
+			// https://github.com/openlayers/openlayers/issues/13588#issuecomment-1125317573
+			// return ['clamp', band, 0, 1];
 			// return ['/', band, 255];
+			return ['case', ['==', band, 0], 0, 1];
 		},
 		async addGeoTiff(geotiff, title = "GeoTiff") {
 			this.bands = geotiff.getBands();
@@ -153,7 +148,7 @@ export default {
 				this.hasStyle = true;
 			}
 			else {
-				//this.layer.updateStyleVariables(this.glStyleVars);
+				this.layer.updateStyleVariables(this.glStyleVars);
 			}
 		}
 	}
