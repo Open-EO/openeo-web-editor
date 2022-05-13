@@ -23,10 +23,10 @@
 			</div>
 			<em v-else>No data retrieved.</em>
 		</Pane>
-		<Pane v-if="chartData" id="chart" :size="50">
+		<Pane v-if="chart" id="chart" :size="50">
 			<div class="chart">
-				<template v-if="typeof chartData === 'string'">{{ chartData }}</template>
-				<LineChart v-else-if="showChart" :chart-options="chartOptions" :chart-data="chartData" :height="400" />
+				<template v-if="typeof chart === 'string'">{{ chart }}</template>
+				<LineChart v-else-if="showChart" v-bind="chart" :height="400" />
 			</div>
 		</Pane>
 	</Splitpanes>
@@ -44,8 +44,12 @@ import {
   LineElement,
   LinearScale,
   CategoryScale,
+  TimeSeriesScale,
   PointElement
 } from 'chart.js'
+
+import 'chartjs-adapter-luxon';
+import { DateTime } from 'luxon';
 
 ChartJS.register(
   Title,
@@ -54,6 +58,7 @@ ChartJS.register(
   LineElement,
   LinearScale,
   CategoryScale,
+  TimeSeriesScale,
   PointElement
 );
 
@@ -113,7 +118,7 @@ export default {
 		}
 	},
 	watch: {
-		chartData(newVal) {
+		chart(newVal) {
 			this.showChart = false;
 			if (newVal) {
 				this.$nextTick(() => this.showChart = true);
@@ -121,17 +126,21 @@ export default {
 		}
 	},
 	computed: {
-		chartData() {
+		chart() {
 			if (this.showCols.length === 0 && this.showRows.length === 0) {
+				this.nextColor = 0;
 				return null;
 			}
 			else if (this.showCols.length > 0 && this.showRows.length > 0) {
 				return `You can only add either rows or columns to the diagram. Please unselect either all rows or all columns.`;
 			}
 
+			let labels;
+			let datasets;
+			let options = {};
 			if (this.showCols.length > 0) {
-				let labels = this.content.map(rows => rows[0]);
-				let datasets = this.showCols.map(col => {
+				labels = this.content.map(rows => rows[0]);
+				datasets = this.showCols.map(col => {
 					let color = colors[this.nextColor++ % colors.length];
 					return {
 						label: this.header[col],
@@ -141,11 +150,10 @@ export default {
 						borderWidth: 1
 					};
 				});
-				return { labels, datasets };
 			}
 			else { // rows
-				let labels = this.header.slice(1);
-				let datasets = this.showRows.map(row => {
+				labels = this.header.slice(1);
+				datasets = this.showRows.map(row => {
 					let color = colors[this.nextColor++ % colors.length];
 					return {
 						label: this.content[row][0],
@@ -155,13 +163,31 @@ export default {
 						borderWidth: 1
 					};
 				});
-				return { labels, datasets };
+			}
+
+			if (labels.find(label => !DateTime.fromISO(label).isValid) === undefined) {
+				options.scales = {
+					x: {
+						type: 'timeseries',
+						adapters: {
+							date: {
+								zone: 'UTC'
+							}
+						}
+					}
+				};
+			}
+
+			return {
+				'chart-data': { labels, datasets },
+				'chart-options': Object.assign(options, this.chartOptions)
 			}
 		}
 	},
 	async created() {
 		let array = await this.data.getData();
 		if (Array.isArray(array) && array.length > 0) {
+			// ToDo: Implement time series parsing for headers... https://www.chartjs.org/docs/latest/axes/cartesian/timeseries.html
 			this.header = array.shift();
 			this.content = array;
 			if (this.content.some(x => typeof x !== 'number')) {
