@@ -26,14 +26,14 @@
 		<Pane v-if="chart" id="chart" :size="50">
 			<div class="chart">
 				<template v-if="typeof chart === 'string'">{{ chart }}</template>
-				<LineChart v-else-if="showChart" v-bind="chart" :height="400" />
+				<Scatter v-else-if="showChart" v-bind="chart" :height="400" />
 			</div>
 		</Pane>
 	</Splitpanes>
 </template>
 
 <script>
-import { Line as LineChart } from 'vue-chartjs/legacy';
+import { Scatter } from 'vue-chartjs/legacy';
 import { Splitpanes, Pane } from 'splitpanes';
 
 import {
@@ -88,7 +88,7 @@ const colors = [
 export default {
 	name: 'TableViewer',
 	components: {
-		LineChart,
+		Scatter,
 		Pane,
 		Splitpanes,
 	},
@@ -190,7 +190,7 @@ export default {
 			// ToDo: Implement time series parsing for headers... https://www.chartjs.org/docs/latest/axes/cartesian/timeseries.html
 			this.header = array.shift();
 			this.content = array;
-			if (this.content.some(x => typeof x !== 'number')) {
+			if (this.content.some(x => typeof x === 'number')) {
 				this.header.unshift("Row");
 				this.content.forEach((arr, i) => arr.unshift(String(i+1)));
 			}
