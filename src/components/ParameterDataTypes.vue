@@ -16,7 +16,7 @@
 			<i class="fas fa-info-circle"></i>
 			<Description :description="selectedSchema.description()" :compact="true" />
 		</div>
-		<ParameterDataType :editable="editable" :parameter="parameter" :schema="selectedSchema" v-model="state" :context="context" @changeType="setSelected" :parent="parent" />
+		<ParameterDataType :editable="editable" :parameter="parameter" :schema="selectedSchema" v-model="state" :context="context" @changeType="setSelected" @reset="resetValue" :parent="parent" />
 	</div>
 </template>
 
@@ -372,6 +372,10 @@ export default {
 		},
 		async onSelectType(evt) {
 			await this.setSelected(evt.target.value, true);
+		},
+		resetValue() {
+			this.state = cloneDefault(this.parameter.default);
+			this.detectType();
 		},
 		async setSelected(type, setValue = false) {
 			let nativeType = type;

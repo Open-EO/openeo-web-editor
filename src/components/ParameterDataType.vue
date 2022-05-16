@@ -76,7 +76,8 @@ import MapAreaSelect from './datatypes/MapAreaSelect.vue';
 import GeoJsonEditor from './datatypes/GeoJsonEditor.vue';
 import TextEditor from './TextEditor.vue';
 
-import Utils from '../utils.js';
+import Utils from '../utils';
+import Process from '../process';
 
 export default {
 	name: 'ParameterDataType',
@@ -222,6 +223,10 @@ export default {
 					return this.getValueFromOtherParameterByDataType('udf-runtime');
 				case 'band-name':
 					return this.getValueFromOtherParameterByDataType('collection-id');
+				case 'array':
+					if (Process.arrayOf(this.schema) === 'band-name') {
+						return this.getValueFromOtherParameterByDataType('collection-id');
+					}
 				default:
 					return undefined;
 			}
@@ -235,6 +240,11 @@ export default {
 		},
 		newValue(newVal) {
 			this.$emit('input', newVal);
+		},
+		dependency(newVal, oldVal) {
+			if (typeof oldVal !== 'undefined' && newVal !== oldVal) {
+				this.$emit('reset');
+			}
 		}
 	},
 	methods: {
