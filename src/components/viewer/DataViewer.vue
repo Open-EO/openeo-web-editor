@@ -18,6 +18,7 @@ import ObjectTree from '@openeo/vue-components/components/ObjectTree.vue';
 import Tabs from '@openeo/vue-components/components/Tabs.vue';
 import Tab from '@openeo/vue-components/components/Tab.vue';
 import TextEditor from '../TextEditor.vue';
+import JSON_ from '../../formats/json';
 
 let tabId = 0;
 
@@ -51,6 +52,9 @@ export default {
 		};
 	},
 	async created() {
+		if (this.data instanceof JSON_) {
+			this.codeLanguage = 'json';
+		}
 		this.content = await this.data.getData();
 	},
 	methods: {
