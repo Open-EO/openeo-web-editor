@@ -14,7 +14,7 @@ You can also build the files yourself and deploy them to any web host:
 3. Open a command line window and go to the directory which contains the cloned/downloaded web editor files.
 4. Configure the web editor by editing `config.js`, `vue.config.js` and `theme.scss` to suit your needs.
 6. Install the dependencies by executing `npm install` on the command line
-7.
+7. For...
     * Development: Run the development server by executing `npm start`.
     * Deployment: Build the project by executing `npm run build`. Afterwards upload the content of the `dist` folder to your server.
 
@@ -81,3 +81,9 @@ To test a certain commit, simply pull the according tag (available from 2021-09-
 docker pull mundialis/openeo-web-editor:sha-4636d41
 ```
 The Dockerimage is maintained by mundialis.
+
+## Implementation guide for back-ends
+
+Here we collection information for back-end implementors that want to improve the experience with the Web Editor by fine-tuning their implementation.
+
+* [GeoTiff / COG support](docs/geotiff.md)
