@@ -81,7 +81,7 @@ export default {
 		},
 		startWatcher() {
 			if (this.syncTimer === null) {
-				this.syncTimer = setInterval(this.loadNext.bind(this), 10000);
+				this.syncTimer = setInterval(() => this.loadNext().catch(error => Utils.exeption(this, error, "Loading logs failed")), 10000);
 			}
 		},
 		stopWatcher() {

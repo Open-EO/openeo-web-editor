@@ -147,17 +147,20 @@ export default {
 			// Download files to disc so that nothing gets lost
 			files.forEach(file => file.download());
 			// Show the data in the viewer
-			this.showViewer(files, title).finally(() => {
-				// Open the log files after the data tab has been opened -> it's in finally to spawn after the data tab
-				if (Array.isArray(result.logs) && result.logs.length > 0) {
-					this.showLogs(result.logs, title, false);
-				}
-			});
+			this.showViewer(files, title)
+				.catch(error => Utils.exception(this, error))
+				.finally(() => {
+					// Open the log files after the data tab has been opened -> it's in finally to spawn after the data tab
+					if (Array.isArray(result.logs) && result.logs.length > 0) {
+						this.showLogs(result.logs, title, false);
+					}
+				});
 		},
 		showJobResults(stac, job) {
 			let files = this.registry.createFilesFromSTAC(stac, job);
 			let title = Utils.getResourceTitle(job, true);
-			this.showViewer(files, title, job.id, true);
+			this.showViewer(files, title, job.id, true)
+				.catch(error => Utils.exception(this, error));
 		},
 		showMapViewer(resource, id = null, title = null, reUseExistingTab = false) {
 			if (!title) {

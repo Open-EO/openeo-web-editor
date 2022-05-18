@@ -6,15 +6,15 @@
 		</template>
 		<template #actions="p">
 			<button title="Details" @click="showJobInfo(p.row)" v-show="supportsRead"><i class="fas fa-info"></i></button>
-			<button title="Estimate" @click="estimateJob(p.row)" v-show="supports('estimateJob')"><i class="fas fa-file-invoice-dollar"></i></button>
+			<button title="Estimate" @click="estimateJob(p.row)" v-show="supportsEstimate"><i class="fas fa-file-invoice-dollar"></i></button>
 			<button title="Edit metadata" @click="editMetadata(p.row)" v-show="supportsUpdate" :disabled="!isJobInactive(p.row)"><i class="fas fa-edit"></i></button>
 			<button title="Edit process" @click="showInEditor(p.row)" v-show="supportsRead"><i class="fas fa-project-diagram"></i></button>
 			<button title="Delete" @click="deleteJob(p.row)" v-show="supportsDelete"><i class="fas fa-trash"></i></button>
-			<button title="Start processing" @click="queueJob(p.row)" v-show="supports('startJob') && isJobInactive(p.row)"><i class="fas fa-play-circle"></i></button>
-			<button title="Cancel processing" @click="cancelJob(p.row)" v-show="supports('stopJob') && isJobActive(p.row)"><i class="fas fa-stop-circle"></i></button>
-			<button title="Download" @click="downloadResults(p.row)" v-show="supports('downloadResults') && mayHaveResults(p.row)"><i class="fas fa-download"></i></button>
-			<button title="View results" @click="viewResults(p.row, true)" v-show="supports('downloadResults') && mayHaveResults(p.row)"><i class="fas fa-eye"></i></button>
-			<button title="View logs" @click="showLogs(p.row)" v-show="supports('debugJob')"><i class="fas fa-bug"></i></button>
+			<button title="Start processing" @click="queueJob(p.row)" v-show="supportsStart && isJobInactive(p.row)"><i class="fas fa-play-circle"></i></button>
+			<button title="Cancel processing" @click="cancelJob(p.row)" v-show="supportsStop && isJobActive(p.row)"><i class="fas fa-stop-circle"></i></button>
+			<button title="Download" @click="downloadResults(p.row)" v-show="supportsDownloadResults && mayHaveResults(p.row)"><i class="fas fa-download"></i></button>
+			<button title="View results" @click="viewResults(p.row, true)" v-show="supportsDownloadResults && mayHaveResults(p.row)"><i class="fas fa-eye"></i></button>
+			<button title="View logs" @click="showLogs(p.row)" v-show="supportsDebug"><i class="fas fa-bug"></i></button>
 		</template>
 	</DataTable>
 </template>
@@ -75,7 +75,23 @@ export default {
 		...Utils.mapState(['connection']),
 		...Utils.mapGetters(['supports', 'supportsBilling', 'supportsBillingPlans']),
 		...Utils.mapGetters('editor', ['hasProcess']),
-		...Utils.mapState('editor', ['process'])
+		...Utils.mapState('editor', ['process']),
+		supportsStart() {
+			return this.supports('startJob');
+		},
+		supportsStop() {
+			return this.supports('stopJob');
+		},
+		supportsEstimate() {
+			return this.supports('estimateJob');
+		},
+		supportsDownloadResults() {
+			return this.supports('downloadResults');
+		},
+		supportsDebug() {
+			return this.supports('debugJob');
+		}
+		
 	},
 	watch: {
 		data: {
@@ -95,12 +111,18 @@ export default {
 		...Utils.mapActions('jobs', ['queue', 'cancel']),
 		startSyncTimer() {
 			WorkPanelMixinInstance.methods.startSyncTimer.call(this);
-			this.jobUpdater = setInterval(this.executeWatchers, 10000);
+			// Use setTimeout instead of setInterval to be able to slow down the refresh time based on the number of watchers
+			let fn = () => {
+				this.executeWatchers();
+				let interval = 5 + 5*Math.log2(Utils.size(this.watchers));
+				this.jobUpdater = setTimeout(fn, interval);
+			};
+			fn();
 		},
 		stopSyncTimer() {
 			WorkPanelMixinInstance.methods.stopSyncTimer.call(this);
 			if (this.jobUpdater !== null) {
-				clearInterval(this.jobUpdater);
+				clearTimeout(this.jobUpdater);
 			}
 		},
 		showInEditor(job) {

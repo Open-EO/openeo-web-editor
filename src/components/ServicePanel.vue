@@ -9,7 +9,7 @@
 			<button title="Edit process" @click="showInEditor(p.row)" v-show="supportsRead"><i class="fas fa-project-diagram"></i></button>
 			<button title="Delete" @click="deleteService(p.row)" v-show="supportsDelete"><i class="fas fa-trash"></i></button>
 			<button v-show="p.row.enabled && isMapServiceSupported(p.row.type)" title="View on map" @click="viewService(p.row)"><i class="fas fa-map"></i></button>
-			<button title="View logs" @click="showLogs(p.row)" v-show="supports('debugService')"><i class="fas fa-bug"></i></button>
+			<button title="View logs" @click="showLogs(p.row)" v-show="supportsDebug"><i class="fas fa-bug"></i></button>
 		</template>
 	</DataTable>
 </template>
@@ -62,7 +62,10 @@ export default {
 		...Utils.mapState('editor', ['process']),
 		...Utils.mapGetters('editor', ['hasProcess']),
 		...Utils.mapState(['serviceTypes']),
-		...Utils.mapGetters(['supports', 'supportsBilling', 'supportsBillingPlans'])
+		...Utils.mapGetters(['supports', 'supportsBilling', 'supportsBillingPlans']),
+		supportsDebug() {
+			return this.supports('debugService');
+		}
 	},
 	mounted() {
 		this.listen('replaceProcess', this.replaceProcess);

@@ -31,7 +31,7 @@ export default (namespace, singular, plural, loadInitially = true) => {
 				return this.$refs && this.$refs.table ? this.$refs.table : null;
 			},
 			onShow() {
-				this.updateData();
+				this.updateData().catch(error => Utils.exception(this, error, `Updating ${plural} failed`));
 				this.startSyncTimer();
 			},
 			onHide() {
