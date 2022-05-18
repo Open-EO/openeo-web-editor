@@ -15,7 +15,6 @@ export default {
 	data() {
 		return {
 			textControlText: 'Pixel Value: -',
-			hasStyle: false,
 			layer: null,
 			source: null,
 			colorMap: null,
@@ -89,10 +88,6 @@ export default {
 		updateGeoTiffStyle(type, data) {
 			switch(type) {
 				case 'channels':
-					if (this.channels.length !== data.length) {
-						// We completely need to update the style and not just variables if the numbers of channels have changed
-						this.hasStyle = false;
-					}
 					this.channels = data;
 					break;
 			}
@@ -103,6 +98,7 @@ export default {
 				return;
 			}
 
+			// Compute variables
 			let variables = {};
 			for(let i in this.channels) {
 				let channel = this.channels[i];
@@ -112,44 +108,38 @@ export default {
 			}
 			variables.alphaband = this.bands.length + 1;
 
-			if (!this.hasStyle) {
-				// Create style
-				let color = [];
-				if (this.colorMap) {
-					color.push('palette');
-					color.push(['band', 1]);
-					color.push(this.colorMap);
+			// Create style
+			let color = [];
+			if (this.colorMap) {
+				color.push('palette');
+				color.push(['band', 1]);
+				color.push(this.colorMap);
+			}
+			else if (this.channels.length === 0) {
+				return null;
+			}
+			else if (this.channels.length === 1) {
+				color.push('color');
+				let formula = this.getFormula(0);
+				color.push(formula);
+				color.push(formula);
+				color.push(formula);
+				if (this.noData.length > 0) {
+					color.push(this.getNoDataFormula());
 				}
-				else if (this.channels.length === 0) {
-					return null;
-				}
-				else if (this.channels.length === 1) {
-					color.push('color');
-					let formula = this.getFormula(0);
-					color.push(formula);
-					color.push(formula);
-					color.push(formula);
-					if (this.noData.length > 0) {
-						color.push(this.getNoDataFormula());
-					}
-				}
-				else {
-					color.push('color');
-					color.push(this.getFormula(0));
-					color.push(this.getFormula(1));
-					color.push(this.getFormula(2));
-					if (this.noData.length > 0) {
-						color.push(this.getNoDataFormula());
-					}
-				}
-				let style = {variables, color};
-				// Set style
-				this.layer.setStyle(style);
-				this.hasStyle = true;
 			}
 			else {
-				this.layer.updateStyleVariables(variables);
+				color.push('color');
+				color.push(this.getFormula(0));
+				color.push(this.getFormula(1));
+				color.push(this.getFormula(2));
+				if (this.noData.length > 0) {
+					color.push(this.getNoDataFormula());
+				}
 			}
+
+			// Set style
+			this.layer.setStyle({variables, color});
 		}
 	}
 }
