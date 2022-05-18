@@ -24,18 +24,6 @@ export default {
 			bands: []
 		}
 	},
-	computed: {
-		glStyleVars() {
-			let vars = {};
-			for(let i in this.channels) {
-				let channel = this.channels[i];
-				vars[`${i}band`] = channel.id;
-				vars[`${i}min`] = channel.min;
-				vars[`${i}max`] = channel.max;
-			}
-			return vars;
-		}
-	},
 	methods: {
 		getBandVar(i) {
 			return ['band', ['var', `${i}band`]];
@@ -48,7 +36,7 @@ export default {
 			return ['clamp', scale, 0, 255]; // clamp values in case we get cales < 0 or > 255
 		},
 		getNoDataFormula() {
-			let band = ['band', this.bands.length + 1];
+			let band = this.getBandVar('alpha');
 			// https://github.com/openlayers/openlayers/issues/13588#issuecomment-1125317573
 			// return ['clamp', band, 0, 1];
 			// return ['/', band, 255];
@@ -82,7 +70,7 @@ export default {
 					let pixelData = this.layer.getData(evt.pixel);
 					let value = Utils.displayRGBA(pixelData, this.noData, this.noData.length > 0);
 					let valueText = `Pixel Value: ${value}`;
-					this.textControlText = [valueText, `${valueText} @ ${evt.coordinate.map(x => String(x.toFixed(6)).replace(/0+$/, '')).join(', ')}`];
+					this.textControlText = [valueText, `${valueText} @ ${evt.coordinate.map(x => String(parseFloat(x.toFixed(6)))).join(', ')}`];
 				}
 			});
 			this.addLayerToMap(this.layer);
@@ -98,20 +86,32 @@ export default {
 
 			return this.source;
 		},
-
 		updateGeoTiffStyle(type, data) {
 			switch(type) {
-				case 'channels': 
+				case 'channels':
+					if (this.channels.length !== data.length) {
+						// We completely need to update the style and not just variables if the numbers of channels have changed
+						this.hasStyle = false;
+					}
 					this.channels = data;
 					break;
 			}
 			this.setStyle();
 		},
-
 		setStyle() {
 			if (!this.layer) {
 				return;
 			}
+
+			let variables = {};
+			for(let i in this.channels) {
+				let channel = this.channels[i];
+				variables[`${i}band`] = channel.id;
+				variables[`${i}min`] = channel.min;
+				variables[`${i}max`] = channel.max;
+			}
+			variables.alphaband = this.bands.length + 1;
+
 			if (!this.hasStyle) {
 				// Create style
 				let color = [];
@@ -142,13 +142,13 @@ export default {
 						color.push(this.getNoDataFormula());
 					}
 				}
-				let style = {variables: this.glStyleVars, color};
+				let style = {variables, color};
 				// Set style
 				this.layer.setStyle(style);
 				this.hasStyle = true;
 			}
 			else {
-				this.layer.updateStyleVariables(this.glStyleVars);
+				this.layer.updateStyleVariables(variables);
 			}
 		}
 	}
