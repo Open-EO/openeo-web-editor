@@ -58,6 +58,13 @@ class GeoTIFF extends SupportedFormat {
 		// Get min/max/nodata from STAC raster:bands
 		if (Array.isArray(this['raster:bands']) && this['raster:bands'].length > 0) {
 			this['raster:bands'].forEach((band, i) => {
+				// Get name from band
+				if (band.name) {
+					this.setBandInfo(i, {
+						name: band.name
+					});
+				}
+
 				// Set min/max from statistics
 				if (Utils.isObject(band.statistics)) {
 					this.setBandInfo(i, {
