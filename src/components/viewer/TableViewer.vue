@@ -190,7 +190,7 @@ export default {
 			// ToDo: Implement time series parsing for headers... https://www.chartjs.org/docs/latest/axes/cartesian/timeseries.html
 			this.header = array.shift();
 			this.content = array;
-			if (this.content.some(x => typeof x === 'number')) {
+			if (!this.content.every(x => !x || typeof x === 'number')) {
 				this.header.unshift("Row");
 				this.content.forEach((arr, i) => arr.unshift(String(i+1)));
 			}
