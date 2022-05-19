@@ -51,11 +51,11 @@ export default {
 			codeLanguage: null
 		};
 	},
-	async created() {
+	created() {
 		if (this.data instanceof JSON_) {
 			this.codeLanguage = 'json';
 		}
-		this.content = await this.data.getData();
+		this.content = this.data.getData();
 	},
 	mounted() {
 		this.$emit('mounted', this);

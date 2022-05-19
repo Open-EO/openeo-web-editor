@@ -34,8 +34,8 @@ export default {
 			value: '-'
 		};
 	},
-	async created() {
-		this.img = await this.data.getData();
+	created() {
+		this.img = this.data.getData();
 		if (this.img.complete) {
 			this.imageLoaded();
 		}

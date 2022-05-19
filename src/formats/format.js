@@ -40,10 +40,16 @@ export class Format {
 		document.body.removeChild(tempLink);
 	}
 
-	async getData(connection) {
+	async loadData(connection) {
 		if (!this.loaded) {
 			this.data = await this.fetchData(connection);
 			this.loaded = true;
+		}
+	}
+
+	getData() {
+		if (!this.loaded) {
+			throw new Error('Data must be loaded before');
 		}
 		return this.data;
 	}
@@ -70,7 +76,7 @@ export class Format {
 			}
 		});
 		let data = await promise;
-		return this.parseData(data);
+		return await this.parseData(data);
 	}
 
 	async parseData(data) {

@@ -36,6 +36,9 @@
 import { Scatter } from 'vue-chartjs/legacy';
 import { Splitpanes, Pane } from 'splitpanes';
 
+import CSV from '../../formats/csv';
+import JSON_ from '../../formats/json';
+
 import {
   Chart as ChartJS,
   Title,
@@ -185,20 +188,38 @@ export default {
 		}
 	},
 	async created() {
-		let array = await this.data.getData();
-		if (Array.isArray(array) && array.length > 0) {
-			// ToDo: Implement time series parsing for headers... https://www.chartjs.org/docs/latest/axes/cartesian/timeseries.html
-			this.header = array.shift();
-			this.content = array;
-			if (!this.content.every(x => !x || typeof x === 'number')) {
-				this.header.unshift("Row");
-				this.content.forEach((arr, i) => arr.unshift(String(i+1)));
+		if(this.data instanceof CSV) {
+			let array = this.data.getData();
+			if (Array.isArray(array) && array.length > 0) {
+				// ToDo: Implement time series parsing for headers... https://www.chartjs.org/docs/latest/axes/cartesian/timeseries.html
+				this.header = array.shift();
+				this.content = array;
+				if (!this.content.every(x => !x || typeof x === 'number')) {
+					this.header.unshift("Row");
+					this.content.forEach((arr, i) => arr.unshift(String(i+1)));
+				}
 			}
+		}
+		else if (this.data instanceof JSON_) {
+			let data = this.data.getData();
+			let keys = Object.keys(data);
+			let values = Object.values(data);
+
+			let headers = new Set();
+			values.forEach(row => Object.keys(row).forEach(key => headers.add(key)));
+			this.header = Array.from(headers);
+			this.content = values.map(row => this.header.map(key => Array.isArray(row[key]) && row[key].length === 1 ? row[key][0] : row[key]));
+
+			this.header.unshift("Row");
+			this.content.forEach((arr, i) => arr.unshift(keys[i]));
+		}
+		else {
+			Utils.error(this, "The format is not supported to be shown in a table.");
 		}
 	},
 	mounted() {
 		this.$emit('mounted', this);
-	},
+	}
 };
 </script>
 

@@ -213,7 +213,7 @@ export default {
 					else if (!title) {
 						title = this.makeTitle("Untitled");
 					}
-					await file.getData(this.connection);
+					await file.loadData(this.connection);
 					this.$refs.tabs.addTab(
 						title, file.icon, file, id, true, true,
 						tab => this.onShow(tab),

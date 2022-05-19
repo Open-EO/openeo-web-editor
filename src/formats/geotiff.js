@@ -34,8 +34,15 @@ class GeoTIFF extends SupportedFormat {
 		return true;
 	}
 
-	async getData() {
-		await this.parseMetadata();
+	async loadData(connection) {
+		if (!this.loaded) {
+			await this.parseMetadata();
+			this.loaded = true;
+		}
+		return this;
+	}
+
+	getData() {
 		return this;
 	}
 

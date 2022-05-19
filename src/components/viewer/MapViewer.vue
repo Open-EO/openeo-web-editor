@@ -131,10 +131,10 @@ export default {
 				let view;
 				let data;
 				if (this.isGeoJson) {
-					data = await this.data.getData(this.connection);
+					data = await this.data.loadData(this.connection);
 				}
 				else if (this.isGeoTiff) {
-					data = await this.data.getData(this.connection);
+					data = await this.data.loadData(this.connection);
 					let projection = data.getProjection();
 					if (projection) {
 						view = projection;
