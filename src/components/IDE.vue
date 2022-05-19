@@ -123,7 +123,7 @@ export default {
 		this.resizeListener = event => this.resized(event);
 		window.addEventListener('resize', this.resizeListener);
 		if (this.isAuthenticated) {
-			this.userInfoUpdater = setInterval(() => this.describeAccount.catch(error => console.error(error)), this.$config.dataRefreshInterval*60*1000); // Refresh user data every x minutes
+			this.userInfoUpdater = setInterval(() => this.describeAccount().catch(error => console.error(error)), this.$config.dataRefreshInterval*60*1000); // Refresh user data every x minutes
 		}
 		this.emit('title', this.title);
 

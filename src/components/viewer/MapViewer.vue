@@ -122,6 +122,9 @@ export default {
 			return this.data instanceof JSON_ && this.data.isGeoJson;
 		}
 	},
+	mounted() {
+		this.$emit('mounted', this);
+	},
 	methods: {
 		async renderMap() {
 			try {

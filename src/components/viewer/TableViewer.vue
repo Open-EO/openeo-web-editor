@@ -195,7 +195,10 @@ export default {
 				this.content.forEach((arr, i) => arr.unshift(String(i+1)));
 			}
 		}
-	}
+	},
+	mounted() {
+		this.$emit('mounted', this);
+	},
 };
 </script>
 

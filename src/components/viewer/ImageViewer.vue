@@ -43,6 +43,9 @@ export default {
 			this.img.onload = this.imageLoaded.bind(this);
 		}
 	},
+	mounted() {
+		this.$emit('mounted', this);
+	},
 	computed: {
 		title() {
 			if (this.fullScreen) {

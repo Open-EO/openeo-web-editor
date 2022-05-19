@@ -149,6 +149,9 @@ export default {
 				let endlessPromise = () => new Promise(() => {}); // Pass a promise to snotify that never resolves as we manually close the toast
 				toast = this.$snotify.async(message, title, endlessPromise, snotifyConfig);
 				let result = await this.connection.computeResult(this.process, null, null, abortController);
+				if (result.logs.length > 0) {
+					this.emit('viewLogs', result.logs);
+				}
 				this.emit('viewSyncResult', result);
 			} catch(error) {
 				if (axios.isCancel(error)) {
@@ -292,7 +295,7 @@ export default {
 				});
 			}
 		},
-		async showJobInfo(job) {
+		showJobInfo(job) {
 			this.refreshElement(job, async (updatedJob) => {
 				let result = null;
 				if (updatedJob.status === 'finished') {
@@ -349,7 +352,7 @@ export default {
 				Utils.exception(this, error, 'Update Job Error: ' + Utils.getResourceTitle(job));
 			}
 		},
-		async queueJob(job) {
+		queueJob(job) {
 			this.refreshElement(job, async (updatedJob) => {
 				if (updatedJob.status === 'finished' && !confirm(`The batch job "${Utils.getResourceTitle(updatedJob)}" has already finished with results. Queueing the job again may discard all previous results! Do you really want to queue it again?`)) {
 					return;

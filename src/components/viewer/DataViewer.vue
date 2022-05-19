@@ -57,6 +57,9 @@ export default {
 		}
 		this.content = await this.data.getData();
 	},
+	mounted() {
+		this.$emit('mounted', this);
+	},
 	methods: {
 		showCode() {
 			this.$refs.sourceEditor.updateState();

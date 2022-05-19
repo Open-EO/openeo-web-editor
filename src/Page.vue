@@ -163,9 +163,14 @@ export default {
 			}
 		},
 		async showProcess(process) {
-			this.showModal('ProcessModal', {
-				process: await this.loadProcess(process)
-			});
+			try {
+				this.showModal('ProcessModal', {
+					process: await this.loadProcess(process)
+				});
+			} catch (error) {
+				console.log(error);
+				Utils.error(this, "Sorry, can't load process details.");
+			}
 		},
 		async showData(data, title) {
 			this.showModal('DataModal', {data, title});
