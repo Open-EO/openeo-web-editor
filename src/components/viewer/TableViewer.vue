@@ -210,7 +210,7 @@ export default {
 			this.header = Array.from(headers);
 			this.content = values.map(row => this.header.map(key => Array.isArray(row[key]) && row[key].length === 1 ? row[key][0] : row[key]));
 
-			this.header.unshift("Row");
+			this.header.unshift("");
 			this.content.forEach((arr, i) => arr.unshift(keys[i]));
 		}
 		else {
