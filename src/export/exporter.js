@@ -16,7 +16,6 @@ export default class Exporter extends ProcessGraph {
 	constructor(process, registry, connection) {
 		super(Utils.isObject(process) ? process : {}, registry);
 		this.connection = connection;
-		this.indent = 0;
 		this.code = [];
 		this.fnCounter = 1;
 		this.allowEmpty();
@@ -164,7 +163,7 @@ export default class Exporter extends ProcessGraph {
 			}
 			if (Utils.isObject(value)) {
 				if (value.from_node) {
-					newArgs[key] = () => this.var(value.from_node);
+					newArgs[key] = () => this.var(value.from_node, this.varPrefix());
 					continue; 
 				}
 				else if (value.from_parameter) {
@@ -239,7 +238,16 @@ export default class Exporter extends ProcessGraph {
 		}
 	}
 
-	var(id, prefix = "datacube") {
+	varPrefix() {
+		if (!this.getParent()) {
+			return 'datacube';
+		}
+		else {
+			return 'data';
+		}
+	}
+
+	var(id, prefix = "var") {
 		id = String(id);
 		if (this.isKeyword(id)) {
 			return `${id}_`;
@@ -256,11 +264,11 @@ export default class Exporter extends ProcessGraph {
 		return `\t`;
 	}
 
-	addCode(code, prefix = '') {
+	addCode(code, prefix = '', level = 0) {
 		if (typeof code !== 'string') {
 			return;
 		}
-		let tabs = this.getTab().repeat(this.indent);
+		let tabs = this.getTab().repeat(level);
 		let lines = code.trim().split(/\r\n|\r|\n/g);
 		for(let line of lines) {
 			this.code.push(`${tabs}${prefix}${line}\n`);
