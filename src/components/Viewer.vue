@@ -159,7 +159,10 @@ export default {
 		showJobResults(stac, job) {
 			let files = this.registry.createFilesFromSTAC(stac, job);
 			let title = Utils.getResourceTitle(job, true);
-			this.showViewer(files, title, job.id, true)
+			if (files.length > 5 && !confirm(`You are about to open ${files.length} individual files / tabs, which could slow down the web browser. Are you sure you want to open all of them?`)) {
+				return;
+			}
+			this.showViewer(files, title, file => `${job.id}-${file.getUrl()}`, true)
 				.catch(error => Utils.exception(this, error));
 		},
 		showMapViewer(resource, id = null, title = null, reUseExistingTab = false) {
@@ -189,18 +192,25 @@ export default {
 			if (!Array.isArray(files)) {
 				return;
 			}
+			let tabId;
 			for(let file of files) {
 				try {
 					let context = file.getContext();
-					if (!id && context) {
-						id = context.id;
+					if (typeof id === 'function') {
+						tabId = id(file);
+					}
+					else if (!id && context) {
+						tabId = context.id;
+					}
+					else {
+						tabId = id;
 					}
 
 					if (reUseExistingTab) {
-						if (!id) {
+						if (!tabId) {
 							throw new Error("Tabs without id can't be re-used");
 						}
-						let tab = this.$refs.tabs.getTab(id);
+						let tab = this.$refs.tabs.getTab(tabId);
 						if (tab) {
 							this.$refs.tabs.selectTab(tab);
 							return;
@@ -215,7 +225,7 @@ export default {
 					}
 					await file.loadData(this.connection);
 					this.$refs.tabs.addTab(
-						title, file.icon, file, id, true, true,
+						title, file.icon, file, tabId, true, true,
 						tab => this.onShow(tab),
 						tab => this.onHide(tab)
 					);
