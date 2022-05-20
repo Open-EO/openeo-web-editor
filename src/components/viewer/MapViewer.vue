@@ -1,13 +1,20 @@
 <template>
-	<div :id="id" class="map-viewer">
-		<ProgressControl ref="progress" :map="map" />
-		<TextControl v-if="textControlText" :text="textControlText" />
-		<ChannelControl v-if="isGeoTiff && !colorMap" :bands="bands" @update="updateGeoTiffStyle" />
-		<div v-if="loading" class="map-loading">
-			<i class="fas fa-spinner fa-spin"></i>
-			<span>Loading map...</span>
-		</div>
-	</div>
+	<Splitpanes horizontal class="default-theme">
+		<Pane id="map">
+			<div :id="id" class="map-viewer">
+				<ProgressControl ref="progress" :map="map" />
+				<TextControl v-if="textControlText" :text="textControlText" />
+				<ChannelControl v-if="isGeoTiff && !colorMap" :bands="bands" @update="updateGeoTiffStyle" />
+				<div v-if="loading" class="map-loading">
+					<i class="fas fa-spinner fa-spin"></i>
+					<span>Loading map...</span>
+				</div>
+			</div>
+		</Pane>
+		<Pane v-if="chart" id="chart" :size="33">
+			<ScatterChart v-bind="chart" :height="220" />
+		</Pane>
+	</Splitpanes>
 </template>
 
 <script>
@@ -17,9 +24,12 @@ import Utils from '../../utils.js';
 import GeoTIFF from '../../formats/geotiff';
 import JSON_ from '../../formats/json';
 
+import { Splitpanes, Pane } from 'splitpanes';
+
 import ExtentMixin from '../maps/ExtentMixin.vue';
 import GeoTiffMixin from '../maps/GeoTiffMixin.vue';
 import MapMixin from '../maps/MapMixin.vue';
+import ScatterChart from './ScatterChart.vue';
 import WebServiceMixin from '../maps/WebServiceMixin.vue';
 
 import { Service } from '@openeo/js-client';
@@ -102,12 +112,18 @@ GeoTIFFImage.prototype.getBitsPerSample = function(sampleIndex = 0) {
 export default {
 	name: 'MapViewer',
 	mixins: [ExtentMixin, GeoTiffMixin, MapMixin, WebServiceMixin],
+	components: {
+		Pane,
+		ScatterChart,
+		Splitpanes,
+	},
 	props: {
 		data: {}
 	},
 	data() {
 		return {
-			loading: true
+			loading: true,
+			chart: null
 		};
 	},
 	computed: {

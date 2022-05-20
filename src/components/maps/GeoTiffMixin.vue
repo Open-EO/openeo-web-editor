@@ -69,7 +69,31 @@ export default {
 					let pixelData = this.layer.getData(evt.pixel);
 					let value = Utils.displayRGBA(pixelData, this.noData, this.noData.length > 0);
 					let valueText = `Pixel Value: ${value}`;
-					this.textControlText = [valueText, `${valueText} @ ${evt.coordinate.map(x => String(parseFloat(x.toFixed(6)))).join(', ')}`];
+					let coords = this.formatCoords(evt.coordinate);
+					this.textControlText = [valueText, `${valueText} @ ${coords}`];
+				},
+				click: evt => {
+					let data = this.layer.getData(evt.pixel);
+					if (!data) {
+						this.chart = null;
+						return;
+					}
+
+					data = Array.from(data).slice(0, this.bands.length);
+					if (data.length < 2 || data.every(x => !isFinite(x))) {
+						this.chart = null;
+						return;
+					}
+
+					let coords = this.formatCoords(evt.coordinate);
+					let label = `Coordinate: ${coords}`;
+
+					let datasets = [{ label, data }];
+
+					this.chart = {
+						labels: this.bands.map(band => String(band.name || band.id)),
+						datasets
+					};
 				}
 			});
 			this.addLayerToMap(this.layer);
@@ -79,11 +103,15 @@ export default {
 				this.map.getView().fit(extent, this.getFitOptions(10));
 			}
 
-			if (this.colorMap) {
-				this.setStyle();
-			}
+			// Hack to get the initial style set.
+			// Not sure yet why this needs a delay -> TODO
+			await new Promise(r => setTimeout(r, 1250));
+			this.setStyle();
 
 			return this.source;
+		},
+		formatCoords(coords) {
+			return coords.map(x => String(parseFloat(x.toFixed(6)))).join(', ');
 		},
 		updateGeoTiffStyle(type, data) {
 			switch(type) {
