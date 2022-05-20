@@ -115,7 +115,7 @@ export default {
 			let fn = () => {
 				this.executeWatchers();
 				let interval = 5 + 5*Math.log2(Utils.size(this.watchers));
-				this.jobUpdater = setTimeout(fn, interval);
+				this.jobUpdater = setTimeout(fn, interval * 1000);
 			};
 			fn();
 		},
