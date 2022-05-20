@@ -67,8 +67,15 @@ export default {
 	},
 	methods: {
 		imageLoaded() {
-			this.loaded = true;
+			if (this.loaded) {
+				return;
+			}
+			if (!this.$refs.canvas) {
+				this.$nextTick(() => this.imageLoaded());
+				return;
+			}
 			
+			this.loaded = true;
 			this.$refs.canvas.width = this.img.naturalWidth;
 			this.$refs.canvas.height = this.img.naturalHeight;
 			this.context = this.$refs.canvas.getContext('2d');
