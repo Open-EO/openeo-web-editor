@@ -116,13 +116,20 @@ export default {
 		font-size: 1.15em;
 	}
 }
-.docgen .collection > h2 {
-	display: none;
-}
-.docgen .items > h2 {
-	display: block;
-	font-size: 1.4em;
-    margin-top: 1.5em;
-    border-bottom-style: dotted;
+.docgen {
+	.map {
+		height: 350px !important; // ToDo: Remove once new release of vue-components is available (newer than 2.8.1)
+	}
+
+	.collection > h2 {
+		display: none;
+	}
+
+	.items > h2 {
+		display: block;
+		font-size: 1.4em;
+		margin-top: 1.5em;
+		border-bottom-style: dotted;
+	}
 }
 </style>

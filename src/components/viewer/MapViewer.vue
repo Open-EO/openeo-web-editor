@@ -3,7 +3,7 @@
 		<Pane id="map">
 			<div :id="id" class="map-viewer">
 				<ProgressControl ref="progress" :map="map" />
-				<TextControl v-if="textControlText" :text="textControlText" />
+				<TextControl v-if="isGeoTiff" :text="textControlText" />
 				<ChannelControl v-if="isGeoTiff && !colorMap" :bands="bands" @update="updateGeoTiffStyle" />
 				<div v-if="loading" class="map-loading">
 					<i class="fas fa-spinner fa-spin"></i>
