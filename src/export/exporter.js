@@ -190,7 +190,14 @@ export default class Exporter extends ProcessGraph {
 	}
 
 	async resolveCallback(node, key) {
-		let callback = node.getArgument(key);
+		let callback;
+		if (node.process_id === 'load_collection') {
+			let properties = node.getArgument('properties');
+			callback = properties[key];
+		}
+		else {
+			callback = node.getArgument(key);
+		}
 		let parameters = callback.getCallbackParameters();
 		await callback.execute(parameters);
 		let fnName = this.var(`${key}${this.fnCounter++}`, 'fn_');
@@ -253,7 +260,7 @@ export default class Exporter extends ProcessGraph {
 			return `${id}_`;
 		}
 		if (!id.match(/^[a-z_]\w*$/)) {
-			return `${prefix}${id}`;
+			return prefix + id.replace(/[^\w]+/g, '_');
 		}
 		else {
 			return id;
