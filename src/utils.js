@@ -200,10 +200,6 @@ class Utils extends VueUtils {
 		return urlParams.get(name); 
 	}
 
-	static isUrl(url) {
-		return (VueUtils.hasText(url) && url.match(/^https?:\/\//i) !== null);
-	}
-
 	static isBboxInWebMercator(bboxes) {
 		if (!bboxes) {
 			return null;

@@ -206,7 +206,7 @@ export default {
 	},
 	async created() {
 		var serverFromQuery = Utils.param('server');
-		if (!this.$config.serverUrl && Utils.isUrl(serverFromQuery)) {
+		if (!this.$config.serverUrl && serverFromQuery) {
 			this.serverUrl = serverFromQuery;
 		}
 
