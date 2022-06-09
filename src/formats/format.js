@@ -62,7 +62,7 @@ export class Format {
 			blob = await response.blob();
 		}
 		else {
-			blob = await connection.download(url);
+			blob = await connection.download(url, false);
 		}
 		let promise = new Promise((resolve, reject) => {
 			let reader = new FileReader();
