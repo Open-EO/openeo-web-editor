@@ -2,8 +2,7 @@ import { SupportedFormat } from './format';
 import Utils from '../utils';
 import ProjManager from '../components/maps/projManager';
 
-import { fromUrl as tiffFromUrl } from 'geotiff';
-import { photometricInterpretations } from 'geotiff/dist-module/globals';
+import { fromUrl as tiffFromUrl, globals as _ } from 'geotiff';
 
 import { toUserExtent } from 'ol/proj';
 import Projection from 'ol/proj/Projection';
@@ -178,9 +177,9 @@ class GeoTIFF extends SupportedFormat {
 
 		// Get photometric interpretation
 		switch (this.img.fileDirectory.PhotometricInterpretation) {
-			case photometricInterpretations.CMYK:
-			case photometricInterpretations.YCbCr:
-			case photometricInterpretations.CIELab:
+			case _.photometricInterpretations.CMYK:
+			case _.photometricInterpretations.YCbCr:
+			case _.photometricInterpretations.CIELab:
 				this.convertToRGB = true;
 				break;
 			default:

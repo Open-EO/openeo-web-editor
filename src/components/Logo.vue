@@ -7,14 +7,14 @@
 
 <script>
 import EventBusMixin from './EventBusMixin.vue';
-import { version } from '../../package.json';
+import Package from '../../package.json';
 
 export default {
 	name: 'Logo',
 	mixins: [EventBusMixin],
 	data() {
 		return {
-			version
+			version: Package.version
 		}
 	},
 	methods: {
