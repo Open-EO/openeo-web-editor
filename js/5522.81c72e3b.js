@@ -1,0 +1,2 @@
+"use strict";(globalThis["webpackChunk_openeo_web_editor"]=globalThis["webpackChunk_openeo_web_editor"]||[]).push([[5522],{65522:(e,r,o)=>{o.r(r),o.d(r,{default:()=>s});var a=o(28843),n=o(3704);class s extends n.Z{decodeBlock(e){return(0,a.rr)(new Uint8Array(e)).buffer}}}}]);
+//# sourceMappingURL=5522.81c72e3b.js.map
