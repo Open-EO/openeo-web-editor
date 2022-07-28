@@ -2,7 +2,7 @@
 	<DataTable ref="table" :data="data" :columns="columns" class="JobPanel">
 		<template slot="toolbar">
 			<button title="Add new job for batch processing" @click="createJobFromScript()" v-show="supportsCreate" :disabled="!this.hasProcess"><i class="fas fa-plus"></i> Create Batch Job</button>
-			<button title="Run the process directly and view the results without storing them permanently" @click="executeProcess" v-show="supports('computeResult')" :disabled="!this.hasProcess"><i class="fas fa-play"></i> Run / Preview</button>
+			<button title="Run the process directly and view the results without storing them permanently" @click="executeProcess" v-show="supports('computeResult')" :disabled="!this.hasProcess"><i class="fas fa-play"></i> Run now</button>
 		</template>
 		<template #actions="p">
 			<button title="Details" @click="showJobInfo(p.row)" v-show="supportsRead"><i class="fas fa-info"></i></button>
@@ -145,7 +145,7 @@ export default {
 			try {
 				this.runId++;
 				let message = "A process is currently executed synchronously...";
-				let title = `Run / Preview #${this.runId}`;
+				let title = `Run #${this.runId}`;
 				let endlessPromise = () => new Promise(() => {}); // Pass a promise to snotify that never resolves as we manually close the toast
 				toast = this.$snotify.async(message, title, endlessPromise, snotifyConfig);
 				let result = await this.connection.computeResult(this.process, null, null, abortController);

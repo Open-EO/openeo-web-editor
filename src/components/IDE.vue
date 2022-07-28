@@ -286,7 +286,7 @@ export default {
 	}
 }
 #workspace {
-	min-width: 300px;
+	min-width: 400px;
 }
 #discovery {
 	height: 100%;
