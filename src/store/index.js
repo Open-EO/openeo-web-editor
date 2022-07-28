@@ -130,7 +130,7 @@ export default new Vuex.Store({
 	},
 	actions: {
 		async initUserLocation(cx) {
-			if ("geolocation" in navigator) {
+			if (Config.requestUserLocation && "geolocation" in navigator) {
 				navigator.geolocation.getCurrentPosition(
 					position => cx.commit('userLocation', [position.coords.latitude, position.coords.longitude]),
 					error => console.warn(error),
