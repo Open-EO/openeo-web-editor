@@ -158,10 +158,14 @@ export default {
 		},
 		showJobResults(stac, job) {
 			let files = this.registry.createFilesFromSTAC(stac, job);
-			let title = Utils.getResourceTitle(job, true);
-			if (files.length > 5 && !confirm(`You are about to open ${files.length} individual files / tabs, which could slow down the web browser. Are you sure you want to open all of them?`)) {
+			if (files.length === 0) {
+				Utils.error(this, 'No results available for job "' + Utils.getResourceTitle(job) + '".');
 				return;
 			}
+			else if (files.length > 5 && !confirm(`You are about to open ${files.length} individual files / tabs, which could slow down the web browser. Are you sure you want to open all of them?`)) {
+				return;
+			}
+			let title = Utils.getResourceTitle(job, true);
 			this.showViewer(files, title, file => `${job.id}-${file.getUrl()}`, true)
 				.catch(error => Utils.exception(this, error));
 		},

@@ -380,11 +380,7 @@ export default {
 		async viewResults(job) {			
 			// Doesn't need to go through job store as it doesn't change job-related data
 			try {
-				let stac = await job.getResultsAsStac()
-				if(Utils.size(stac.assets) == 0) {
-					Utils.error(this, 'No results available for job "' + Utils.getResourceTitle(job) + '".');
-					return;
-				}
+				let stac = await job.getResultsAsStac();
 				this.emit('viewJobResults', stac, job);
 			} catch(error) {
 				Utils.exception(this, error, 'View Result Error: ' + Utils.getResourceTitle(job));

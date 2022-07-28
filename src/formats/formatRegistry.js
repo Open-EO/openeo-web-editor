@@ -15,6 +15,7 @@ export default class FormatRegistry {
 
 	createFilesFromSTAC(stac, resource = null) {
 		let files = Object.values(stac.assets)
+			.filter(asset => !Array.isArray(asset.roles) || !asset.roles.includes("metadata"))
 			.map(asset => this.createFileFromAsset(asset, stac));
 		if (resource) {
 			files.forEach(file => file.setContext(resource));
