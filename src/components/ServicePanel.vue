@@ -257,9 +257,19 @@ export default {
 		viewService(service) {
 			this.emit('viewWebService', service);
 		},
-		shareResults(service) {
+		async shareResults(service) {
 			if (this.canShare) {
-				this.emit('showModal', 'ShareModal', {context: service});
+				this.refreshElement(service, service2 => {
+					if (!service.enabled) {
+						Utils.error(this, "Sorry, only enabled services can be shared.");
+					}
+					else if (service2.url) {
+						this.emit('showModal', 'ShareModal', {url: service2.url, title: service2.title, context: service2});
+					}
+					else {
+						Utils.error(this, "Sorry, this service has no public URL.");
+					}
+				});
 			}
 		}
 	}

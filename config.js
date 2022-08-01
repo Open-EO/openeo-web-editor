@@ -39,11 +39,13 @@ export default {
 
 	// List of supported batch job sharing services
 	supportedBatchJobSharingServices: [
+		'CopyUrl',
 		'TwitterShare'
 	],
 
 	// List of supported web service sharing services
 	supportedWebServiceSharingServices: [
+		'CopyUrl',
 		'TwitterShare'
 	],
 
