@@ -88,6 +88,11 @@ export default {
 			}
 		}
 
+		> .no-data {
+			text-align: center;
+    		padding: 1em;
+		}
+
 		> table > thead {
 			position: sticky;
 			background-color: #fff;
