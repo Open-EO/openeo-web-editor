@@ -14,7 +14,7 @@ class BrowserImage extends SupportedFormat {
 		return new Promise((resolve, reject) => {
 			let img = new Image();
 			img.crossOrigin = 'anonymous';
-			img.onerror = reject;
+			img.onerror = () => reject(new Error('Failed to load the image'));
 			img.onload = () => resolve(img);
 			img.fetchPriotity = 'high';
 			img.decoding = 'sync';
