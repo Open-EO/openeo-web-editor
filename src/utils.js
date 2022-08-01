@@ -1,5 +1,5 @@
 import VueUtils from '@openeo/vue-components/utils';
-import { Job, Service, UserProcess } from '@openeo/js-client';
+import { Job, Service, UserFile, UserProcess } from '@openeo/js-client';
 import { mapState, mapActions, mapMutations, mapGetters } from 'vuex';
 import contentType from 'content-type';
 import Config from '../config';
@@ -14,6 +14,64 @@ class Utils extends VueUtils {
 			}
 		}
 		return null;
+	}
+
+	static isMapServiceSupported(mapType) {
+		if (typeof mapType !== 'string') {
+			return false;
+		}
+		return Config.supportedMapServices.includes(mapType.toLowerCase());
+	}
+
+	static parseNodata(value) {
+		if (Array.isArray(value)) {
+			return value.map(nodata => Utils.parseNodata(nodata));
+		}
+		else {
+			return typeof value === "string" && value.toLowerCase() === "nan" ? Number.NaN : value;
+		}
+	}
+
+	static displayRGBA(data, nodata = [NaN, null], hasAlpha = true) {
+		let NA = 'no data';
+		if (typeof data === 'undefined' || data === null) {
+			return NA;
+		}
+		let values = Array.from(data).map(v => parseFloat(v.toFixed(6)));
+		if (values.length === 0) {
+			return '-';
+		}
+
+		let a = 1;
+		if (hasAlpha && data.length > 1) {
+			a = values.pop();
+		}
+
+		// Transparent (no-data)
+		if (a === 0 || values.find(v => nodata.includes(v)) !== undefined) {
+			return NA;
+		}
+		// Grayscale (all values are the same)
+		else if (values.every(v => v === values[0])) {
+			return values[0];
+		}
+		// RGB and others
+		else {
+			return values.join(' | ');
+		}
+	}
+
+	static isActiveJobStatusCode(status) {
+		if (typeof status !== 'string') {
+			return null;
+		}
+		switch (status.toLowerCase()) {
+			case 'running':
+			case 'queued':
+				return true;
+			default:
+				return false;
+		}
 	}
 
 	static exception(vm, error, alt) {
@@ -72,13 +130,7 @@ class Utils extends VueUtils {
 		}; 
 		vm.$snotify.confirm(message, null, Object.assign({}, vm.$config.snotifyDefaults, typeDefaults)); 
 	}
-
-	static blobToText(blob, callback) {
-		var reader = new FileReader(); 
-		reader.onload = callback; 
-		reader.readAsText(blob.blob); 
-	}
-
+	
 	static isChildOfModal(that) {
 		return that.$parent && that.$parent.$options.name == 'Modal'; 
 	}
@@ -148,18 +200,32 @@ class Utils extends VueUtils {
 		return urlParams.get(name); 
 	}
 
-	static isUrl(url) {
-		return (VueUtils.hasText(url) && url.match(/^https?:\/\//i) !== null);
+	static isBboxInWebMercator(bboxes) {
+		if (!bboxes) {
+			return null;
+		}
+		if (!Array.isArray(bboxes)) {
+			bboxes = [bboxes];
+		}
+		let maxBounds = {south: -85.06, north: 85.06}; // Max. south/north bounds for Web Mercator
+		return !bboxes.find(bbox => bbox.south < maxBounds.south || bbox.north > maxBounds.north);
 	}
-
 	static extentToBBox(extent) {
-		var hasZ = extent.length > 4;
-        return {
+		if (!Array.isArray(extent)) {
+			return null;
+		}
+		var hasZ = extent.length >= 6;
+        let obj = {
 			west: extent[0],
 			east: extent[hasZ ? 3 : 2],
 			south: extent[1],
 			north: extent[hasZ ? 4 : 3]
 		};
+		if (hasZ) {
+			obj.base = extent[2];
+			obj.height = extent[5];
+		}
+		return obj;
 	}
 	static sortById(a, b) {
 		return VueUtils.compareStringCaseInsensitive(a.id, b.id);
@@ -243,28 +309,24 @@ class Utils extends VueUtils {
 	}
 
 	static getResourceTitle(obj, showType = false) {
-		let title = '';
-		if (showType) {
-			if (obj instanceof Job) {
-				title += 'Job: ';
-			}
-			else if (obj instanceof Service) {
-				title = 'Service: ';
-			}
-			else if (obj instanceof UserProcess) {
-				title += 'Process: ';
-			}
-		}
+		let title;
+		let isObj = Utils.isObject(obj);
 		if (obj instanceof UserProcess) {
-			title += obj.id;
+			title = obj.id;
 		}
-		else if (obj.title) {
-			title += obj.title;
+		else if (obj instanceof UserFile) {
+			title = obj.path;
 		}
-		else if (obj.id) {
+		else if (isObj && typeof obj.stac_version === 'string') {
+			title = obj.id;
+		}
+		else if (isObj && obj.title) {
+			title = obj.title;
+		}
+		else if (isObj && obj.id) {
 			let id = new String(obj.id);
 			if (id.length > 10) {
-				title += obj.id.substr(0, 5) + '…' + obj.id.substr(-5);
+				title = obj.id.substr(0, 5) + '…' + obj.id.substr(-5);
 			}
 			else {
 				title = obj.id
@@ -272,7 +334,32 @@ class Utils extends VueUtils {
 			title = '#' + title;
 		}
 		else {
-			title += "Unnamed";
+			title = 'Unnamed';
+		}
+		if (showType) {
+			let type;
+			if (typeof showType === 'string') {
+				type = showType;
+			}
+			else if (obj instanceof Job) {
+				type = 'Job';
+			}
+			else if (obj instanceof Service) {
+				type = 'Service';
+			}
+			else if (obj instanceof UserProcess) {
+				type = 'Process';
+			}
+			else if (obj instanceof UserFile) {
+				type = 'File';
+			}
+			else if (isObj && typeof obj.stac_version === 'string' && obj.type === 'Collection') {
+				type = obj.type;
+			}
+
+			if (type) {
+				title = `${title} (${type})`;
+			}
 		}
 		return title;
 	}

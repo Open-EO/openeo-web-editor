@@ -64,12 +64,47 @@ export default {
 }
 </script>
 
-<style>
-#userContent .tabContent {
-	padding: 5px;
-	height: calc(100% - 12px);
-}
-#userContent .data-table .title {
-	word-break: break-all;
+<style lang="scss">
+#userContent {
+	.data-table {
+		> .menu {
+			padding: 0.5em;
+			background-color: #fff;
+			border-bottom: 3px solid #ccc;
+			position: sticky;
+			top: 0;
+			box-sizing: border-box;
+			height: 2.5em;
+			z-index: 10;
+			margin: 0;
+			white-space: nowrap;
+
+			> .toolbar {
+				flex-grow: 2;
+
+				button {
+					white-space: nowrap;
+				}
+			}
+		}
+
+		> table > thead {
+			position: sticky;
+			background-color: #fff;
+			top: calc(2.5em + 2px);
+			box-shadow: 0 2px 0 #ccc;
+			z-index: 10;
+			box-sizing: border-box;
+
+			th {
+				padding-top: 8px;
+				border-top: 0;
+			}
+		}
+
+		.title {
+			word-break: break-all;
+		}
+	}
 }
 </style>

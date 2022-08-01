@@ -39,14 +39,22 @@ Vue.config.errorHandler = function (err, vm, info) {
 		vm.$snotify.singleError(message, 'Error', Config.snotifyDefaults);
 	}
 };
-
 Vue.prototype.$config = Config;
 
 for(var name in filters) {
 	Vue.filter(name, filters[name]);
 }
 
-new Vue({
+const app = new Vue({
 	store,
 	render: h => h(Page)
 }).$mount('#app');
+
+window.addEventListener("unhandledrejection", function(event) {
+	console.warn(event);
+	if (typeof event.reason === 'String' || event.reason instanceof Error) {
+		app.$snotify.singleError(event.reason, 'Error', Config.snotifyDefaults);
+	}
+	event.preventDefault();
+	event.stopPropagation();
+});

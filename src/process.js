@@ -1,5 +1,5 @@
 import Utils from './utils';
-import { ProcessSchema } from '@openeo/js-commons';
+import { ProcessSchema, ProcessDataType } from '@openeo/js-commons';
 
 export default class Process {
 
@@ -41,5 +41,16 @@ export default class Process {
 		// ToDo: Parameters with a dash (and other operators) in them are a problem
 
 		return true;
+	}
+
+	static arrayOf(datatype) {
+		if (!(datatype instanceof ProcessDataType)) {
+			datatype = new ProcessDataType(datatype);
+		}
+		if (datatype.nativeDataType() === 'array' && Utils.isObject(datatype.schema.items)) {
+			let subtype = new ProcessDataType(datatype.schema.items);
+			return subtype.dataType();
+		}
+		return undefined;
 	}
 }

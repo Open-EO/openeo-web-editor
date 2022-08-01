@@ -33,11 +33,11 @@
 		<!-- Temporal (date, time, date-time, temporal-interval) -->
 		<TemporalPicker v-else-if="isTemporal" v-model="state" :key="type" :type="type" :editable="editable"></TemporalPicker>
 		<!-- Bounding Box -->
-		<MapAreaSelect v-else-if="type === 'bounding-box'" v-model="state" :key="type" :id="name + '_bbox'" :editable="editable" class="areaSelector"></MapAreaSelect>
+		<MapAreaSelect v-else-if="type === 'bounding-box'" v-model="state" :key="type" :editable="editable" class="areaSelector"></MapAreaSelect>
 		<!-- GeoJSON -->
-		<MapGeoJsonEditor v-else-if="type === 'geojson'" v-model="state" :key="type" :id="name + '_geojson'" :editable="editable" class="geoJsonEditor"></MapGeoJsonEditor>
+		<GeoJsonEditor v-else-if="type === 'geojson'" v-model="state" :key="type" :editable="editable" class="geoJsonEditor"></GeoJsonEditor>
 		<!-- Process Editor -->
-		<Editor v-else-if="type === 'process-graph'" class="callbackEditor" :id="name" :editable="editable" :parent="parent" :parentSchema="schema" :showDiscoveryToolbar="true" v-model="state" :defaultValue="editorDefaultValue" />
+		<Editor v-else-if="type === 'process-graph'" class="callbackEditor" :editable="editable" :parent="parent" :parentSchema="schema" :showDiscoveryToolbar="true" v-model="state" :defaultValue="editorDefaultValue" />
 		<!-- Output format options -->
 		<FileFormatOptionsEditor v-else-if="type === 'output-format-options' || type === 'input-format-options'" ref="fileFormatOptionsEditor" :type="type" v-model="state" :format="dependency"></FileFormatOptionsEditor>
 		<!-- Budget -->
@@ -73,10 +73,11 @@ import EventBusMixin from './EventBusMixin.vue';
 import ObjectEditor from './datatypes/ObjectEditor.vue';
 import Budget from './datatypes/Budget.vue';
 import MapAreaSelect from './datatypes/MapAreaSelect.vue';
-import MapGeoJsonEditor from './datatypes/MapGeoJsonEditor.vue';
+import GeoJsonEditor from './datatypes/GeoJsonEditor.vue';
 import TextEditor from './TextEditor.vue';
 
-import Utils from '../utils.js';
+import Utils from '../utils';
+import Process from '../process';
 
 export default {
 	name: 'ParameterDataType',
@@ -85,7 +86,7 @@ export default {
 		ObjectEditor,
 		Budget,
 		MapAreaSelect,
-		MapGeoJsonEditor,
+		GeoJsonEditor,
 		TextEditor,
 		// Asynchronously load the following components to avoid circular references.
 		// See https://vuejs.org/v2/guide/components-edge-cases.html#Circular-References-Between-Components
@@ -222,6 +223,10 @@ export default {
 					return this.getValueFromOtherParameterByDataType('udf-runtime');
 				case 'band-name':
 					return this.getValueFromOtherParameterByDataType('collection-id');
+				case 'array':
+					if (Process.arrayOf(this.schema) === 'band-name') {
+						return this.getValueFromOtherParameterByDataType('collection-id');
+					}
 				default:
 					return undefined;
 			}
@@ -233,8 +238,13 @@ export default {
 				this.state = this.value;
 			}
 		},
-		async newValue(newVal) {
+		newValue(newVal) {
 			this.$emit('input', newVal);
+		},
+		dependency(newVal, oldVal) {
+			if (typeof oldVal !== 'undefined' && newVal !== oldVal) {
+				this.$emit('reset');
+			}
 		}
 	},
 	methods: {

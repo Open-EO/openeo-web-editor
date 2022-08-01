@@ -1,17 +1,20 @@
 <template>
 	<div class="imageViewer" ref="imageViewer" :class="{'fullscreen': fullScreen}">
-		<div class="toolbar">
-			<span class="value" :title="valueTitle">{{ valueText }}</span>
-			<FullscreenButton class="fullscreen-button" :element="() => $refs.imageViewer" @changed="fullscreenToggled" />
-		</div>
-		<div v-show="!loaded" class="noDataMessage"><i class="fas fa-spinner fa-spin"></i> Loading image...</div>
-		<canvas ref="canvas" :class="{'fullsize': fullSize}" :title="title" @click="resize" @mousemove="getPixelValue" @mouseout="resetPixelValue" @load="imageLoaded" />
+		<template v-if="error">{{ error }}</template>
+		<template v-else>
+			<div class="toolbar">
+				<span class="value" :title="valueTitle">{{ valueText }}</span>
+				<FullscreenButton class="fullscreen-button" :element="() => $refs.imageViewer" @changed="fullscreenToggled" />
+			</div>
+			<div v-show="!context" class="noDataMessage"><i class="fas fa-spinner fa-spin"></i> Loading image...</div>
+			<canvas v-show="context" ref="canvas" :class="{'fullsize': fullSize}" :title="title" @click="resize" @mousemove="getPixelValue" @mouseout="resetPixelValue" />
+		</template>
 	</div>
 </template>
 
 <script>
-import FullscreenButton from './FullscreenButton.vue';
-import Utils from '../utils';
+import FullscreenButton from '../FullscreenButton.vue';
+import Utils from '../../utils';
 
 export default {
 	name: 'ImageViewer',
@@ -20,6 +23,7 @@ export default {
 	},
 	props: {
 		data: {
+			type: Object,
 			required: true
 		}
 	},
@@ -28,17 +32,21 @@ export default {
 			fullScreen: false,
 			fullSize: false,
 			img: null,
-			loaded: false,
+			error: null,
 			context: null,
 			value: '-'
 		};
 	},
-	mounted() {
-		if (this.data.blob) {
-			this.showImageBlob(this.data.blob);
-		}
-		else if (this.data.url) {
-			this.showImage(this.data.url);
+	async mounted() {
+		this.$emit('mounted', this);
+		try {
+			this.img = await this.data.getData();
+			this.$refs.canvas.width = this.img.naturalWidth;
+			this.$refs.canvas.height = this.img.naturalHeight;
+			this.context = this.$refs.canvas.getContext('2d');
+			this.context.drawImage(this.img, 0, 0);
+		} catch (error) {
+			this.error = error;
 		}
 	},
 	computed: {
@@ -61,24 +69,6 @@ export default {
 		}
 	},
 	methods: {
-		showImage(src) {
-			this.loaded = false;
-			this.img = new Image();
-			this.img.crossOrigin = "Anonymous";
-			this.img.onload = this.imageLoaded.bind(this)
-			this.img.src = src;
-		},
-		showImageBlob(data) {
-			this.showImage(URL.createObjectURL(data));
-		},
-		imageLoaded() {
-			this.loaded = true;
-			
-			this.$refs.canvas.width = this.img.naturalWidth;
-			this.$refs.canvas.height = this.img.naturalHeight;
-			this.context = this.$refs.canvas.getContext('2d');
-			this.context.drawImage(this.img, 0, 0);
-		},
 		fullscreenToggled(open) {
 			this.fullScreen = open;
 		},
@@ -97,24 +87,8 @@ export default {
 				let yScale = this.img.naturalHeight / size.height;
 				let x = event.offsetX * xScale;
 				let y = event.offsetY * yScale;
-				let [r,g,b,a] = this.context.getImageData(Math.ceil(x), Math.ceil(y), 1, 1).data;
-				if (a === 0) {
-					// Transparent (no-data?)
-					this.value = 'no data';
-				}
-				else if (r == g && g === b) {
-					if (a === 255) {
-						// Grayscale
-						this.value = r;
-					}
-					else {
-						// Grayscale with Alpha
-						this.value = `${r}, Alpha: ${a}`;
-					}
-				}
-				else {
-					this.value = `Red: ${r}, Green: ${g}, Blue: ${b}, Alpha: ${a}`;
-				}
+				let rgba = this.context.getImageData(Math.ceil(x), Math.ceil(y), 1, 1).data;
+				this.value = Utils.displayRGBA(rgba);
 			} catch (error) {
 				this.value = 'n/a';
 				console.log(error);

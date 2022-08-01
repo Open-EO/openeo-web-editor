@@ -27,7 +27,7 @@ export default {
 	actions: {
 		async loadEpsgCodes(cx) {
 			if (cx.state.epsgCodes.length === 0) {
-				let res = await import('../assets/epsg.json');
+				let res = await import('../assets/epsg-names.json');
 				cx.commit('epsgCodes', res.default);
 			}
 		},

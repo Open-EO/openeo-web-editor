@@ -54,9 +54,9 @@ export default {
 		getIdField(value = undefined) {
 			return {
 				value,
-				name: "name",
+				name: "id",
 				description: 'A unique identifier. Must contain only letters (`a`-`z`), digits (`0`-`9`) and underscores (`_`). `snake_case` is recommended.',
-				label: 'Name',
+				label: 'Process ID',
 				schema: {
 					type: 'string',
 					pattern: '^\\w+$'

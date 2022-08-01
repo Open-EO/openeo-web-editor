@@ -2,20 +2,20 @@
 	<DataTable ref="table" :data="data" :columns="columns" class="JobPanel">
 		<template slot="toolbar">
 			<button title="Add new job for batch processing" @click="createJobFromScript()" v-show="supportsCreate" :disabled="!this.hasProcess"><i class="fas fa-plus"></i> Create Batch Job</button>
-			<button title="Run the process directly and view the results without storing them permanently" @click="executeProcess" v-show="supports('computeResult')" :disabled="!this.hasProcess"><i class="fas fa-play"></i> Run / Preview</button>
+			<button title="Run the process directly and view the results without storing them permanently" @click="executeProcess" v-show="supports('computeResult')" :disabled="!this.hasProcess"><i class="fas fa-play"></i> Run now</button>
 		</template>
 		<template #actions="p">
 			<button title="Details" @click="showJobInfo(p.row)" v-show="supportsRead"><i class="fas fa-info"></i></button>
-			<button title="Estimate" @click="estimateJob(p.row)" v-show="supports('estimateJob')"><i class="fas fa-file-invoice-dollar"></i></button>
-			<button title="Edit metadata" @click="editMetadata(p.row)" v-show="supportsUpdate && isJobInactive(p.row)"><i class="fas fa-edit"></i></button>
-			<button title="Edit process" @click="showInEditor(p.row)" v-show="supportsRead && isJobInactive(p.row)"><i class="fas fa-project-diagram"></i></button>
+			<button title="Estimate" @click="estimateJob(p.row)" v-show="supportsEstimate"><i class="fas fa-file-invoice-dollar"></i></button>
+			<button title="Edit metadata" @click="editMetadata(p.row)" v-show="supportsUpdate" :disabled="!isJobInactive(p.row)"><i class="fas fa-edit"></i></button>
+			<button title="Edit process" @click="showInEditor(p.row)" v-show="supportsRead"><i class="fas fa-project-diagram"></i></button>
 			<button title="Delete" @click="deleteJob(p.row)" v-show="supportsDelete"><i class="fas fa-trash"></i></button>
-			<button title="Start processing" @click="queueJob(p.row)" v-show="supports('startJob') && isJobInactive(p.row)"><i class="fas fa-play-circle"></i></button>
-			<button title="Cancel processing" @click="cancelJob(p.row)" v-show="supports('stopJob') && isJobActive(p.row)"><i class="fas fa-stop-circle"></i></button>
-			<button title="Download" @click="downloadResults(p.row)" v-show="supports('downloadResults') && hasResults(p.row)"><i class="fas fa-download"></i></button>
+			<button title="Start processing" @click="queueJob(p.row)" v-show="supportsStart && isJobInactive(p.row)"><i class="fas fa-play-circle"></i></button>
+			<button title="Cancel processing" @click="cancelJob(p.row)" v-show="supportsStop && isJobActive(p.row)"><i class="fas fa-stop-circle"></i></button>
+			<button title="Download" @click="downloadResults(p.row)" v-show="supportsDownloadResults && mayHaveResults(p.row)"><i class="fas fa-download"></i></button>
 			<button title="Export / Share" @click="shareResults(p.row)" v-show="canShare && supports('downloadResults') && hasResults(p.row)"><i class="fas fa-share"></i></button>
-			<button title="View results" @click="viewResults(p.row, true)" v-show="supports('downloadResults') && hasResults(p.row)"><i class="fas fa-eye"></i></button>
-			<button title="View logs" @click="showLogs(p.row)" v-show="supports('debugJob')"><i class="fas fa-bug"></i></button>
+			<button title="View results" @click="viewResults(p.row, true)" v-show="supportsDownloadResults && mayHaveResults(p.row)"><i class="fas fa-eye"></i></button>
+			<button title="View logs" @click="showLogs(p.row)" v-show="supportsDebug"><i class="fas fa-bug"></i></button>
 		</template>
 	</DataTable>
 </template>
@@ -77,9 +77,25 @@ export default {
 		...Utils.mapGetters(['supports', 'supportsBilling', 'supportsBillingPlans']),
 		...Utils.mapGetters('editor', ['hasProcess']),
 		...Utils.mapState('editor', ['process']),
+		supportsStart() {
+			return this.supports('startJob');
+		},
+		supportsStop() {
+			return this.supports('stopJob');
+		},
+		supportsEstimate() {
+			return this.supports('estimateJob');
+		},
+		supportsDownloadResults() {
+			return this.supports('downloadResults');
+		},
+		supportsDebug() {
+			return this.supports('debugJob');
+		},
 		canShare() {
 			return Array.isArray(this.$config.supportedBatchJobSharingServices) && this.$config.supportedBatchJobSharingServices.length > 0;
 		}
+		
 	},
 	watch: {
 		data: {
@@ -87,11 +103,8 @@ export default {
 				// Update Watchers
 				this.watchers = {};
 				for(let job of updatedJobs) {
-					switch(job.status.toLowerCase()) {
-						case 'running':
-						case 'queued':
-							this.watchers[job.id] = job;
-							break;
+					if (Utils.isActiveJobStatusCode(job.status)) {
+						this.watchers[job.id] = job;
 					}
 				}
 			},
@@ -102,12 +115,18 @@ export default {
 		...Utils.mapActions('jobs', ['queue', 'cancel']),
 		startSyncTimer() {
 			WorkPanelMixinInstance.methods.startSyncTimer.call(this);
-			this.jobUpdater = setInterval(this.executeWatchers, 10000);
+			// Use setTimeout instead of setInterval to be able to slow down the refresh time based on the number of watchers
+			let fn = () => {
+				this.executeWatchers();
+				let interval = 5 + 5*Math.log2(Utils.size(this.watchers));
+				this.jobUpdater = setTimeout(fn, interval * 1000);
+			};
+			fn();
 		},
 		stopSyncTimer() {
 			WorkPanelMixinInstance.methods.stopSyncTimer.call(this);
 			if (this.jobUpdater !== null) {
-				clearInterval(this.jobUpdater);
+				clearTimeout(this.jobUpdater);
 			}
 		},
 		showInEditor(job) {
@@ -130,10 +149,13 @@ export default {
 			try {
 				this.runId++;
 				let message = "A process is currently executed synchronously...";
-				let title = `Run / Preview #${this.runId}`;
+				let title = `Run #${this.runId}`;
 				let endlessPromise = () => new Promise(() => {}); // Pass a promise to snotify that never resolves as we manually close the toast
 				toast = this.$snotify.async(message, title, endlessPromise, snotifyConfig);
 				let result = await this.connection.computeResult(this.process, null, null, abortController);
+				if (result.logs.length > 0) {
+					this.emit('viewLogs', result.logs);
+				}
 				this.emit('viewSyncResult', result);
 			} catch(error) {
 				if (axios.isCancel(error)) {
@@ -244,12 +266,17 @@ export default {
 			];
 			this.emit('showDataForm', "Create new batch job", fields, data => this.createJob(this.process, data));
 		},
-		deleteJob(job) {
+		async deleteJob(job) {
 			if (!confirm(`Do you really want to delete the batch job "${Utils.getResourceTitle(job)}"?`)) {
 				return;
 			}
-			this.delete({data: job})
-				.catch(error => Utils.exception(this, error, 'Delete Job Error: ' + Utils.getResourceTitle(job)));
+
+			try {
+				await this.delete({data: job});
+				this.emit('removeBatchJob', job.id);
+			} catch(error) {
+				Utils.exception(this, error, 'Delete Job Error: ' + Utils.getResourceTitle(job));
+			}
 		},
 		executeWatchers() {
 			for(var i in this.watchers) {
@@ -272,7 +299,7 @@ export default {
 				});
 			}
 		},
-		async showJobInfo(job) {
+		showJobInfo(job) {
 			this.refreshElement(job, async (updatedJob) => {
 				let result = null;
 				if (updatedJob.status === 'finished') {
@@ -329,16 +356,22 @@ export default {
 				Utils.exception(this, error, 'Update Job Error: ' + Utils.getResourceTitle(job));
 			}
 		},
-		async queueJob(job) {
-			try {
-				let updatedJob = await this.queue({data: job});
-				Utils.ok(this, 'Job "' + Utils.getResourceTitle(updatedJob) + '" successfully queued.');
-			} catch(error) {
-				Utils.exception(this, error, 'Queue Job Error: ' + Utils.getResourceTitle(job));
-			}
+		queueJob(job) {
+			this.refreshElement(job, async (updatedJob) => {
+				if (updatedJob.status === 'finished' && !confirm(`The batch job "${Utils.getResourceTitle(updatedJob)}" has already finished with results. Queueing the job again may discard all previous results! Do you really want to queue it again?`)) {
+					return;
+				}
+				
+				try {
+					let updatedJob = await this.queue({data: job});
+					Utils.ok(this, 'Job "' + Utils.getResourceTitle(updatedJob) + '" successfully queued.');
+				} catch(error) {
+					Utils.exception(this, error, 'Queue Job Error: ' + Utils.getResourceTitle(job));
+				}
+			});
 		},
 		async cancelJob(job) {
-			if (!confirm(`Do you really want to cancel the execution of batch job "${file.path}"?`)) {
+			if (!confirm(`Do you really want to cancel the execution of batch job "${Utils.getResourceTitle(job)}"?`)) {
 				return;
 			}
 			try {
@@ -351,11 +384,7 @@ export default {
 		async viewResults(job) {
 			// Doesn't need to go through job store as it doesn't change job-related data
 			try {
-				let stac = await job.getResultsAsStac()
-				if(Utils.size(stac.assets) == 0) {
-					Utils.error(this, 'No results available for job "' + Utils.getResourceTitle(job) + '".');
-					return;
-				}
+				let stac = await job.getResultsAsStac();
 				this.emit('viewJobResults', stac, job);
 			} catch(error) {
 				Utils.exception(this, error, 'View Result Error: ' + Utils.getResourceTitle(job));
@@ -379,23 +408,14 @@ export default {
 				this.emit('showModal', 'ShareModal', {context: job});
 			}
 		},
-		hasResults(job) {
-			return (typeof job.status !== 'string' || job.status.toLowerCase() == 'finished');
+		mayHaveResults(job) {
+			return (typeof job.status !== 'string' || job.status.toLowerCase() == 'finished'); // todo: We may also want to check for canceled or errored here.
 		},
 		isJobInactive(job) {
-			return (typeof job.status !== 'string' || !this.isActiveStatusCode(job.status));
+			return Utils.isActiveJobStatusCode(job.status) !== true;
 		},
 		isJobActive(job) {
-			return (typeof job.status !== 'string' || this.isActiveStatusCode(job.status));
-		},
-		isActiveStatusCode(status) {
-			switch (status.toLowerCase()) {
-				case 'running':
-				case 'queued':
-					return true;
-				default:
-					return false;
-			}
+			return Utils.isActiveJobStatusCode(job.status) !== false;
 		}
 	}
 }

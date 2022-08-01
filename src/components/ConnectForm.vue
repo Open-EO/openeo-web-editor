@@ -18,7 +18,7 @@
 					<div class="row">
 						<label for="serverUrl">URL:</label>
 						<div class="input">
-							<input type="url" id="serverUrl" class="tour-connect-url" v-model.lazy.trim="serverUrl" :disabled="autoConnect" />
+							<input type="text" id="serverUrl" class="tour-connect-url" v-model.lazy.trim="serverUrl" :disabled="autoConnect" />
 							<button v-if="allowOtherServers" type="button" @click="showServerSelector" title="Select previously used server" class="tour-connect-history"><i class="fas fa-book"></i></button>
 						</div>
 					</div>
@@ -206,7 +206,7 @@ export default {
 	},
 	async created() {
 		var serverFromQuery = Utils.param('server');
-		if (!this.$config.serverUrl && Utils.isUrl(serverFromQuery)) {
+		if (!this.$config.serverUrl && serverFromQuery) {
 			this.serverUrl = serverFromQuery;
 		}
 
@@ -294,26 +294,34 @@ export default {
 
 		async submitForm() {
 			if (!this.isConnected) {
-				this.initConnection(this.skipLogin, false);
+				await this.initConnection(this.skipLogin, false);
 			}
 		},
 
 		async initConnection(skipLogin = false, programmatically = false) {
-			if (typeof this.serverUrl !== 'string' || !Utils.isUrl(this.serverUrl)) {
-				Utils.error(this, 'Please specify a valid server.');
+			if (typeof this.serverUrl !== 'string' || !this.serverUrl) {
+				Utils.error(this, 'Please specify a server.');
 				return;
 			}
-			else if (window.location.protocol === 'https:' && this.serverUrl.toLowerCase().substr(0,6) !== 'https:') {
+			let serverUrl = this.serverUrl;
+			if (!serverUrl.match(/^https?:\/\//i)) {
+				serverUrl = `https://${serverUrl}`;
+			}
+			if (!Utils.isUrl(serverUrl)) {
+				Utils.error(this, 'The server given is not a valid URL.');
+				return;
+			}
+			else if (window.location.protocol === 'https:' && serverUrl.toLowerCase().substr(0,6) !== 'https:') {
 				Utils.error(this, 'You are trying to connect to a server with HTTP instead of HTTPS, which is insecure and prohibited by web browsers. Please use HTTPS instead.');
 				return;
 			}
 
 			this.loading = true;
 			try {
-				if (await this.connect(this.serverUrl)) {
-					this.addServer(this.serverUrl);
+				if (await this.connect(serverUrl)) {
+					this.addServer(serverUrl);
 					if (!programmatically) {
-						window.history.pushState({reset: true, serverUrl: this.serverUrl, autoConnect: true}, "", this.makeUrl());
+						window.history.pushState({reset: true, serverUrl: this.serverUrl, autoConnect: true, skipLogin}, "", this.makeUrl());
 					}
 					if (skipLogin) {
 						await this.initDiscovery();

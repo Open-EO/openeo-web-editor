@@ -78,17 +78,16 @@ export default ({namespace, listFn, createFn, updateFn, deleteFn, readFn, readFn
 			async list(cx) {
 				var data = [];
 				if (cx.getters.supportsList) {
-					data = await cx.rootState.connection[listFn]();
+					// Pass over existing data so that it can be updated (for all complete entities, only update fields that exist in the new object)
+					// instead of getting replaced, see https://github.com/Open-EO/openeo-web-editor/issues/234
+					data = await cx.rootState.connection[listFn](cx.state[namespace]);
 				}
 				cx.commit('data', data);
 				return data;
 			}
 		},
 		mutations: {
-			// ToDo: Use Vue.observable on all JS client objects?
 			data(state, data) {
-				// This also overrides data that had been requested before and is more complete, see https://github.com/Open-EO/openeo-web-editor/issues/234
-				// So for all complete entities, only update fields that exist in the new object
 				state[namespace] = data.map(d => Vue.observable(d));
 			},
 			upsert(state, data) {

@@ -8,9 +8,9 @@
 			<button title="Edit metadata" @click="editMetadata(p.row)" v-show="supportsUpdate"><i class="fas fa-edit"></i></button>
 			<button title="Edit process" @click="showInEditor(p.row)" v-show="supportsRead"><i class="fas fa-project-diagram"></i></button>
 			<button title="Delete" @click="deleteService(p.row)" v-show="supportsDelete"><i class="fas fa-trash"></i></button>
-			<button title="View on map" @click="viewService(p.row)" v-show="p.row.enabled && isMapServiceSupported(p.row.type)"><i class="fas fa-map"></i></button>
+			<button v-show="p.row.enabled && isMapServiceSupported(p.row.type)" title="View on map" @click="viewService(p.row)"><i class="fas fa-map"></i></button>
 			<button title="Export / Share" @click="shareResults(p.row)" v-show="p.row.enabled && canShare"><i class="fas fa-share"></i></button>
-			<button title="View logs" @click="showLogs(p.row)" v-show="supports('debugService')"><i class="fas fa-bug"></i></button>
+			<button title="View logs" @click="showLogs(p.row)" v-show="supportsDebug"><i class="fas fa-bug"></i></button>
 		</template>
 	</DataTable>
 </template>
@@ -66,17 +66,17 @@ export default {
 		...Utils.mapGetters(['supports', 'supportsBilling', 'supportsBillingPlans']),
 		canShare() {
 			return Array.isArray(this.$config.supportedBatchJobSharingServices) && this.$config.supportedBatchJobSharingServices.length > 0;
+		},
+		supportsDebug() {
+			return this.supports('debugService');
 		}
 	},
 	mounted() {
 		this.listen('replaceProcess', this.replaceProcess);
 	},
 	methods: {
-		isMapServiceSupported(mapType) {
-			if (typeof mapType !== 'string') {
-				return false;
-			}
-			return this.$config.supportedMapServices.includes(mapType.toLowerCase());
+		isMapServiceSupported(type) {
+			return Utils.isMapServiceSupported(type);
 		},
 		showInEditor(service) {
 			this.refreshElement(service, updatedService => this.emit('editProcess', updatedService));

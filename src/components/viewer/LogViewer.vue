@@ -6,8 +6,8 @@
 </template>
 
 <script>
-import Utils from '../utils.js';
-import EventBusMixin from './EventBusMixin.vue';
+import Utils from '../../utils.js';
+import EventBusMixin from '../EventBusMixin.vue';
 import Logs from '@openeo/vue-components/components/Logs.vue';
 
 export default {
@@ -51,6 +51,9 @@ export default {
 			this.listen('jobStatusUpdated', this.onJobStatusUpdated);
 		}
 	},
+	mounted() {
+		this.$emit('mounted', this);
+	},
 	beforeDestroy() {
 		this.onHide();
 	},
@@ -72,13 +75,11 @@ export default {
 				return;
 			}
 
-			switch(this.data.status.toLowerCase()) {
-				case 'running':
-				case 'queued':
-					this.startWatcher();
-				break;
-				default:
-					this.stopWatcher();
+			if (Utils.isActiveJobStatusCode(this.data.status)) {
+				this.startWatcher();
+			}
+			else {
+				this.stopWatcher();
 			}
 		},
 		startWatcher() {
@@ -93,17 +94,21 @@ export default {
 			}
 		},
 		async loadNext() {
-			if (this.logIterator) {
-				let logs = await this.logIterator.nextLogs();
-				if (!Array.isArray(this.logs)) {
-					this.logs = [];
+			try {
+				if (this.logIterator) {
+					let logs = await this.logIterator.nextLogs();
+					if (!Array.isArray(this.logs)) {
+						this.logs = [];
+					}
+					for(let log of logs) {
+						this.logs.push(log);
+					}
 				}
-				for(let log of logs) {
-					this.logs.push(log);
+				else if(Array.isArray(this.data) && !this.logs) {
+					this.logs = this.data;
 				}
-			}
-			else if(Array.isArray(this.data) && !this.logs) {
-				this.logs = this.data;
+			} catch (error) {
+				Utils.exeption(this, error, "Loading logs failed");
 			}
 		}
 	}

@@ -14,7 +14,7 @@ You can also build the files yourself and deploy them to any web host:
 3. Open a command line window and go to the directory which contains the cloned/downloaded web editor files.
 4. Configure the web editor by editing `config.js`, `vue.config.js` and `theme.scss` to suit your needs.
 6. Install the dependencies by executing `npm install` on the command line
-7.
+7. For...
     * Development: Run the development server by executing `npm start`.
     * Deployment: Build the project by executing `npm run build`. Afterwards upload the content of the `dist` folder to your server.
 
@@ -31,7 +31,7 @@ You can use some query parameters to set initial state to the Editor.
 * `discover`: If you want to skip authentication and just show the capabiltiies of the back-end, simply set to `1`.
 * `process`: Loads a process from a URL and shows it in the Model Builder. You can also pass a single process name with an optional namespace to the parameter (format: `process@namespace`) to simply add a single process node for that process by default.
 * `namespaces`: Loads a additional process namespaces. Multiple namespaces can be separated by a comma (e.g. `vector,sar`).
-* `edit-node` Opens the parameter editor for a single process node on start-up. Must have the `process` parameter being set, otherwise will be ignored. You can set two types of values:
+* `edit-node`: Opens the parameter editor for a single process node on start-up. Must have the `process` parameter being set, otherwise will be ignored. You can set two types of values:
   * `1`: If only a single node is being added, opens this node without explicitly naming it.
   * Otherwise, the value must correspond to the node identifier without `#` at the beginning.
 * `preview-collection` Shows the preview of a Collection on the map upon start.
@@ -81,3 +81,9 @@ To test a certain commit, simply pull the according tag (available from 2021-09-
 docker pull mundialis/openeo-web-editor:sha-4636d41
 ```
 The Dockerimage is maintained by mundialis.
+
+## Implementation guide for back-ends
+
+Here we collection information for back-end implementors that want to improve the experience with the Web Editor by fine-tuning their implementation.
+
+* [GeoTiff / COG support](docs/geotiff.md)

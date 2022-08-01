@@ -94,8 +94,8 @@ export default class JavaScript extends Exporter {
 		super.parse();
 	}
 
-	isKeyword(keyword) {
-		return KEYWORDS.includes(keyword.toLowerCase());
+	getKeywords() {
+		return KEYWORDS;
 	}
 
 	comment(comment) {
@@ -123,8 +123,8 @@ export default class JavaScript extends Exporter {
 	}
 
 	async generateFunction(node) {
-		let variable = this.var(node.id);
 		let builderName = node.getParent() ? 'this' : 'builder';
+		let variable = this.var(node.id, this.varPrefix());
 		let args = await this.generateArguments(node, !node.namespace);
 
 		this.comment(node.description);
@@ -154,9 +154,7 @@ export default class JavaScript extends Exporter {
 			let params = this.generateFunctionParams(parameters);
 			this.newLine();
 			this.addCode(`let ${variable} = function(${params.join(', ')}) {`);
-			this.indent++;
-			this.addCode(await callback.toCode(true));
-			this.indent--;
+			this.addCode(await callback.toCode(true), '', 1);
 			this.addCode(`}`);
 		}
 	}
@@ -165,7 +163,7 @@ export default class JavaScript extends Exporter {
 		if (!resultNode) {
 			return;
 		}
-		let variable = this.var(resultNode.id);
+		let variable = this.var(resultNode.id, this.varPrefix());
 		if (callback) {
 			this.addCode(`return ${variable};`);
 		}

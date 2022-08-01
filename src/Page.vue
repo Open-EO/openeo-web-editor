@@ -31,6 +31,7 @@ export default {
 		ConnectForm,
 		IDE: () => import('./components/IDE.vue'),
 		CollectionModal: () => import('./components/modals/CollectionModal.vue'),
+		DataModal: () => import('./components/modals/DataModal.vue'),
 		DownloadAssetsModal: () => import('./components/modals/DownloadAssetsModal.vue'),
 		ErrorModal: () => import('./components/modals/ErrorModal.vue'),
 		ExportCodeModal: () => import('./components/modals/ExportCodeModal.vue'),
@@ -85,6 +86,7 @@ export default {
 	},
 	mounted() {
 		this.listen('showError', this.showError);
+		this.listen('showDataModal', this.showData);
 		this.listen('showModal', this.showModal);
 		this.listen('showListModal', this.showListModal);
 		this.listen('showCollection', this.showCollection);
@@ -161,15 +163,20 @@ export default {
 			}
 		},
 		async showProcess(process) {
-			this.showModal('ProcessModal', {
-				process: await this.loadProcess(process)
-			});
+			try {
+				this.showModal('ProcessModal', {
+					process: await this.loadProcess(process)
+				});
+			} catch (error) {
+				console.log(error);
+				Utils.error(this, "Sorry, can't load process details.");
+			}
+		},
+		async showData(data, title) {
+			this.showModal('DataModal', {data, title});
 		},
 		showProcessParameter(parameter, udp = true) {
-			this.showModal('ProcessParameterModal', {
-				parameter,
-				udp
-			});
+			this.showModal('ProcessParameterModal', {parameter,udp});
 		}
 	}
 }
@@ -368,5 +375,26 @@ h3.aboutPage {
 }
 .connect-fade-enter, .connect-fade-leave-to {
   opacity: 0;
+}
+
+/* General editor styling */
+.sourceHeader {
+	padding: 5px;
+	border-bottom: 1px solid #ddd;
+	display: flex;
+	justify-content: flex-end;
+	background-color: #fff;
+
+	strong {
+		display: block;
+		margin: auto 0;
+		flex-grow: 1;
+	}
+}
+.sourceToolbar {
+	text-align: right;
+}
+.tabContent > .textEditor {
+	border: 0 !important;
 }
 </style>

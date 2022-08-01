@@ -12,6 +12,9 @@ export default {
 	// Skip login and automatically load up the "discovery mode"
 	skipLogin: false,
 
+	// Request the user location to default the map view on where the user is
+	requestUserLocation: true,
+
 	// A message shown on the login page
 	loginMessage: '',
 

@@ -4,13 +4,13 @@
 			<Collection :data="collection">
 				<template #spatial-extents="p">
 					<span v-if="p.worldwide" class="worldwide"><i class="fas fa-globe"></i> Worldwide</span>
-					<MapViewer v-else class="map" id="collectionMap" :show="showMap" :extents="p.extents"></MapViewer>
+					<MapExtentViewer v-else class="map" :footprint="p.extents"></MapExtentViewer>
 				</template>
 			</Collection>
 			<section v-if="currentItems">
 				<Items :items="currentItems">
 					<template #item-location="p">
-						<MapViewer :id="mapViewerId" :geoJson="p.geometry"></MapViewer>
+						<MapExtentViewer :footprint="p.geometry"></MapExtentViewer>
 					</template>
 				</Items>
 				<div class="pagination">
@@ -23,7 +23,6 @@
 </template>
 
 <script>
-import MapViewer from '../MapViewer.vue';
 import Modal from './Modal.vue';
 import Collection from '@openeo/vue-components/components/Collection.vue';
 import Utils from '../../utils.js';
@@ -31,14 +30,13 @@ import Utils from '../../utils.js';
 export default {
 	name: 'CollectionModal',
 	components: {
-		MapViewer,
+		MapExtentViewer: () => import('../maps/MapExtentViewer.vue'),
 		Modal,
 		Collection,
 		Items: () => import('@openeo/vue-components/components/Items.vue')
 	},
 	data() {
 		return {
-			showMap: false,
 			items: [],
 			itemsPage: 0,
 			itemsIterator: null
@@ -52,9 +50,6 @@ export default {
 	computed: {
 		...Utils.mapState(['connection']),
 		...Utils.mapGetters(['supports']),
-		mapViewerId() {
-			return 'map_' + this.collection.id;
-		},
 		bbox() {
 			try {
 				return this.collection.extent.spatial.bbox[0];
@@ -76,10 +71,6 @@ export default {
 		}
 	},
 	async mounted() {
-		this.$nextTick(() => {
-			this.showMap = true;
-		});
-
 		if (this.supports('listCollectionItems')) {
 			await this.nextItems();
 			// Always request a page in advance so that we know whether a next page is available.
@@ -125,13 +116,20 @@ export default {
 		font-size: 1.15em;
 	}
 }
-.docgen .collection > h2 {
-	display: none;
-}
-.docgen .items > h2 {
-	display: block;
-	font-size: 1.4em;
-    margin-top: 1.5em;
-    border-bottom-style: dotted;
+.docgen {
+	.map {
+		height: 350px !important; // ToDo: Remove once new release of vue-components is available (newer than 2.8.1)
+	}
+
+	.collection > h2 {
+		display: none;
+	}
+
+	.items > h2 {
+		display: block;
+		font-size: 1.4em;
+		margin-top: 1.5em;
+		border-bottom-style: dotted;
+	}
 }
 </style>

@@ -18,8 +18,8 @@ export default class Python extends Exporter {
 		return this.copyProcessGraphInstanceProperties(pg);
 	}
 
-	isKeyword(keyword) {
-		return KEYWORDS.includes(keyword.toLowerCase());
+	getKeywords() {
+		return KEYWORDS;
 	}
 
 	comment(comment) {
@@ -61,7 +61,7 @@ export default class Python extends Exporter {
 	}
 
 	async generateFunction(node) {
-		let variable = this.var(node.id);
+		let variable = this.var(node.id, this.varPrefix());
 		let builderName;
 		let addProcessToArguments = true;
 		let filterDcName = null;
@@ -83,7 +83,7 @@ export default class Python extends Exporter {
 			}
 			else {
 				let prevNodes = node.getPreviousNodes();
-				let dcName = this.var(prevNodes[0].id);
+				let dcName = this.var(prevNodes[0].id, this.varPrefix());
 				// If the process has a callback parameter, we need to call the "native" process
 				// until https://github.com/Open-EO/openeo-python-client/issues/223 is solved
 				if (this.hasCallbackParameter(node) || node.process_id === 'save_result') {
@@ -91,7 +91,7 @@ export default class Python extends Exporter {
 					addProcessToArguments = false;
 					// If we call the process directly on a new data cube with dcName
 					// we need to remove the argument that is passing this data
-					filterDcName = (key, value) => Utils.isObject(value) && value.from_node && this.var(value.from_node) === dcName;
+					filterDcName = (key, value) => Utils.isObject(value) && value.from_node && this.var(value.from_node, this.varPrefix()) === dcName;
 				}
 				else {
 					builderName = `${dcName}.process`;
@@ -125,9 +125,7 @@ export default class Python extends Exporter {
 		}
 		this.newLine();
 		this.addCode(`def ${variable}(${params.join(', ')}):`);
-		this.indent++;
-		this.addCode(await callback.toCode(true));
-		this.indent--;
+		this.addCode(await callback.toCode(true), '', 1);
 		this.newLine();
 	}
 
@@ -135,7 +133,7 @@ export default class Python extends Exporter {
 		if (!resultNode) {
 			return;
 		}
-		let variable = this.var(resultNode.id);
+		let variable = this.var(resultNode.id, this.varPrefix());
 		if (callback) {
 			this.addCode(`return ${variable}`);
 		}

@@ -64,29 +64,20 @@ export default {
 			var parameters = [];
 			// Convert to Fields
 			for (var name in this.fileFormat.parameters) {
-				var p = this.fileFormat.parameters[name];
-				var schema = {};
-				if (typeof p.type !== 'undefined') {
-					schema.type = [p.type, "null"];
-				}
-				if (typeof p.minimum !== 'undefined') {
-					schema.minimum = p.minimum;
-				}
-				if (typeof p.maximum !== 'undefined') {
-					schema.maximum = p.maximum;
-				} 
-				if (Array.isArray(p.enum)) {
-					schema.enum = p.enum;
-				}
-				if (typeof p.example !== 'undefined') {
-					schema.examples = [p.example];
+				var schema = Object.assign({}, this.fileFormat.parameters[name]);
+				if (typeof schema.example !== 'undefined') {
+					schema.examples = [schema.example];
+					delete schema.example;
 				}
 				parameters.push(new ProcessParameter({
 					name: name,
-					description: p.description,
-					schema: schema,
-					optional: !p.required,
-					default: p.default
+					description: schema.description,
+					schema: [
+						{subtype: 'undefined', not: {}},
+						schema
+					],
+					optional: !schema.required,
+					default: schema.default
 				}));
 			}
 			return parameters;

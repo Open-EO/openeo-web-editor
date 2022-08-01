@@ -37,23 +37,37 @@ export default {
 		defaultEnd() {
 			return this.newDate(this.dateTimes[1] || Date.now());
 		},
+		realType() {
+			if (this.type === 'temporal-interval') {
+				let checkDate = dt => (typeof dt === 'string' && dt.length === 10);
+				let containsDate;
+				if (Array.isArray(this.value)) {
+					containsDate = !!this.value.find(checkDate);
+				}
+				else {
+					containsDate = checkDate(this.value);
+				}
+				return containsDate ? 'date' : 'date-time';
+			}
+			else {
+				return this.type;
+			}
+		},
 		formatApi() {
-			switch(this.type) {
+			switch(this.realType) {
 				case 'date':
 					return 'YYYY-MM-DD';
 				case 'date-time':
-				case 'temporal-interval':
 					return 'YYYY-MM-DD[T]HH:mm:ss[Z]';
 				case 'time':
 					return 'HH:mm:ss[Z]';
 			}
 		},
 		formatUi() {
-			switch(this.type) {
+			switch(this.realType) {
 				case 'date':
 					return 'YYYY-MM-DD';
 				case 'date-time':
-				case 'temporal-interval':
 					return 'YYYY-MM-DD HH:mm';
 				case 'time':
 					return 'HH:mm';
@@ -76,8 +90,7 @@ export default {
 			}
 		},
 		pickerType() {
-			switch(this.type) {
-				case 'temporal-interval':
+			switch(this.realType) {
 				case 'date-time':
 					return 'datetime';
 				default:

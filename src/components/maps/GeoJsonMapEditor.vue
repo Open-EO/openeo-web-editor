@@ -1,12 +1,17 @@
 <template>
-	<div :id="id"></div>
+	<div :id="id" class="geojson-map-editor">
+		<ProgressControl ref="progress" :map="map" />
+	</div>
 </template>
 
 <script>
-import MapMixin from '../MapMixin.vue';
+import MapMixin from '../maps/MapMixin.vue';
+import GeoJsonMixin from '../maps/GeoJsonMixin.vue';
+import Utils from '../../utils.js';
 
 import GeoJSON from 'ol/format/GeoJSON';
 import Snap from 'ol/interaction/Snap';
+import { isEmpty as extentIsEmpty } from 'ol/extent';
 
 import 'ol-ext/control/Bar.css';
 import Bar from 'ol-ext/control/Bar';
@@ -16,8 +21,8 @@ import EditBar from 'ol-ext/control/EditBar';
 import UndoRedo from 'ol-ext/interaction/UndoRedo';
 
 export default {
-	name: 'MapGeoJsonEditor',
-	mixins: [MapMixin],
+	name: 'GeoJsonMapEditor',
+	mixins: [MapMixin, GeoJsonMixin],
 	props: {
 		value: {
 			type: Object,
@@ -30,19 +35,24 @@ export default {
 		};
 	},
 	methods: {
-		showMap() {
-			if (this.show) {
-				this.$nextTick(this.renderMap);
+		async renderMap() {
+			let isWebMercatorCompatible = true;
+			if (this.value) {
+				let source = this.createGeoJsonSource(this.value);
+				let extent = source.getExtent();
+				if (!extentIsEmpty(extent)) {
+					isWebMercatorCompatible = Utils.isBboxInWebMercator(Utils.extentToBBox(extent)) !== false;
+				}
 			}
-		},
-		renderMap() {
-			this.createMap(true, 'EPSG:4326');
+
+			await this.createMap(isWebMercatorCompatible ? 'EPSG:3857' : 'EPSG:4326');
+			this.addBasemaps();
 
 			if (!this.editable) {
-				this.geoJsonLayer = this.addGeoJson(this.value);
+				this.geoJsonLayer = this.addGeoJson(isWebMercatorCompatible ? this.value : source);
 			}
 			else {
-				this.geoJsonLayer = this.geoJsonEditor(this.value);
+				this.geoJsonLayer = this.geoJsonEditor(isWebMercatorCompatible ? this.value : source);
 			}
 
 			if (this.editable) {
@@ -143,4 +153,10 @@ export default {
 }
 </script>
 
-<style src="../MapMixin.css"></style>
+<style src="../maps/MapMixin.css"></style>
+
+<style lang="scss">
+.geojson-map-editor {
+	height: 100%;
+}
+</style>

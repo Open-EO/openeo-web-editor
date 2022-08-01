@@ -1,4 +1,4 @@
-const webpack = require('webpack');
+const NodePolyfillPlugin = require('node-polyfill-webpack-plugin')
 
 module.exports = {
 	// Path where this instance of the web editor is hosted (string)
@@ -26,6 +26,14 @@ module.exports = {
 				maxInitialRequests: 8,
 				maxAsyncRequests: 1
 			}
+		},
+		resolve: {
+			fallback: {
+				fs: false
+			}
 		}
+	},
+	chainWebpack: webpackConfig => {
+		webpackConfig.plugin('polyfills').use(NodePolyfillPlugin);
 	}
 }

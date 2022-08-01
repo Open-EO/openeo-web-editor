@@ -25,12 +25,6 @@ Shows process information in a modal.
 
 ## Viewer & Web Services
 
-### viewBlob(Blob $data, $title = null)
-Shows the Blob object in the viewer.
-
-### viewLink(Object $data, $title = null)
-Shows the link in the viewer. A link object must contain href and type properties and may contain a title.
-
 ### viewSyncResult(object $result)
 Shows the result of a synchronous job.
 

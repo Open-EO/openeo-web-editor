@@ -191,6 +191,8 @@ export default {
 	font-size: 1.5rem;
 	border: 0;
 	cursor: text;
+	text-overflow: ellipsis;
+    overflow: hidden;
 }
 
 .modal .modal-content {

@@ -510,17 +510,19 @@ export default {
 			let process = Utils.deepClone(this.value);
 			let node = process.process_graph[nodeId];
 			let processSpec = this.processes.get(node.process_id, node.namespace);
-			this.openArgumentEditor(
-				processSpec.parameters.map(p => new ProcessParameter(p)).filter(p => p.isEditable()),
-				node.arguments,
-				processSpec.id,
-				true,
-				null,
-				data => {
-					Object.assign(node, {arguments: data});
-					this.commit(process);
-				}
-			);
+			if (Array.isArray(processSpec.parameters) && processSpec.parameters.length > 0) {
+				this.openArgumentEditor(
+					processSpec.parameters.map(p => new ProcessParameter(p)).filter(p => p.isEditable()),
+					node.arguments,
+					processSpec.id,
+					true,
+					null,
+					data => {
+						Object.assign(node, {arguments: data});
+						this.commit(process);
+					}
+				);
+			}
 		},
 		openArgumentEditor(parameters, data, title = "Edit", editable = true, selectParameterName = null, saveCallback = null, parent = null) {
 			let props = {

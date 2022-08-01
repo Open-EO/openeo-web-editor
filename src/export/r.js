@@ -15,8 +15,8 @@ export default class R extends Exporter {
 		return this.copyProcessGraphInstanceProperties(pg);
 	}
 
-	isKeyword(keyword) {
-		return KEYWORDS.includes(keyword.toLowerCase());
+	getKeywords() {
+		return KEYWORDS;
 	}
 
 	makeNull() {
@@ -58,7 +58,7 @@ export default class R extends Exporter {
 	}
 
 	async generateFunction(node) {
-		let variable = this.var(node.id);
+		let variable = this.var(node.id, this.varPrefix());
 		let args = await this.generateArguments(node);
 		// ToDo: This doesn't seem to be supported in R yet
 		if (node.namespace) {
@@ -86,9 +86,7 @@ export default class R extends Exporter {
 			let params = this.generateFunctionParams(parameters);
 			this.newLine();
 			this.addCode(`${variable} = function(${params.join(', ')}) {`);
-			this.indent++;
-			this.addCode(await callback.toCode(true));
-			this.indent--;
+			this.addCode(await callback.toCode(true), '', 1);
 			this.addCode(`}`);
 		}
 	}
@@ -97,7 +95,7 @@ export default class R extends Exporter {
 		if (!resultNode) {
 			return;
 		}
-		let variable = this.var(resultNode.id);
+		let variable = this.var(resultNode.id, this.varPrefix());
 		if (callback) {
 			this.addCode(`return(${variable})`);
 		}
