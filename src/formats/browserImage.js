@@ -11,10 +11,15 @@ class BrowserImage extends SupportedFormat {
 	}
 
 	async fetchData() {
-		let img = new Image();
-		img.crossOrigin = 'anonymous';
-		img.src = this.getUrl();
-		return img;
+		return new Promise((resolve, reject) => {
+			let img = new Image();
+			img.crossOrigin = 'anonymous';
+			img.onerror = reject;
+			img.onload = () => resolve(img);
+			img.fetchPriotity = 'high';
+			img.decoding = 'sync';
+			img.src = this.getUrl();
+		});
 	}
 
 }

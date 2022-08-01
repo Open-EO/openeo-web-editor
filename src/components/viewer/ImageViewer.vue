@@ -1,11 +1,14 @@
 <template>
 	<div class="imageViewer" ref="imageViewer" :class="{'fullscreen': fullScreen}">
-		<div class="toolbar">
-			<span class="value" :title="valueTitle">{{ valueText }}</span>
-			<FullscreenButton class="fullscreen-button" :element="() => $refs.imageViewer" @changed="fullscreenToggled" />
-		</div>
-		<div v-show="!loaded" class="noDataMessage"><i class="fas fa-spinner fa-spin"></i> Loading image...</div>
-		<canvas ref="canvas" :class="{'fullsize': fullSize}" :title="title" @click="resize" @mousemove="getPixelValue" @mouseout="resetPixelValue" @load="imageLoaded" />
+		<template v-if="error">{{ error }}</template>
+		<template v-else>
+			<div class="toolbar">
+				<span class="value" :title="valueTitle">{{ valueText }}</span>
+				<FullscreenButton class="fullscreen-button" :element="() => $refs.imageViewer" @changed="fullscreenToggled" />
+			</div>
+			<div v-show="!context" class="noDataMessage"><i class="fas fa-spinner fa-spin"></i> Loading image...</div>
+			<canvas v-show="context" ref="canvas" :class="{'fullsize': fullSize}" :title="title" @click="resize" @mousemove="getPixelValue" @mouseout="resetPixelValue" />
+		</template>
 	</div>
 </template>
 
@@ -29,22 +32,22 @@ export default {
 			fullScreen: false,
 			fullSize: false,
 			img: null,
-			loaded: false,
+			error: null,
 			context: null,
 			value: '-'
 		};
 	},
-	created() {
-		this.img = this.data.getData();
-		if (this.img.complete) {
-			this.imageLoaded();
-		}
-		else {
-			this.img.onload = this.imageLoaded.bind(this);
-		}
-	},
-	mounted() {
+	async mounted() {
 		this.$emit('mounted', this);
+		try {
+			this.img = await this.data.getData();
+			this.$refs.canvas.width = this.img.naturalWidth;
+			this.$refs.canvas.height = this.img.naturalHeight;
+			this.context = this.$refs.canvas.getContext('2d');
+			this.context.drawImage(this.img, 0, 0);
+		} catch (error) {
+			this.error = error;
+		}
 	},
 	computed: {
 		title() {
@@ -66,21 +69,6 @@ export default {
 		}
 	},
 	methods: {
-		imageLoaded() {
-			if (this.loaded) {
-				return;
-			}
-			if (!this.$refs.canvas) {
-				this.$nextTick(() => this.imageLoaded());
-				return;
-			}
-			
-			this.loaded = true;
-			this.$refs.canvas.width = this.img.naturalWidth;
-			this.$refs.canvas.height = this.img.naturalHeight;
-			this.context = this.$refs.canvas.getContext('2d');
-			this.context.drawImage(this.img, 0, 0);
-		},
 		fullscreenToggled(open) {
 			this.fullScreen = open;
 		},
