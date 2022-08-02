@@ -14,6 +14,7 @@
 			<button title="Cancel processing" @click="cancelJob(p.row)" v-show="supportsStop && isJobActive(p.row)"><i class="fas fa-stop-circle"></i></button>
 			<button title="Download" @click="downloadResults(p.row)" v-show="supportsDownloadResults && mayHaveResults(p.row)"><i class="fas fa-download"></i></button>
 			<button title="View results" @click="viewResults(p.row, true)" v-show="supportsDownloadResults && mayHaveResults(p.row)"><i class="fas fa-eye"></i></button>
+			<button title="Export / Share" @click="shareResults(p.row)" v-show="canShare && supports('downloadResults') && mayHaveResults(p.row)"><i class="fas fa-share"></i></button>
 			<button title="View logs" @click="showLogs(p.row)" v-show="supportsDebug"><i class="fas fa-bug"></i></button>
 		</template>
 	</DataTable>
@@ -90,6 +91,9 @@ export default {
 		},
 		supportsDebug() {
 			return this.supports('debugJob');
+		},
+		canShare() {
+			return Array.isArray(this.$config.supportedBatchJobSharingServices) && this.$config.supportedBatchJobSharingServices.length > 0;
 		}
 		
 	},
@@ -377,7 +381,7 @@ export default {
 				Utils.exception(this, error, 'Cancel Job Error: ' + Utils.getResourceTitle(job));
 			}
 		},
-		async viewResults(job) {			
+		async viewResults(job) {
 			// Doesn't need to go through job store as it doesn't change job-related data
 			try {
 				let stac = await job.getResultsAsStac();
@@ -386,7 +390,7 @@ export default {
 				Utils.exception(this, error, 'View Result Error: ' + Utils.getResourceTitle(job));
 			}
 		},
-		async downloadResults(job) {	
+		async downloadResults(job) {
 			// Doesn't need to go through job store as it doesn't change job-related data
 			try {
 				let result = await job.getResultsAsStac();
@@ -397,6 +401,26 @@ export default {
 				this.emit('showModal', 'DownloadAssetsModal', {job, result});
 			} catch(error) {
 				Utils.exception(this, error, 'Download Result Error: ' + Utils.getResourceTitle(job));
+			}
+		},
+		async shareResults(job) {
+			if (this.canShare) {
+				let result = await job.getResultsAsStac();
+				let url;
+				let link;
+				if (Array.isArray(result.links)) {
+					link = result.links.find(link => link.rel === 'canonical');
+					if (link && typeof link.href === 'string') {
+						url = link.href;
+					}
+				}
+				if (url) {
+					let title = result.properties?.title || job.title || link?.title;
+					this.emit('showModal', 'ShareModal', {url, title, extra: result, context: job});
+				}
+				else {
+					Utils.error(this, "Sorry, this job has no public URL");
+				}
 			}
 		},
 		mayHaveResults(job) {

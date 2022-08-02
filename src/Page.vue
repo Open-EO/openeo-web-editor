@@ -46,6 +46,7 @@ export default {
 		ProcessParameterModal: () => import('./components/modals/ProcessParameterModal.vue'),
 		ServerInfoModal: () => import('./components/modals/ServerInfoModal.vue'),
 		ServiceInfoModal: () => import('./components/modals/ServiceInfoModal.vue'),
+		ShareModal: () => import('./components/modals/ShareModal.vue'),
 		Tour: () => import('./components/Tour.vue'),
 		UdfRuntimeModal: () => import('./components/modals/UdfRuntimeModal.vue'),
 		WebEditorModal: () => import('./components/modals/WebEditorModal.vue')

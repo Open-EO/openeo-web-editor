@@ -9,6 +9,7 @@
 			<button title="Edit process" @click="showInEditor(p.row)" v-show="supportsRead"><i class="fas fa-project-diagram"></i></button>
 			<button title="Delete" @click="deleteService(p.row)" v-show="supportsDelete"><i class="fas fa-trash"></i></button>
 			<button v-show="p.row.enabled && isMapServiceSupported(p.row.type)" title="View on map" @click="viewService(p.row)"><i class="fas fa-map"></i></button>
+			<button title="Export / Share" @click="shareResults(p.row)" v-show="p.row.enabled && canShare"><i class="fas fa-share"></i></button>
 			<button title="View logs" @click="showLogs(p.row)" v-show="supportsDebug"><i class="fas fa-bug"></i></button>
 		</template>
 	</DataTable>
@@ -63,6 +64,9 @@ export default {
 		...Utils.mapGetters('editor', ['hasProcess']),
 		...Utils.mapState(['serviceTypes']),
 		...Utils.mapGetters(['supports', 'supportsBilling', 'supportsBillingPlans']),
+		canShare() {
+			return Array.isArray(this.$config.supportedBatchJobSharingServices) && this.$config.supportedBatchJobSharingServices.length > 0;
+		},
 		supportsDebug() {
 			return this.supports('debugService');
 		}
@@ -252,6 +256,21 @@ export default {
 		},
 		viewService(service) {
 			this.emit('viewWebService', service);
+		},
+		async shareResults(service) {
+			if (this.canShare) {
+				this.refreshElement(service, service2 => {
+					if (!service.enabled) {
+						Utils.error(this, "Sorry, only enabled services can be shared.");
+					}
+					else if (service2.url) {
+						this.emit('showModal', 'ShareModal', {url: service2.url, title: service2.title, context: service2});
+					}
+					else {
+						Utils.error(this, "Sorry, this service has no public URL.");
+					}
+				});
+			}
 		}
 	}
 }
