@@ -268,7 +268,7 @@ export default {
 		value: {
 			immediate: true,
 			handler(value) {
-				if (value !== this.state) {
+				if (typeof this.state === 'undefined' || value !== this.state) {
 					if (typeof value === 'undefined' && !this.allowedTypes.undefined) {
 						this.state = cloneDefault(this.parameter.default);
 					}
