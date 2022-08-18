@@ -6,7 +6,7 @@
 				<span class="value" :title="valueTitle">{{ valueText }}</span>
 				<FullscreenButton class="fullscreen-button" :element="() => $refs.imageViewer" @changed="fullscreenToggled" />
 			</div>
-			<div v-show="!context" class="noDataMessage"><i class="fas fa-spinner fa-spin"></i> Loading image...</div>
+			<div v-show="!context" class="no-data"><i class="fas fa-spinner fa-spin"></i> Loading image...</div>
 			<canvas v-show="context" ref="canvas" :class="{'fullsize': fullSize}" :title="title" @click="resize" @mousemove="getPixelValue" @mouseout="resetPixelValue" />
 		</template>
 	</div>

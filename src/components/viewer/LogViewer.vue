@@ -1,6 +1,6 @@
 <template>
 	<div class="log-viewer">
-		<div v-if="logs === null" class="noDataMessage"><i class="fas fa-spinner fa-spin fa-lg"></i> Loading logs...</div>
+		<div v-if="logs === null" class="no-data"><i class="fas fa-spinner fa-spin fa-lg"></i> Loading logs...</div>
 		<Logs v-else :logs="logs" />
 	</div>
 </template>

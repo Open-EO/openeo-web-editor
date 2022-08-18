@@ -321,7 +321,7 @@ h3.aboutPage {
 	margin-bottom: 0.5em;
 }
 
-.noDataMessage {
+.no-data {
 	text-align: center;
 	margin: 1em;
 	font-weight: bold;
