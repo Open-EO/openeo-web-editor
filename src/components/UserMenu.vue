@@ -14,6 +14,7 @@
 			<a v-if="profileLink" class="item" :href="profileLink.href" target="_blank">Welcome, {{ userName }}!</a>
 			<div v-else class="item">Welcome, {{ userName }}!</div>
 			<template v-if="isAuthenticated">
+				<a v-if="hasProfile" class="item" @click.prevent="userDetails"><i class="fas fa-user"></i> Profile</a>
 				<a v-if="settingsLink" class="item" :href="settingsLink.href" target="_blank"><i class="fas fa-user-edit"></i> {{ settingsLink.title || 'Edit Profile' }}</a>
 				<a class="item" @click.prevent="logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
 			</template>
@@ -85,6 +86,12 @@ export default {
 		budget() {
 			return Utils.formatBudget(this.userInfo.budget, this.currency);
 		},
+		profile() {
+			return Utils.omitFromObject(this.userInfo, ["budget", "links", "storage"]);
+		},
+		hasProfile() {
+			return Utils.size(this.profile) > 0;
+		},
 		userName() {
 			if (typeof this.userInfo.name === 'string') {
 				return this.userInfo.name;
@@ -126,6 +133,9 @@ export default {
 		},
 		login() {
 			this.emit('showLogin');
+		},
+		userDetails() {
+			this.emit('showDataModal', this.profile, "User Profile");
 		},
 		formatMegabyte(num) {
 			var gb = 1024*1024*1024;

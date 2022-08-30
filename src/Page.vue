@@ -321,7 +321,7 @@ h3.aboutPage {
 	margin-bottom: 0.5em;
 }
 
-.no-data {
+.no-data, .log-empty {
 	text-align: center;
 	margin: 1em;
 	font-weight: bold;
