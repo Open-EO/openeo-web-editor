@@ -87,7 +87,7 @@ export default {
 			return Utils.formatBudget(this.userInfo.budget, this.currency);
 		},
 		profile() {
-			return Utils.omitFromObject(this.userInfo, ["budget", "links", "storage"]);
+			return Utils.omitFromObject(this.userInfo, ["budget", "links", "storage", "default_plan"]);
 		},
 		hasProfile() {
 			return Utils.size(this.profile) > 0;
