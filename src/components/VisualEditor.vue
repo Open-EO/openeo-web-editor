@@ -26,6 +26,28 @@
 		<div class="editorSplitter">
 			<DiscoveryToolbar v-if="(showDiscoveryToolbar || isFullScreen) && editable" class="discoveryToolbar" :onAddProcess="insertProcess" />
 			<div class="graphBuilder" @drop="onDrop" @dragover="allowDrop">
+				<div v-if="showHelpOverlay" class="model-overlay">
+					<h2>Welcome!</h2>
+					<p>What you are seeing in this area of the {{ $config.appName }} is the visual model builder.</p>
+					<p>You can start building your model by dragging collections, processes etc. from the left area and dropping them here.</p>
+					<p>Alternatively, you can also import existing processes into the model builder:</p>
+					<ul>
+						<li>Paste the JSON from your clipboard by clicking <button type="button" @click="paste" title="Paste from clipboard"><i class="fas fa-paste"></i></button> or use <kbd>CTRL</kbd> + <kbd>V</kbd> (Windows, Linux) or <kbd>⌘</kbd> + <kbd>V</kbd> (MacOS) when the model builder is in focus.</li>
+						<li>Drag and drop a JSON file from your computer</li>
+						<li>Import a JSON file from your computer or another source such as the internet by clicking <button type="button" @click="importProcess" title="Import process from external source"><i class="fas fa-cloud-download-alt"></i></button></li>
+					</ul>
+					<p>
+						You can also import the processes from the Python and R client.
+						You need to export your process to JSON first:
+						<ul>
+							<li>In Python use <a href="https://open-eo.github.io/openeo-python-client/cookbook/tricks.html#process-graph-export" target="_blank"><code>print(result.to_json())</code></a></li>
+							<li>In R use <a href="https://open-eo.github.io/openeo-r-client/reference/index.html" target="_blank"><code>toJSON(as(result, "Process"))</code></a></li>
+						</ul>
+						In both cases, <code>result</code> is your last return value from a data cube process such as <code>save_result</code>.
+						For more details, please read the corresponding chapter in the <a href="https://openeo.org/documentation/1.0/cookbook/#output-process-as-json" target="_blank">openEO cookbook</a>.
+					</p>
+					<p>Once you start interacting with this area, this message will disappear.</p>
+				</div>
 				<ModelBuilder
 					ref="blocks"
 					:editable="editable"
@@ -90,6 +112,10 @@ export default {
 			type: Boolean,
 			default: false
 		},
+		showIntro: {
+			type: Boolean,
+			default: false
+		},
 		title: {
 			type: String
 		},
@@ -105,6 +131,7 @@ export default {
 	},
 	data() {
 		return {
+			showHelpOverlay: this.showIntro,
 			canUndo: false,
 			canRedo: false,
 			compactMode: false,
@@ -117,6 +144,9 @@ export default {
 		value: {
 			immediate: true,
 			handler(value) {
+				if (value) {
+					this.showHelpOverlay = false;
+				}
 				if (this.initialNode && Utils.isObject(value) && Utils.isObject(value.process_graph)) {
 					try {
 						let node = this.initialNode;
@@ -142,6 +172,18 @@ export default {
 			}
 			this.$emit('input', value);
 		},
+		async paste() {
+			try {
+				const text = await navigator.clipboard.readText();
+				let process = JSON.parse(text);
+				await this.$refs.blocks.import(process);
+			} catch(error) {
+				Utils.exception(this, error, 'Paste Error');
+			}
+		},
+		importProcess() {
+			this.emit('importProcess');
+		},
 		errorHandler(message, title = null) {
 			Utils.exception(this, message, title)
 		},
@@ -153,6 +195,7 @@ export default {
 			this.canRedo = !!history[index+1];
 		},
 		allowDrop(event) {
+			this.showHelpOverlay = false;
 			event.preventDefault();
 		},
 		onDrop(event) {
@@ -574,49 +617,67 @@ export default {
 }
 </script>
 
-<style>
+<style lang="scss">
 .visualEditor {
 	background-color: white;
 	height: 100%;
 	display: flex;
 	flex-direction: column;
-}
 
-.visualEditor .vue-component.model-builder {
-	min-height: 100px;
-	min-width: 100px;
-}
+	.vue-component.model-builder {
+		min-height: 100px;
+		min-width: 100px;
+	}
 
-.visualEditor .editorSplitter {
-	display: flex;
-	flex-direction: row-reverse;
-	flex-grow: 1;
-	height: 100%;
-	overflow: hidden;
-}
+	.model-overlay {
+		position: absolute;
+		width: 100%;
+		height: 100%;
+		left: 0;
+		top: 0;
+		color: #555;
+		z-index: 5;
+		padding: 1em;
+		overflow: auto;
+		box-sizing: border-box;
+		line-height: 1.33em;
 
-.visualEditor .discoveryToolbar {
-	width: 25%;
-	min-width: 150px;
-	border-left: 1px solid #ddd;
-}
-.visualEditor.fullscreen .discoveryToolbar {
-	width: 15%;
-	min-width: 250px;
+		> p:first-of-type {
+			margin-top: 0;
+		}
+	}
+
+	.discoveryToolbar {
+		width: 25%;
+		min-width: 150px;
+		border-left: 1px solid #ddd;
+	}
+	.editorSplitter {
+		display: flex;
+		flex-direction: row-reverse;
+		flex-grow: 1;
+		height: 100%;
+		overflow: hidden;
+	}
+
+	&.fullscreen {
+		display: flex;
+		flex-direction: column;
+
+		.discoveryToolbar {
+			width: 15%;
+			min-width: 250px;
+		}
+		.editorSplitter {
+			height: 100%;
+		}
+	}
 }
 
 .graphBuilder {
 	height: 100%;
 	flex-grow: 1;
-}
-
-.visualEditor.fullscreen {
-	display: flex;
-	flex-direction: column;
-}
-
-.visualEditor.fullscreen .editorSplitter {
-	height: 100%;
+	position: relative;
 }
 
 .compactMode {

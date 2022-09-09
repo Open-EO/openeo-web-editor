@@ -16,7 +16,7 @@
 				<Pane id="workspace" :size="splitpaneSizeH[1]">
 					<Splitpanes class="default-theme" horizontal @resize="resized" @pane-maximize="resized">
 						<Pane id="editor" :size="splitpaneSizeV[0]">
-							<Editor ref="editor" class="mainEditor tour-ide-editor" id="main" :value="process" @input="updateEditor" :title="contextTitle">
+							<Editor ref="editor" class="mainEditor tour-ide-editor" id="main" :value="process" @input="updateEditor" :title="contextTitle" showIntro>
 								<template #file-toolbar>
 									<button type="button" @click="importProcess" title="Import process from external source"><i class="fas fa-cloud-download-alt"></i></button>
 									<button type="button" v-show="saveSupported" :disabled="!hasProcess" @click="saveProcess" :title="'Save to ' + contextTitle"><i class="fas fa-save"></i></button>
@@ -120,6 +120,7 @@ export default {
 		this.listen('showDataForm', this.showDataForm);
 		this.listen('editProcess', this.editProcess);
 		this.listen('showLogin', this.login);
+		this.listen('importProcess', this.importProcess);
 
 		this.resizeListener = event => this.resized(event);
 		window.addEventListener('resize', this.resizeListener);
