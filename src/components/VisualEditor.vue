@@ -32,7 +32,7 @@
 					<p>You can start building your model by dragging collections, processes etc. from the left area and dropping them here.</p>
 					<p>Alternatively, you can also import existing processes into the model builder:</p>
 					<ul>
-						<li>Paste the JSON from your clipboard by clicking <button type="button" @click="paste" title="Paste from clipboard"><i class="fas fa-paste"></i></button> or use <kbd>STRG</kbd> + <kbd>V</kbd> (Windows, Linux) or <kbd>⌘</kbd> + <kbd>V</kbd> (MacOS) when the model builder is in focus.</li>
+						<li>Paste the JSON from your clipboard by clicking <button type="button" @click="paste" title="Paste from clipboard"><i class="fas fa-paste"></i></button> or use <kbd>CTRL</kbd> + <kbd>V</kbd> (Windows, Linux) or <kbd>⌘</kbd> + <kbd>V</kbd> (MacOS) when the model builder is in focus.</li>
 						<li>Drag and drop a JSON file from your computer</li>
 						<li>Import a JSON file from your computer or another source such as the internet by clicking <button type="button" @click="importProcess" title="Import process from external source"><i class="fas fa-cloud-download-alt"></i></button></li>
 					</ul>
@@ -40,7 +40,7 @@
 						You can also import the processes from the Python and R client.
 						You need to export your process to JSON first:
 						<ul>
-							<li>In Python use <a href="https://open-eo.github.io/openeo-python-client/cookbook/tricks.html#process-graph-export" target="_blank"><code>result.to_json()</code></a></li>
+							<li>In Python use <a href="https://open-eo.github.io/openeo-python-client/cookbook/tricks.html#process-graph-export" target="_blank"><code>print(result.to_json())</code></a></li>
 							<li>In R use <a href="https://open-eo.github.io/openeo-r-client/reference/index.html" target="_blank"><code>toJSON(as(result, "Process"))</code></a></li>
 						</ul>
 						In both cases, <code>result</code> is your last return value from a data cube process such as <code>save_result</code>.
