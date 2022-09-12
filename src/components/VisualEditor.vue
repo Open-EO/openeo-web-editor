@@ -32,7 +32,7 @@
 					<p>You can start building your model by dragging collections, processes etc. from the left area and dropping them here.</p>
 					<p>Alternatively, you can also import existing processes into the model builder:</p>
 					<ul>
-						<li>Paste the JSON from your clipboard by clicking <button type="button" @click="paste" title="Paste from clipboard"><i class="fas fa-paste"></i></button> or use <kbd>CTRL</kbd> + <kbd>V</kbd> (Windows, Linux) or <kbd>⌘</kbd> + <kbd>V</kbd> (MacOS) when the model builder is in focus.</li>
+						<li v-if="canPaste">Paste the JSON from your clipboard by clicking <button type="button" @click="paste" title="Paste from clipboard"><i class="fas fa-paste"></i></button> or use <kbd>CTRL</kbd> + <kbd>V</kbd> (Windows, Linux) or <kbd>⌘</kbd> + <kbd>V</kbd> (MacOS) when the model builder is in focus.</li>
 						<li>Drag and drop a JSON file from your computer</li>
 						<li>Import a JSON file from your computer or another source such as the internet by clicking <button type="button" @click="importProcess" title="Import process from external source"><i class="fas fa-cloud-download-alt"></i></button></li>
 					</ul>
@@ -134,6 +134,7 @@ export default {
 			showHelpOverlay: this.showIntro,
 			canUndo: false,
 			canRedo: false,
+			canPaste: false,
 			compactMode: false,
 			hasSelection: false,
 			formula: null,
@@ -163,6 +164,9 @@ export default {
 			}
 		}
 	},
+	mounted() {
+		this.canPaste = navigator && navigator.clipboard && typeof navigator.clipboard.readText === 'function';
+	},
 	methods: {
 		...Utils.mapMutations('editor', ['setInitialNode']),
 		commit(value) {
@@ -173,6 +177,9 @@ export default {
 			this.$emit('input', value);
 		},
 		async paste() {
+			if (!this.canPaste) {
+                Utils.error(this, 'error', 'Pasting is not supported by your browser.');
+			}
 			try {
 				const text = await navigator.clipboard.readText();
 				let process = JSON.parse(text);
