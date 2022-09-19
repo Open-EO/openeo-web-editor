@@ -16,6 +16,7 @@ export default {
 		return {
 			WMTSCapabilities: {},
 			timeline: null,
+			times: []
 		}
 	},
 	methods: {
@@ -93,10 +94,10 @@ export default {
 					defaultDate = new Date(options.dimensions.TIME);
 				}
 
-				let times = this.getWMTSTimes(capabilities, layer);
-				if (times.length) {
-					let min = new Date(times[0]);
-					let max = new Date(times[times.length -1]);
+				this.times = this.getWMTSTimes(capabilities, layer);
+				if (this.times.length) {
+					let min = new Date(this.times[0]);
+					let max = new Date(this.times[this.times.length-1]);
 					if (!minDate || min < minDate) {
 						minDate = min;
 					}
@@ -124,7 +125,15 @@ export default {
 					maxDate: maxDate
 				});
 				let run;
+				let toDate = (date) => {
+					return [
+						date.getFullYear(),
+						("0" + (date.getMonth() + 1)).slice(-2),
+						("0" + date.getDate()).slice(-2)
+					].join('-');
+				};
 				this.timeline.on('scroll', function(e) {
+					console.log(e);
 					if (!e.date || e.date > maxDate || e.date < minDate) {
 						return;
 					}
@@ -133,13 +142,14 @@ export default {
 					}
 					run = window.setTimeout(() => {
 						try {
-							let date = e.date.toISOString().substr(0, 10);
+							console.log(e.date);
+							let date = toDate(e.date);
+							console.log(date);
 							source.updateDimensions({
 								TIME: date
 							});
 							let btns = document.getElementsByClassName('timeline-date-label');
 							btns[0].innerText = date;
-							btns[0].disabled = true;
 						} catch (error) {
 							console.log(error);
 						}
@@ -149,11 +159,51 @@ export default {
 				this.map.addControl(this.timeline);
 
 				this.timeline.addButton({
+					className: 'timeline-prev-label',
+					title: 'Go to previous date',
+					html: '<',
+					handleClick: () => {
+						console.log(this.timeline.getDate());
+						console.log(this.times);
+					}
+				});
+				this.timeline.addButton({
 					className: 'timeline-date-label',
 					title: `The date that is shown on the map for the collection '${title}'`,
-					html: 'No date'
+					html: 'No date',
+					handleClick: () => {
+						let date = this.timeline.getDate();
+						let newDate = toDate(date);
+						while (typeof newDate === 'string') {
+							newDate = prompt("Please specify the date (format: YYYY-MM-DD) you want to go to:", newDate);
+							if (typeof newDate !== 'string') {
+								return;
+							}
+							let match = newDate.match(/^\s*(\d{1,4})-(\d{2})-(\d{2})\s*$/);
+							if (match) {
+								let parts = match.slice(1, 4).map(x => parseInt(x, 10));
+								date.setFullYear(parts[0]);
+								date.setMonth(parts[1] - 1);
+								date.setDate(parts[2]);
+								console.log(date);
+								this.timeline.setDate(date);
+								console.log(this.timeline.getDate());
+								return;
+							}
+						}
+					}
 				});
-				this.timeline.setDate(defaultDate);
+				this.timeline.addButton({
+					className: 'timeline-next-label',
+					title: 'Go to next label',
+					html: '>',
+					handleClick: () => {
+						console.log(this.timeline.getDate());
+						
+					}
+				});
+
+				this.timeline.setDate(defaultDate, {anim: false});
 			}
 
 			let group = new LayerGroup({
