@@ -147,4 +147,4 @@ export default {
 }
 </script>
 
-<style src="../maps/MapMixin.css"></style>
+<style src="../maps/MapMixin.scss" lang="scss"></style>

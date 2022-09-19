@@ -231,7 +231,7 @@ export default {
 }
 </script>
 
-<style src="../maps/MapMixin.css"></style>
+<style src="../maps/MapMixin.scss" lang="scss"></style>
 
 <style lang="scss">
 .map-viewer {
@@ -259,10 +259,5 @@ export default {
 .ol-control.value {
 	top: 0.5em;
 	left: 3em;
-}
-.ol-control.ol-timeline .timeline-date-label {
-	width: 7em;
-    font-size: 0.8em;
-    font-weight: normal;
 }
 </style>

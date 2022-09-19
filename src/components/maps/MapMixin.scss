@@ -1,0 +1,57 @@
+/* Customize layerswitcher control */
+.ol-layerswitcher > button {
+    font-size: 1.14em;
+	background-color: rgba(0,60,136,.5);
+
+	&:before,
+	&:after {
+		background: transparent;
+		background-image: none;
+		box-shadow: none;
+		position: inherit;
+		transform: none;
+		display: inline-block;
+		width: auto;
+		height: auto;
+	}
+
+	&:after {
+		font-family: "Font Awesome\ 5 Free";
+		content: "\f5fd";
+		font-weight: 900;
+		left: 1px;
+		top: 1px;
+	}
+}
+
+/* Customize scale line control */
+.ol-scale-line {
+	background-color: rgba(0,60,136,.5);
+}
+.ol-scale-line-inner {
+	color: #fff;
+	border-color: #fff;
+}
+
+.ol-unselectable,
+.ol-control {
+	z-index: 2;
+
+	&.ol-timeline {
+		z-index: 1;
+
+		.ol-buttons {
+			width: auto;
+			font-size: 0.8em;
+
+			> button {
+				display: inline-block;
+			}
+
+			.timeline-date-label {
+				width: 7em;
+				font-weight: normal;
+			}
+		}
+	}
+}

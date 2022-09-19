@@ -61,4 +61,4 @@ export default {
 }
 </script>
 
-<style src="./MapMixin.css"></style>
+<style src="./MapMixin.scss" lang="scss"></style>
