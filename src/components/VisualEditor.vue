@@ -28,14 +28,18 @@
 			<div class="graphBuilder" @drop="onDrop" @dragover="allowDrop">
 				<div v-if="showHelpOverlay" class="model-overlay">
 					<h2>Welcome!</h2>
-					<p>What you are seeing in this area of the {{ $config.appName }} is the visual model builder.</p>
-					<p>You can start building your model by dragging collections, processes etc. from the left area and dropping them here.</p>
-					<p>Alternatively, you can also import existing processes into the model builder:</p>
-					<ul>
-						<li v-if="canPaste">Paste the JSON from your clipboard by clicking <button type="button" @click="paste" title="Paste from clipboard"><i class="fas fa-paste"></i></button> or use <kbd>CTRL</kbd> + <kbd>V</kbd> (Windows, Linux) or <kbd>⌘</kbd> + <kbd>V</kbd> (MacOS) when the model builder is in focus.</li>
-						<li>Drag and drop a JSON file from your computer</li>
-						<li>Import a JSON file from your computer or another source such as the internet by clicking <button type="button" @click="importProcess" title="Import process from external source"><i class="fas fa-cloud-download-alt"></i></button></li>
-					</ul>
+					<p>
+						What you are seeing in this area of the {{ $config.appName }} is the visual model builder.
+						You can start building your model by dragging collections, processes etc. from the left area and dropping them here.
+						</p>
+					<p>
+						Alternatively, you can also import existing processes into the model builder:
+						<ul>
+							<li v-if="canPaste">Paste the JSON from your clipboard by clicking <button type="button" @click="paste" title="Paste from clipboard"><i class="fas fa-paste"></i></button> or use <kbd>CTRL</kbd> + <kbd>V</kbd> (Windows, Linux) or <kbd>⌘</kbd> + <kbd>V</kbd> (MacOS) when the model builder is in focus.</li>
+							<li>Drag and drop a JSON file from your computer</li>
+							<li>Import a JSON file from your computer or another source such as the internet by clicking <button type="button" @click="importProcess" title="Import process from external source"><i class="fas fa-cloud-download-alt"></i></button></li>
+						</ul>
+					</p>
 					<p>
 						You can also import the processes from the Python and R client.
 						You need to export your process to JSON first:
@@ -647,10 +651,27 @@ export default {
 		padding: 1em;
 		overflow: auto;
 		box-sizing: border-box;
-		line-height: 1.33em;
+		line-height: 1.25em;
 
-		> p:first-of-type {
-			margin-top: 0;
+		> h2 {
+			font-size: 1.2em;
+			text-align: center;
+			border-bottom: 0;
+			margin-bottom: 0.5em;
+			padding: 0;
+		}
+		> p {
+			margin: 0.5em 0;
+
+			> ul {
+				margin: 0.25em 0;
+			}
+			&:first-of-type {
+				margin-top: 0;
+			}
+			&:last-of-type {
+				margin-bottom: 0;
+			}
 		}
 	}
 
