@@ -109,8 +109,8 @@ export default {
 			let title = Utils.getResourceTitle(collection, true);
 			this.showMapViewer(service, service.id, title, true);
 		},
-		showWebService(service) {
-			this.showMapViewer(service, service.id, null, true);
+		showWebService(service, onClose = null) {
+			this.showMapViewer(service, service.id, null, true, onClose);
 		},
 		showLogs(resource, defaultTitle = 'Logs', selectTab = true, faIcon = 'fa-bug') {
 			let title = Array.isArray(resource) ? defaultTitle : Utils.getResourceTitle(resource, "Logs");
@@ -169,7 +169,7 @@ export default {
 			this.showViewer(files, title, file => `${job.id}-${file.getUrl()}`, true)
 				.catch(error => Utils.exception(this, error));
 		},
-		showMapViewer(resource, id = null, title = null, reUseExistingTab = false) {
+		showMapViewer(resource, id = null, title = null, reUseExistingTab = false, onClose = null) {
 			if (!title) {
 				title = Utils.getResourceTitle(resource, true);
 			}
@@ -189,7 +189,8 @@ export default {
 			this.$refs.tabs.addTab(
 				title, "fa-map", resource, id, true, true,
 				tab => this.onShow(tab),
-				tab => this.onHide(tab)
+				tab => this.onHide(tab),
+				onClose
 			);
 		},
 		async showViewer(files, title = null, id = null, reUseExistingTab = false) {

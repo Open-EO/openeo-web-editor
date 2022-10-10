@@ -31,7 +31,7 @@ Shows the result of a synchronous job.
 ### viewJobResults(object $jobResult, object $job = null)
 Shows data from a job result document.
 
-### viewWebService(object $service)
+### viewWebService(object $service, function $onClose = null)
 Shows a web service on the map.
 
 ### removeWebService(string $id)

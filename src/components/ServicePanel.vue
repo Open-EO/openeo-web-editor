@@ -1,7 +1,8 @@
 <template>
 	<DataTable ref="table" :data="data" :columns="columns" class="ServicePanel">
 		<template slot="toolbar">
-			<button title="Add new service" @click="createServiceFromScript()" v-show="supportsCreate" :disabled="!this.hasProcess"><i class="fas fa-plus"></i> Create</button>
+			<button title="Add new permanently stored web service" @click="createServiceFromScript()" v-show="supportsCreate" :disabled="!this.hasProcess"><i class="fas fa-plus"></i> Create</button>
+			<button title="Quickly show the process on map without storing it permanently" @click="quickViewServiceFromScript()" v-show="supportsQuickView" :disabled="!this.hasProcess"><i class="fas fa-map"></i> Show on Map</button>
 		</template>
 		<template #actions="p">
 			<button title="Details" @click="serviceInfo(p.row)" v-show="supportsRead"><i class="fas fa-info"></i></button>
@@ -69,6 +70,23 @@ export default {
 		},
 		supportsDebug() {
 			return this.supports('debugService');
+		},
+		supportsQuickView() {
+			return this.supportsCreate && this.supportsDelete && this.mapService !== null;
+		},
+		mapService() {
+			for(let key in this.serviceTypes) {
+				if (!Utils.isMapServiceSupported(key)) {
+					continue;
+				}
+				let service = this.serviceTypes[key];
+				let hasRequiredParam = Object.values(service.configuration).some(param => param.required === true);
+				if (hasRequiredParam) {
+					continue;
+				}
+				return key;
+			}
+			return null;
 		}
 	},
 	mounted() {
@@ -185,13 +203,17 @@ export default {
 			}
 			return data;
 		},
-		async createService(script, data) {
+		async createService(script, data, quiet = false) {
 			data = this.normalizeToDefaultData(data);
 			try {
 				let service = await this.create({parameters: [script, data.type, data.title, data.description, data.enabled, data.configuration, data.plan, data.budget]});
-				this.serviceCreated(service);
+				if (!quiet) {
+					this.serviceCreated(service);
+				}
+				return service;
 			} catch(error) {
 				Utils.exception(this, error, 'Create Service Error: ' + (data.title || ''));
+				return null;
 			}
 		},
 		createServiceFromScript() {
@@ -205,6 +227,21 @@ export default {
 				this.getConfigField()
 			];
 			this.emit('showDataForm', "Create new web service", fields, data => this.createService(this.process, data));
+		},
+		async quickViewServiceFromScript() {
+			try {
+				let settings = {
+					title: 'Quick view',
+					type: this.mapService,
+					enabled: true
+				};
+				let service = await this.createService(this.process, settings, true);
+				if (service) {
+					this.viewService(service, () => this.deleteService(service, true));
+				}
+			} catch(error) {
+				Utils.exception(this, error, "Show on Map Error");
+			}
 		},
 		editMetadata(oldService) {
 			this.refreshElement(oldService, service => {
@@ -243,19 +280,24 @@ export default {
 				Utils.exception(this, error, "Update Service Error: " + Utils.getResourceTitle(service));
 			}
 		},
-		async deleteService(service) {
-			if (!confirm(`Do you really want to delete the service "${Utils.getResourceTitle(service)}"?`)) {
+		async deleteService(service, quiet = false) {
+			if (!quiet && !confirm(`Do you really want to delete the service "${Utils.getResourceTitle(service)}"?`)) {
 				return;
 			}
 			try {
 				await this.delete({data: service});
 				this.emit('removeWebService', service.id);
 			} catch(error) {
-				Utils.exception(this, error, 'Delete Service Error: ' + Utils.getResourceTitle(service));
+				if (quiet) {
+					console.error(error);
+				}
+				else {
+					Utils.exception(this, error, 'Delete Service Error: ' + Utils.getResourceTitle(service));
+				}
 			}
 		},
-		viewService(service) {
-			this.emit('viewWebService', service);
+		viewService(service, onClose = null) {
+			this.emit('viewWebService', service, onClose);
 		},
 		async shareResults(service) {
 			if (this.canShare) {
