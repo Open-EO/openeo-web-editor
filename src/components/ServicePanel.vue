@@ -21,6 +21,7 @@ import EventBusMixin from './EventBusMixin.vue';
 import WorkPanelMixin from './WorkPanelMixin';
 import Utils from '../utils';
 import { Service } from '@openeo/js-client';
+import { mapMutations } from 'vuex';
 
 export default {
 	name: 'ServicePanel',
@@ -57,7 +58,8 @@ export default {
 					filterable: false,
 					sort: false
 				}
-			}
+			},
+			createdQuickViews: {}
 		};
 	},
 	computed: {
@@ -91,8 +93,22 @@ export default {
 	},
 	mounted() {
 		this.listen('replaceProcess', this.replaceProcess);
+		this.beforeLogoutListener({key: this.$options.name, listener: this.onExit});
+	},
+	beforeDestroy() {
+		this.beforeLogoutListener({key: this.$options.name});
 	},
 	methods: {
+		...mapMutations(['beforeLogoutListener']),
+		async onExit() {
+			let promises = [];
+			for(let id in this.createdQuickViews) {
+				let service = this.createdQuickViews[id];
+				promises.push(this.deleteService(service, true));
+			}
+			await Promise.all(promises);
+			this.createdQuickViews = {};
+		},
 		isMapServiceSupported(type) {
 			return Utils.isMapServiceSupported(type);
 		},
@@ -237,6 +253,7 @@ export default {
 				};
 				let service = await this.createService(this.process, settings, true);
 				if (service) {
+					this.createdQuickViews[service.id] = service;
 					this.viewService(service, () => this.deleteService(service, true));
 				}
 			} catch(error) {
@@ -287,6 +304,7 @@ export default {
 			try {
 				await this.delete({data: service});
 				this.emit('removeWebService', service.id);
+				delete this.createdQuickViews[service.id];
 			} catch(error) {
 				if (quiet) {
 					console.error(error);
