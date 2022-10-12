@@ -36,6 +36,7 @@ export default class FormatRegistry {
 			assets: {
 				result: {
 					href: URL.createObjectURL(data),
+					blob: data,
 					type: data.type
 				}
 			}

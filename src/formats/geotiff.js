@@ -2,7 +2,7 @@ import { SupportedFormat } from './format';
 import Utils from '../utils';
 import ProjManager from '../components/maps/projManager';
 
-import { fromUrl as tiffFromUrl, globals as _ } from 'geotiff';
+import { fromUrl as tiffFromUrl, fromBlob as tiffFromBlob, globals as _ } from 'geotiff';
 
 import { toUserExtent } from 'ol/proj';
 import Projection from 'ol/proj/Projection';
@@ -87,7 +87,13 @@ class GeoTIFF extends SupportedFormat {
 		}
 
 		// Load example tiff image
-		let tiff = await tiffFromUrl(this.getUrl());
+		let tiff;
+		if (this.getBlob()) {
+			tiff = await tiffFromBlob(this.getBlob());
+		}
+		else {
+			tiff = await tiffFromUrl(this.getUrl());
+		}
 		this.img = await tiff.getImage();
 
 		// Get data for each band / sample
@@ -196,6 +202,10 @@ class GeoTIFF extends SupportedFormat {
 		else {
 			this.bands.push(Object.assign({ id: i + 1 }, data));
 		}
+	}
+
+	getBlob() {
+		return this.blob;
 	}
 
 	getNoData() {

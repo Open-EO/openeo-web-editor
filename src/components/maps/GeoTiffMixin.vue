@@ -46,16 +46,21 @@ export default {
 			this.colorMap = geotiff.getColorMap();
 			this.noData = geotiff.getNoData();
 
+			let source = {
+				nodata: this.noData[0] // OL only supports passing one no data value
+			};
+			if (geotiff.getBlob()) {
+				source.blob = geotiff.getBlob();
+			}
+			else {
+				source.url = geotiff.getUrl();
+			}
+
 			this.source = new GeoTIFF({
 				interpolate: false,
 				normalize: false,
 				convertToRGB: geotiff.convertToRGB,
-				sources: [
-					{
-						url: geotiff.getUrl(),
-						nodata: this.noData[0] // OL only supports passing one no data value
-					}
-				]
+				sources: [source]
 			});
 
 			this.layer = new TileLayer({
