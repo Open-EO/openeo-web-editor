@@ -68,7 +68,7 @@
 </template>
 
 <script>
-import EventBusMixin from './EventBusMixin.vue';
+import EventBusMixin from './EventBusMixin.js';
 
 import ObjectEditor from './datatypes/ObjectEditor.vue';
 import Budget from './datatypes/Budget.vue';
@@ -267,7 +267,7 @@ export default {
 		},
 		onSelectDetails() {
 			if (this.type === 'collection-id') {
-				this.emit('showCollection', this.state);
+				this.broadcast('showCollection', this.state);
 			}
 		}
 	}

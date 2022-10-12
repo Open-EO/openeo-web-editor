@@ -96,7 +96,7 @@
 </template>
 
 <script>
-import EventBusMixin from './EventBusMixin.vue';
+import EventBusMixin from './EventBusMixin.js';
 import Logo from './Logo.vue';
 import Tabs from '@openeo/vue-components/components/Tabs.vue';
 import Tab from '@openeo/vue-components/components/Tab.vue';
@@ -167,15 +167,15 @@ export default {
 	watch: {
 		showConnectForm(newVal) {
 			if (newVal) {
-				this.emit('title', 'Connect to server');
+				this.broadcast('title', 'Connect to server');
 			}
-			this.emit('stopTour');
+			this.broadcast('stopTour');
 		},
 		showLoginForm(newVal) {
 			if (newVal) {
-				this.emit('title', 'Log in');
+				this.broadcast('title', 'Log in');
 			}
-			this.emit('stopTour');
+			this.broadcast('stopTour');
 		}
 	},
 	data() {
@@ -239,9 +239,9 @@ export default {
 
 		showHelp() {
 			if (!this.isConnected) {
-				this.emit('showTour', 'connect');
+				this.broadcast('showTour', 'connect');
 			} else {
-				this.emit('showTour', 'login');
+				this.broadcast('showTour', 'login');
 			}
 		},
 
@@ -412,7 +412,7 @@ export default {
 		},
 
 		showServerSelector() {
-			this.emit(
+			this.broadcast(
 				'showListModal', 
 				"Select previously used server",
 				this.storedServers,

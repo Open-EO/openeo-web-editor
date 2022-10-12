@@ -16,7 +16,7 @@
 </template>
 
 <script>
-import EventBusMixin from './components/EventBusMixin.vue';
+import EventBusMixin from './components/EventBusMixin.js';
 import Utils from './utils';
 import ConnectForm from './components/ConnectForm.vue';
 import axios from 'axios';

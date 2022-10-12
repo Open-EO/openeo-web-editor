@@ -25,7 +25,7 @@ import Utils from '../utils.js';
 import JsonSchema from './jsonSchema.js';
 import ParameterDataType from './ParameterDataType.vue';
 import Description from '@openeo/vue-components/components/Description.vue';
-import EventBusMixin from './EventBusMixin.vue';
+import EventBusMixin from './EventBusMixin.js';
 import { ProcessDataType, ProcessParameter } from '@openeo/js-commons';
 import { API_TYPES, NATIVE_TYPES } from './datatypes/api';
 

@@ -17,7 +17,7 @@
 </template>
 
 <script>
-import EventBusMixin from './EventBusMixin.vue';
+import EventBusMixin from './EventBusMixin.js';
 import WorkPanelMixin from './WorkPanelMixin';
 import Utils from '../utils';
 import { Service } from '@openeo/js-client';
@@ -113,10 +113,10 @@ export default {
 			return Utils.isMapServiceSupported(type);
 		},
 		showInEditor(service) {
-			this.refreshElement(service, updatedService => this.emit('editProcess', updatedService));
+			this.refreshElement(service, updatedService => this.broadcast('editProcess', updatedService));
 		},
 		showLogs(service) {
-			this.emit('viewLogs', service);
+			this.broadcast('viewLogs', service);
 		},
 		serviceCreated(service) {
 			var buttons = [];
@@ -242,7 +242,7 @@ export default {
 				this.supportsBilling ? this.getBudgetField() : null,
 				this.getConfigField()
 			];
-			this.emit('showDataForm', "Create new web service", fields, data => this.createService(this.process, data));
+			this.broadcast('showDataForm', "Create new web service", fields, data => this.createService(this.process, data));
 		},
 		async quickViewServiceFromScript() {
 			try {
@@ -270,12 +270,12 @@ export default {
 					this.supportsBilling ? this.getBudgetField(service.budget) : null,
 					this.getConfigField(service.configuration)
 				];
-				this.emit('showDataForm', "Edit web service", fields, data => this.updateService(service, data));
+				this.broadcast('showDataForm', "Edit web service", fields, data => this.updateService(service, data));
 			});
 		},
 		serviceInfo(service) {
 			this.refreshElement(service, updatedService => {
-				this.emit('showModal', 'ServiceInfoModal', {service: updatedService.getAll()});
+				this.broadcast('showModal', 'ServiceInfoModal', {service: updatedService.getAll()});
 			});
 		},
 		replaceProcess(service, process) {
@@ -303,7 +303,7 @@ export default {
 			}
 			try {
 				await this.delete({data: service});
-				this.emit('removeWebService', service.id);
+				this.broadcast('removeWebService', service.id);
 				delete this.createdQuickViews[service.id];
 			} catch(error) {
 				if (quiet) {
@@ -315,7 +315,7 @@ export default {
 			}
 		},
 		viewService(service, onClose = null) {
-			this.emit('viewWebService', service, onClose);
+			this.broadcast('viewWebService', service, onClose);
 		},
 		async shareResults(service) {
 			if (this.canShare) {
@@ -324,7 +324,7 @@ export default {
 						Utils.error(this, "Sorry, only enabled services can be shared.");
 					}
 					else if (service2.url) {
-						this.emit('showModal', 'ShareModal', {url: service2.url, title: service2.title, context: service2});
+						this.broadcast('showModal', 'ShareModal', {url: service2.url, title: service2.title, context: service2});
 					}
 					else {
 						Utils.error(this, "Sorry, this service has no public URL.");

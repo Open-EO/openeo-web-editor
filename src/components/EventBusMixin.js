@@ -1,4 +1,3 @@
-<script>
 export default {
 	data() {
 		return {
@@ -25,9 +24,8 @@ export default {
 				delete this.eventBusListeners[eventName];
 			}
 		},
-		emit() {
+		broadcast() {
 			this.$root.$emit(...arguments);
 		}
 	}
 }
-</script>

@@ -53,7 +53,7 @@
 </template>
 
 <script>
-import EventBusMixin from './EventBusMixin.vue';
+import EventBusMixin from './EventBusMixin.js';
 import Utils from '../utils.js';
 import Collections from '@openeo/vue-components/components/Collections.vue';
 import FileFormats from '@openeo/vue-components/components/FileFormats.vue';
@@ -150,19 +150,19 @@ export default {
 			event.dataTransfer.setData("text/plain", JSON.stringify(node, null, 2));
 		},
 		showCollectionInfo(id) {
-			this.emit('showCollection', id);
+			this.broadcast('showCollection', id);
 		},
 		hasCollectionPreview(collection) {
 			return Boolean(this.collectionPreview && Utils.getPreviewLinkFromSTAC(collection));
 		},
 		showCollectionPreview(collection) {
-			this.emit('showCollectionPreview', collection);
+			this.broadcast('showCollectionPreview', collection);
 		},
 		showProcess(process) {
-			this.emit('showProcess', process);
+			this.broadcast('showProcess', process);
 		},
 		showUdfInfo(id, data) {
-			this.emit('showModal', 'UdfRuntimeModal', {id, data, version: data.default});
+			this.broadcast('showModal', 'UdfRuntimeModal', {id, data, version: data.default});
 		},
 		showFileFormatInfo(format) {
 			let props = {
@@ -170,7 +170,7 @@ export default {
 				format: this.fileFormats.output[format.name],
 				type: "output"
 			};
-			this.emit('showModal', 'FileFormatModal', props);
+			this.broadcast('showModal', 'FileFormatModal', props);
 		},
 		getNode(type, data) {
 			switch(type) {

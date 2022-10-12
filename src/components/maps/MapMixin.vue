@@ -1,5 +1,5 @@
 <script>
-import EventBusMixin from '../EventBusMixin.vue';
+import EventBusMixin from '../EventBusMixin.js';
 import Utils from '../../utils.js';
 
 import 'ol/ol.css';

@@ -12,7 +12,7 @@
 </template>
 
 <script>
-import EventBusMixin from './EventBusMixin.vue';
+import EventBusMixin from './EventBusMixin.js';
 import WorkPanelMixin from './WorkPanelMixin';
 import Utils from '../utils.js';
 import { UserProcess } from '@openeo/js-client';
@@ -49,7 +49,7 @@ export default {
 	},
 	methods: {
 		showInEditor(process) {
-			this.refreshElement(process, updatedProcess => this.emit('editProcess', updatedProcess));
+			this.refreshElement(process, updatedProcess => this.broadcast('editProcess', updatedProcess));
 		},
 		getIdField(value = undefined) {
 			return {
@@ -87,7 +87,7 @@ export default {
 			}
 			let store = data => this.addProcess(this.normalize(this.process, data));
 			if (fields.length > 0) {
-				this.emit('showDataForm', 'Store a new custom process', fields, store);
+				this.broadcast('showDataForm', 'Store a new custom process', fields, store);
 			}
 			else {
 				store();
@@ -105,7 +105,7 @@ export default {
 				.catch(error => Utils.exception(this, error, 'Store Process Error' + (process.id ? `: ${process.id}` : '')));
 		},
 		processInfo(process) {
-			this.emit('showProcess', process);
+			this.broadcast('showProcess', process);
 		},
 		replaceProcess(process, newProcess) {
 			if (process instanceof UserProcess) {

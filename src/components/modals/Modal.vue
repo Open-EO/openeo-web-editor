@@ -18,7 +18,7 @@
 </template>
 
 <script>
-import EventBusMixin from '../EventBusMixin.vue';
+import EventBusMixin from '../EventBusMixin.js';
 import Utils from '../../utils.js';
 
 export default {

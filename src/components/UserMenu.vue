@@ -50,7 +50,7 @@
 </template>
 
 <script>
-import EventBusMixin from './EventBusMixin.vue';
+import EventBusMixin from './EventBusMixin.js';
 import Utils from '../utils.js';
 
 export default {
@@ -132,10 +132,10 @@ export default {
 			window.history.pushState({}, "", "?");
 		},
 		login() {
-			this.emit('showLogin');
+			this.broadcast('showLogin');
 		},
 		userDetails() {
-			this.emit('showDataModal', this.profile, "User Profile");
+			this.broadcast('showDataModal', this.profile, "User Profile");
 		},
 		formatMegabyte(num) {
 			var gb = 1024*1024*1024;

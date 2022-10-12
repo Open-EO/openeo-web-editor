@@ -6,11 +6,11 @@
 				<div class="description">
 					<p><i  class="fas fa-info-circle"></i> Above you can insert a mathematical formula and it will be converted to openEO code for you.</p>
 					<p><strong>Operators</strong>:<br />
-						<kbd v-for="op in operators" :key="op.op" :title="op.title" @click="emit('showProcess', {id: op.processId})" class="click" draggable="true" @dragstart="onDrag($event, 'operators', op.op)">{{ op.op }}</kbd>
+						<kbd v-for="op in operators" :key="op.op" :title="op.title" @click="broadcast('showProcess', {id: op.processId})" class="click" draggable="true" @dragstart="onDrag($event, 'operators', op.op)">{{ op.op }}</kbd>
 					</p>
 					<p>Supported <strong>mathematical functions</strong>:
 						<template v-if="mathProcesses.length">
-							<br /><kbd v-for="func in mathProcesses" :key="func.id" :title="func.summary" @click="emit('showProcess', func)" class="click" draggable="true" @dragstart="onDrag($event, 'functions', func)">{{ func.id }}</kbd>
+							<br /><kbd v-for="func in mathProcesses" :key="func.id" :title="func.summary" @click="broadcast('showProcess', func)" class="click" draggable="true" @dragstart="onDrag($event, 'functions', func)">{{ func.id }}</kbd>
 						</template>
 						<template v-else>None</template>
 					</p>
@@ -22,7 +22,7 @@
 					</p>
 					<p><strong>Parameters</strong>: If a variable is found in the formula which can't be resolved to a pre-defined parameter, a new parameter will be created for it. Available pre-defined parameters:
 						<template v-if="pgParameters.length">
-							<br /><kbd v-for="param in pgParameters" :key="param.id" @click="emit('showProcessParameter', param)" class="click" draggable="true" @dragstart="onDrag($event, 'pgParameters', param.name)">{{ param.name }}</kbd>
+							<br /><kbd v-for="param in pgParameters" :key="param.id" @click="broadcast('showProcessParameter', param)" class="click" draggable="true" @dragstart="onDrag($event, 'pgParameters', param.name)">{{ param.name }}</kbd>
 						</template>
 						<template v-else>None</template>
 					</p>
@@ -42,7 +42,7 @@
 import Modal from './Modal.vue';
 import Utils from '../../utils.js';
 import TextEditor from '../TextEditor.vue';
-import EventBusMixin from '../EventBusMixin.vue';
+import EventBusMixin from '../EventBusMixin.js';
 import Process from '../../process';
 import { Formula } from '@openeo/js-client';
 

@@ -19,7 +19,7 @@
 </template>
 
 <script>
-import EventBusMixin from './EventBusMixin.vue';
+import EventBusMixin from './EventBusMixin.js';
 import Utils from '../utils.js';
 import Tabs from '@openeo/vue-components/components/Tabs.vue';
 import { Service } from '@openeo/js-client';

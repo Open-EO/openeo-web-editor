@@ -21,7 +21,7 @@
 </template>
 
 <script>
-import EventBusMixin from './EventBusMixin.vue';
+import EventBusMixin from './EventBusMixin.js';
 import WorkPanelMixin from './WorkPanelMixin';
 import Utils from '../utils.js';
 import { AbortController, Job } from '@openeo/js-client';
@@ -130,7 +130,7 @@ export default {
 			}
 		},
 		showInEditor(job) {
-			this.refreshElement(job, updatedJob => this.emit('editProcess', updatedJob));
+			this.refreshElement(job, updatedJob => this.broadcast('editProcess', updatedJob));
 		},
 		async executeProcess() {
 			let abortController = new AbortController();
@@ -154,15 +154,15 @@ export default {
 				toast = this.$snotify.async(message, title, endlessPromise, snotifyConfig);
 				let result = await this.connection.computeResult(this.process, null, null, abortController);
 				if (result.logs.length > 0) {
-					this.emit('viewLogs', result.logs);
+					this.broadcast('viewLogs', result.logs);
 				}
-				this.emit('viewSyncResult', result);
+				this.broadcast('viewSyncResult', result);
 			} catch(error) {
 				if (axios.isCancel(error)) {
 					// Do nothing, we expected the cancellation
 				}
 				else if (typeof error.message === 'string' && Utils.isObject(error.response) && [400,500].includes(error.response.status)) {
-					this.emit('viewLogs', [{
+					this.broadcast('viewLogs', [{
 						id: error.id,
 						code: error.code,
 						level: 'error',
@@ -264,7 +264,7 @@ export default {
 				this.supportsBillingPlans ? this.getBillingPlanField() : null,
 				this.supportsBilling ? this.getBudgetField() : null
 			];
-			this.emit('showDataForm', "Create new batch job", fields, data => this.createJob(this.process, data));
+			this.broadcast('showDataForm', "Create new batch job", fields, data => this.createJob(this.process, data));
 		},
 		async deleteJob(job) {
 			if (!confirm(`Do you really want to delete the batch job "${Utils.getResourceTitle(job)}"?`)) {
@@ -273,7 +273,7 @@ export default {
 
 			try {
 				await this.delete({data: job});
-				this.emit('removeBatchJob', job.id);
+				this.broadcast('removeBatchJob', job.id);
 			} catch(error) {
 				Utils.exception(this, error, 'Delete Job Error: ' + Utils.getResourceTitle(job));
 			}
@@ -294,7 +294,7 @@ export default {
 					}
 
 					if (old.status !== updated.status) {
-						this.emit('jobStatusUpdated', updated, old);
+						this.broadcast('jobStatusUpdated', updated, old);
 					}
 				});
 			}
@@ -309,20 +309,20 @@ export default {
 						Utils.exception(this, error, "Load Results Error: " + Utils.getResourceTitle(updatedJob));
 					}
 				}
-				this.emit('showModal', 'JobInfoModal', {job: updatedJob.getAll(), result});
+				this.broadcast('showModal', 'JobInfoModal', {job: updatedJob.getAll(), result});
 			});
 		},
 		async estimateJob(job) {
 			// Doesn't need to go through job store as it doesn't change job-related data
 			try {
 				let estimate = await job.estimateJob();
-				this.emit('showModal', 'JobEstimateModal', {job: job.getAll(), estimate});
+				this.broadcast('showModal', 'JobEstimateModal', {job: job.getAll(), estimate});
 			} catch(error) {
 				Utils.exception(this, error, "Job Estimate Error: " + Utils.getResourceTitle(job));
 			}
 		},
 		showLogs(job) {
-			this.emit('viewLogs', job);
+			this.broadcast('viewLogs', job);
 		},
 		replaceProcess(job, process) {
 			if (job instanceof Job) {
@@ -342,7 +342,7 @@ export default {
 					this.supportsBillingPlans ? this.getBillingPlanField(job.plan) : null,
 					this.supportsBilling ? this.getBudgetField(job.budget) : null
 				];
-				this.emit('showDataForm', "Edit batch job", fields, data => this.updateJob(job, data));
+				this.broadcast('showDataForm', "Edit batch job", fields, data => this.updateJob(job, data));
 			});
 		},
 		updateTitle(job, newTitle) {
@@ -385,7 +385,7 @@ export default {
 			// Doesn't need to go through job store as it doesn't change job-related data
 			try {
 				let stac = await job.getResultsAsStac();
-				this.emit('viewJobResults', stac, job);
+				this.broadcast('viewJobResults', stac, job);
 			} catch(error) {
 				Utils.exception(this, error, 'View Result Error: ' + Utils.getResourceTitle(job));
 			}
@@ -398,7 +398,7 @@ export default {
 					Utils.error(this, 'No results available for job "' + Utils.getResourceTitle(job) + '".');
 					return;
 				}
-				this.emit('showModal', 'DownloadAssetsModal', {job, result});
+				this.broadcast('showModal', 'DownloadAssetsModal', {job, result});
 			} catch(error) {
 				Utils.exception(this, error, 'Download Result Error: ' + Utils.getResourceTitle(job));
 			}
@@ -416,7 +416,7 @@ export default {
 				}
 				if (url) {
 					let title = result.properties?.title || job.title || link?.title;
-					this.emit('showModal', 'ShareModal', {url, title, extra: result, context: job});
+					this.broadcast('showModal', 'ShareModal', {url, title, extra: result, context: job});
 				}
 				else {
 					Utils.error(this, "Sorry, this job has no public URL");

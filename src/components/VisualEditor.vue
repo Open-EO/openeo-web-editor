@@ -63,9 +63,9 @@
 					:value="value"
 					@input="commit"
 					@error="errorHandler"
-					@showProcess="(id, namespace) => emit('showProcess', {id, namespace})"
-					@showCollection="id => emit('showCollection', id)"
-					@showParameter="param => emit('showProcessParameter', param)"
+					@showProcess="(id, namespace) => broadcast('showProcess', {id, namespace})"
+					@showCollection="id => broadcast('showCollection', id)"
+					@showParameter="param => broadcast('showProcessParameter', param)"
 					@editParameter="editParameter"
 					@editArguments="openArgumentEditor"
 					@compactMode="compact => this.compactMode = compact"
@@ -81,7 +81,7 @@
 import ModelBuilder from '@openeo/vue-components/components/ModelBuilder.vue';
 import Utils from '../utils.js';
 import DiscoveryToolbar from './DiscoveryToolbar.vue';
-import EventBusMixin from './EventBusMixin.vue';
+import EventBusMixin from './EventBusMixin.js';
 import FullscreenButton from './FullscreenButton.vue';
 import { ProcessParameter } from '@openeo/js-commons';
 import JavaScript from '../export/javascript';
@@ -193,7 +193,7 @@ export default {
 			}
 		},
 		importProcess() {
-			this.emit('importProcess');
+			this.broadcast('importProcess');
 		},
 		errorHandler(message, title = null) {
 			Utils.exception(this, message, title)
@@ -485,7 +485,7 @@ export default {
 					}
 				}
 			];
-			this.emit('showDataForm', "Edit Process", fields, async data => {
+			this.broadcast('showDataForm', "Edit Process", fields, async data => {
 				let newData = Utils.pickFromObject(data, ['id', 'summary', 'description', 'categories', 'experimental', 'deprecated', 'exception', 'examples', 'links']);
 				if (typeof newData.description === 'string' || Utils.isObject(newData.schema)) {
 					newData.returns = {
@@ -526,7 +526,7 @@ export default {
 				this.getDeprecatedField(),
 				this.getSchemaField()
 			];
-			this.emit('showDataForm', "Add Parameter", fields, async data => {
+			this.broadcast('showDataForm', "Add Parameter", fields, async data => {
 				if (typeof data.name === 'string' && data.name.length > 0) {
 					await this.$refs.blocks.addPgParameter(data);
 				}
@@ -542,7 +542,7 @@ export default {
 				this.getDeprecatedField(parameter.deprecated),
 				this.getSchemaField(parameter.schema)
 			];
-			this.emit('showDataForm', title, fields, saveCallback);
+			this.broadcast('showDataForm', title, fields, saveCallback);
 		},
 		showExpressionModal() {
 			let js = new JavaScript(this.value, this.processes, this.connection, true);
@@ -555,7 +555,7 @@ export default {
 				let events = {
 					save: this.insertNodes
 				};
-				this.emit('showModal', 'ExpressionModal', props, events);
+				this.broadcast('showModal', 'ExpressionModal', props, events);
 			} catch (error) {
 				Utils.exception(this, error);
 			}
@@ -591,7 +591,7 @@ export default {
 			if (typeof saveCallback === 'function') {
 				events.save = saveCallback;
 			}
-			this.emit('showModal', 'ParameterModal', props, events);
+			this.broadcast('showModal', 'ParameterModal', props, events);
 		},
 		confirmClear() {
 			var confirmed = confirm("Do you really want to clear the existing model?");

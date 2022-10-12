@@ -6,7 +6,7 @@
 </template>
 
 <script>
-import EventBusMixin from './EventBusMixin.vue';
+import EventBusMixin from './EventBusMixin.js';
 import Package from '../../package.json';
 
 export default {
@@ -19,7 +19,7 @@ export default {
 	},
 	methods: {
 		showWebEditorInfo() {
-			this.emit('showWebEditorInfo');
+			this.broadcast('showWebEditorInfo');
 		}
 	}
 }

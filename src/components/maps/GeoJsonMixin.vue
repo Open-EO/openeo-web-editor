@@ -1,6 +1,6 @@
 <script>
 import Utils from '../../utils.js';
-import EventBusMixin from '../EventBusMixin.vue';
+import EventBusMixin from '../EventBusMixin.js';
 
 import { isEmpty as extentIsEmpty } from 'ol/extent';
 import { singleClick } from 'ol/events/condition';
@@ -54,7 +54,7 @@ export default {
 				let feature = event.selected[0];
 				let props = Utils.omitFromObject(feature.getProperties(), ['geometry']);
 				let title = feature.getId() || "Feature Properties";
-				this.emit('showDataModal', props, title);
+				this.broadcast('showDataModal', props, title);
 			}
 		},
 		createGeoJsonSource(geojson, projection) {
