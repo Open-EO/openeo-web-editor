@@ -12,8 +12,12 @@ export default {
 	// Skip login and automatically load up the "discovery mode"
 	skipLogin: false,
 
-	// Request the user location to default the map view on where the user is
-	requestUserLocation: true,
+	// Default location for maps
+	// Default to the center of the EU in Wuerzburg: 
+	// https://en.wikipedia.org/wiki/Geographical_midpoint_of_Europe#Geographic_centre_of_the_European_Union
+	// The zoom level should show most of Europe
+	mapLocation: [49.8, 9.9],
+	mapZoom: 4,
 
 	// A message shown on the login page
 	loginMessage: '',

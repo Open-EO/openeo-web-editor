@@ -16,12 +16,14 @@ import 'ol-ext/control/LayerSwitcher.css';
 import LayerSwitcher from 'ol-ext/control/LayerSwitcher';
 
 import ProgressControl from './ProgressControl.vue';
+import UserLocationControl from './UserLocationControl.vue';
 
 let idCounter = 1;
 
 export default {
 	components: {
-		ProgressControl
+		ProgressControl,
+		UserLocationControl
 	},
 	mixins: [EventBusMixin],
 	props: {
@@ -48,9 +50,6 @@ export default {
 		async show() {
 			await this.showMap();
 		}
-	},
-	computed: {
-		...Utils.mapState(['userLocation', 'locationZoom']),
 	},
 	async mounted() {
 		await this.showMap();
@@ -83,10 +82,14 @@ export default {
 			if (!view) {
 				view = new View(viewOpts);
 				if (!view.getCenter()) {
-					view.setCenter(fromLonLat([this.userLocation[1], this.userLocation[0]], view.getProjection()));
+					let location = this.$config.mapLocation;
+					if (!Array.isArray(location) || location.length != 2) {
+						location = [0,0];
+					}
+					view.setCenter(fromLonLat([location[1], location[0]], view.getProjection()));
 				}
 				if (!view.getZoom()) {
-					view.setZoom(this.locationZoom);
+					view.setZoom(this.$config.mapZoom || 0);
 				}
 			}
 

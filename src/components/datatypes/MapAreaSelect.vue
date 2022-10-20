@@ -1,6 +1,7 @@
 <template>
 	<div :id="id">
 		<ProgressControl ref="progress" :map="map" />
+		<UserLocationControl :map="map" />
 		<TextControl :text="help" :map="map" />
 	</div>
 </template>

@@ -1,6 +1,7 @@
 <template>
 	<div :id="id" class="geojson-map-editor">
 		<ProgressControl ref="progress" :map="map" />
+		<UserLocationControl :map="map" />
 	</div>
 </template>
 

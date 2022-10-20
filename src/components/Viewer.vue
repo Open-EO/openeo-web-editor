@@ -59,7 +59,7 @@ export default {
 		}
 	},
 	computed: {
-		...Utils.mapState(['connection', 'userLocation']),
+		...Utils.mapState(['connection']),
 		nextTabId() {
 			return `viewer~${this.tabIdCounter}`;
 		}

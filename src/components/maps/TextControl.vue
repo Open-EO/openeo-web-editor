@@ -54,6 +54,14 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.value {
+	position: absolute;
+	top: 0.5em;
+	left: calc(2.375em + 6px);
+	max-width: calc(100% - 2*(2.375em + 6px));
+	box-sizing: border-box;
+	background-color: rgba(255,255,255,0.6);
+}
 .pointer {
 	cursor: pointer;
 }

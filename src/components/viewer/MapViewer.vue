@@ -3,6 +3,7 @@
 		<Pane id="map">
 			<div :id="id" class="map-viewer">
 				<ProgressControl ref="progress" :map="map" />
+				<UserLocationControl :map="map" />
 				<TextControl v-if="isGeoTiff" :text="textControlText" />
 				<ChannelControl v-if="isGeoTiff && !colorMap" :bands="bands" @update="updateGeoTiffStyle" />
 				<div v-if="loading" class="map-loading">
@@ -255,9 +256,5 @@ export default {
 			font-size: 2em;
 		}
 	}
-}
-.ol-control.value {
-	top: 0.5em;
-	left: 3em;
 }
 </style>
