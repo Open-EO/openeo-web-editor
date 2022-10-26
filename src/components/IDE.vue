@@ -196,10 +196,10 @@ export default {
 		},
 
 		updateEditor(value) {
-			this.setProcess(value);
 			if (value === null) {
 				this.setContext(null);
 			}
+			this.setProcess(value || null); // Convert an empty string to null
 		},
 
 		editProcess(obj) {

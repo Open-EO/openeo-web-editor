@@ -148,8 +148,8 @@ export default {
 		this.editor.on('changes', (cm, evt) => {
 			try {
 				// Don't commit external changes (i.e. coming from the value prop)
-				if (Object.values(evt).filter(e => e.origin === 'setValue').length === 0) {
-					this.commit();
+				if (!Object.values(evt).find(e => e.origin === 'setValue')) {
+					this.commit(false);
 				}
 			} catch (error) {
 				this.$emit('error', error);
@@ -178,7 +178,7 @@ export default {
 			// Refresh element for fullscreen
 			this.element = this.$el;
 		},
-		commit() {
+		commit(updateContext = true) {
 			var value = this.editor.getValue();
 			switch(this.languageString) {
 				case 'math':
@@ -193,7 +193,7 @@ export default {
 							return this.emit(process);
 						}
 					}
-					return this.emit(null);
+					return this.emit(updateContext ? null : "");
 				case 'json':
 					if (value) {
 						return this.emit(JSON.parse(value));
