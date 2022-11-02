@@ -2,6 +2,7 @@
 	<DataTable ref="table" :data="data" :columns="columns" class="CustomProcessPanel">
 		<template slot="toolbar">
 			<button title="Add new custom process" @click="addProcessFromScript" v-show="supportsCreate" :disabled="!this.hasProcess"><i class="fas fa-plus"></i> Add</button>
+			<SyncButton name="custom processes" :sync="() => updateData(true)" />
 		</template>
 		<template #actions="p">
 			<button title="Details" @click="processInfo(p.row)" v-show="supportsRead"><i class="fas fa-info"></i></button>
@@ -12,14 +13,18 @@
 </template>
 
 <script>
-import EventBusMixin from './EventBusMixin.js';
+import EventBusMixin from './EventBusMixin';
 import WorkPanelMixin from './WorkPanelMixin';
+import SyncButton from './SyncButton.vue';
 import Utils from '../utils.js';
 import { UserProcess } from '@openeo/js-client';
 
 export default {
 	name: 'CustomProcessPanel',
 	mixins: [WorkPanelMixin('userProcesses', 'custom process', 'custom processes', false), EventBusMixin],
+	components: {
+		SyncButton
+	},
 	data() {
 		return {
 			columns: {

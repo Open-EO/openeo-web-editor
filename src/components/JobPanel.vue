@@ -3,6 +3,7 @@
 		<template slot="toolbar">
 			<button title="Add new job for batch processing" @click="createJobFromScript()" v-show="supportsCreate" :disabled="!this.hasProcess"><i class="fas fa-plus"></i> Create Batch Job</button>
 			<button title="Run the process directly and view the results without storing them permanently" @click="executeProcess" v-show="supports('computeResult')" :disabled="!this.hasProcess"><i class="fas fa-play"></i> Run now</button>
+			<SyncButton name="batch jobs" :sync="() => updateData(true)" />
 		</template>
 		<template #actions="p">
 			<button title="Details" @click="showJobInfo(p.row)" v-show="supportsRead"><i class="fas fa-info"></i></button>
@@ -21,8 +22,9 @@
 </template>
 
 <script>
-import EventBusMixin from './EventBusMixin.js';
+import EventBusMixin from './EventBusMixin';
 import WorkPanelMixin from './WorkPanelMixin';
+import SyncButton from './SyncButton.vue';
 import Utils from '../utils.js';
 import { AbortController, Job } from '@openeo/js-client';
 
@@ -31,6 +33,9 @@ const WorkPanelMixinInstance = WorkPanelMixin('jobs', 'batch job', 'batch jobs')
 export default {
 	name: 'JobPanel',
 	mixins: [WorkPanelMixinInstance, EventBusMixin],
+	components: {
+		SyncButton
+	},
 	data() {
 		return {
 			columns: {

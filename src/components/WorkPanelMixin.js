@@ -62,11 +62,11 @@ export default (namespace, singular, plural, loadInitially = true) => {
 					Utils.exception(this, error, "Load " + singular + " error");
 				}
 			},
-			async updateData() {
+			async updateData(force = false) {
 				var table = this.getTable();
 				var nextSyncTime = Date.now() - this.getSyncInterval();
-				if (!table || this.lastSyncTime > nextSyncTime) {
-					return;
+				if (!table || (!force && this.lastSyncTime > nextSyncTime)) {
+					return false;
 				}
 				else if (!this.supportsList) {
 					table.setNoData("Sorry, listing stored " + plural + " is not supported by the server.");
@@ -85,6 +85,7 @@ export default (namespace, singular, plural, loadInitially = true) => {
 						if(data.length == 0) {
 							table.setNoData("Add your first " + singular + " here...");
 						}
+						return true;
 					} catch(error) {
 						if (!isUpdate) {
 							Utils.exception(this, error);
@@ -95,6 +96,7 @@ export default (namespace, singular, plural, loadInitially = true) => {
 						}
 					}
 				}
+				return false;
 			}
 		}
 	};

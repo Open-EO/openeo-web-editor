@@ -3,6 +3,7 @@
 		<template slot="toolbar">
 			<button title="Add new permanently stored web service" @click="createServiceFromScript()" v-show="supportsCreate" :disabled="!this.hasProcess"><i class="fas fa-plus"></i> Create</button>
 			<button title="Quickly show the process on map without storing it permanently" @click="quickViewServiceFromScript()" v-show="supportsQuickView" :disabled="!this.hasProcess"><i class="fas fa-map"></i> Show on Map</button>
+			<SyncButton name="web services" :sync="() => updateData(true)" />
 		</template>
 		<template #actions="p">
 			<button title="Details" @click="serviceInfo(p.row)" v-show="supportsRead"><i class="fas fa-info"></i></button>
@@ -17,8 +18,9 @@
 </template>
 
 <script>
-import EventBusMixin from './EventBusMixin.js';
+import EventBusMixin from './EventBusMixin';
 import WorkPanelMixin from './WorkPanelMixin';
+import SyncButton from './SyncButton.vue';
 import Utils from '../utils';
 import { Service } from '@openeo/js-client';
 import { mapMutations } from 'vuex';
@@ -26,6 +28,9 @@ import { mapMutations } from 'vuex';
 export default {
 	name: 'ServicePanel',
 	mixins: [WorkPanelMixin('services', 'web service', 'web services'), EventBusMixin],
+	components: {
+		SyncButton
+	},
 	data() {
 		return {
 			columns: {

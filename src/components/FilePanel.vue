@@ -9,6 +9,7 @@
 						<input type="file" name="uploadUserFile" class="uploadUserFile" ref="uploadUserFile" @change="uploadFiles" multiple>
 					</div>
 				</div>
+				<SyncButton name="files" :sync="() => updateData(true)" />
 			</template>
 			<template #actions="p">
 				<button title="Download" @click="downloadFile(p.row)" v-show="supportsRead"><i class="fas fa-download"></i></button>
@@ -20,11 +21,15 @@
 
 <script>
 import WorkPanelMixin from './WorkPanelMixin';
+import SyncButton from './SyncButton.vue';
 import Utils from '../utils.js';
 
 export default {
   	name: 'FilePanel',
 	mixins: [WorkPanelMixin('files', 'file', 'files')],
+	components: {
+		SyncButton
+	},
 	data() {
 		return {
 			columns: {
@@ -152,6 +157,18 @@ export default {
 	position: relative;
 	height: 100%;
 	width: 100%;
+
+	.toolbar {
+		display: flex;
+
+		.upload {
+			flex-grow: 1;
+		}
+		.data-sync {
+			flex-grow: 0;
+			height: 100%;
+		}
+	}
 
 	.dropZone {
 		width: 100%;
