@@ -114,6 +114,7 @@ export default {
 			let values = Object.values(data);
 
 			let headers = new Set();
+			// ToDo: If the values holds arrays, parse this into columns?
 			values.forEach(row => Object.keys(row).forEach(key => headers.add(key)));
 			this.header = Array.from(headers);
 			this.content = values.map(row => this.header.map(key => Array.isArray(row[key]) && row[key].length === 1 ? row[key][0] : row[key]));

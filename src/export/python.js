@@ -36,7 +36,7 @@ export default class Python extends Exporter {
 	}
 
 	generateAuthentication() {
-		this.comment(`ToDo: Here you need to authenticate with authenticate_basic() or authenticate_OIDC()`);
+		this.comment(`ToDo: Here you need to authenticate with authenticate_basic() or authenticate_oidc()`);
 	}
 
 	generateBuilder() {}
