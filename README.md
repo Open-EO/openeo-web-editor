@@ -1,7 +1,10 @@
 # openEO Web Editor
+
 A web-based editor for interactive usage of the openEO API.
 
 The Web Editor currently **supports openEO API versions v1.0.x** (including 1.0.0-rc.2).
+
+This project is licensed under the Apache 2.0 license - see the [LICENSE.md](LICENSE.md) file for details.
 
 ## Getting Started
 
@@ -18,11 +21,6 @@ You can also build the files yourself and deploy them to any web host:
     * Development: Run the development server by executing `npm start`.
     * Deployment: Build the project by executing `npm run build`. Afterwards upload the content of the `dist` folder to your server.
 
-### Breaking changes
-
-* Please note that in v0.9.8 and v0.9.9 the config file structure has changed slightly.
-  You need to add the new `basemaps` property to your config file. Otherwise, you won't see a basemap any more.
-
 ### Query Parameters
 
 You can use some query parameters to set initial state to the Editor.
@@ -38,15 +36,29 @@ You can use some query parameters to set initial state to the Editor.
 
 Example: <https://editor.openeo.org?server=https://earthengine.openeo.org&discover=1&process=https://raw.githubusercontent.com/Open-EO/openeo-earthengine-driver/master/tests/data/sample-processgraph.json>
 
-## Built With
+## Implementation guide for back-ends
+
+Here we collection information for back-end implementors that want to improve the experience with the Web Editor by fine-tuning their implementation.
+
+* [GeoTiff / COG support](docs/geotiff.md)
+* and more...
+
+## Contributions
+
+The authors acknowledge the financial support for the development of this package during the H2020 project "openEO" (Oct 2017 to Sept 2020) by the European Union, funded by call EO-2-2017: EO Big Data Shift, under grant number 776242. We also acknowledge the financial support received from ESA for the project "openEO Platform" (Sept 2020 to Sept 2023).
+
+This package received major contributions from the following organizations:
+
+[<img src="https://www.uni-muenster.de/imperia/md/images/allgemein/farbunabhaengig/wwu.svg" alt="WWU Münster logo" title="WWU Münster" height="50">](https://www.uni-muenster.de/) &nbsp;
+[<img src="https://www.mundialis.de/wordpress/wp-content/uploads/2015/11/mundialis_logo_web.png" alt="mundialis logo" title="mundialis" height="50">](https://www.mundialis.de)
+[<img src="https://www.sinergise.com/sites/default/files/logo.png" alt="Sinergise logo" title="Sinergise" height="50">](https://www.sinergise.com)
+
+## Built with
+
 * [Vue.js](https://vuejs.org/) and some plugins - UI framework
 * [OpenLayers](http://openlayers.org/) and multiple extensions - Map visualization
 * [CodeMirror](https://codemirror.net/) - Source code editor
 * [openEO JS Client](https://github.com/Open-EO/openeo-js-client) - openEO client
-* and more...
-
-## License
-This project is licensed under the Apache 2.0 license - see the [LICENSE.md](LICENSE.md) file for details.
 
 ## Docker
 
@@ -81,9 +93,3 @@ To test a certain commit, simply pull the according tag (available from 2021-09-
 docker pull mundialis/openeo-web-editor:sha-4636d41
 ```
 The Dockerimage is maintained by mundialis.
-
-## Implementation guide for back-ends
-
-Here we collection information for back-end implementors that want to improve the experience with the Web Editor by fine-tuning their implementation.
-
-* [GeoTiff / COG support](docs/geotiff.md)
