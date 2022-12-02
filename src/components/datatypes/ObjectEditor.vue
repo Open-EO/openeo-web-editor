@@ -189,17 +189,17 @@ export default {
 .array .element.sortable-chosen .deleteBtn {
 	visibility: hidden;
 }
-#parameterModal .fieldRow .array .element .fieldLabel {
+.parameters .fieldRow .array .element .fieldLabel {
 	display: flex;
 	align-items: center;
 	min-width: 1.5em;
 	width: auto;
 	padding: 0 0.5em;
 }
-#parameterModal .fieldRow .object .element .fieldLabel {
+.parameters .fieldRow .object .element .fieldLabel {
 	min-width: 20%;
 }
-#parameterModal .fieldRow .element .fieldValue {
+.parameters .fieldRow .element .fieldValue {
 	display: block;
 }
 .element > .row {

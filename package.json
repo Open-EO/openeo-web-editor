@@ -36,9 +36,9 @@
     "url": "https://github.com/Open-EO/openeo-web-editor.git"
   },
   "scripts": {
-    "build:epsg": "node src/build-epsg.js",
-    "start": "npm run build:epsg && npx vue-cli-service serve",
-    "build": "npm run build:epsg && npx vue-cli-service build --report"
+    "build:database": "node src/build-database.js",
+    "start": "npm run build:database && npx vue-cli-service serve",
+    "build": "npm run build:database && npx vue-cli-service build --report"
   },
   "dependencies": {
     "@musement/iso-duration": "^1.0.0",

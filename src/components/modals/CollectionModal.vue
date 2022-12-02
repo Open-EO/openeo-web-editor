@@ -1,12 +1,7 @@
 <template>
 	<Modal width="80%" :title="collection.id" @closed="$emit('closed')">
 		<div class="docgen">
-			<Collection :data="collection">
-				<template #spatial-extents="p">
-					<span v-if="p.worldwide" class="worldwide"><i class="fas fa-globe"></i> Worldwide</span>
-					<MapExtentViewer v-else class="map" :footprint="p.extents"></MapExtentViewer>
-				</template>
-			</Collection>
+			<Collection :data="collection" />
 			<section v-if="currentItems">
 				<Items :items="currentItems">
 					<template #item-location="p">
@@ -24,7 +19,7 @@
 
 <script>
 import Modal from './Modal.vue';
-import Collection from '@openeo/vue-components/components/Collection.vue';
+import Collection from '../Collection.vue';
 import Utils from '../../utils.js';
 
 export default {
@@ -50,13 +45,6 @@ export default {
 	computed: {
 		...Utils.mapState(['connection']),
 		...Utils.mapGetters(['supports']),
-		bbox() {
-			try {
-				return this.collection.extent.spatial.bbox[0];
-			} catch(e) {
-				return null;
-			}
-		},
 		currentItems() {
 			if (this.items.length >= this.itemsPage) {
 				return this.items[this.itemsPage];
@@ -117,10 +105,6 @@ export default {
 	}
 }
 .docgen {
-	.map {
-		height: 350px !important; // ToDo: Remove once new release of vue-components is available (newer than 2.8.1)
-	}
-
 	.collection > h2 {
 		display: none;
 	}

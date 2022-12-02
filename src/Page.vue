@@ -49,7 +49,8 @@ export default {
 		ShareModal: () => import('./components/modals/ShareModal.vue'),
 		Tour: () => import('./components/Tour.vue'),
 		UdfRuntimeModal: () => import('./components/modals/UdfRuntimeModal.vue'),
-		WebEditorModal: () => import('./components/modals/WebEditorModal.vue')
+		WebEditorModal: () => import('./components/modals/WebEditorModal.vue'),
+		WizardModal: () => import('./components/modals/WizardModal.vue')
 	},
 	data() {
 		return {

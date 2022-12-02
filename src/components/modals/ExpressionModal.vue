@@ -316,9 +316,6 @@ export default {
 </script>
 
 <style scoped>
-.footer {
-	text-align: right;
-}
 .content {
 	display: flex;
 	flex-direction: column;
