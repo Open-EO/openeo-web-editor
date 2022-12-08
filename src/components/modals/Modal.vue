@@ -1,6 +1,6 @@
 <template>
 	<div class="modal" @mousedown="backgroundClose" :style="{'z-index': zIndex}">
-		<div ref="container" class="modal-container" :style="style">
+		<component :is="containerTag" ref="container" class="modal-container" :style="style" @submit.prevent.stop="submitFunction">
 			<header class="modal-header" @mousedown="startMove">
 				<slot name="header">
 					<h2>{{ title }}</h2>
@@ -11,9 +11,11 @@
 				<slot></slot>
 			</main>
 			<footer class="modal-footer">
-				<slot name="footer"></slot>
+				<slot name="footer">
+					<button v-if="submitFunction" type="submit">{{ submitButtonText }}</button>
+				</slot>
 			</footer>
-		</div>
+		</component>
 	</div>
 </template>
 
@@ -40,6 +42,14 @@ export default {
 		show: {
 			type: Boolean,
 			default: true
+		},
+		submitFunction: {
+			type: Function,
+			default: null
+		},
+		submitButtonText: {
+			type: String,
+			default: 'Submit'
 		}
 	},
 	data() {
@@ -64,6 +74,9 @@ export default {
 				style.top = this.position[1] + 'px';
 			}
 			return style;
+		},
+		containerTag() {
+			return this.submitFunction ? 'form' : 'div';
 		}
     },
 	watch: {
@@ -81,6 +94,9 @@ export default {
 	},
 	methods: {
 		...Utils.mapMutations('editor', ['openModal', 'closeModal']),
+		submit(event) {
+			this.submitFunction(event);
+		},
 		open() {
 			this.openModal();
 			this.zIndex = this.hightestModalZIndex;
@@ -169,6 +185,9 @@ export default {
 	box-shadow: 8px 8px 8px 0px rgba(0,0,0,0.3);
 	resize: both;
 	overflow: hidden;
+	transition-timing-function: linear;
+	transition-property: width, height;
+  	transition-duration: 0.5s;
 }
 
 .modal .modal-header {
@@ -213,6 +232,7 @@ export default {
 	background-color: #eee;
 	margin: 0;
 	padding: 1rem;
+	text-align: right;
 }
 
 .modal .close {

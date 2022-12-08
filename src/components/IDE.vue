@@ -4,8 +4,9 @@
 			<header class="navbar">
 				<Logo />
 				<ul id="menu">
-					<li><div class="menuItem" @click="showHelp" title="Start a guided tour"><i class="fas fa-question fa-fw"></i> Help</div></li>
-					<li><div class="menuItem" @click="showServerInfo" title="Get server information"><i class="fas fa-info fa-fw"></i> Server</div></li>
+					<li><div class="menuItem" @click="showHelp" title="Start a guided tour"><i class="fas fa-question-circle fa-fw"></i>Help</div></li>
+					<li><div class="menuItem" @click="showWizard" title="Start the process wizard"><i class="fas fa-magic fa-fw"></i>Wizard</div></li>
+					<li><div class="menuItem" @click="showServerInfo" title="Get server information"><i class="fas fa-info-circle fa-fw"></i>Server</div></li>
 					<li><UserMenu /></li>
 				</ul>
 			</header>
@@ -79,6 +80,7 @@ export default {
 		...Utils.mapState(['connection', 'isAuthenticated']),
 		...Utils.mapState('editor', ['context', 'process', 'collectionPreview']),
 		...Utils.mapGetters(['title', 'apiVersion', 'supports']),
+		...Utils.mapGetters('editor', ['hasProcess']),
 		...Utils.mapGetters('jobs', {supportsJobUpdate: 'supportsUpdate'}),
 		...Utils.mapGetters('services', {supportsServiceUpdate: 'supportsUpdate'}),
 		...Utils.mapGetters('userProcesses', {supportsUserProcessUpdate: 'supportsUpdate'}),
@@ -172,6 +174,16 @@ export default {
 
 		async exportCode() {
 			this.broadcast('showModal', 'ExportCodeModal');
+		},
+
+		showWizard() {
+			if (this.hasProcess) {
+				var confirmed = confirm("Starting the wizard may clear the existing model.\r\nDo you really want to continue?");
+				if (!confirmed) {
+					return;
+				}
+			}
+			this.broadcast('showModal', 'WizardModal');
 		},
 
 		async validateProcess() {
@@ -375,6 +387,10 @@ export default {
 			height: 60px;
 			font-size: 16px;
 			font-weight: bold;
+
+			i {
+				margin-right: 5px;
+			}
 		}
 
 		.dropdown {

@@ -1,5 +1,5 @@
 <template>
-	<Modal :show="show" title="Import process from external source" @closed="$emit('closed')">
+	<Modal :show="show" title="Import process from external source" @closed="$emit('closed')" :submitFunction="submit">
 		<template #default>
 			<div class="content">
 				You can load an external process from multiple different sources:
@@ -28,7 +28,7 @@
 		</template>
 		<template #footer>
 			<div class="footer">
-				<button type="button" :disabled="!process" @click="submit">
+				<button type="submit" :disabled="!process">
 					Import
 					<template v-if="processId === null">unnamed process</template>
 					<code v-else-if="processId">{{ processId }}</code>
@@ -143,6 +143,9 @@ export default {
 			}
 		},
 		submit() {
+			if (!this.process) {
+				return;
+			}
 			this.$emit('save', this.process);
 			this.show = false;
 		},
@@ -151,9 +154,6 @@ export default {
 </script>
 
 <style scoped lang="scss">
-.footer {
-	text-align: right;
-}
 h3 {
 	margin-top: 1.5em;
 	margin-bottom: 0.5em;

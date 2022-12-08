@@ -20,7 +20,8 @@ export default {
 	props: {
 		value: {},
 		type: {
-			type: String
+			type: String,
+			default: ""
 		},
 		editable: {
 			type: Boolean,
@@ -172,7 +173,14 @@ export default {
 						return this.schema.getEnumChoices().map(val => this.e(val));
 					}
 					else if (Array.isArray(this.options)) {
-						return this.options.map(val => this.e(val));
+						return this.options.map(val => {
+							if (Utils.isObject(val)) {
+								return val;
+							}
+							else {
+								return this.e(val)
+							}
+						});
 					}
 					else {
 						return [];
