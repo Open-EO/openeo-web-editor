@@ -61,7 +61,7 @@
 		<!-- URL -->
 		<input class="fieldValue" v-else-if="type === 'url' || type === 'uri'" v-model="state" type="url" :name="name" :disabled="!editable" />
 		<!-- Objects / Arrays -->
-		<ObjectEditor  v-else-if="nativeType === 'object' || nativeType === 'array'" :editable="editable" :parameter="parameter" :schema="schema" :isObject="nativeType === 'object'" v-model="state" :context="context" />
+		<ObjectEditor  v-else-if="nativeType === 'object' || nativeType === 'array'" :editable="editable" :parameter="parameter" :schema="schema" :isObject="nativeType === 'object'" v-model="state" :parent="parent" :context="context" />
 		<!-- String and all other -->
 		<input class="fieldValue" v-else v-model="state" type="text" :name="name" :disabled="!editable" />
 	</div>

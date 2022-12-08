@@ -17,7 +17,7 @@
 						<input v-else-if="isObject" v-model="e.key" type="text" :disabled="!editable"/>
 						<template v-else>{{ k+1 }}</template>
 					</label>
-					<ParameterDataTypes :editable="editable" :parameter="elementSchema(k, e.key)" :isItem="true" :context="context" v-model="e.value" />
+					<ParameterDataTypes :editable="editable" :parameter="elementSchema(k, e.key)" :isItem="true" :parent="parent" :context="context" v-model="e.value" />
 					<button v-if="editable && !e.prop.required" :disabled="count <= minCount" class="deleteBtn" type="button" @click="remove(k)"><i class="fas fa-trash"></i></button>
 					<button v-show="editable && !isObject" class="mover" type="button"><i class="fas fa-arrows-alt"></i></button>
 				</div>
@@ -59,6 +59,7 @@ export default {
 			type: Boolean,
 			default: false
 		},
+		parent: Object,
 		context: {}
 	},
 	data() {

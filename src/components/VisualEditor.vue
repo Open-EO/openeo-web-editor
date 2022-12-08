@@ -65,7 +65,7 @@
 					@error="errorHandler"
 					@showProcess="(id, namespace) => broadcast('showProcess', {id, namespace})"
 					@showCollection="id => broadcast('showCollection', id)"
-					@showParameter="param => broadcast('showProcessParameter', param)"
+					@showParameter="(param, origin) => broadcast('showProcessParameter', param, origin)"
 					@editParameter="editParameter"
 					@editArguments="openArgumentEditor"
 					@compactMode="compact => this.compactMode = compact"

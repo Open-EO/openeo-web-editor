@@ -176,8 +176,8 @@ export default {
 		async showData(data, title) {
 			this.showModal('DataModal', {data, title});
 		},
-		showProcessParameter(parameter, udp = true) {
-			this.showModal('ProcessParameterModal', {parameter,udp});
+		showProcessParameter(parameter, origin) {
+			this.showModal('ProcessParameterModal', {parameter, origin});
 		}
 	}
 }
