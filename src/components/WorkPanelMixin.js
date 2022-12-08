@@ -8,7 +8,6 @@ export default (namespace, singular, plural, loadInitially = true) => {
 		},
 		data() {
 			return {
-				columns: {},
 				syncTimer: null,
 				lastSyncTime: null
 			};

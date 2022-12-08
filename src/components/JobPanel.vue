@@ -38,7 +38,21 @@ export default {
 	},
 	data() {
 		return {
-			columns: {
+			watchers: {},
+			jobUpdater: null,
+			runId: 0
+		};
+	},
+	mounted() {
+		this.listen('replaceProcess', this.replaceProcess);
+	},
+	computed: {
+		...Utils.mapState(['connection']),
+		...Utils.mapGetters(['supports', 'supportsBilling', 'supportsBillingPlans']),
+		...Utils.mapGetters('editor', ['hasProcess']),
+		...Utils.mapState('editor', ['process']),
+		columns() {
+			return {
 				id: {
 					name: 'ID',
 					primaryKey: true,
@@ -48,7 +62,7 @@ export default {
 					name: 'Batch Job',
 					computedValue: row => Utils.getResourceTitle(row),
 					format: value => Utils.formatIdOrTitle(value),
-					edit: this.updateTitle
+					edit: this.supportsUpdate ? this.updateTitle : null
 				},
 				status: {
 					name: 'Status',
@@ -68,20 +82,8 @@ export default {
 					filterable: false,
 					sort: false
 				}
-			},
-			watchers: {},
-			jobUpdater: null,
-			runId: 0
-		};
-	},
-	mounted() {
-		this.listen('replaceProcess', this.replaceProcess);
-	},
-	computed: {
-		...Utils.mapState(['connection']),
-		...Utils.mapGetters(['supports', 'supportsBilling', 'supportsBillingPlans']),
-		...Utils.mapGetters('editor', ['hasProcess']),
-		...Utils.mapState('editor', ['process']),
+			};
+		},
 		supportsStart() {
 			return this.supports('startJob');
 		},

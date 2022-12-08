@@ -33,7 +33,16 @@ export default {
 	},
 	data() {
 		return {
-			columns: {
+			createdQuickViews: {}
+		};
+	},
+	computed: {
+		...Utils.mapState('editor', ['process']),
+		...Utils.mapGetters('editor', ['hasProcess']),
+		...Utils.mapState(['serviceTypes']),
+		...Utils.mapGetters(['supports', 'supportsBilling', 'supportsBillingPlans']),
+		columns() {
+			return {
 				id: {
 					name: 'ID',
 					primaryKey: true,
@@ -43,7 +52,7 @@ export default {
 					name: 'Web Service',
 					computedValue: row => Utils.getResourceTitle(row),
 					format: value => Utils.formatIdOrTitle(value),
-					edit: this.updateTitle
+					edit: this.supportsUpdate ? this.updateTitle : null
 				},
 				type: {
 					name: 'Type',
@@ -51,7 +60,7 @@ export default {
 				},
 				enabled: {
 					name: 'Enabled',
-					edit: this.toggleEnabled
+					edit: this.supportsUpdate ? this.toggleEnabled : null
 				},
 				created: {
 					name: 'Submitted',
@@ -63,15 +72,8 @@ export default {
 					filterable: false,
 					sort: false
 				}
-			},
-			createdQuickViews: {}
-		};
-	},
-	computed: {
-		...Utils.mapState('editor', ['process']),
-		...Utils.mapGetters('editor', ['hasProcess']),
-		...Utils.mapState(['serviceTypes']),
-		...Utils.mapGetters(['supports', 'supportsBilling', 'supportsBillingPlans']),
+			};
+		},
 		canShare() {
 			return Array.isArray(this.$config.supportedBatchJobSharingServices) && this.$config.supportedBatchJobSharingServices.length > 0;
 		},
