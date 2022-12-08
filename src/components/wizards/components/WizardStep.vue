@@ -1,5 +1,5 @@
 <template>
-	<li :class="{active:tab.active, error: tab.validationError, checked: tab.checked}">
+	<li :class="{active: tab.active, error: tab.validationError, checked: tab.checked}">
 		<a href="javascript:void(0)" :class="{disabled: !tab.checked}">
 			<div class="wizard-icon-circle" :tabindex="tab.checked ? 0 : ''">
 				<transition mode="out-in">
@@ -9,7 +9,7 @@
 						<i v-else class="wizard-icon">{{index + 1}}</i>
 				</transition>
 			</div>
-      <span class="stepTitle">{{tab.title}}</span>
+	  <span class="stepTitle">{{tab.title}}</span>
 		</a>
 	</li>
 </template>
@@ -19,11 +19,11 @@
 		props: {
 			tab: {
 				type: Object,
-        required: true
+				required: true
 			},
 			index: {
 				type: Number,
-        required: true
+				required: true
 			}
 		}
 	}

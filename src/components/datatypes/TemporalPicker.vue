@@ -25,6 +25,10 @@ export default {
 		type: {
 			type: String
 		},
+		intervalType: {
+			type: String,
+			default: null
+		},
 		editable: {
 			type: Boolean,
 			default: true
@@ -39,6 +43,9 @@ export default {
 		},
 		realType() {
 			if (this.type === 'temporal-interval') {
+				if (this.intervalType) {
+					return this.intervalType;
+				}
 				let checkDate = dt => (typeof dt === 'string' && dt.length === 10);
 				let containsDate;
 				if (Array.isArray(this.value)) {

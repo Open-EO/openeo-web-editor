@@ -1,5 +1,5 @@
 <template>
-	<Modal id="WizardModal" width="90%" :title="title" @closed="$emit('closed')">
+	<Modal id="WizardModal" :show="show" width="90%" :title="title" @closed="$emit('closed')">
 		<template #default>
 			<div v-if="selected" class="wizard">
 				<div class="wizard-navigation">
@@ -10,7 +10,7 @@
 						<wizard-step v-for="(tab, i) in tabs" :key="i" :tab="tab" @click.native="navigateToTab(i)" @keyup.enter.native="navigateToTab(i)" :index="i" />
 					</ul>
 				</div>
-				<component :is="selected.component" :parent="self" />
+				<component ref="component" :is="selected.component" :parent="self" @input="execute" />
 			</div>
 			<div v-else class="start">
 				<p>This wizard helps you to create openEO processes in a simple way for some common use cases.</p>
@@ -53,6 +53,7 @@ import Modal from './Modal.vue';
 import WizardStep from '../wizards/components/WizardStep.vue';
 import Utils from '../../utils';
 import Config from '../../../config';
+import EventBusMixin from '../EventBusMixin';
 
 const wizards = Config.supportedWizards || [];
 let components = {
@@ -66,9 +67,11 @@ for(let wizard of wizards) {
 
 export default {
 	name: "WizardModal",
+	mixins: [EventBusMixin],
 	components,
 	data() {
 		return {
+			show: true,
 			selected: null,
 			usecases: [
 				{
@@ -76,15 +79,23 @@ export default {
 					title: 'Download Data',
 					description: 'Just download a small portion of data.'
 				},
-				...(Config.supportedWizards || [])
+				...(Config.supportedWizards || []) // ToDo: only show usecases that are supported based on processes (requiredProcesses)
 			],
 			activeTabIndex: 0,
 			currentPercentage: 0,
 			maxStep: 0,
-			tabs: []
+			tabs: [],
+			process: null
 		};
 	},
 	computed: {
+		...Utils.mapGetters(['supports']),
+		supportsJobs() {
+			return this.supports('createJob') && this.supports('startJob');
+		},
+		supportsSync() {
+			return this.supports('computeResult');
+		},
 		self() {
 			return this;
 		},
@@ -114,11 +125,24 @@ export default {
 		}
 	},
 	methods: {
+		...Utils.mapMutations('editor', ['setProcess']),
 		start(selected) {
 			this.selected = selected;
 		},
 		reset() {
 			this.selected = null;
+		},
+		async execute({process, mode, modeOptions}) {
+			// Add process to model builder
+			this.setProcess(process);
+
+			// Execute
+			if (mode == 'sync' && this.supportsSync) {
+				this.broadcast('executeProcess');
+			}
+			else if (mode == 'job' && this.supportsJobs) {
+				this.broadcast('startAndQueueProcess', modeOptions);
+			}
 		},
 		addTab(item, pos) {
 			this.tabs.splice(pos, 0, item);
@@ -170,23 +194,28 @@ export default {
 		nextTab() {
 			let cb = () => {
 				if (this.activeTabIndex < this.tabs.length - 1) {
-					this.changeTab(this.activeTabIndex, this.activeTabIndex + 1)
-					this.afterTabChange(this.activeTabIndex)
+					this.changeTab(this.activeTabIndex, this.activeTabIndex + 1);
+					this.afterTabChange(this.activeTabIndex);
+				}
+				else if (this.isLastStep) {
+					this.$refs.component.finish()
+						.then(() => this.show = false)
+						.catch(error => Utils.exception(this, error));
 				}
 			}
-			this.beforeTabChange(this.activeTabIndex, cb)
+			this.beforeTabChange(this.activeTabIndex, cb);
 		},
 		prevTab() {
 			let cb = () => {
 				if (this.activeTabIndex > 0) {
-				this.setValidationError(null)
-				this.changeTab(this.activeTabIndex, this.activeTabIndex - 1)
+					this.setValidationError(null);
+					this.changeTab(this.activeTabIndex, this.activeTabIndex - 1);
 				}
 			}
 			if (this.validateOnBack) {
-				this.beforeTabChange(this.activeTabIndex, cb)
+				this.beforeTabChange(this.activeTabIndex, cb);
 			} else {
-				cb()
+				cb();
 			}
 		},
 		setValidationError(error) {
@@ -195,23 +224,27 @@ export default {
 			}
 			this.tabs[this.activeTabIndex].validationError = error;
 		},
-		validateBeforeChange(result, callback) {
-			this.setValidationError(null);
-			let validationResult = result === true;
-			this.executeBeforeChange(validationResult, callback);
-		},
-		executeBeforeChange(validationResult, callback) {
-			if (validationResult) {
-				callback();
-			} else {
-				this.setValidationError('Please fill the form completely');
-			}
-		},
 		beforeTabChange(index, callback) {
+			const fallbackMsg = "Please fill the form";
+			this.setValidationError(null);
 			let oldTab = this.tabs[index];
 			if (oldTab && oldTab.beforeChange !== undefined) {
-				let tabChangeRes = oldTab.beforeChange();
-				this.validateBeforeChange(tabChangeRes, callback);
+				try {
+					let result = oldTab.beforeChange();
+					if (result instanceof Promise) {
+						result
+							.then(result => result ? callback() : this.setValidationError(fallbackMsg))
+							.catch(error => this.setValidationError(error.message))
+					}
+					else if (result) {
+						callback();
+					}
+					else {
+						this.setValidationError(fallbackMsg)
+					}
+				} catch(error) {
+					this.setValidationError(error.message);
+				}
 			}
 			else {
 				callback();

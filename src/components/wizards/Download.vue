@@ -1,33 +1,41 @@
 <template>
 	<div class="wizard-tab-content">
 		<WizardTab :pos="0" :parent="parent" title="Data Source" :beforeChange="() => collection !== null">
-			<ChooseCollection :value="collection" @input="submit" />
+			<ChooseCollection :value="collection" @input="submitCollection" />
 		</WizardTab>
-		<WizardTab :pos="1" :parent="parent" title="Location" :beforeChange="() => bbox !== null">
-			<ChooseBoundingBox v-model="bbox"/>
+		<WizardTab :pos="1" :parent="parent" title="Location" :beforeChange="() => spatial_extent !== null">
+			<ChooseBoundingBox v-model="spatial_extent"/>
 		</WizardTab>
-		<WizardTab :pos="2" :parent="parent" title="Temporal Coverage">
-			Choose temporal extent
+		<WizardTab :pos="2" :parent="parent" title="Temporal Coverage" :beforeChange="() => temporal_extent !== null">
+			<ChooseTime v-model="temporal_extent"/>
 		</WizardTab>
-		<WizardTab :pos="3" :parent="parent" title="File Format">
-			Choose file format
+		<WizardTab :pos="3" :parent="parent" title="File Format" :beforeChange="() => format !== null">
+			<ChooseFormat v-model="format"/>
 		</WizardTab>
 		<WizardTab :pos="4" :parent="parent" title="Finish">
-			Insert or run (sync / batch)
+			<ChooseProcessingMode v-model="mode" :title.sync="jobTitle"/>
 		</WizardTab>
 	</div>
 </template>
 
 <script>
-import ChooseCollection from './tabs/ChooseCollection.vue';
-import WizardTab from './components/WizardTab.vue';
 import ChooseBoundingBox from './tabs/ChooseBoundingBox.vue';
+import ChooseCollection from './tabs/ChooseCollection.vue';
+import ChooseFormat from './tabs/ChooseFormat.vue';
+import ChooseProcessingMode from './tabs/ChooseProcessingMode.vue';
+import ChooseTime from './tabs/ChooseTime.vue';
+import WizardTab from './components/WizardTab.vue';
+import { Builder } from '@openeo/js-client';
+import Utils from '../../utils';
 
 export default {
 	name: "Download",
 	components: {
-		ChooseCollection,
 		ChooseBoundingBox,
+		ChooseCollection,
+		ChooseFormat,
+		ChooseProcessingMode,
+		ChooseTime,
 		WizardTab
 	},
 	props: {
@@ -39,13 +47,46 @@ export default {
 	data() {
 		return {
 			collection: null,
-			bbox: null
+			format: null,
+			spatial_extent: null,
+			temporal_extent: null,
+			format: null,
+			mode: "",
+			jobTitle: 'Download created by Wizard'
 		};
 	},
+	computed: {
+		...Utils.mapGetters(['processes', 'collectionDefaults'])
+	},
 	methods: {
-		submit(id) {
+		submitCollection(id) {
+			if (this.collection !== id || this.temporal_extent == null || this.spatial_extent == null) {
+				let defaults = this.collectionDefaults(id);
+				if (this.collection !== id || this.spatial_extent == null) {
+					this.spatial_extent = defaults.spatial_extent;
+				}
+				if (this.collection !== id || this.temporal_extent == null) {
+					this.temporal_extent = defaults.temporal_extent;
+				}
+			}
 			this.collection = id;
 			this.parent.nextTab();
+		},
+		createProcess() {
+			const b = new Builder(this.processes);
+			let load = b.load_collection(this.collection, this.spatial_extent, this.temporal_extent);
+			let save = b.save_result(load, this.format);
+			save.result = true;
+			return b.toJSON();
+		},
+		async finish() {
+			this.$emit('input', {
+				process: this.createProcess(),
+				mode: this.mode,
+				modeOptions: {
+					title: this.jobTitle
+				}
+			});
 		}
 	}
 }

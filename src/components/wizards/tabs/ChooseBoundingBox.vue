@@ -30,7 +30,7 @@ export default {
 		window.setTimeout(() => this.showMap = true, 1000);
 	},
 	methods: {
-		async update(bbox) {
+		update(bbox) {
 			this.$emit('input', bbox);
 		}
 	}
