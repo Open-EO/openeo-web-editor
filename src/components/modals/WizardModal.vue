@@ -1,5 +1,5 @@
 <template>
-	<Modal id="WizardModal" :show="show" width="90%" :title="title" @closed="$emit('closed')">
+	<Modal id="WizardModal" :show="show" :width="width" :title="title" @closed="$emit('closed')">
 		<template #default>
 			<div v-if="selected" class="wizard">
 				<div class="wizard-navigation">
@@ -13,6 +13,10 @@
 				<component ref="component" :is="selected.component" :parent="self" @input="execute" />
 			</div>
 			<div v-else class="start">
+				<div class="message warning">
+					<i class="fas fa-bullhorn"></i>
+					<span>Please note that this feature is <strong>experimental</strong> and there are chances that the generated models won't work.</span>
+				</div>
 				<p>This wizard helps you to create openEO processes in a simple way for some common use cases.</p>
 				<p>Which use case do you want to work on today?</p>
 				<ul>
@@ -98,6 +102,9 @@ export default {
 		},
 		self() {
 			return this;
+		},
+		width() {
+			return this.selected ? "90%" : "50%";
 		},
 		title() {
 			let title = 'Process Wizard';

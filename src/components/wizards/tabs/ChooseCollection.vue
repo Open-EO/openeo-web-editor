@@ -8,7 +8,7 @@
 						<strong :title="item.id">{{ item.id }}</strong>
 						<small v-if="item.title" :title="item.title">{{ item.title }}</small>
 					</div>
-					<button class="button" type="button" @click="showCollectionInfo(item.id)" title="View on map"><i class="fas fa-info"></i></button>
+					<button class="button" type="button" @click="showCollectionInfo(item.id)" title="Show collection details"><i class="fas fa-info"></i></button>
 				</div>
 			</template>
 		</Collections>
@@ -51,17 +51,19 @@ export default {
 
 <style lang="scss">
 .choose-collection {
-	.vue-component.searchable-list ul.list > li > summary:before {
-		content: '';
-		margin-left: 0;
-		float: none;
-	}
-	.vue-component.searchable-list ul.list > li > summary {
-		margin: 0;
-		line-height: inherit;
-	}
 	.vue-component.searchable-list ul.list > li {
 		margin-bottom: 0;
+
+		> summary {
+			margin: 0;
+			line-height: inherit;
+
+			&:before {
+				content: '';
+				margin-left: 0;
+				float: none;
+			}
+		}
 	}
 }
 </style>

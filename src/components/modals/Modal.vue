@@ -185,6 +185,9 @@ export default {
 	box-shadow: 8px 8px 8px 0px rgba(0,0,0,0.3);
 	resize: both;
 	overflow: hidden;
+	transition-timing-function: linear;
+	transition-property: width, height;
+  	transition-duration: 0.5s;
 }
 
 .modal .modal-header {

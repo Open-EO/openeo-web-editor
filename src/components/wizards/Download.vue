@@ -4,16 +4,16 @@
 			<ChooseCollection :value="collection" @input="submitCollection" />
 		</WizardTab>
 		<WizardTab :pos="1" :parent="parent" title="Location" :beforeChange="() => spatial_extent !== null">
-			<ChooseBoundingBox v-model="spatial_extent"/>
+			<ChooseBoundingBox v-model="spatial_extent" />
 		</WizardTab>
 		<WizardTab :pos="2" :parent="parent" title="Temporal Coverage" :beforeChange="() => temporal_extent !== null">
-			<ChooseTime v-model="temporal_extent"/>
+			<ChooseTime v-model="temporal_extent" />
 		</WizardTab>
 		<WizardTab :pos="3" :parent="parent" title="File Format" :beforeChange="() => format !== null">
-			<ChooseFormat v-model="format"/>
+			<ChooseFormat v-model="format" />
 		</WizardTab>
 		<WizardTab :pos="4" :parent="parent" title="Finish">
-			<ChooseProcessingMode v-model="mode" :title.sync="jobTitle"/>
+			<ChooseProcessingMode v-model="mode" :title.sync="jobTitle" />
 		</WizardTab>
 	</div>
 </template>
@@ -48,11 +48,10 @@ export default {
 		return {
 			collection: null,
 			format: null,
-			spatial_extent: null,
-			temporal_extent: null,
-			format: null,
+			jobTitle: 'Download created by Wizard',
 			mode: "",
-			jobTitle: 'Download created by Wizard'
+			spatial_extent: null,
+			temporal_extent: null
 		};
 	},
 	computed: {

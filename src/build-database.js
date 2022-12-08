@@ -32,6 +32,9 @@ async function build_indices() {
 	for (let key in response.data.SpectralIndices) {
 		let val = response.data.SpectralIndices[key];
 		let domain = val.application_domain;
+		if (['radar', 'kernel'].includes(domain)) {
+			continue; // todo: Not supported right now
+		}
 		let dix = list.domains.indexOf(domain);
 		if (dix === -1) {
 			dix = list.domains.length;

@@ -1,5 +1,5 @@
 <template>
-	<div class="step choose-time">
+	<div class="step choose-processing-mode">
 		<template v-if="isAuthenticated && (supportsJobs || supportsSync)">
 			<p>Please select how you'd like to execute this workflow?</p>
 			<ul class="mode">
