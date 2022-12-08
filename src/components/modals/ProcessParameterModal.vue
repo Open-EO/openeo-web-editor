@@ -1,13 +1,13 @@
 <template>
 	<Modal width="50%" :title="title" @closed="$emit('closed')">
 		<div class="processParameterModal">
-			<p class="message info" v-if="udp">
+			<p class="message info" v-if="origin === 'schema'">
 				<i class="fas fa-info-circle"></i>
 				<span>
 					This is a parameter for a user-defined process.
 					It is a value made available by the parent entity (usually another process or a secondary web service) that is executing this processes for further use.
 					See below for details about this parameter:
-					</span>
+				</span>
 			</p>
 			<ProcessParameter :parameter="parameter" />
 		</div>
@@ -28,9 +28,9 @@ export default {
 		parameter: {
 			type: Object
 		},
-		udp: {
-			type: Boolean,
-			default: false
+		origin: {
+			type: String,
+			default: 'schema'
 		}
 	},
 	computed: {
