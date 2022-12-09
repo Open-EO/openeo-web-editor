@@ -195,6 +195,18 @@ class Utils extends VueUtils {
 		return urlObj.toString();
 	}
 
+	static paramsForPrefix(prefix, sep = '~') {
+		prefix += sep;
+		const urlParams = new URLSearchParams(window.location.search);
+		let params = {};
+		for(let [key, value] of urlParams) {
+			if (key.startsWith(prefix)) {
+				params[key.substring(prefix.length)] = value;
+			}
+		}
+		return params; 
+	}
+
 	static param(name) {
 		const urlParams = new URLSearchParams(window.location.search); 
 		return urlParams.get(name); 

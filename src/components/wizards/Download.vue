@@ -24,25 +24,21 @@ import ChooseCollection from './tabs/ChooseCollection.vue';
 import ChooseFormat from './tabs/ChooseFormat.vue';
 import ChooseProcessingMode from './tabs/ChooseProcessingMode.vue';
 import ChooseTime from './tabs/ChooseTime.vue';
-import WizardTab from './components/WizardTab.vue';
+import WizardMixin from './WizardMixin';
 import { Builder } from '@openeo/js-client';
 import Utils from '../../utils';
 
 export default {
 	name: "Download",
+	mixins: [
+		WizardMixin
+	],
 	components: {
 		ChooseBoundingBox,
 		ChooseCollection,
 		ChooseFormat,
 		ChooseProcessingMode,
-		ChooseTime,
-		WizardTab
-	},
-	props: {
-		parent: {
-			type: Object,
-			required: true
-		}
+		ChooseTime
 	},
 	data() {
 		return {

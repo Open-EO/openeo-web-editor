@@ -32,7 +32,7 @@ import ChooseProcessingMode from './tabs/ChooseProcessingMode.vue';
 import ChooseReducer from './tabs/ChooseReducer.vue';
 import ChooseSpectralIndices from './tabs/ChooseSpectralIndices.vue';
 import ChooseTime from './tabs/ChooseTime.vue';
-import WizardTab from './components/WizardTab.vue';
+import WizardMixin from './WizardMixin';
 import { Builder, Formula } from '@openeo/js-client';
 import Utils from '../../utils';
 
@@ -61,6 +61,9 @@ const MAPPING = {
 
 export default {
 	name: "SpectralIndices",
+	mixins: [
+		WizardMixin
+	],
 	components: {
 		ChooseBoundingBox,
 		ChooseCollection,
@@ -68,14 +71,7 @@ export default {
 		ChooseProcessingMode,
 		ChooseReducer,
 		ChooseSpectralIndices,
-		ChooseTime,
-		WizardTab
-	},
-	props: {
-		parent: {
-			type: Object,
-			required: true
-		}
+		ChooseTime
 	},
 	data() {
 		return {

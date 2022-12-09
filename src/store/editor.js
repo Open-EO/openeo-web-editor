@@ -14,6 +14,8 @@ const getDefaultState = () => {
 		epsgCodes: [],
 		initialProcess: null,
 		initialNode: null,
+		openWizard: null,
+		openWizardProps: {},
 		collectionPreview: null
 	};
 };
@@ -72,6 +74,12 @@ export default {
 		},
 		setInitialNode(state, node) {
 			state.initialNode = node;
+		},
+		setOpenWizard(state, {component, options}) {
+			state.openWizard = component;
+			if (component) {
+				state.openWizardProps = options;
+			}
 		},
 		setCollectionPreview(state, collectionID) {
 			state.collectionPreview = collectionID;

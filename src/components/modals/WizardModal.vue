@@ -10,7 +10,7 @@
 						<wizard-step v-for="(tab, i) in tabs" :key="i" :tab="tab" @click.native="navigateToTab(i)" @keyup.enter.native="navigateToTab(i)" :index="i" />
 					</ul>
 				</div>
-				<component ref="component" :is="selected.component" :parent="self" @input="execute" />
+				<component ref="component" :is="selected.component" :parent="self" :options="options" @input="execute" @close="close" />
 			</div>
 			<div v-else class="start">
 				<div class="message warning">
@@ -20,12 +20,14 @@
 				<p>This wizard helps you to create openEO processes in a simple way for some common use cases.</p>
 				<p>Which use case do you want to work on today?</p>
 				<ul>
-					<li v-for="usecase in usecases" :key="usecase.component" @click="start(usecase)" class="element">
-						<div class="summary">
-							<strong>{{ usecase.title }}</strong>
-							<small>{{ usecase.description }}</small>
-						</div>
-					</li>
+					<template v-for="usecase in usecases">
+						<li v-if="!usecase.hide" :key="usecase.component" @click="start(usecase)" class="element">
+							<div class="summary">
+								<strong>{{ getUsecaseTitle(usecase) }}</strong>
+								<small>{{ usecase.description }}</small>
+							</div>
+						</li>
+					</template>
 				</ul>
 			</div>
 		</template>
@@ -35,7 +37,7 @@
 					<span @click="prevTab" @keyup.enter="prevTab" v-if="activeTabIndex > 0" role="button" tabindex="0">
 						<button tabindex="-1" type="button">Back</button>
 					</span>
-					<span @click="reset" @keyup.enter="reset" v-else role="button" tabindex="0">
+					<span @click="reset" @keyup.enter="reset" v-else-if="!selected.hide" role="button" tabindex="0">
 						<button tabindex="-1" type="button">Start over</button>
 					</span>
 				</div>
@@ -62,11 +64,12 @@ import EventBusMixin from '../EventBusMixin';
 const wizards = Config.supportedWizards || [];
 let components = {
 	Download: () => import('../wizards/Download.vue'),
+	UDP: () => import('../wizards/UDP.vue'),
 	Modal,
 	WizardStep,
 };
 for(let wizard of wizards) {
-	components[wizard.component] = () => import(`../wizards/${wizard.component}.vue`);;
+	components[wizard.component] = () => import(`../wizards/${wizard.component}.vue`);
 }
 
 export default {
@@ -78,6 +81,12 @@ export default {
 			show: true,
 			selected: null,
 			usecases: [
+				{
+					component: 'UDP',
+					title: () => typeof this.options.process === 'string' ? this.options.process.replace(/@.+/, '') : 'Run UDP',
+					description: 'Executes a user-defined process',
+					hide: true
+				},
 				{
 					component: 'Download',
 					title: 'Download Data',
@@ -91,6 +100,21 @@ export default {
 			tabs: [],
 			process: null
 		};
+	},
+	props: {
+		preselectUsecase: {
+			type: String,
+			default: null
+		},
+		options: {
+			type: Object,
+			default: () => ({})
+		}
+	},
+	created() {
+		if (this.preselectUsecase) {
+			this.selected = this.usecases.find(uc => uc.component === this.preselectUsecase) || null;
+		}
 	},
 	computed: {
 		...Utils.mapGetters(['supports']),
@@ -109,7 +133,7 @@ export default {
 		title() {
 			let title = 'Process Wizard';
 			if (this.selected) {
-				title += ': ' + this.selected.title;
+				title += ': ' + this.getUsecaseTitle(this.selected);
 			}
 			return title;
 		},
@@ -139,6 +163,12 @@ export default {
 		reset() {
 			this.selected = null;
 		},
+		close(error = null) {
+			this.show = false;
+			if (error) {
+				Utils.error(this, error, "Wizard Error");
+			}
+		},
 		async execute({process, mode, modeOptions}) {
 			// Add process to model builder
 			this.setProcess(process);
@@ -149,6 +179,14 @@ export default {
 			}
 			else if (mode == 'job' && this.supportsJobs) {
 				this.broadcast('startAndQueueProcess', modeOptions);
+			}
+		},
+		getUsecaseTitle(usecase) {
+			if (typeof usecase.title == 'function') {
+				return usecase.title();
+			}
+			else {
+				return usecase.title;
 			}
 		},
 		addTab(item, pos) {
@@ -206,7 +244,7 @@ export default {
 				}
 				else if (this.isLastStep) {
 					this.$refs.component.finish()
-						.then(() => this.show = false)
+						.then(this.close)
 						.catch(error => Utils.exception(this, error));
 				}
 			}
@@ -247,9 +285,11 @@ export default {
 						callback();
 					}
 					else {
+						console.log("fallvback");
 						this.setValidationError(fallbackMsg)
 					}
 				} catch(error) {
+						console.log("catch");
 					this.setValidationError(error.message);
 				}
 			}

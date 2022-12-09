@@ -32,6 +32,7 @@ You can use some query parameters to set initial state to the Editor.
 * `edit-node`: Opens the parameter editor for a single process node on start-up. Must have the `process` parameter being set, otherwise will be ignored. You can set two types of values:
   * `1`: If only a single node is being added, opens this node without explicitly naming it.
   * Otherwise, the value must correspond to the node identifier without `#` at the beginning.
+* `wizard`: Opens a specific wizard on start-up. The value must correspond to the component name of the wizard. Wizard options can be set by provding them as query parameter prefixed with `wizard~`, e.g. `&wizard~collection=SENTINEL2-L2A`.
 * `preview-collection` Shows the preview of a Collection on the map upon start.
 
 Example: <https://editor.openeo.org?server=https://earthengine.openeo.org&discover=1&process=https://raw.githubusercontent.com/Open-EO/openeo-earthengine-driver/master/tests/data/sample-processgraph.json>

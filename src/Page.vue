@@ -64,6 +64,10 @@ export default {
 		this.addProcessNamespacesToRequest(Utils.param('namespaces'));
 		this.setInitialProcess(Utils.param('process'));
 		this.setInitialNode(Utils.param('edit-node'));
+		this.setOpenWizard({
+			component: Utils.param('wizard'),
+			options: Utils.paramsForPrefix('wizard')
+		});
 		this.setCollectionPreview(Utils.param('preview-collection'));
 
 		if (Utils.param('discover')) {
@@ -117,7 +121,7 @@ export default {
 	methods: {
 		...Utils.mapActions(['describeAccount', 'describeCollection', 'loadProcess']),
 		...Utils.mapMutations(['startActiveRequest', 'endActiveRequest', 'addProcessNamespacesToRequest']),
-		...Utils.mapMutations('editor', ['setInitialProcess', 'setInitialNode', 'setCollectionPreview']),
+		...Utils.mapMutations('editor', ['setInitialProcess', 'setInitialNode', 'setOpenWizard', 'setCollectionPreview']),
 		setTitle(subtitle) {
 			var title = `${this.$config.serviceName} ${this.$config.appName}`;
 			if (subtitle) {
