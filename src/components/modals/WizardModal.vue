@@ -162,6 +162,10 @@ export default {
 		},
 		reset() {
 			this.selected = null;
+			this.activeTabIndex = 0;
+			this.currentPercentage = 0;
+			this.maxStep = 0;
+			this.tabs = [];
 		},
 		close(error = null) {
 			this.show = false;
