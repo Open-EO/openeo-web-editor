@@ -43,7 +43,7 @@ export default {
 			this.img = await this.data.getData();
 			this.$refs.canvas.width = this.img.naturalWidth;
 			this.$refs.canvas.height = this.img.naturalHeight;
-			this.context = this.$refs.canvas.getContext('2d');
+			this.context = this.$refs.canvas.getContext('2d', {willReadFrequently: true});
 			this.context.drawImage(this.img, 0, 0);
 		} catch (error) {
 			this.error = error;
