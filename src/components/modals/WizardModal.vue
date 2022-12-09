@@ -289,11 +289,9 @@ export default {
 						callback();
 					}
 					else {
-						console.log("fallvback");
 						this.setValidationError(fallbackMsg)
 					}
 				} catch(error) {
-						console.log("catch");
 					this.setValidationError(error.message);
 				}
 			}

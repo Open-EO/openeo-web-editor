@@ -16,7 +16,7 @@
 			<ChooseReducer v-model="composite" allowEmpty text="If you want, you can create a temporal composite by selecting the aggregation method below:" />
 		</WizardTab>
 		<WizardTab :pos="5" :parent="parent" title="File Format" :beforeChange="() => format !== null">
-			<ChooseFormat v-model="format" />
+			<ChooseFormat v-model="format" gisDataType="raster" :scale.sync="scale" />
 		</WizardTab>
 		<WizardTab :pos="6" :parent="parent" title="Finish">
 			<ChooseProcessingMode v-model="mode" :title.sync="jobTitle" />
@@ -75,18 +75,22 @@ export default {
 	},
 	data() {
 		return {
-			collection: null,
-			dimT: 't',
-			dimBands: 'bands',
 			availableBands: {},
+			collection: null,
 			composite: "",
+			dimBands: 'bands',
+			dimT: 't',
 			format: null,
 			index: {},
 			jobTitle: createTitle(),
 			mode: "",
+			scale: null,
 			spatial_extent: null,
 			temporal_extent: null
 		};
+	},
+	created() {
+		this.scale = this.processes.has('apply') && this.processes.has('linear_scale_range') ? false : null;
 	},
 	computed: {
 		...Utils.mapGetters(['processes', 'collectionDefaults'])
@@ -136,6 +140,11 @@ export default {
 				let reducer = (data, _, b2) => b2[this.composite](data);
 				datacube = b.reduce_dimension(datacube, reducer, this.dimT)
 					.description(`Compute the ${this.composite} over the temporal dimension`);
+			}
+			if (this.scale) {
+				let scaling = (x, _, b2) => b2.linear_scale_range(x, -1, 1, 0, 255);
+				datacube = b.apply(datacube, scaling)
+					.description(`Scales the values from [-1, 1] to [0, 255]`);
 			}
 			datacube = b.save_result(datacube, this.format)
 				.description(`Store as ${this.format}`);

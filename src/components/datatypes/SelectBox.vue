@@ -33,7 +33,11 @@ export default {
 		schema: {
 			type: Object
 		},
-		context: {}
+		context: {},
+		optionFilter: {
+			type: Function,
+			default: null
+		}
 	},
 	computed: {
 		...Utils.mapGetters(['collectionDefaults']),
@@ -95,6 +99,15 @@ export default {
 				case 'udf-runtime-version':
 					state = this.context in this.$store.state.udfRuntimes ? Object.keys(this.$store.state.udfRuntimes[this.context].versions) : [];
 					break;
+			}
+
+			if (typeof this.optionFilter === 'function' && state && typeof state === 'object') {
+				if (Utils.isObject(state)) {
+					state = Object.fromEntries(Object.entries(state).filter(([key, value]) => this.optionFilter(value, key)));
+				}
+				else {
+					state = state.filter((value, key) => this.optionFilter(value, key));
+				}
 			}
 
 			let data = [];

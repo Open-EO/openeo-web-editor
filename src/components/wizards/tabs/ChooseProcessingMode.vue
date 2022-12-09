@@ -9,7 +9,7 @@
 						<strong>Batch Jobs</strong><br />
 						Slower processing mode for large amounts of data. Creates and queues a batch job.<br />
 						It is recommended to provide a title for the batch job:
-						<input type="text" ref="title" :value="title" @input="title => $emit('input:title', title)" />
+						<input type="text" ref="title" v-model="titleInput" />
 					</label>
 				</li>
 				<li v-if="supportsSync">
@@ -61,6 +61,14 @@ export default {
 	computed: {
 		...Utils.mapState(['isAuthenticated']),
 		...Utils.mapGetters(['supports']),
+		titleInput: {
+			get() {
+				return this.title;
+			},
+			set(value) {
+				this.$emit('update:title', value);
+			}
+		},
 		supportsJobs() {
 			return this.supports('createJob') && this.supports('startJob');
 		},
@@ -79,7 +87,7 @@ export default {
 			}
 		},
 		title() {
-			this.$emit('input:title', this.title);
+			this.$emit('update:title', this.title);
 		}
 	}
 }
