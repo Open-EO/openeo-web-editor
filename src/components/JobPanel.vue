@@ -165,9 +165,6 @@ export default {
 				let endlessPromise = () => new Promise(() => {}); // Pass a promise to snotify that never resolves as we manually close the toast
 				toast = this.$snotify.async(message, title, endlessPromise, snotifyConfig);
 				let result = await this.connection.computeResult(this.process, null, null, abortController);
-				if (result.logs.length > 0) {
-					this.broadcast('viewLogs', result.logs);
-				}
 				this.broadcast('viewSyncResult', result);
 			} catch(error) {
 				if (axios.isCancel(error)) {
