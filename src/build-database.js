@@ -45,7 +45,7 @@ async function build_indices() {
 			val.long_name,
 			dix,
 			val.bands,
-			val.formula,
+			val.formula.replaceAll('**', '^'), // ** (in ASI) = power = ^ (in the Formula parser)
 			val.reference.replace("https://doi.org/", "")
 		]);
 	}

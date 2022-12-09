@@ -355,7 +355,7 @@ export default {
 	.wizard {
 		$size: 40px;
 		$font-size: 16px;
-		$computed-font-size: $size/2 + 5px;
+		$computed-font-size: calc($size/2 + 5px);
 
 		flex-grow: 1;
 		display: flex;

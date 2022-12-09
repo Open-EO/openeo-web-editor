@@ -53,12 +53,12 @@ export default {
 		'TwitterShare'
 	],
 
-	// List of supported batch job sharing services
+	// List of supported wizards
 	supportedWizards: [
 		{
 			component: 'SpectralIndices',
 			title: 'Compute Spectral Indices',
-			description: 'A spectral index is a mathematical equation that is applied on the various spectral bands of an image per pixel. It is often used to highlight vegetation, urban areas, snow, burn, soil, or water/drought/moisture stress. Provided by [Awesome Spectral Indices](https://github.com/awesome-spectral-indices/awesome-spectral-indices).',
+			description: 'A spectral index is a mathematical equation that is applied on the various spectral bands of an image per pixel. It is often used to highlight vegetation, urban areas, snow, burn, soil, or water/drought/moisture stress. Provided by Awesome Spectral Indices (https://github.com/awesome-spectral-indices/awesome-spectral-indices).',
 			requiredProcesses: ['reduce_dimension']
 		}
 	],

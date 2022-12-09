@@ -8,8 +8,6 @@
 <script>
 import MapAreaSelect from '../../datatypes/MapAreaSelect.vue';
 
-// ToDo: Pass in collection bbox and show it
-
 export default {
 	name: 'ChooseBoundingBox',
 	components: {

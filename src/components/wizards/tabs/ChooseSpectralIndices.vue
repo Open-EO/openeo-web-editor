@@ -1,6 +1,6 @@
 <template>
 	<div class="step choose-index">
-		<p>Please select the spectral indice you want to compute.</p>
+		<p>Please select the spectral index you want to compute.</p>
 		<SearchableList v-if="indices.length > 0" heading="" :data="indices" :offerDetails="false" showKeywords>
 			<template #summary="{ item }">
 				<div :class="{element: true, selected: item.id == value.id}">

@@ -12,7 +12,7 @@
 		<WizardTab :pos="3" :parent="parent" title="Temporal Coverage" :beforeChange="() => temporal_extent !== null">
 			<ChooseTime v-model="temporal_extent" />
 		</WizardTab>
-		<WizardTab :pos="4" :parent="parent" title="Time Composite">
+		<WizardTab :pos="4" :parent="parent" title="Temporal Composite">
 			<ChooseReducer v-model="composite" allowEmpty text="If you want, you can create a temporal composite by selecting the aggregation method below:" />
 		</WizardTab>
 		<WizardTab :pos="5" :parent="parent" title="File Format" :beforeChange="() => format !== null">
@@ -46,6 +46,7 @@ const MAPPING = {
 	G: 'green',
 	Y: 'yellow',
 	R: 'red',
+// ToDo: There's no 1:1 mapping
 //	RE1: 'rededge',
 //	RE2: 'rededge',
 //	RE3: 'rededge',
@@ -79,6 +80,8 @@ export default {
 	data() {
 		return {
 			collection: null,
+			dimT: 't',
+			dimBands: 'bands',
 			availableBands: {},
 			composite: "",
 			format: null,
@@ -118,22 +121,28 @@ export default {
 			// Prepare bands and formula
 			let formula = this.index.formula;
 			let bands = [];
+			let bandDescription = [];
 			for(let i in this.index.bands) {
 				let asiBand = this.index.bands[i];
-				bands.push(this.availableBands[asiBand].name);
+				let dcBand = this.availableBands[asiBand].name;
+				bands.push(dcBand);
 				formula = formula.replaceAll(asiBand, '$'+i);
+				bandDescription.push(`- ${asiBand} = ${dcBand}`);
 			}
 
 			// Construct process
 			const b = new Builder(this.processes);
-			let datacube = b.load_collection(this.collection, this.spatial_extent, this.temporal_extent, bands);
-			// ToDo: Don't harcode dimension names
-			datacube = b.reduce_dimension(datacube, new Formula(formula), "bands");
+			let datacube = b.load_collection(this.collection, this.spatial_extent, this.temporal_extent, bands)
+				.description("Load the data, including the bands:\r\n" + bandDescription.join("\r\n"));
+			datacube = b.reduce_dimension(datacube, new Formula(formula), this.dimBands)
+				.description(`Compute the ${this.index.id} (${this.index.summary}) for the bands dimension\r\nFormula: ${this.index.formula}`);
 			if (this.composite) {
 				let reducer = (data, _, b2) => b2[this.composite](data);
-				datacube = b.reduce_dimension(datacube, reducer, "t");
+				datacube = b.reduce_dimension(datacube, reducer, this.dimT)
+					.description(`Compute the ${this.composite} over the temporal dimension`);
 			}
-			datacube = b.save_result(datacube, this.format);
+			datacube = b.save_result(datacube, this.format)
+				.description(`Store as ${this.format}`);
 			datacube.result = true;
 			return b.toJSON();
 		},
@@ -168,6 +177,19 @@ export default {
 			}
 			if (Utils.size(this.availableBands) === 0) {
 				throw new Error("This collection doesn't support spectral indices as there are no compatible bands available.");
+			}
+
+			// Store relevant dimension names
+			if (Utils.isObject(collectionMeta['cube:dimensions'])) {
+				let dims = Object.values(collectionMeta['cube:dimensions']);
+				let bandDimension = dims.find(d => d.type === 'bands');
+				if (bandDimension && bandDimension.name) {
+					this.dimBands = bandDimension.name;
+				}
+				let tDimension = dims.find(d => d.type === 'temporal');
+				if (tDimension && tDimension.name) {
+					this.dimT = tDimension.name;
+				}
 			}
 
 			return true;
