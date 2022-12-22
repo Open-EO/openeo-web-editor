@@ -1,6 +1,6 @@
 <template>
 	<div class="modal" @mousedown="backgroundClose" :style="{'z-index': zIndex}">
-		<component :is="containerTag" ref="container" class="modal-container" :style="style" @submit.prevent.stop="submitFunction">
+		<component :is="containerTag" ref="container" class="modal-container" :class="{smooth: smooth}" :style="style" @submit.prevent.stop="submitFunction">
 			<header class="modal-header" @mousedown="startMove">
 				<slot name="header">
 					<h2>{{ title }}</h2>
@@ -56,10 +56,11 @@ export default {
 		return {
 			zIndex: 1000,
 			position: null,
-			dragPosition: null
+			dragPosition: null,
+			smooth: false
 		};
 	},
-    computed: {
+	computed: {
 		...Utils.mapState('editor', ['hightestModalZIndex']),
 		style() {
 			let style = {
@@ -78,7 +79,7 @@ export default {
 		containerTag() {
 			return this.submitFunction ? 'form' : 'div';
 		}
-    },
+	},
 	watch: {
 		show: {
 			immediate: true,
@@ -90,10 +91,20 @@ export default {
 					this.open();
 				}
 			}
+		},
+		width() {
+			this.smoothResize();
+		},
+		minWidth() {
+			this.smoothResize();
 		}
 	},
 	methods: {
 		...Utils.mapMutations('editor', ['openModal', 'closeModal']),
+		smoothResize() {
+			this.smooth = true;
+			setTimeout(() => this.smooth = false, 600);
+		},
 		submit(event) {
 			this.submitFunction(event);
 		},
@@ -127,7 +138,7 @@ export default {
 			document.removeEventListener('mouseup', this.stopMove);
 		},
 		move(event) {
-      		event.preventDefault();
+			event.preventDefault();
 			// set the element's new position
 			this.position = [
 				this.$refs.container.offsetLeft - (this.dragPosition[0] - event.clientX),
@@ -160,21 +171,21 @@ export default {
 @import '../../../theme.scss';
 
 .modal {
-    position: fixed;
-    z-index: 1000; /* Snotify has 9999 and is intentionally above the modals */
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0,0,0,0.4);
+	position: fixed;
+	z-index: 1000; /* Snotify has 9999 and is intentionally above the modals */
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	background-color: rgba(0,0,0,0.4);
 	display: flex;
 	justify-content: center;
 	align-items: center;
 }
 
 .modal .modal-container {
-    background-color: #fff;
-    border: 1px solid #fff;
+	background-color: #fff;
+	border: 1px solid #fff;
 	min-height: 50vh;
 	min-width: 300px;
 	width: 70%;
@@ -185,9 +196,12 @@ export default {
 	box-shadow: 8px 8px 8px 0px rgba(0,0,0,0.3);
 	resize: both;
 	overflow: hidden;
-	transition-timing-function: linear;
-	transition-property: width, height;
-  	transition-duration: 0.5s;
+
+	&.smooth {
+		transition-timing-function: linear;
+		transition-property: width, height;
+		transition-duration: 0.5s;
+	}
 }
 
 .modal .modal-header {
@@ -199,7 +213,7 @@ export default {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-    cursor: move;
+	cursor: move;
 }
 
 .modal .modal-header h2 {
@@ -211,11 +225,11 @@ export default {
 	border: 0;
 	cursor: text;
 	text-overflow: ellipsis;
-    overflow: hidden;
+	overflow: hidden;
 }
 
 .modal .modal-content {
-    padding: 1rem;
+	padding: 1rem;
 	overflow: auto;
 	flex-grow: 1;
 }
@@ -239,14 +253,14 @@ export default {
 	font-size: 1.5rem;
 	height: 2rem;
 	width: 2rem;
-    color: white;
-    cursor: pointer;
+	color: white;
+	cursor: pointer;
 	display: flex;
 	justify-content: center;
 	align-items: center;
 }
 
 .modal .close:hover, .modal .close:focus {
-    color: red;
+	color: red;
 }
 </style>

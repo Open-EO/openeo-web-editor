@@ -8,6 +8,9 @@
 				<TextEditor ref="sourceEditor" :editable="editable" v-model="data" id="geojson-texteditor" language="json"></TextEditor>
 			</Tab>
 		</Tabs>
+		<small v-if="editable" class="info">
+			To easily import your area of interest, you can drag &amp; drop GeoJSON and KML files into this area.
+		</small>
 	</div>
 </template>
 
@@ -124,5 +127,14 @@ export default {
 <style lang="scss" scoped>
 .geojson-editor {
 	max-width: 100%;
+	display: flex;
+	flex-direction: column;
+}
+.info {
+	display: block;
+	text-align: center;
+	font-style: italic;
+	color: #555;
+	margin-top: 0.5em;
 }
 </style>
