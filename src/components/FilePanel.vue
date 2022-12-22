@@ -1,5 +1,5 @@
 <template>
-	<div id="FilePanel" @dragenter="dropZoneInfo(true)" @dragleave="dropZoneInfo(false)" @drop="uploadFiles($event)" @dragover="allowDrop($event)">
+	<div id="FilePanel" @dragenter="dropZoneInfo(true)" @dragleave="dropZoneInfo(false)" @drop="uploadFiles" @dragover="allowDrop">
 		<div class="dropZone" v-show="showUploadDropHint">To upload files, drop them here.</div>
 		<DataTable ref="table" :data="data" :columns="columns">
 			<template slot="toolbar">
