@@ -46,7 +46,7 @@ export default {
 				}
 			}
 			else if (typeof cx.state.initialProcess === 'string' && cx.state.initialProcess.length > 0) {
-				let [id, namespace] = cx.state.initialProcess.split('@');
+				let [id, namespace] = Utils.extractUDPParams(cx.state.initialProcess);
 				try {
 					await cx.dispatch('loadProcess', {id, namespace}, {root: true});
 				} catch (error) {
