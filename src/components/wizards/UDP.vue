@@ -43,7 +43,7 @@ export default {
 			if (!this.process || !this.processSpec) {
 				return null;
 			}
-			let [id, namespace] = this.process.split('@');
+			let [id, namespace] = Utils.extractUDPParams(this.process);
 			return {
 				process_graph: {
 					[id]: {
@@ -59,7 +59,7 @@ export default {
 	},
 	async created() {
 		this.loading = true;
-		let [id, namespace] = this.process.split('@');
+		let [id, namespace] = Utils.extractUDPParams(this.process);
 		try {
 			this.processSpec = await this.loadProcess({id, namespace});
 			if (this.processSpec) {
