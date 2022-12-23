@@ -405,7 +405,7 @@ class Utils extends VueUtils {
 	}
 	static extractUDPParams(process) {
 		let [id, ...namespace] = process.split('@');
-		return [id, namespace.join('@')]
+		return [id, namespace.join('@')];
 	}
 
 };
