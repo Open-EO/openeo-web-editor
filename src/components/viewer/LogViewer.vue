@@ -113,7 +113,7 @@ export default {
 					this.logs = this.data;
 				}
 			} catch (error) {
-				Utils.exeption(this, error, "Loading logs failed");
+				Utils.exception(this, error, "Loading logs failed");
 			}
 		}
 	}

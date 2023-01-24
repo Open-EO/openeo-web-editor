@@ -410,9 +410,9 @@ class Utils extends VueUtils {
 
 };
 
-export default Object.assign(Utils, {
-	mapState,
-	mapGetters,
-	mapMutations,
-	mapActions
-});
+Utils.mapState = mapState;
+Utils.mapGetters = mapGetters;
+Utils.mapMutations = mapMutations;
+Utils.mapActions = mapActions;
+
+export default Utils;
