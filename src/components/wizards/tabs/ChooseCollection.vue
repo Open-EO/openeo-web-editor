@@ -32,44 +32,21 @@ export default {
 		value: {
 			type: String,
 			default: null
+		},
+		filter: {
+			type: Function,
+			default: null
 		}
 	},
 	computed: {
 		...Utils.mapState(['collections']),
 		filteredCollections() {
-			return this.collections.filter(c => {
-				if (!Utils.isObject(c['cube:dimensions'])) {
-					return true;
-				}
-
-				let dims = Object.values(c['cube:dimensions']);
-				if (dims.length !== 4) {
-					// More or less than 4 dimensions don't work (we need x,y,t,b)
-					return false;
-				}
-
-				let bandDimension = dims.find(d => d.type === 'bands');
-				if (bandDimension) {
-					// Collections with 1 band can't be used to compute an index (requires 2 bands)
-					if (Array.isArray(bandDimension.values) && bandDimension.values.length === 1) {
-						return false;
-					}
-				}
-
-				let timeDimensions = dims.filter(d => d.type === 'temporal');
-				if (timeDimensions.length > 1) {
-					// Collections with more than a single time dimension don't work
-					return false;
-				}
-
-				let spatialDimensions = dims.filter(d => d.type === 'spatial' && ['x', 'y'].includes(d.axis));
-				if (spatialDimensions.length === 2) {
-					// Collections with more than a two spatial dimensions don't work
-					return false;
-				}
-
-				return true;
-			});
+			if (typeof this.filter === 'function') {
+				return this.collections.filter(this.filter);
+			}
+			else {
+				return this.collections;
+			}
 		}
 	},
 	methods: {

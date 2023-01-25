@@ -216,7 +216,6 @@ export default {
 					let isBBox = (e.west || e.east || e.south || e.north) && (!e.crs || e.crs === 4326 || e.crs === e4326);
 					let isGeoJSON = e.type && (!e.crs || (Utils.isObject(e.crs) && e.crs.type === "name" && (e.crs.properties?.name === e4326 || e.properties?.name === crs84)));
 					if (isBBox || isGeoJSON) {
-						console.log(e);
 						this.addExtent(e, false);
 					}
 				}
