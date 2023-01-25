@@ -206,19 +206,19 @@ export default {
 
 			// Try to detect a bounding box and fit the view to it
 			if (Utils.isObject(service.process) && Utils.isObject(service.process.process_graph)) {
-				let load = Object.values(service.process.process_graph)
-					.filter(node => node.process_id === 'load_collection' && Utils.isObject(node.arguments) && node.arguments.spatial_extent);
-
-				if (load.length === 1) {
-					let e = load[0].arguments.spatial_extent;
-					let crs84 = "urn:ogc:def:crs:OGC:1.3:CRS84";
-					let e4326 = "EPSG:4326";
-					let isBBox = (e.west || e.east || e.south || e.north) && (!e.crs || e.crs === 4326 || e.crs === e4326);
-					let isGeoJSON = e.type && (!e.crs || (Utils.isObject(e.crs) && e.crs.type === "name" && (e.crs.properties?.name === e4326 || e.properties?.name === crs84)));
-					if (isBBox || isGeoJSON) {
-						this.addExtent(e, false);
-					}
-				}
+				const crs84 = "urn:ogc:def:crs:OGC:1.3:CRS84";
+				const e4326 = "EPSG:4326";
+				Object.values(service.process.process_graph)
+					.filter(node => node.process_id === 'load_collection' && Utils.isObject(node.arguments) && node.arguments.spatial_extent)
+					.forEach(node => {
+						let e = node.arguments.spatial_extent;
+						let isBBox = (e.west || e.east || e.south || e.north) && (!e.crs || e.crs === 4326 || e.crs === e4326);
+						let isGeoJSON = e.type && (!e.crs || (Utils.isObject(e.crs) && e.crs.type === "name" && (e.crs.properties?.name === e4326 || e.properties?.name === crs84)));
+						if (isBBox || isGeoJSON) {
+							this.addExtent(e, false);
+							// ToDo: This should be combined into just a single call to addExtent to fit the view to the full extents
+						}
+					});
 			}
 
 			return group;
