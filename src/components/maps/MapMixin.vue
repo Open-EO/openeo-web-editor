@@ -230,14 +230,12 @@ export default {
 		},
 
 		trackTileProgress(source) {
-			let fn = () => {
-				if (this.$refs.progress) {
-					this.$refs.progress.addLoading();
-				}
-			};
-			source.on('tileloadstart', fn);
-			source.on('tileloadend', fn);
-			source.on('tileloaderror', fn);
+			if (this.$refs.progress) {
+				source.on('tileloadstart', () => this.$refs.progress && this.$refs.progress.addLoading());
+				let loadedFn = () => this.$refs.progress && this.$refs.progress.addLoaded();
+				source.on('tileloadend', loadedFn);
+				source.on('tileloaderror', loadedFn);
+			}
 			return source;
 		},
 

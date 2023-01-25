@@ -322,7 +322,7 @@ export default {
 			}
 		},
 		viewService(service, onClose = null) {
-			this.broadcast('viewWebService', service, onClose);
+			this.refreshElement(service, updatedService => this.broadcast('viewWebService', updatedService, onClose));
 		},
 		async shareResults(service) {
 			if (this.canShare) {
