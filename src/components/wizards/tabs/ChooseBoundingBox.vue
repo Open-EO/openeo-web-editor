@@ -1,12 +1,12 @@
 <template>
 	<div class="step choose-bbox">
-		<p>Please select the area of interest which you want to download data for.</p>
-		<MapAreaSelect class="map" :show="showMap" :value="value" @input="update" />
+		<p>Please select the area of interest which you want to download data for. You can add or remove a bounding box by clicking into the map.</p>
+		<MapAreaSelect class="map" :show="showMap" :value="value" :showMaxExtent="max" @input="update" />
 	</div>
 </template>
 
 <script>
-import MapAreaSelect from '../../datatypes/MapAreaSelect.vue';
+import MapAreaSelect from '../../maps/MapAreaSelect.vue';
 
 export default {
 	name: 'ChooseBoundingBox',
@@ -15,6 +15,10 @@ export default {
 	},
 	props: {
 		value: {
+			type: Object,
+			default: null
+		},
+		max: {
 			type: Object,
 			default: null
 		}

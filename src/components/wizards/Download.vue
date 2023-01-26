@@ -4,7 +4,7 @@
 			<ChooseCollection :value="collection" @input="submitCollection" />
 		</WizardTab>
 		<WizardTab :pos="1" :parent="parent" title="Location" :beforeChange="() => spatial_extent !== null">
-			<ChooseBoundingBox v-model="spatial_extent" />
+			<ChooseBoundingBox v-model="spatial_extent" :max="max_spatial_extent" />
 		</WizardTab>
 		<WizardTab :pos="2" :parent="parent" title="Temporal Coverage" :beforeChange="() => temporal_extent !== null">
 			<ChooseTime v-model="temporal_extent" />
@@ -47,6 +47,7 @@ export default {
 			jobTitle: 'Download created by Wizard',
 			mode: "",
 			spatial_extent: null,
+			max_spatial_extent: null,
 			temporal_extent: null
 		};
 	},
@@ -55,10 +56,10 @@ export default {
 	},
 	methods: {
 		submitCollection(id) {
-			if (this.collection !== id || this.temporal_extent == null || this.spatial_extent == null) {
+			if (this.collection !== id || this.temporal_extent == null) {
 				let defaults = this.collectionDefaults(id);
-				if (this.collection !== id || this.spatial_extent == null) {
-					this.spatial_extent = defaults.spatial_extent;
+				if (this.collection !== id) {
+					this.max_spatial_extent = defaults.spatial_extent;
 				}
 				if (this.collection !== id || this.temporal_extent == null) {
 					this.temporal_extent = defaults.temporal_extent;

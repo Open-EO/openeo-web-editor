@@ -7,18 +7,22 @@
 </template>
 
 <script>
-import MapMixin from '../maps/MapMixin.vue';
+import GeoJsonMixin from './ExtentMixin.vue';
+import GeocoderMixin from './GeocoderMixin.vue';
+import MapMixin from './MapMixin.vue';
 import Utils from '../../utils.js';
 import ExtentInteraction from 'ol/interaction/Extent';
 import { transformExtent } from 'ol/proj';
 import { containsXY } from 'ol/extent';
-import { createDefaultStyle } from 'ol/style/Style';
-import TextControl from '../maps/TextControl.vue';
-import GeocoderMixin from '../maps/GeocoderMixin.vue';
+import Style, { createDefaultStyle } from 'ol/style/Style';
+import TextControl from './TextControl.vue';
+import Stroke from 'ol/style/Stroke';
+import Fill from 'ol/style/Fill';
 
 export default {
 	name: 'MapAreaSelect',
 	mixins: [
+		GeoJsonMixin,
 		GeocoderMixin,
 		MapMixin
 	],
@@ -30,6 +34,10 @@ export default {
 		// Array is always in WGS84 with the following elements: 0 => west, 1 => south, 2 => east, 3 => north
 		// Object is an bbox object as defined by the openEO API (with west, south, east, north properties).
 		value: {
+			type: [Object, Array],
+			default: () => null
+		},
+		showMaxExtent: {
 			type: [Object, Array],
 			default: () => null
 		}
@@ -49,6 +57,31 @@ export default {
 				return transformExtent(this.extent, 'EPSG:4326', this.map.getView().getProjection());
 			}
 			return null;
+		},
+		outerArea() {
+			if (!this.showMaxExtent) {
+				return null;
+			}
+			let {west, east, north, south} = this.showMaxExtent;
+			return {
+				"type": "Polygon",
+				"coordinates": [
+					[
+						[-180, 90],
+						[-180, -90],
+						[180, -90],
+						[180, 90],
+						[-180, 90]
+					],
+					[
+						[west, north],
+						[west, south],
+						[east, south],
+						[east, north],
+						[west, north]
+					]
+				]
+			};
 		},
 		bbox() {
 			return Utils.extentToBBox(this.extent);
@@ -81,6 +114,17 @@ export default {
 				this.interaction.setExtent(extent);
 				this.fitMap();
 			});
+			if (this.showMaxExtent) {
+				const style = new Style({
+					fill: new Fill({ color: '#00000099' }),
+					stroke: new Stroke({ width: 0, color: '#00000000' })
+				});
+				this.addGeoJson(this.outerArea, false, "unsupported area", style);
+
+				let extent = this.toExtent(this.showMaxExtent);
+				extent = transformExtent(extent, 'EPSG:4326', this.map.getView().getProjection());
+				this.map.getView().fit(extent, this.getFitOptions(1));
+			}
 
 			let condition = (event) => {
 				if (!this.editable) {

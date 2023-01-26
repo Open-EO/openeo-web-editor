@@ -72,7 +72,7 @@ import EventBusMixin from './EventBusMixin.js';
 
 import ObjectEditor from './datatypes/ObjectEditor.vue';
 import Budget from './datatypes/Budget.vue';
-import MapAreaSelect from './datatypes/MapAreaSelect.vue';
+import MapAreaSelect from './maps/MapAreaSelect.vue';
 import GeoJsonEditor from './datatypes/GeoJsonEditor.vue';
 import TextEditor from './TextEditor.vue';
 

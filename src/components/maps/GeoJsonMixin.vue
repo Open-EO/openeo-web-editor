@@ -15,7 +15,7 @@ export default {
 		EventBusMixin
 	],
 	methods: {
-		addGeoJson(geojson, selectable = false, title = "GeoJSON", fill = true) {
+		addGeoJson(geojson, selectable = false, title = "GeoJSON", fillOrStyle = true) {
 			let source;
 			if (geojson instanceof VectorSource) {
 				source = geojson;
@@ -25,7 +25,10 @@ export default {
 			}
 
 			let layer = new VectorLayer({title, source});
-			if(!fill && this.removeLayerFill) {
+			if (Utils.isObject(fillOrStyle)) {
+				layer.setStyle(fillOrStyle);
+			}
+			else if(!fillOrStyle && this.removeLayerFill) {
 				this.removeLayerFill(layer);
 			}
 			this.map.addLayer(layer);
