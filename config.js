@@ -19,6 +19,9 @@ export default {
 	mapLocation: [49.8, 9.9],
 	mapZoom: 4,
 
+	// OSM Nominatim compliant geocoder URL, remove to disable
+	geocoder: "https://nominatim.openstreetmap.org/search/",
+
 	// A message shown on the login page
 	loginMessage: '',
 

@@ -60,9 +60,9 @@ export default class R extends Exporter {
 	async generateFunction(node) {
 		let variable = this.var(node.id, this.varPrefix());
 		let args = await this.generateArguments(node);
-		// ToDo: This doesn't seem to be supported in R yet
 		if (node.namespace) {
 			throw new Error("The R client doesn't support namespaced processes yet");
+			// ToDo: This doesn't seem to be supported in R yet
 			// args.namespace = this.e(node.namespace);
 		}
 		args = Utils.mapObject(args, (value, name) => `${name} = ${this.e(value)}`);

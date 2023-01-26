@@ -7,7 +7,8 @@
 
 <script>
 import MapMixin from '../maps/MapMixin.vue';
-import GeoJsonMixin from '../maps/GeoJsonMixin.vue';
+import ExtentMixin from '../maps/ExtentMixin.vue';
+import GeocoderMixin from '../maps/GeocoderMixin.vue';
 import Utils from '../../utils.js';
 
 import GeoJSON from 'ol/format/GeoJSON';
@@ -23,7 +24,11 @@ import UndoRedo from 'ol-ext/interaction/UndoRedo';
 
 export default {
 	name: 'GeoJsonMapEditor',
-	mixins: [MapMixin, GeoJsonMixin],
+	mixins: [
+		GeocoderMixin,
+		MapMixin,
+		ExtentMixin
+	],
 	props: {
 		value: {
 			type: Object,
@@ -59,6 +64,15 @@ export default {
 			if (this.editable) {
 				var callback = () => this.$emit('input', this.getGeoJson());
 				this.geoJsonLayer.getSource().on('change', callback);
+
+				this.addGeocoder(polygon => {
+					if (!polygon) {
+						return;
+					}
+					let feature = (new GeoJSON()).readFeature(polygon, { featureProjection: this.map.getView().getProjection() });
+					this.geoJsonLayer.getSource().addFeature(feature);
+					this.map.getView().fit(this.geoJsonLayer.getSource().getExtent(), this.getFitOptions());
+				}, true);
 			}
 		},
 

@@ -14,10 +14,14 @@ import { transformExtent } from 'ol/proj';
 import { containsXY } from 'ol/extent';
 import { createDefaultStyle } from 'ol/style/Style';
 import TextControl from '../maps/TextControl.vue';
+import GeocoderMixin from '../maps/GeocoderMixin.vue';
 
 export default {
 	name: 'MapAreaSelect',
-	mixins: [MapMixin],
+	mixins: [
+		GeocoderMixin,
+		MapMixin
+	],
 	components: {
 		TextControl
 	},
@@ -31,17 +35,9 @@ export default {
 		}
 	},
 	data() {
-		let extent = null;
-		if (Utils.isObject(this.value) && "west" in this.value && "south" in this.value && "east" in this.value && "north" in this.value) {
-			extent = [this.value.west, this.value.south, this.value.east, this.value.north];
-		}
-		else if (Array.isArray(this.value) && value.length >= 4) {
-			extent = this.value;
-		}
-
 		return {
 			interaction: null,
-			extent
+			extent: this.toExtent(this.value)
 		};
 	},
 	computed: {
@@ -71,22 +67,20 @@ export default {
 			}
 			this.$emit('input', this.returnAsObject ? this.bbox : this.extent);
 		},
-		ensureValidExtent(extent) {
-			if (!extent) {
-				return extent;
-			}
-			return [
-				Math.max(extent[0], -180),
-				Math.max(extent[1], -90),
-				Math.min(extent[2], 180),
-				Math.min(extent[3], 90)
-			];
-		},
 		async renderMap() {
 			let isWebMercatorCompatible = Utils.isBboxInWebMercator(this.bbox) !== false;
 			
 			await this.createMap(isWebMercatorCompatible ? 'EPSG:3857' : 'EPSG:4326');
 			this.addBasemaps();
+			this.addGeocoder(bbox => {
+				if (!bbox) {
+					return;
+				}
+				let extent = this.toExtent(bbox);
+				extent = transformExtent(extent, 'EPSG:4326', this.map.getView().getProjection());
+				this.interaction.setExtent(extent);
+				this.fitMap();
+			});
 
 			let condition = (event) => {
 				if (!this.editable) {
@@ -129,14 +123,14 @@ export default {
 				pixelTolerance: 15
 			});
 
-			// let oldImplementation = this.interaction.setExtent.bind(this.interaction);
-			// this.interaction.setExtent = extent => oldImplementation(this.ensureValidExtent(extent));
 			if (this.editable) {
 				this.interaction.on('extentchanged', this.update);
 			}
 
 			this.map.addInteraction(this.interaction);
-
+			this.fitMap();
+		},
+		fitMap() {
 			// If not ediable, make a bigger extent visible so that user can get a better overview
 			if (this.projectedExtent) {
 				var fitOptions = this.getFitOptions(this.editable ? 10 : 33);

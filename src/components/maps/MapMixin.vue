@@ -241,7 +241,18 @@ export default {
 
 		fromLonLat(coords) {
 			return fromLonLat(coords, this.map.getView().getProjection());
+		},
+		toExtent(value) {
+			let extent = null;
+			if (Utils.isObject(value) && "west" in value && "south" in value && "east" in value && "north" in value) {
+				extent = [value.west, value.south, value.east, value.north];
+			}
+			else if (Array.isArray(value) && value.length >= 4) {
+				extent = value;
+			}
+			return extent;
 		}
+
 	}
 }
 </script>

@@ -28,6 +28,7 @@ import JSON_ from '../../formats/json';
 import { Splitpanes, Pane } from 'splitpanes';
 
 import ExtentMixin from '../maps/ExtentMixin.vue';
+import GeocoderMixin from '../maps/GeocoderMixin.vue';
 import GeoTiffMixin from '../maps/GeoTiffMixin.vue';
 import MapMixin from '../maps/MapMixin.vue';
 import ScatterChart from './ScatterChart.vue';
@@ -37,6 +38,7 @@ import { Service } from '@openeo/js-client';
 
 import Feature from 'ol/Feature';
 import { fromExtent as PolygonFromExtent } from 'ol/geom/Polygon';
+import { transformExtent } from 'ol/proj';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 
@@ -112,7 +114,13 @@ GeoTIFFImage.prototype.getBitsPerSample = function(sampleIndex = 0) {
 
 export default {
 	name: 'MapViewer',
-	mixins: [ExtentMixin, GeoTiffMixin, MapMixin, WebServiceMixin],
+	mixins: [
+		ExtentMixin,
+		GeocoderMixin,
+		GeoTiffMixin,
+		MapMixin,
+		WebServiceMixin
+	],
 	components: {
 		Pane,
 		ScatterChart,
@@ -169,6 +177,14 @@ export default {
 
 				await this.createMap(view);
 				this.addLayerSwitcher();
+				this.addGeocoder(data => {
+					if (!data) {
+						return;
+					}
+					let extent = this.toExtent(data);
+					extent = transformExtent(extent, 'EPSG:4326', this.map.getView().getProjection());
+					this.map.getView().fit(extent, this.getFitOptions());
+				});
 
 				if (this.isGeoJson) {
 					this.addBasemaps();
