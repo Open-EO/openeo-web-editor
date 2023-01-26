@@ -62,7 +62,7 @@ export default class R extends Exporter {
 		let args = await this.generateArguments(node);
 		// ToDo: This doesn't seem to be supported in R yet
 		if (node.namespace) {
-			args.namespace = this.e(args.namespace);
+			args.namespace = this.e(node.namespace);
 		}
 		args = Utils.mapObject(args, (value, name) => `${name} = ${this.e(value)}`);
 
