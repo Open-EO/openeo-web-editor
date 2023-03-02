@@ -99,7 +99,7 @@ export default {
 					let logs = await this.logIterator.nextLogs();
 					// If no logs have been set of the offset parameter is unsupported and we got the full list of logs again
 					// assign the full list instead of appding it. Vue will make sure to not refresh the existing elements.
-					if (!Array.isArray(this.logs) || this.logs.length > 0 && logs[0].id == this.logs[0].id) {
+					if (!Array.isArray(this.logs) || (this.logs.length > 0 && logs.length > 0 && logs[0].id == this.logs[0].id)) {
 						this.logs = logs;
 					}
 					else {
