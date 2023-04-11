@@ -323,7 +323,10 @@ class Utils extends VueUtils {
 	static getResourceTitle(obj, showType = false) {
 		let title;
 		let isObj = Utils.isObject(obj);
-		if (obj instanceof UserProcess) {
+		if (typeof obj === 'string') {
+			title = obj;
+		}
+		else if (obj instanceof UserProcess) {
 			title = obj.id;
 		}
 		else if (obj instanceof UserFile) {
@@ -406,6 +409,27 @@ class Utils extends VueUtils {
 	static extractUDPParams(process) {
 		let [id, ...namespace] = process.split('@');
 		return [id, namespace.join('@')];
+	}
+	static getProcessingExpression(stac) {
+		let key = 'processing:expression';
+		if (!Utils.isObject(stac) || !stac[key]) {
+			return null;
+		}
+		let obj = stac[key];
+		if (Array.isArray(obj)) {
+			if (obj.length > 0) {
+				obj = obj[0];
+			}
+			else {
+				return null;
+			}
+		}
+		if (Utils.isObject(obj) && obj.format === 'openeo' && Utils.isObject(obj.expression)) {
+			return obj.expression;
+		}
+		else {
+			return null;
+		}
 	}
 
 };

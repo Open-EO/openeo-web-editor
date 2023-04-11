@@ -1,3 +1,4 @@
+import Vue from 'vue';
 import Utils from '../utils';
 import { Job, Service, UserProcess } from '@openeo/js-client';
 import { ProcessGraph } from '@openeo/js-processgraphs';
@@ -6,6 +7,7 @@ const serverStorage = "serverUrls";
 
 const getDefaultState = () => {
 	return {
+		appMode: null,
 		storedServers: JSON.parse(localStorage.getItem(serverStorage) || "[]"),
 		context: null,
 		process: null,
@@ -16,7 +18,8 @@ const getDefaultState = () => {
 		initialNode: null,
 		openWizard: null,
 		openWizardProps: {},
-		collectionPreview: null
+		collectionPreview: null,
+		viewerOptions: {}
 	};
 };
 
@@ -63,6 +66,21 @@ export default {
 					}
 				});
 			}
+		},
+		async loadForAppMode(cx) {
+			if (!cx.state.appMode) {
+				return;
+			}
+
+			try {
+				let response = await axios(cx.state.appMode.resultUrl);
+				if (Utils.isObject(response.data)) {
+					cx.commit('setAppModeData', response.data);
+				}
+			} catch (error) {
+				console.error(error);
+				throw new Error("Sorry, the shared data is not available anymore!");
+			}
 		}
 	},
 	mutations: {
@@ -74,6 +92,54 @@ export default {
 		},
 		setInitialNode(state, node) {
 			state.initialNode = node;
+		},
+		setAppMode(state, appMode) {
+			if (appMode.channels) {
+				try {
+					appMode.channels = appMode.channels
+						.split(',')
+						.map((row, i) => {
+							let parts = row.split('|');
+							return {
+								id: parseInt(parts[0], 10),
+								name: parts[1],
+								min: parts[2] ? parseFloat(parts[2]) : undefined,
+								max: parts[3] ? parseFloat(parts[3]) : undefined
+							};
+						});
+				} catch (error) {
+					console.error(error);
+					delete appMode.channels;
+				}
+			}
+			state.appMode = {
+				...appMode,
+				title: 'Results',
+				data: null
+			};
+		},
+		setAppModeData(state, data) {
+			Vue.set(state.appMode, 'data', data);
+
+			let process, title;
+			if (data.type === 'Collection') {
+				process = Utils.getProcessingExpression(data) || Utils.getProcessingExpression(data.summaries);
+				title = data.title;
+			}
+			else if (data.type === 'Feature') {
+				process = Utils.getProcessingExpression(data.properties) || Utils.getProcessingExpression(data); // Remove the last part, it's only there for SH right now
+				title = data.properties?.title;
+			}
+			if (process) {
+				state.process = process;
+			}
+			if (title) {
+				Vue.set(state.appMode, 'title', title);
+				state.context = title;
+			}
+		},
+		setViewerOptions(state, options) {
+			state.viewerOptions = options || {};
 		},
 		setOpenWizard(state, {component, options}) {
 			state.openWizard = component;
