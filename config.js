@@ -80,6 +80,9 @@ export default {
 		}
 	],
 
+	// Import processes from openeo-community-examples repo
+	importCommunityExamples: true,
+
 	// Additional process namespaces to load by default
 	processNamespaces: [],
 

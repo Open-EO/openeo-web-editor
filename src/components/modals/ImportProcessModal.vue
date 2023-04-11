@@ -57,16 +57,24 @@ export default {
 		};
 	},
 	async created() {
-		try {
-			let response = await axios('https://api.github.com/repos/Open-EO/openeo-community-examples/git/trees/2babd5d10e56f10d0a51569838227e93fdd934c5'); // the hash is the sha for the processes folder, see https://api.github.com/repos/Open-EO/openeo-community-examples/git/trees
-			this.gh = response.data.tree
-				.filter(file => file.path.endsWith('.json'))
-				.map(file => ({
-					name: file.path.substring(0, file.path.length-5),
-					url: `https://raw.githubusercontent.com/Open-EO/openeo-community-examples/main/processes/${file.path}`
-				}));
-		} catch(error) {
-			console.warn(error);
+		if (this.$config.importCommunityExamples) {
+			try {
+				// Get folders from repo and find the processes folder
+				let response = await axios('https://api.github.com/repos/Open-EO/openeo-community-examples/git/trees/main');
+				let folder = response.data.tree.find(file => file.path === 'processes');
+				if (folder) {
+					// Get files in the folder
+					let response2 = await axios(folder.url);
+					this.gh = response2.data.tree
+						.filter(file => file.path.endsWith('.json'))
+						.map(file => ({
+							name: file.path.substring(0, file.path.length-5),
+							url: `https://raw.githubusercontent.com/Open-EO/openeo-community-examples/main/processes/${file.path}`
+						}));
+				}
+			} catch(error) {
+				console.warn(error);
+			}
 		}
 	},
 	computed: {
