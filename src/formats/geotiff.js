@@ -49,7 +49,10 @@ class GeoTIFF extends SupportedFormat {
 		let stacHasExtent = this.stac && (this.stac.geometry || this.stac.extent);
 
 		// Get projection from STAC
-		this.projection = await ProjManager.addFromStac(this.stac);
+		this.projection = await ProjManager.addFromStacAsset(this);
+		if (!this.projection && this.stac.type === 'Feature') {
+			this.projection = await ProjManager.addFromStacItem(this.stac);
+		}
 
 		// Get nodata from STAC file:nodata
 		if (Array.isArray(this['file:nodata']) && this['file:nodata'].length > 0) {
@@ -138,11 +141,11 @@ class GeoTIFF extends SupportedFormat {
 		let code;
 		if (!this.projection && this.img.geoKeys) {
 			let { ProjectedCSTypeGeoKey, GeographicTypeGeoKey, ProjLinearUnitsGeoKey, GeogAngularUnitsGeoKey } = this.img.geoKeys;
-			if (ProjectedCSTypeGeoKey) {
+			if (ProjectedCSTypeGeoKey && ProjectedCSTypeGeoKey !== 32767) {
 				code = 'EPSG:' + ProjectedCSTypeGeoKey;
 				this.projection = await ProjManager.get(code);
 			}
-			if (!this.projection && GeographicTypeGeoKey) {
+			if (!this.projection && GeographicTypeGeoKey && GeographicTypeGeoKey !== 32767) {
 				code = 'EPSG:' + GeographicTypeGeoKey;
 				this.projection = await ProjManager.get(code);
 			}

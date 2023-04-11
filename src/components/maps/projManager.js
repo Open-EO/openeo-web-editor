@@ -34,14 +34,29 @@ export default class ProjManager {
 		}
 	}
 
-	// Get projection details from STAC (todo: add collection support)
-	static async addFromStac(stac) {
-		if (Utils.isObject(stac) && Utils.isObject(stac.properties)) {
-			if (stac.properties['proj:epsg']) {
-				return await ProjManager.get(stac.properties['proj:epsg']);
+	static async addFromStacItem(stac) {
+		if (Utils.isObject(stac)) {
+			return await this.addFromStacObject(stac.properties, stac.id);
+		}
+		return null;
+	}
+
+	// Get projection details from STAC Asset
+	static async addFromStacAsset(asset) {
+		return await this.addFromStacObject(asset, asset.href);
+	}
+
+	// Get projection details from STAC Asset
+	static async addFromStacObject(obj, id) {
+		if (Utils.isObject(obj)) {
+			if (obj['proj:epsg']) {
+				return await ProjManager.get(obj['proj:epsg']);
 			}
-			else if (stac.properties['proj:wkt2']) {
-				return ProjManager.add(stac.id, stac.properties['proj:wkt2']);
+			else if (obj['equi7:proj']) {
+				return ProjManager.add(id, obj['equi7:proj']);
+			}
+			else if (obj['proj:wkt2']) {
+				return ProjManager.add(id, obj['proj:wkt2']);
 			}
 		}
 		return null;

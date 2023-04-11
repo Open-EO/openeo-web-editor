@@ -19,7 +19,7 @@ What is required by back-ends to give users an ideal experience with GeoTiff ima
     1. The no-data value either in `file:nodata` (deprecated) or in `nodata` in `raster:bands`
 	2. The `minimum` and `maximum` values per band in the `statistics` object in `raster:bands`
 	3. A band `name` either in `raster:bands` (unspecified) or `eo:bands`
-	4. The projection in `proj:epsg` (recommended), `proj:wkt2` (not well suported by OpenLayers) or `proj:proj4` (deprecated by STAC)
+	4. The projection in `proj:epsg` (recommended), `proj:wkt2` (not suported by OpenLayers), or `equi7:proj` (proprietary).
 	5. The `type` must be set to the corresponding media type (see below)
 8. For synchronous execution, the `Content-Type` in the header of the response must be set to the corresponding media type (see below)
 
