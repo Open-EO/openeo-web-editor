@@ -3,9 +3,9 @@
 		<Tabs id="viewerTabs" ref="tabs" @empty="onTabsEmpty">
 			<template #empty>Nothing to show right now...</template>
 			<template #dynamic="{ tab }">
-				<LogViewer v-if="logViewerIcons.includes(tab.icon)" :data="tab.data" @mounted="onMounted" />
-				<MapViewer v-else-if="tab.icon === 'fa-map'" :data="tab.data" :removableLayers="isCollectionPreview(tab.data)" @mounted="onMounted" /> <!-- for services -->
-				<component v-else-if="tab.data.component" :is="tab.data.component" v-on="tab.data.events" v-bind="tab.data.props" @mounted="onMounted" /> <!-- for file formats -->
+				<LogViewer v-if="logViewerIcons.includes(tab.icon)" :data="tab.data" @mounted="onMounted" @options="onOptionsChanged" />
+				<MapViewer v-else-if="tab.icon === 'fa-map'" :data="tab.data" :removableLayers="isCollectionPreview(tab.data)" @mounted="onMounted" @options="onOptionsChanged" /> <!-- for services -->
+				<component v-else-if="tab.data.component" :is="tab.data.component" v-on="tab.data.events" v-bind="tab.data.props" @mounted="onMounted" @options="onOptionsChanged" /> <!-- for file formats -->
 				<div class="unsupported" v-else>
 					Sorry, the viewer doesn't support showing this type of data.
 					<template v-if="isFormat(tab.data)">
@@ -45,6 +45,14 @@ export default {
 		this.listen('viewLogs', this.showLogs);
 		this.listen('removeWebService', this.closeTabWithLogs);
 		this.listen('removeBatchJob', this.closeTabWithLogs);
+
+		if (this.appMode) {
+			this.showJobResults(this.appMode.data, null, this.appMode.title);
+			if (typeof this.appMode.expires === 'string') {
+				let expires = this.appMode.expires.replace('T', '').replace(/(\.\d)?(Z|[+-]\d\d:\d\d])$/, ''); // todo: improve date rendering
+				Utils.info(this, `The shared data is available until ${expires}`);
+			}
+		}
 	},
 	data() {
 		return {
@@ -55,17 +63,20 @@ export default {
 				'fa-bug',
 				'fa-bomb',
 				'fa-tasks'
-			]
+			],
+			options: null
 		}
 	},
 	computed: {
 		...Utils.mapState(['connection']),
+		...Utils.mapState('editor', ['appMode']),
 		nextTabId() {
 			return `viewer~${this.tabIdCounter}`;
 		}
 	},
 	methods: {
 		...Utils.mapActions(['describeCollection']),
+		...Utils.mapMutations('editor', ['setViewerOptions']),
 		isCollectionPreview(data) {
 			return (data instanceof Service && Utils.isObject(data.attributes) && data.attributes.preview === true);
 		},
@@ -156,17 +167,31 @@ export default {
 					}
 				});
 		},
-		showJobResults(stac, job) {
+		showJobResults(stac, job = null, title = null) {
+			if (title === null) {
+				if (stac.title) {
+					title = stac.title;
+				}
+				else if (stac.properties && stac.properties.title) {
+					title = stac.properties.title
+				}
+				else {
+					title = Utils.getResourceTitle(job, true);
+				}
+			}
+			let id = stac.id;
+			if (job && job.id) {
+				id = job.id;
+			}
 			let files = this.registry.createFilesFromSTAC(stac, job);
 			if (files.length === 0) {
-				Utils.error(this, 'No results available for job "' + Utils.getResourceTitle(job) + '".');
+				Utils.error(this, 'No results available for "' + title + '".');
 				return;
 			}
 			else if (files.length > 5 && !confirm(`You are about to open ${files.length} individual files / tabs, which could slow down the web browser. Are you sure you want to open all of them?`)) {
 				return;
 			}
-			let title = Utils.getResourceTitle(job, true);
-			this.showViewer(files, title, file => `${job.id}-${file.getUrl()}`, true)
+			this.showViewer(files, title, file => `${id}-${file.getUrl()}`, true)
 				.catch(error => Utils.exception(this, error));
 		},
 		showMapViewer(resource, id = null, title = null, reUseExistingTab = false, onClose = null) {
@@ -271,12 +296,17 @@ export default {
 		},
 		onMounted(component) {
 			this.callChildFunction(component, 'onShow');
+			this.setViewerOptions();
 		},
 		onHide(tab) {
 			this.callChildFunction(tab, 'onHide');
 		},
 		onTabsEmpty(hasNone) {
 			this.$emit('empty', hasNone);
+			this.setViewerOptions();
+		},
+		onOptionsChanged(options) {
+			this.setViewerOptions(options);
 		},
 		uniqueTitle(title) {
 			if (!this.tabTitleCounter[title]) {
