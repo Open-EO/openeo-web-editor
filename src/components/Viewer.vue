@@ -222,7 +222,10 @@ export default {
 						}
 					}
 
-					if (!title && context) {
+					if (file.title) {
+						title = file.title;
+					}
+					else if (!title && context) {
 						title = Utils.getResourceTitle(context, true);
 					}
 					else if (!title) {
