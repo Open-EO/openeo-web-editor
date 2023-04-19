@@ -34,7 +34,8 @@ You can use some query parameters to set initial state to the Editor.
   * Otherwise, the value must correspond to the node identifier without `#` at the beginning.
 * `wizard`: Opens a specific wizard on start-up. The value must correspond to the component name of the wizard. Wizard options can be set by provding them as query parameter prefixed with `wizard~`, e.g. `&wizard~collection=SENTINEL2-L2A`.
   * Usecase "Run UDP": For `wizard=UDP` you can provide a process in the query parameter `wizard~process` which has the same format as in `process` above and will open a wizard for this UDP.
-* `preview-collection` Shows the preview of a Collection on the map upon start.
+* `preview-collection`: Shows the preview of a Collection on the map upon start.
+* `result`: Loads a STAC Item or Collection in "App mode".
 
 Example: <https://editor.openeo.org?server=https://earthengine.openeo.org&discover=1&process=https://raw.githubusercontent.com/Open-EO/openeo-earthengine-driver/master/tests/data/sample-processgraph.json>
 

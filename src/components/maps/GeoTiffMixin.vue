@@ -19,9 +19,13 @@ export default {
 			source: null,
 			colorMap: null,
 			noData: [],
+			defaultChannels: [],
 			channels: [],
 			bands: []
 		}
+	},
+	computed: {
+		...Utils.mapState('editor', ['appMode'])
 	},
 	methods: {
 		getBandVar(i) {
@@ -43,6 +47,9 @@ export default {
 		},
 		async addGeoTiff(geotiff, title = "GeoTiff") {
 			this.bands = geotiff.getBands();
+			if (this.appMode && this.appMode.channels) {
+				this.defaultChannels = this.appMode.channels;
+			}
 			this.colorMap = geotiff.getColorMap();
 			this.noData = geotiff.getNoData();
 
@@ -122,6 +129,7 @@ export default {
 			switch(type) {
 				case 'channels':
 					this.channels = data;
+					this.setOptions('channels', data);
 					break;
 			}
 			this.setStyle();

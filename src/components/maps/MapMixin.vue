@@ -43,7 +43,8 @@ export default {
 	data() {
 		return {
 			map: null,
-			id: `map_` + idCounter++
+			id: `map_` + idCounter++,
+			options: {}
 		};
 	},
 	watch: {
@@ -59,6 +60,7 @@ export default {
 			if (this.show) {
 				await this.$nextTick();
 				await this.renderMap();
+				this.$emit('options', this.options);
 			}
 		},
 		async createMap(opts = 'EPSG:3857') {
@@ -164,6 +166,11 @@ export default {
 				}
 			}
 			return baselayers;
+		},
+
+		setOptions(key, value) {
+			this.options[key] = value;
+			this.$emit('options', this.options);
 		},
 
 		onShow() {

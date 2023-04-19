@@ -44,6 +44,10 @@ export default {
 		bands: {
 			type: Array,
 			default: () => []
+		},
+		defaultChannels: {
+			type: Array,
+			default: () => []
 		}
 	},
 	computed: {
@@ -62,8 +66,8 @@ export default {
 	},
 	data() {
 		return {
-			channels: [],
-			isGray: this.bands.length === 1
+			channels: this.defaultChannels,
+			isGray: this.defaultChannels.length === 1 || this.bands.length === 1
 		}
 	},
 	watch: {
@@ -92,9 +96,17 @@ export default {
 			return (typeof value === 'number');
 		},
 		updateChannels() {
-			this.channels = this.bands
-				.slice(0, this.isGray ? 1 : 3)
-				.map(band => Object.assign({}, band));
+			if (this.defaultChannels.length > 0) {
+				this.channels = this.defaultChannels;
+				if (this.defaultChannels.length === 1) {
+					this.isGray = true;
+				}
+			}
+			else {
+				this.channels = this.bands
+					.slice(0, this.isGray ? 1 : 3)
+					.map(band => Object.assign({}, band));
+			}
 			// If only two channels are available, add a third one so that we have enough for RGB
 			// If we only have one channel it is grayscale
 			if (this.channels.length === 2) {

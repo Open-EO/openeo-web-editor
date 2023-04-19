@@ -1,5 +1,5 @@
 <template>
-	<ShareInterface id="share-twitter" title="Twitter" description="Share your data as a tweet">
+	<ShareInterface id="share-twitter" :icon="['fab', 'fa-twitter']" title="Twitter" description="Share your STAC metadata as a tweet">
 		<template #customize>
 			<textarea v-model="text"></textarea><br />
 			<button @click="tweet">Open Twitter</button>

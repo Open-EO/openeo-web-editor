@@ -46,6 +46,7 @@ export default {
 
 	// List of supported batch job sharing services
 	supportedBatchJobSharingServices: [
+		'ShareEditor',
 		'CopyUrl',
 		'TwitterShare'
 	],

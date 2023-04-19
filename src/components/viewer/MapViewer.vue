@@ -5,7 +5,7 @@
 				<ProgressControl ref="progress" :map="map" />
 				<UserLocationControl :map="map" />
 				<TextControl v-if="isGeoTiff" :text="textControlText" />
-				<ChannelControl v-if="isGeoTiff && !colorMap" :bands="bands" @update="updateGeoTiffStyle" />
+				<ChannelControl v-if="isGeoTiff && !colorMap" :bands="bands" :defaultChannels="defaultChannels" @update="updateGeoTiffStyle" />
 				<div v-if="loading" class="map-loading">
 					<i class="fas fa-spinner fa-spin"></i>
 					<span>Loading map...</span>
@@ -195,11 +195,11 @@ export default {
 					if (proj.basemap || ['EPSG:3857', 'EPSG:4326'].includes(proj.getCode())) {
 						this.addBasemaps();
 					}
+					this.addGeoTiff(data);
 					let stac = this.data.getContext();
 					if (stac) {
 						this.addExtent(stac, false);
 					}
-					this.addGeoTiff(data);
 				}
 				else if (this.isWebService && Utils.isMapServiceSupported(this.data.type)) {
 					this.addBasemaps();

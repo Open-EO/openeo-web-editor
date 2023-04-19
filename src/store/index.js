@@ -240,7 +240,16 @@ export default new Vuex.Store({
 				try {
 					await cx.dispatch('editor/loadInitialProcess');
 				} catch (error) {
-					errors.push(error)
+					errors.push(error);
+				}
+			}
+
+			// Request batch job result for app mode
+			if (!refresh) {
+				try {
+					await cx.dispatch('editor/loadForAppMode');
+				} catch (error) {
+					errors.push(error);
 				}
 			}
 
