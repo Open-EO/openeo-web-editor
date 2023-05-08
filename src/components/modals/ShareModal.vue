@@ -1,5 +1,5 @@
 <template>
-	<Modal minWidth="50%" title="Export / Share" @closed="$emit('closed')">
+	<Modal width="70%" title="Export / Share" @closed="$emit('closed')">
 		<ul class="share-list">
 			<li v-for="component in components" :key="component">
 				<component :is="component" v-bind="componentProps" />

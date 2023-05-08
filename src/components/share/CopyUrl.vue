@@ -1,6 +1,6 @@
 <template>
 	<ShareInterface v-if="canCopy"
-		id="share-copy" title="Copy" :description="description" :action="copy"
+		id="share-copy" icon="fa-file-code" title="STAC metadata" :description="description" :action="copy"
 		actionDefaultIcon="fa-clipboard" actionSuccessIcon="fa-clipboard-check" @stateChanged="state => this.state = state">
 	</ShareInterface>
 </template>
@@ -32,7 +32,7 @@ export default {
 				return 'Copied to clipboard';
 			}
 			else {
-				return 'Copy the public URL to your clipboard';
+				return 'Copy the public URL of the STAC metadata to your clipboard';
 			}
 		}
 	},
@@ -43,6 +43,14 @@ export default {
 	},
 	mounted() {
 		this.canCopy = navigator && navigator.clipboard && typeof navigator.clipboard.writeText === 'function';
+
+		let link = document.createElement('link');
+		link.as = "font";
+		link.type = "font/woff2";
+		link.crossOrigin = "";
+		link.href = "https://use.fontawesome.com/releases/v5.13.0/webfonts/fa-brands-400.woff2";
+		let head = document.getElementsByTagName("head")[0];
+		head.appendChild(link);
 	}
 }
 </script>

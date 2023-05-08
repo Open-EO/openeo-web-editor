@@ -1,14 +1,23 @@
 <template>
 	<div :class="classes" :id="id">
 		<div class="entry" @click="toggle">
-			<span v-if="icon" class="toggle">
-				<img v-if="iconIsImage" :src="icon" />
-				<i v-else :class="['fas', icon]"></i>
+			<span v-if="actionIcon" class="toggle">
+				<img v-if="actionIconIsImage" :src="actionIcon" />
+				<i v-else :class="faActionIcon"></i>
 			</span>
 			<slot name="summary" v-bind="$props" :expanded="expanded" :state="state" :icon="icon">
 				<div class="summary">
-					<strong>{{ title }}</strong>
-					<small v-if="description">{{ description }}</small>
+					<strong>
+						<span v-if="icon" class="icon">
+							<img v-if="iconIsImage" :src="icon" />
+							<i v-else :class="faIcon"></i>
+						</span>
+						{{ title }}
+					</strong>
+					<template v-if="description">
+						<small class="sep">—</small>
+						<small class="description" v-if="description">{{ description }}</small>
+					</template>
 				</div>
 			</slot>
 		</div>
@@ -47,20 +56,24 @@ export default {
 			default: null
 		},
 		// Font Awesome Icon identifiers or a URL to an image (png, jpeg, gif, webp)
+		icon: { // Primary icon
+			type: [String, Array],
+			default: null
+		},
 		actionDefaultIcon: { // Default
-			type: String,
+			type: [String, Array],
 			default: 'fa-share'
 		},
-		actionLoadingIcon: { // When loding
-			type: String,
+		actionLoadingIcon: { // When loading
+			type: [String, Array],
 			default: 'fa-spinner fa-spin'
 		},
 		actionSuccessIcon: { // on success (for a couple of seconds)
-			type: String,
+			type: [String, Array],
 			default: 'fa-check'
 		},
 		actionErrorIcon: { // on error (for a couple of seconds)
-			type: String,
+			type: [String, Array],
 			default: 'fa-times'
 		}
 	},
@@ -87,7 +100,18 @@ export default {
 		iconIsImage() {
 			return this.icon.includes('/');
 		},
-		icon() {
+		faIcon() {
+			if (Array.isArray(this.icon)) {
+				return this.icon;
+			}
+			else {
+				return ['fas', this.icon];
+			}
+		},
+		actionIconIsImage() {
+			return this.actionIcon.includes('/');
+		},
+		actionIcon() {
 			if (typeof this.action === 'function') {
 				let fn = this.state[0].toUpperCase() + this.state.substr(1);
 				return this[`action${fn}Icon`];
@@ -97,6 +121,14 @@ export default {
 			}
 			else {
 				return this.expanded ? 'fa-caret-down' : 'fa-caret-right';
+			}
+		},
+		faActionIcon() {
+			if (Array.isArray(this.actionIcon)) {
+				return this.actionIcon;
+			}
+			else {
+				return ['fas', this.actionIcon];
 			}
 		}
 	},
@@ -138,11 +170,13 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+@import '../../../theme.scss';
+
 .shareable {
 	> .entry {
 		display: flex;
-		color: #1665B6;
-		align-items: center;
+		color: $mainColor;
+		align-items: top;
 		padding: 0.5em;
 		font-size: 1.2em;
 		line-height: 1.5em;
@@ -156,21 +190,22 @@ export default {
 			cursor: pointer;
 			flex-grow: 1;
 			display: flex;
-			align-items: center;
+			align-items: top;
 
-			> small {
-				&:before {
-					content: ' — ';
-					margin-left: 0.6em;
-					margin-right: 0.4em;
-				}
+			> strong {
+				white-space: nowrap;
+			}
+
+			> small.sep {
+				padding: 0 0.5em;
 			}
 		}
 
-		> .toggle {
+		> .toggle,
+		.icon {
+			display: inline-block;
 			user-select: none;
 			width: 1.5em;
-			margin-right: 0.5rem;
 			text-align: center;
 
 			img {
@@ -178,18 +213,25 @@ export default {
 				max-width: 1.5em;
 			}
 		}
+		> .toggle {
+			margin-right: 0.5rem;
+		}
 	}
 	> .customize {
 		padding: 1em;
 	}
-	&.expanded > .entry {
-		color: white;
-		background-color: #1665B6;
+	.entry > .toggle {
+		color: #555;
 	}
-	&.success > .entry {
+	&.expanded > .entry,
+	&.expanded > .entry > .toggle {
+		color: white;
+		background-color: $mainColor;
+	}
+	&.success > .entry > .toggle {
 		color: green !important;
 	}
-	&.error > .entry {
+	&.error > .entry > .toggle {
 		color: maroon !important;
 	}
 }

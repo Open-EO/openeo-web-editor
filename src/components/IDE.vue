@@ -1,6 +1,6 @@
 <template>
 	<div id="wrapper">
-		<div id="ide" :class="{authenticated: isAuthenticated}">
+		<div id="ide" :class="{authenticated: isAuthenticated, appMode: Boolean(appMode)}">
 			<header class="navbar">
 				<Logo />
 				<ul id="menu">
@@ -78,7 +78,7 @@ export default {
 	},
 	computed: {
 		...Utils.mapState(['connection', 'isAuthenticated']),
-		...Utils.mapState('editor', ['context', 'process', 'collectionPreview', 'openWizard', 'openWizardProps']),
+		...Utils.mapState('editor', ['appMode', 'context', 'process', 'collectionPreview', 'openWizard', 'openWizardProps']),
 		...Utils.mapGetters(['title', 'apiVersion', 'supports']),
 		...Utils.mapGetters('editor', ['hasProcess']),
 		...Utils.mapGetters('jobs', {supportsJobUpdate: 'supportsUpdate'}),
@@ -101,7 +101,15 @@ export default {
 			return this.supports('validateProcess');
 		},
 		splitpaneSizeH() {
-			if (this.showViewer) {
+			if (this.appMode) {
+				if (this.process) {
+					return [0, 50, 50];
+				}
+				else {
+					return [0, 0, 100];
+				}
+			}
+			else if (this.showViewer) {
 				return [20, 40, 40];
 			}
 			else {
@@ -109,11 +117,14 @@ export default {
 			}
 		},
 		splitpaneSizeV() {
-			if (this.isAuthenticated) {
-				return [50,50];
+			if (this.appMode) {
+				return [100, 0];
+			}
+			else if (this.isAuthenticated) {
+				return [50, 50];
 			}
 			else {
-				return [99,1];
+				return [99, 1];
 			}
 		}
 	},
@@ -304,6 +315,9 @@ export default {
 #workspace {
 	min-width: 400px;
 }
+.appMode #workspace {
+	min-width: 0;
+}
 #discovery {
 	height: 100%;
 	overflow: auto;
@@ -320,6 +334,9 @@ export default {
 }
 #editor, .authenticated #user {
 	min-height: 150px;
+}
+.appMode #user {
+	min-height: 0;
 }
 #editor {
 	padding-bottom: 0.5rem;
