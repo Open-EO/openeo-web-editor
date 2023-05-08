@@ -235,7 +235,7 @@ export default {
 		getBudgetField(value = null) {
 			return {
 				name: 'budget',
-				label: 'Budget',
+				label: 'Budget limit',
 				schema: {type: 'number', subtype: 'budget'},
 				default: null,
 				value: value,
