@@ -187,8 +187,6 @@ export default {
 			l = window.screen.availWidth * 0.1;
 			t = window.screen.availHeight * 0.1;
 		}
-		// Allow enforcing a re-login with 'prompt=login' parameter on authentication request (https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest).
-		var prompt = Utils.param('prompt') == 'login' ? 'login' : null;
 		return {
 			serverUrl: this.$config.serverUrl,
 			allowOtherServers: !this.$config.serverUrl,
@@ -200,7 +198,6 @@ export default {
 			message: this.$config.loginMessage,
 			userOidcClientId: '',
 			oidcOptions: {
-				prompt: prompt,
 				automaticSilentRenew: true,
 				popupWindowFeatures: `location=no,toolbar=no,width=${w},height=${h},left=${l},top=${t}`
 			},
@@ -215,6 +212,13 @@ export default {
 
 		if (this.serverUrl) {
 			this.autoConnect = true;
+		}
+
+		// Allow enforcing a re-login with e.g. 'prompt=login' parameter on authentication request.
+		// See https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest
+		let prompt = Utils.param('oidc~prompt');
+		if (['none', 'login', 'consent', 'select_account'].includes(prompt)) {
+			this.oidcOptions.prompt = prompt;
 		}
 
 		// Do this after the other initial work as the await delays execution and makes mounted run before created sometimes.
