@@ -36,6 +36,7 @@ You can use some query parameters to set initial state to the Editor.
   * Usecase "Run UDP": For `wizard=UDP` you can provide a process in the query parameter `wizard~process` which has the same format as in `process` above and will open a wizard for this UDP.
 * `preview-collection`: Shows the preview of a Collection on the map upon start.
 * `result`: Loads a STAC Item or Collection in "App mode".
+* `oidc~prompt`: Set the `prompt` parameter for the [OIDC authentication request](https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest). For example: use value `login` to enforce a (re)login with the OIDC provider.
 
 Example: <https://editor.openeo.org?server=https://earthengine.openeo.org&discover=1&process=https://raw.githubusercontent.com/Open-EO/openeo-earthengine-driver/master/tests/data/sample-processgraph.json>
 
