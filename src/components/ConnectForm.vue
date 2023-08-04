@@ -214,6 +214,13 @@ export default {
 			this.autoConnect = true;
 		}
 
+		// Allow enforcing a re-login with e.g. 'prompt=login' parameter on authentication request.
+		// See https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest
+		let prompt = Utils.param('oidc~prompt');
+		if (['none', 'login', 'consent', 'select_account'].includes(prompt)) {
+			this.oidcOptions.prompt = prompt;
+		}
+
 		// Do this after the other initial work as the await delays execution and makes mounted run before created sometimes.
 		OidcProvider.uiMethod = 'popup';
 		try {
