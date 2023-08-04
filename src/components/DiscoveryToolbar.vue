@@ -144,7 +144,11 @@ export default {
 	},
 	methods: {
 		...Utils.mapMutations('editor', ['setDiscoverySearchTerm']),
-		onDrag(event, type, data) {
+		...Utils.mapActions(['loadProcess']),
+		async onDrag(event, type, data) {
+			if (type === 'process') {
+				this.loadProcess(data);
+			}
 			let node = this.getNode(type, data);
 			event.dataTransfer.setData("application/vnd.openeo-node", JSON.stringify(node));
 			event.dataTransfer.setData("text/plain", JSON.stringify(node, null, 2));
