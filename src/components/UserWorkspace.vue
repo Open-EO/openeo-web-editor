@@ -37,7 +37,7 @@ export default {
 	computed: {
 		...Utils.mapGetters(['supports']),
 		showJobs() {
-			return (this.supports('listJobs') || this.supports('createJob'));
+			return (this.supports('listJobs') || this.supports('createJob') || this.supports('computeResult'));
 		},
 		showServices() {
 			return (this.supports('listServices') || this.supports('createService'));
