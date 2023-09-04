@@ -100,6 +100,7 @@ const SUPPORTED_TYPES = [
 // Can't be transfered between client and server, no JSON encoding available for cubes:
 //		{type: 'object', subtype: 'raster-cube'},
 //		{type: 'object', subtype: 'vector-cube'},
+//		{type: 'object', subtype: 'datacube'},
 ];
 const refSchema = {
 	type: 'object',

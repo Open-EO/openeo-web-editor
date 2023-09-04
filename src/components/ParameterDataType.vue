@@ -7,7 +7,7 @@
 			</div>
 			<button type="button" v-if="nativeParameterType === 'array'" @click="convertToArray()"><i class="fas fa-list"></i> Convert to array</button>
 		</template>
-		<div v-else-if="type === 'raster-cube' || type === 'vector-cube'" class="fieldValue description">
+		<div v-else-if="type === 'raster-cube' || type === 'vector-cube' || type === 'datacube'" class="fieldValue description">
 			<i class="fas fa-exclamation-circle"></i>
 			<p>This parameter can only be set by creating a connection between an "Output" / "Result" and this parameter in the Visual Model.</p>
 		</div>
