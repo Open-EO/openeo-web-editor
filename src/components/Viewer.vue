@@ -264,6 +264,8 @@ export default {
 					);
 				} catch (error) {
 					Utils.exception(this, error, "Viewer Error");
+					// Try to download instead
+					file.download();
 				}
 			}
 		},
