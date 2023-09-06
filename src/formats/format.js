@@ -32,9 +32,7 @@ export class Format {
 		tempLink.style.display = 'none';
 		tempLink.href = this.getUrl();
 		tempLink.setAttribute('download', filename ? filename :  Utils.makeFileName("result", this.type));
-		if (typeof tempLink.download === 'undefined') {
-			tempLink.setAttribute('target', '_blank');
-		}
+		tempLink.setAttribute('target', '_blank');
 		document.body.appendChild(tempLink);
 		tempLink.click();
 		document.body.removeChild(tempLink);
@@ -62,7 +60,14 @@ export class Format {
 			blob = await response.blob();
 		}
 		else {
-			blob = await connection.download(url, false);
+			let auth = false;
+			try {
+				let apiUrl = new URL(connection.getUrl());
+				let requestUrl = new URL(url);
+				auth = apiUrl.origin === requestUrl.origin;
+			} catch (error) {}
+
+			blob = await connection.download(url, auth);
 		}
 		let promise = new Promise((resolve, reject) => {
 			let reader = new FileReader();
