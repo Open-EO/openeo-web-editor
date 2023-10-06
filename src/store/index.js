@@ -100,9 +100,14 @@ export default new Vuex.Store({
 					temporal_extent[1] = null;
 				}
 			} catch (error) {}
+
+			var dimensions = {};
+			try {
+				dimensions = collection.summaries['cube:dimensions']
+			} catch (error) {}
 	
 			var bands = null;
-			return {id, spatial_extent, temporal_extent, bands};
+			return {id, spatial_extent, temporal_extent, bands, dimensions};
 		},
 		processes: (state) => {
 			let registry
