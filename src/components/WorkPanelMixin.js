@@ -70,9 +70,6 @@ export default (namespace, singular, plural, loadInitially = true) => {
 				else if (!this.supportsList) {
 					table.setNoData("Sorry, listing stored " + plural + " is not supported by the server.");
 				}
-				else if (!this.supportsCreate) {
-					table.setNoData("Sorry, this feature is not supported by the server.");
-				}
 				else {
 					var isUpdate = this.data.length > 0;
 					if (!isUpdate) {
