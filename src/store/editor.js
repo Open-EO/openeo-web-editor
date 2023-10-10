@@ -19,7 +19,8 @@ const getDefaultState = () => {
 		openWizard: null,
 		openWizardProps: {},
 		collectionPreview: null,
-		viewerOptions: {}
+		viewerOptions: {},
+		modelDnD: null
 	};
 };
 
@@ -28,6 +29,53 @@ export default {
 	state: getDefaultState(),
 	getters: {
 		hasProcess: state => Utils.isObject(state.process) && Utils.size(state.process) > 0 && Utils.size(state.process.process_graph),
+		getModelNodeFromDnD: (state, getters, rootState, rootGetters) => () => {
+			return new Promise((resolve, reject) => {
+				if (!state.modelDnD) {
+					resolve(null);
+					return;
+				}
+				const getterFn = () => {
+					switch(state.modelDnD.type) {
+						case 'collection':
+							return {
+								process_id: 'load_collection',
+								arguments: rootGetters.collectionDefaults(state.modelDnD.data.id)
+							};
+						case 'process':
+							return {
+								process_id: state.modelDnD.data.id,
+								namespace: state.modelDnD.data.namespace,
+								arguments: {}
+							};
+						case 'udf':
+							return {
+								process_id: 'run_udf',
+								arguments: state.modelDnD.data
+							};
+						case 'fileformat':
+							return {
+								process_id: 'save_result',
+								arguments: {format: state.modelDnD.data.name, options: {}}
+							};
+						default:
+							return null;
+					}
+				};
+				if (state.modelDnD.loading) {
+					let id = setInterval(() => {
+						if (!state.modelDnD || state.modelDnD.loading) {
+							return;
+						}
+						clearInterval(id);
+						resolve(getterFn());
+					}, 50);
+				}
+				else {
+					resolve(getterFn());
+				}
+			});
+		}
 	},
 	actions: {
 		async loadEpsgCodes(cx) {
@@ -84,6 +132,9 @@ export default {
 		}
 	},
 	mutations: {
+		setModelDnd(state, obj = null) {
+			state.modelDnD = obj;
+		},
 		setDiscoverySearchTerm(state, searchTerm) {
 			state.discoverySearchTerm = typeof searchTerm === 'string' ? searchTerm : '';
 		},

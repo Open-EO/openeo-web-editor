@@ -129,6 +129,7 @@ export default {
 		...Utils.mapState(['connection', 'collections']),
 		...Utils.mapGetters(['processes', 'supportsMath']),
 		...Utils.mapState('editor', ['initialNode']),
+		...Utils.mapGetters('editor', ['getModelNodeFromDnD']),
 		isMath() {
 			return (this.supportsMath && this.processes.isMath(this.value));
 		}
@@ -172,7 +173,7 @@ export default {
 		this.canPaste = navigator && navigator.clipboard && typeof navigator.clipboard.readText === 'function';
 	},
 	methods: {
-		...Utils.mapMutations('editor', ['setInitialNode']),
+		...Utils.mapMutations('editor', ['setInitialNode', 'setModelDnD']),
 		commit(value) {
 			// Fix #115: Return the default value/null if no nodes are given
 			if (typeof this.defaultValue !== 'undefined' && Utils.isObject(value) && Utils.size(value.process_graph) === 0) {
@@ -209,11 +210,11 @@ export default {
 			this.showHelpOverlay = false;
 			event.preventDefault();
 		},
-		onDrop(event) {
-			var editorNodeJson = event.dataTransfer.getData("application/vnd.openeo-node");
-			if (editorNodeJson) {
-				let node = JSON.parse(editorNodeJson);
+		async onDrop(event) {
+			const node = await this.getModelNodeFromDnD();
+			if (node) {
 				this.insertProcess(node, event.pageX, event.pageY);
+				this.setModelDnD();
 				return event.preventDefault();
 			}
 

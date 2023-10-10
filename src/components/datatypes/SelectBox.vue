@@ -40,7 +40,6 @@ export default {
 		}
 	},
 	computed: {
-		...Utils.mapGetters(['collectionDefaults']),
 		selectOptions() {
 			let state = [];
 			switch(this.type) {
