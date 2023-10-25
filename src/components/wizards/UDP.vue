@@ -57,8 +57,12 @@ export default {
 			};
 		}
 	},
-	async created() {
+	async beforeMount() {
 		this.loading = true;
+		if (typeof this.process !== 'string' || this.process.length === 0) {
+			this.$emit('close', `Sorry, no process specified.`);
+			return;
+		}
 		let [id, namespace] = Utils.extractUDPParams(this.process);
 		try {
 			this.processSpec = await this.loadProcess({id, namespace});

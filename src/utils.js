@@ -208,8 +208,11 @@ class Utils extends VueUtils {
 	}
 
 	static param(name) {
-		const urlParams = new URLSearchParams(window.location.search); 
-		return urlParams.get(name); 
+		const urlParams = new URLSearchParams(window.location.search);
+		if (urlParams.has(name)) {
+			return urlParams.get(name);
+		}
+		return undefined;
 	}
 
 	static isBboxInWebMercator(bboxes) {
@@ -407,8 +410,15 @@ class Utils extends VueUtils {
 		return resolver(schema);
 	}
 	static extractUDPParams(process) {
-		let [id, ...namespace] = process.split('@');
-		return [id, namespace.join('@')];
+		const pos = process.indexOf('@');
+		if (pos < 0) {
+			return [process, undefined];
+		}
+		else {
+			const id = process.substring(0, pos);
+			const namespace = process.substring(pos + 1);
+			return [id, namespace];
+		}
 	}
 	static getProcessingExpression(stac) {
 		let key = 'processing:expression';

@@ -78,8 +78,12 @@ export default {
 			});
 		}
 
-		if (Utils.param('discover') || resultUrl) {
+		const discover = Utils.param('discover');
+		if (discover === "1" || resultUrl) {
 			this.skipLogin = true;
+		}
+		else if (discover === "0") {
+			this.skipLogin = false;
 		}
 
 		// Count active requests
