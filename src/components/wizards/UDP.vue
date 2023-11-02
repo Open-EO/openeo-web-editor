@@ -1,11 +1,14 @@
 <template>
 	<div class="wizard-tab-content">
-		<WizardTab :pos="0" :parent="parent" title="Parameters" :beforeChange="checkRequirements">
+		<WizardTab v-if="!noProcessSelection" :pos="tabPos[0]" :parent="parent" title="Process" :beforeChange="checkProcessRequirements">
+			<ChooseUserDefinedProcess :value="process" :namespace="processNamespace" @input="submitProcess" />
+		</WizardTab>
+		<WizardTab :pos="tabPos[1]" :parent="parent" title="Parameters" :beforeChange="checkParameterRequirements">
 			<ChooseProcessParameters v-if="processSpec" v-model="args" :process="processSpec" />
 			<p class="center" v-else-if="loading"><i class="fas fa-spinner fa-spin"></i> Loading process...</p>
 			<p v-else>Process not available.</p>
 		</WizardTab>
-		<WizardTab :pos="1" :parent="parent" title="Finish">
+		<WizardTab :pos="tabPos[2]" :parent="parent" title="Finish">
 			<ChooseProcessingMode v-model="mode" :title.sync="jobTitle" />
 		</WizardTab>
 	</div>
@@ -14,6 +17,7 @@
 <script>
 import ChooseProcessingMode from './tabs/ChooseProcessingMode.vue';
 import ChooseProcessParameters from './tabs/ChooseProcessParameters.vue';
+import ChooseUserDefinedProcess from './tabs/ChooseUserDefinedProcess.vue';
 import WizardMixin from './WizardMixin';
 import Utils from '../../utils';
 import { ProcessGraph } from '@openeo/js-processgraphs';
@@ -24,14 +28,17 @@ export default {
 		WizardMixin
 	],
 	components: {
+		ChooseUserDefinedProcess,
 		ChooseProcessingMode,
 		ChooseProcessParameters
 	},
 	data() {
 		return {
-			loading: true,
+			loading: false,
+			noProcessSelection: false,
 			process: null,
 			processSpec: null,
+			processNamespace: 'user',
 			args: {},
 			jobTitle: "",
 			mode: "",
@@ -39,6 +46,14 @@ export default {
 	},
 	computed: {
 		...Utils.mapGetters(['processes']),
+		tabPos() {
+			if (this.noProcessSelection) {
+				return [null, 0, 1];
+			}
+			else {
+				return [0, 1, 2];
+			}
+		},
 		graph() {
 			if (!this.process || !this.processSpec) {
 				return null;
@@ -58,27 +73,47 @@ export default {
 		}
 	},
 	async beforeMount() {
-		this.loading = true;
-		if (typeof this.process !== 'string' || this.process.length === 0) {
-			this.$emit('close', `Sorry, no process specified.`);
-			return;
-		}
-		let [id, namespace] = Utils.extractUDPParams(this.process);
-		try {
-			this.processSpec = await this.loadProcess({id, namespace});
-			if (this.processSpec) {
-				this.jobTitle = this.processSpec.id;
+		if (typeof this.process === 'string' && this.process.length > 0) {
+			const [id, ns] = Utils.extractUDPParams(this.process);
+			this.noProcessSelection = true;
+			this.process = id;
+			if (ns) {
+				this.processNamespace = ns;
 			}
-		} catch (error) {
-			console.warn(error);
-			this.$emit('close', `Sorry, the wizard can't load the requested process.`);
-		} finally {
-			this.loading = false;
+			let loaded = await this.checkProcessRequirements();
+			if (!loaded) {
+				this.$emit('close', `Sorry, the wizard can't load the requested process.`);
+			}
 		}
 	},
 	methods: {
 		...Utils.mapActions(['loadProcess']),
-		checkRequirements() {
+		submitProcess(item) {
+			this.process = item.id;
+			if (item.namespace) {
+				this.processNamespace = item.namespace;
+			}
+			this.parent.nextTab();
+		},
+		async checkProcessRequirements() {
+			this.loading = true;
+			try {
+				this.processSpec = await this.loadProcess({
+					id: this.process,
+					namespace: this.processNamespace
+				});
+				this.loading = false;
+				if (this.processSpec) {
+					this.jobTitle = this.processSpec.id;
+				}
+				return true;
+			} catch (error) {
+				this.loading = false;
+				console.warn(error);
+				return false;
+			}
+		},
+		checkParameterRequirements() {
 			if (this.graph) {
 				var pg = new ProcessGraph(this.graph, this.processes);
 				return pg.validate();

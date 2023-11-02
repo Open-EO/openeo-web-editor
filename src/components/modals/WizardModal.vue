@@ -82,15 +82,14 @@ export default {
 			selected: null,
 			usecases: [
 				{
-					component: 'UDP',
-					title: () => typeof this.options.process === 'string' ? this.options.process.replace(/@.+/, '') : 'Run UDP',
-					description: 'Executes a user-defined process',
-					hide: true
-				},
-				{
 					component: 'Download',
 					title: 'Download Data',
 					description: 'Just download a small portion of data.'
+				},
+				{
+					component: 'UDP',
+					title: () => typeof this.options.process === 'string' ? this.options.process.replace(/@.+/, '') : 'Run UDP',
+					description: 'Executes a user-defined process'
 				},
 				...(Config.supportedWizards || []) // ToDo: only show usecases that are supported based on processes (requiredProcesses)
 			],
