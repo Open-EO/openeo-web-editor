@@ -38,7 +38,7 @@ export default {
 		},
 		namespace: {
 			type: String,
-			default: 'user'
+			default: null
 		},
 		url: {
 			type: String,
@@ -48,7 +48,7 @@ export default {
 	computed: {
 		...Utils.mapGetters(['processes']),
 		filteredProcesses() {
-			return this.processes.namespace(this.namespace);
+			return this.processes.namespace(this.namespace || 'user');
 		}
 	},
 	methods: {

@@ -39,7 +39,7 @@ export default {
 			process: null,
 			processUrl: null,
 			processSpec: null,
-			processNamespace: 'user',
+			processNamespace: null,
 			args: {},
 			jobTitle: "",
 			mode: "",
