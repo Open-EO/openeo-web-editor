@@ -1,5 +1,5 @@
 <template>
-	<Modal id="WizardModal" :show="show" :width="width" :title="title" @closed="$emit('closed')">
+	<Modal id="WizardModal" :show="show" :width="width" :title="title" :submitFunction="nextTab" @closed="$emit('closed')">
 		<template #default>
 			<div v-if="selected" class="wizard">
 				<div class="wizard-navigation">

@@ -108,8 +108,11 @@ export default {
 			if (!Utils.isObject(data)) {
 				throw new Error('Process does not contain any data');
 			}
-			if (typeof data.id !== 'string' && !Utils.isObject(data.process_graph)) {
-				throw new Error('Process does not contain `id` or `process graph`');
+			if (!Utils.hasText(data.id)) {
+				throw new Error('Process does not contain an id');
+			}
+			if (!Utils.isObject(data.process_graph)) {
+				throw new Error('Process does not contain a process graph');
 			}
 			return data;
 		},

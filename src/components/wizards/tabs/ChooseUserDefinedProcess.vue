@@ -1,6 +1,6 @@
 <template>
 	<div class="step choose-process">
-		<p>Please select the user-defined process to execute.</p>
+		<p>Please select the user-defined process to execute:</p>
 		<Processes heading="" :processes="filteredProcesses" :offerDetails="false">
 			<template #summary="{ item }">
 				<div :class="{element: true, selected: item.id == value}">
@@ -12,6 +12,9 @@
 				</div>
 			</template>
 		</Processes>
+		<hr />
+		<p>Alternatively, provide a URL to a user-defined process:</p>
+		<input type="url" name="url" class="url" :value="url" @blur="updateUrl" />
 	</div>
 </template>
 
@@ -36,6 +39,10 @@ export default {
 		namespace: {
 			type: String,
 			default: 'user'
+		},
+		url: {
+			type: String,
+			default: null
 		}
 	},
 	computed: {
@@ -46,8 +53,20 @@ export default {
 	},
 	methods: {
 		...Utils.mapActions(['describeUserProcess']),
-		async update(id) {
+		update(id) {
 			this.$emit('input', id);
+		},
+		updateUrl(event) {
+			const url = event.target.value;
+			if (!url) {
+				return;
+			}
+			else if (Utils.isUrl(url)) {
+				this.$emit('input', url, true);
+			}
+			else {
+				throw new Error('The provided URL is not valid.');
+			}
 		},
 		showProcess(item) {
 			this.broadcast('showProcess', item);
@@ -58,6 +77,11 @@ export default {
 
 <style lang="scss">
 .choose-process {
+	input.url {
+		width: 100%;
+		box-sizing: border-box;
+	}
+
 	.vue-component.searchable-list ul.list > li {
 		margin-bottom: 0;
 

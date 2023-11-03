@@ -1,7 +1,7 @@
 <template>
 	<div class="wizard-tab-content">
 		<WizardTab v-if="!noProcessSelection" :pos="tabPos[0]" :parent="parent" title="Process" :beforeChange="checkProcessRequirements">
-			<ChooseUserDefinedProcess :value="process" :namespace="processNamespace" @input="submitProcess" />
+			<ChooseUserDefinedProcess :value="process" :namespace="processNamespace" :url="processUrl" @input="submitProcess" />
 		</WizardTab>
 		<WizardTab :pos="tabPos[1]" :parent="parent" title="Parameters" :beforeChange="checkParameterRequirements">
 			<ChooseProcessParameters v-if="processSpec" v-model="args" :process="processSpec" />
@@ -37,6 +37,7 @@ export default {
 			loading: false,
 			noProcessSelection: false,
 			process: null,
+			processUrl: null,
 			processSpec: null,
 			processNamespace: 'user',
 			args: {},
@@ -58,16 +59,20 @@ export default {
 			if (!this.process || !this.processSpec) {
 				return null;
 			}
-			let [id, namespace] = Utils.extractUDPParams(this.process);
+			let node = {
+				process_id: this.process,
+				arguments: this.args,
+				result: true
+			};
+			if (Utils.hasText(this.processNamespace)) {
+				node.namespace = this.processNamespace;
+			}
+			if (Utils.hasText(this.processSpec.summary)) {
+				node.description = this.processSpec.summary;
+			}
 			return {
 				process_graph: {
-					[id]: {
-						process_id: id,
-						namespace,
-						description: this.processSpec.summary,
-						arguments: this.args,
-						result: true
-					}
+					[this.process]: node
 				}
 			};
 		}
@@ -88,30 +93,70 @@ export default {
 	},
 	methods: {
 		...Utils.mapActions(['loadProcess']),
-		submitProcess(item) {
-			this.process = item.id;
-			if (item.namespace) {
-				this.processNamespace = item.namespace;
+		submitProcess(item, isUrl = false) {
+			if (isUrl) {
+				this.processUrl = item;
 			}
-			this.parent.nextTab();
+			else {
+				this.process = item.id;
+				if (item.namespace) {
+					this.processNamespace = item.namespace;
+				}
+				this.parent.nextTab();
+			}
+		},
+		async loadFromUrl(url) {
+			if (!Utils.isUrl(url)) {
+				throw new Error('Please provide a valid URL!');
+			}
+			let data;
+			try {
+				const response = await axios(url);
+				data = response.data;
+			} catch(error) {
+				throw new Error('Failed to load process from the given URL');
+			}
+			if (typeof data === 'string') {
+				try {
+					data = JSON.parse(data);
+				} catch(error) {
+					throw new Error('Process is not valid JSON');
+				}
+			}
+			if (!Utils.isObject(data)) {
+				throw new Error('Process does not contain any data');
+			}
+			if (!Utils.hasText(data.id)) {
+				throw new Error('Process does not contain an id');
+			}
+			if (!Utils.isObject(data.process_graph)) {
+				throw new Error('Process does not contain a process graph');
+			}
+			return data;
 		},
 		async checkProcessRequirements() {
 			this.loading = true;
-			try {
+			if (this.processUrl) {
+				const process = await this.loadFromUrl(this.processUrl);
+				this.processes.add(process, this.processUrl);
+				this.processNamespace = this.processUrl;
+				this.process = process.id;
+				this.processSpec = process;
+			}
+			else if (this.process) {
 				this.processSpec = await this.loadProcess({
 					id: this.process,
 					namespace: this.processNamespace
 				});
-				this.loading = false;
-				if (this.processSpec) {
-					this.jobTitle = this.processSpec.id;
-				}
-				return true;
-			} catch (error) {
-				this.loading = false;
-				console.warn(error);
-				return false;
 			}
+			else {
+				throw new Error('Please select a user-defined process');
+			}
+			this.loading = false;
+			if (this.processSpec) {
+				this.jobTitle = this.processSpec.id;
+			}
+			return true;
 		},
 		checkParameterRequirements() {
 			if (this.graph) {
