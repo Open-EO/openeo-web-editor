@@ -60,6 +60,7 @@ import WizardStep from '../wizards/components/WizardStep.vue';
 import Utils from '../../utils';
 import Config from '../../../config';
 import EventBusMixin from '../EventBusMixin';
+import { CancellableRequestError } from '../cancellableRequest';
 
 const wizards = Config.supportedWizards || [];
 let components = {
@@ -248,7 +249,22 @@ export default {
 				else if (this.isLastStep) {
 					this.$refs.component.finish()
 						.then(this.close)
-						.catch(error => Utils.exception(this, error));
+						.catch(error => {
+							if (error instanceof CancellableRequestError) {
+								if (error.isError) {
+									Utils.exception(this, error, error.title);
+								}
+								else {
+									Utils.ok(this, error.message, error.title);
+								}
+								if (error.close) {
+									this.close();
+								}
+							}
+							else {
+								Utils.exception(this, error);
+							}
+						});
 				}
 			}
 			this.beforeTabChange(this.activeTabIndex, cb);

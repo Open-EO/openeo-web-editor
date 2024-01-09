@@ -26,7 +26,8 @@ import EventBusMixin from './EventBusMixin';
 import WorkPanelMixin from './WorkPanelMixin';
 import SyncButton from './SyncButton.vue';
 import Utils from '../utils.js';
-import { AbortController, Job } from '@openeo/js-client';
+import { Job } from '@openeo/js-client';
+import { cancellableRequest, showCancellableRequestError, CancellableRequestError } from './cancellableRequest';
 
 const WorkPanelMixinInstance = WorkPanelMixin('jobs', 'batch job', 'batch jobs');
 
@@ -39,8 +40,7 @@ export default {
 	data() {
 		return {
 			watchers: {},
-			jobUpdater: null,
-			runId: 0
+			jobUpdater: null
 		};
 	},
 	mounted() {
@@ -145,48 +145,20 @@ export default {
 			await this.queueJob(job);
 		},
 		async executeProcess() {
-			let abortController = new AbortController();
-			let snotifyConfig = {
-				timeout: 0,
-				type: 'async',
-				buttons: [{
-					text: 'Cancel',
-					action: toast => {
-						abortController.abort();
-						this.$snotify.remove(toast.id, true);
-					}
-				}]
-			};
-			let toast;
-			try {
-				this.runId++;
-				let message = "A process is currently executed synchronously...";
-				let title = `Run #${this.runId}`;
-				let endlessPromise = () => new Promise(() => {}); // Pass a promise to snotify that never resolves as we manually close the toast
-				toast = this.$snotify.async(message, title, endlessPromise, snotifyConfig);
-				let result = await this.connection.computeResult(this.process, null, null, abortController);
+			const callback = async (abortController) => {
+				const result = await this.connection.computeResult(this.process, null, null, abortController);
 				this.broadcast('viewSyncResult', result);
-			} catch(error) {
-				if (axios.isCancel(error)) {
-					// Do nothing, we expected the cancellation
-				}
-				else if (typeof error.message === 'string' && Utils.isObject(error.response) && [400,500].includes(error.response.status)) {
-					this.broadcast('viewLogs', [{
-						id: error.id,
-						code: error.code,
-						level: 'error',
-						message: error.message,
-						links: error.links || []
-					}]);
-					Utils.error(this, "Synchronous processing failed. Please see the logs for details.", "Processing Error");
+			};
+			try {
+				await cancellableRequest(this, callback, 'Run');
+			} catch (error) {
+				if (error instanceof CancellableRequestError) {
+					showCancellableRequestError(this, error);
 				}
 				else {
-					Utils.exception(this, error, "Server Error");
+					Utils.exception(this, error);
 				}
-			} finally {
-				if (toast) {
-					this.$snotify.remove(toast.id, true);
-				}
+
 			}
 		},
 		jobCreated(job) {
