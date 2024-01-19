@@ -57,7 +57,7 @@ export default {
 	name: 'UserMenu',
 	mixins: [EventBusMixin],
 	computed: {
-		...Utils.mapState(['userInfo', 'isAuthenticated']),
+		...Utils.mapState(['userInfo', 'isAuthenticated', 'connection']),
 		...Utils.mapGetters(['currency', 'capabilities']),
 		userLinks() {
 			return Utils.friendlyLinks(this.userInfo.links, true, ['self', 'edit-form', 'payment', 'alternate']);
@@ -93,8 +93,12 @@ export default {
 			return Utils.size(this.profile) > 0;
 		},
 		userName() {
+			const authProvier = this.connection && this.connection.getAuthProvider();
 			if (typeof this.userInfo.name === 'string') {
 				return this.userInfo.name;
+			}
+			else if (authProvier && authProvier.getDisplayName()) {
+				return authProvier.getDisplayName();
 			}
 			else if (typeof this.userInfo.user_id === 'string') {
 				return this.userInfo.user_id;
