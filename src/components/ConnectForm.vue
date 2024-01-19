@@ -355,10 +355,15 @@ export default {
 					await provider.login(this.username, this.password);
 				}
 				else if (authType === 'oidc') {
+					let offlineScope = true;
 					if (this.oidcClientId) {
 						this.provider.setClientId(this.oidcClientId);
 					}
-					await provider.login(this.oidcOptions, true);
+					else {
+						const client = provider.detectDefaultClient();
+						offlineScope = client && Array.isArray(client.grant_types) && client.grant_types.includes('refresh_token');
+					}
+					await provider.login(this.oidcOptions, offlineScope);
 					provider.addListener('AccessTokenExpired', () => Utils.warn(this, "User session has expired, please login again."));
 					provider.addListener('SilentRenewError', () => Utils.error(this, "You'll be switching to Guest mode in less than a minute.", "Session renewal failed"));
 				}
