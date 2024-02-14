@@ -36,6 +36,10 @@
     "type": "git",
     "url": "https://github.com/Open-EO/openeo-web-editor.git"
   },
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/m-mohr"
+  },
   "scripts": {
     "build:database": "node src/build-database.js",
     "start": "npm run build:database && npx vue-cli-service serve",
