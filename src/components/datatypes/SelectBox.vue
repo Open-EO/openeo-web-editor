@@ -40,7 +40,6 @@ export default {
 		}
 	},
 	computed: {
-		...Utils.mapGetters(['collectionDefaults']),
 		selectOptions() {
 			let state = [];
 			switch(this.type) {
@@ -213,7 +212,8 @@ export default {
 			return (this.type === 'file-paths');
 		},
 		taggable() {
-			return (this.type === 'year');
+			let freeInputIfEmpty = ['band-name', 'collection-id', 'job-id', 'input-format', 'output-format'];
+			return (this.type === 'year' || (this.selectOptions.length === 0 && freeInputIfEmpty.includes(this.type)));
 		},
 		preselect() {
 			if (this.multiple) {

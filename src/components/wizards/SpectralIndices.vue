@@ -90,7 +90,7 @@ export default {
 			temporal_extent: null
 		};
 	},
-	created() {
+	beforeMount() {
 		this.scale = this.processes.has('apply') && this.processes.has('linear_scale_range') ? false : null;
 	},
 	computed: {

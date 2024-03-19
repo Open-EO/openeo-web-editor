@@ -406,6 +406,9 @@ export default {
 			if (discover && !this.$config.skipLogin) {
 				params.set('discover', 1);
 			}
+			else if (!discover && this.$config.skipLogin) {
+				params.set('discover', 0);
+			}
 			else {
 				params.delete('discover');
 			}

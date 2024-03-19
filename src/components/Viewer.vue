@@ -70,13 +70,14 @@ export default {
 	computed: {
 		...Utils.mapState(['connection']),
 		...Utils.mapState('editor', ['appMode']),
+		...Utils.mapGetters('editor', ['getModelNodeFromDnD']),
 		nextTabId() {
 			return `viewer~${this.tabIdCounter}`;
 		}
 	},
 	methods: {
 		...Utils.mapActions(['describeCollection']),
-		...Utils.mapMutations('editor', ['setViewerOptions']),
+		...Utils.mapMutations('editor', ['setViewerOptions', 'setModelDnD']),
 		isCollectionPreview(data) {
 			return (data instanceof Service && Utils.isObject(data.attributes) && data.attributes.preview === true);
 		},
@@ -278,11 +279,9 @@ export default {
 			}
 		},
 		async onDrop(event) {
-			var json = event.dataTransfer.getData("application/vnd.openeo-node");
-			if (!json) {
-				return;
-			}
-			let node = JSON.parse(json);
+			const node = await this.getModelNodeFromDnD();
+			this.setModelDnD();
+
 			if (node.process_id === 'load_collection') {
 				event.preventDefault();
 				let id = Utils.isObject(node.arguments) ? node.arguments.id : null;

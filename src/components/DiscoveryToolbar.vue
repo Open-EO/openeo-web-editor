@@ -94,7 +94,7 @@ export default {
 	computed: {
 		...Utils.mapState(['collections', 'udfRuntimes']),
 		...Utils.mapState('editor', ['discoverySearchTerm']),
-		...Utils.mapGetters(['supports', 'collectionDefaults', 'fileFormats', 'processes']),
+		...Utils.mapGetters(['supports', 'fileFormats', 'processes']),
 		supportsLoadCollection() {
 			return this.processes.has('load_collection');
 		},
@@ -143,15 +143,17 @@ export default {
 		}
 	},
 	methods: {
-		...Utils.mapMutations('editor', ['setDiscoverySearchTerm']),
+		...Utils.mapMutations('editor', ['setDiscoverySearchTerm', 'setModelDnd']),
 		...Utils.mapActions(['loadProcess']),
-		async onDrag(event, type, data) {
+		onDrag(event, type, data) {
+			let fn = (loading) => this.setModelDnd({type, data, loading});
 			if (type === 'process') {
-				this.loadProcess(data);
+				fn(true);
+				this.loadProcess(data).then(() => fn(false));
 			}
-			let node = this.getNode(type, data);
-			event.dataTransfer.setData("application/vnd.openeo-node", JSON.stringify(node));
-			event.dataTransfer.setData("text/plain", JSON.stringify(node, null, 2));
+			else {
+				fn(false);
+			}
 		},
 		showCollectionInfo(id) {
 			this.broadcast('showCollection', id);
@@ -175,31 +177,6 @@ export default {
 				type: "output"
 			};
 			this.broadcast('showModal', 'FileFormatModal', props);
-		},
-		getNode(type, data) {
-			switch(type) {
-				case 'collection':
-					return {
-						process_id: 'load_collection',
-						arguments: this.collectionDefaults(data.id)
-					};
-				case 'process':
-					return {
-						process_id: data.id,
-						namespace: data.namespace,
-						arguments: {}
-					};
-				case 'udf':
-					return {
-						process_id: 'run_udf',
-						arguments: data
-					};
-				case 'fileformat':
-					return {
-						process_id: 'save_result',
-						arguments: {format: data.name, options: {}}
-					};
-			}
 		}
 	}
 }

@@ -1,5 +1,5 @@
 <template>
-	<Modal id="WizardModal" :show="show" :width="width" :title="title" @closed="$emit('closed')">
+	<Modal id="WizardModal" :show="show" :width="width" :title="title" :submitFunction="nextTab" @closed="$emit('closed')">
 		<template #default>
 			<div v-if="selected" class="wizard">
 				<div class="wizard-navigation">
@@ -60,6 +60,7 @@ import WizardStep from '../wizards/components/WizardStep.vue';
 import Utils from '../../utils';
 import Config from '../../../config';
 import EventBusMixin from '../EventBusMixin';
+import { CancellableRequestError } from '../cancellableRequest';
 
 const wizards = Config.supportedWizards || [];
 let components = {
@@ -82,15 +83,14 @@ export default {
 			selected: null,
 			usecases: [
 				{
-					component: 'UDP',
-					title: () => typeof this.options.process === 'string' ? this.options.process.replace(/@.+/, '') : 'Run UDP',
-					description: 'Executes a user-defined process',
-					hide: true
-				},
-				{
 					component: 'Download',
 					title: 'Download Data',
 					description: 'Just download a small portion of data.'
+				},
+				{
+					component: 'UDP',
+					title: () => typeof this.options.process === 'string' ? this.options.process.replace(/@.+/, '') : 'Run UDP',
+					description: 'Executes a user-defined process'
 				},
 				...(Config.supportedWizards || []) // ToDo: only show usecases that are supported based on processes (requiredProcesses)
 			],
@@ -249,7 +249,22 @@ export default {
 				else if (this.isLastStep) {
 					this.$refs.component.finish()
 						.then(this.close)
-						.catch(error => Utils.exception(this, error));
+						.catch(error => {
+							if (error instanceof CancellableRequestError) {
+								if (error.isError) {
+									Utils.exception(this, error, error.title);
+								}
+								else {
+									Utils.ok(this, error.message, error.title);
+								}
+								if (error.close) {
+									this.close();
+								}
+							}
+							else {
+								Utils.exception(this, error);
+							}
+						});
 				}
 			}
 			this.beforeTabChange(this.activeTabIndex, cb);
