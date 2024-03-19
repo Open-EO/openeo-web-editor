@@ -20,7 +20,7 @@ export default {
 	mapZoom: 4,
 
 	// OSM Nominatim compliant geocoder URL, remove to disable
-	geocoder: "https://nominatim.openstreetmap.org/search/",
+	geocoder: "https://nominatim.openstreetmap.org/search",
 
 	// A message shown on the login page
 	loginMessage: '',
