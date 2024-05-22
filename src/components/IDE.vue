@@ -321,13 +321,6 @@ export default {
 #discovery {
 	height: 100%;
 	overflow: auto;
-
-	.search-box {
-		margin: 1rem;
-	}
-	.category {
-		padding: 5px 1em;
-	}
 }
 #user {
 	min-height: 2.5em;
