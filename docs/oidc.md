@@ -1,8 +1,8 @@
 # OIDC setup guidelines for usage with the Web Editor
 
 The standard authentication mechanism in openEO is OpenID Connect (OIDC).
-The openEO Web Editor, being a standard web application,
-uses the [OIDC Authorization Code Flow](https://openid.net/specs/openid-connect-core-1_0.html#CodeFlowAuth)
+The openEO Web Editor, being a standard web application, uses the corresponding OIDC flows such as the
+[Authorization Code Flow](https://openid.net/specs/openid-connect-core-1_0.html#CodeFlowAuth)
 to authenticate the user.
 
 To provide an optimal OIDC authentication user experience in the openEO Web Editor,
