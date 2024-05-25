@@ -31,8 +31,7 @@ it is important for an openEO back-end to properly set up a couple of things:
     For example, if you host the web editor at `https://editor.openeo.example.org/`,
     you should allow the redirect URI `https://editor.openeo.example.org`.
 
-    Note that per [Open-EO/openeo-web-editor#320](https://github.com/Open-EO/openeo-web-editor/issues/320),
-    the redirect URIs should be allow-listed *without trailing slashes*.
+    Note that the redirect URIs should be allow-listed *without trailing slashes*.
 
     Make sure to cover all possible Web Editor domains you want to support with the client.
     For example, consider allow-listing:
