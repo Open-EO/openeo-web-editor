@@ -311,7 +311,7 @@ export default {
 			}
 		},
 		initSelection() {
-			let value = this.value;
+			let value = typeof this.value === 'undefined' ? this.schema.default() : this.value;
 			if (this.multiple && Array.isArray(value)) {
 				this.selected = this.selectOptions.filter(o => value.includes(o.id));
 			}

@@ -115,11 +115,11 @@ export default {
 			}
 
 			try {
-				await this.create({parameters: [
+				await this.create([
 					file,
 					null,
 					percent => this.$set(this.uploadProgressPerFile, i, percent)
-				]});
+				]);
 				this.$set(this.uploadProgressPerFile, i, 100);
 				Utils.ok(this, 'File upload completed.', file.name);
 			} catch (error) {

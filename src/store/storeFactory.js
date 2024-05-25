@@ -26,7 +26,7 @@ export default ({namespace, listFn, createFn, updateFn, deleteFn, readFn, readFn
 			}
 		},
 		actions: {
-			async create(cx, {parameters}) {
+			async create(cx, parameters) {
 				if (cx.getters.supportsCreate) {
 					let connection = cx.rootState.connection;
 					let data = await connection[createFn].apply(connection, parameters);

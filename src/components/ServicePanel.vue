@@ -20,6 +20,7 @@
 <script>
 import EventBusMixin from './EventBusMixin';
 import WorkPanelMixin from './WorkPanelMixin';
+import FieldMixin from './FieldMixin';
 import SyncButton from './SyncButton.vue';
 import Utils from '../utils';
 import { Service } from '@openeo/js-client';
@@ -27,7 +28,11 @@ import { mapMutations } from 'vuex';
 
 export default {
 	name: 'ServicePanel',
-	mixins: [WorkPanelMixin('services', 'web service', 'web services'), EventBusMixin],
+	mixins: [
+		WorkPanelMixin('services', 'web service', 'web services'),
+		EventBusMixin,
+		FieldMixin
+	],
 	components: {
 		SyncButton
 	},
@@ -138,52 +143,12 @@ export default {
 			}
 			Utils.confirm(this, 'Web Service created!', buttons);
 		},
-		getTitleField(value = null) {
-			return {
-				name: 'title',
-				label: 'Title',
-				schema: {type: 'string'},
-				default: null,
-				value: value,
-				optional: true
-			};
-		},
-		getDescriptionField(value = null) {
-			return {
-				name: 'description',
-				label: 'Description',
-				schema: {type: 'string', subtype: 'commonmark'},
-				default: null,
-				value: value,
-				description: 'CommonMark (Markdown) is allowed.',
-				optional: true
-			};
-		},
 		getServiceTypeField(value = undefined) {
 			return {
 				name: 'type',
 				label: 'Type',
 				schema: {type: 'string', subtype: 'service-type'},
 				value: value
-			};
-		},
-		getBillingPlanField(value = undefined) {
-			return {
-				name: 'plan',
-				label: 'Billing plan',
-				schema: {type: 'string', subtype: 'billing-plan'},
-				value: value,
-				optional: true
-			};
-		},
-		getBudgetField(value = null) {
-			return {
-				name: 'budget',
-				label: 'Budget limit',
-				schema: {type: 'number', subtype: 'budget'},
-				default: null,
-				value: value,
-				optional: true
 			};
 		},
 		getEnabledField(value = true) {
@@ -229,7 +194,17 @@ export default {
 		async createService(script, data, quiet = false) {
 			data = this.normalizeToDefaultData(data);
 			try {
-				let service = await this.create({parameters: [script, data.type, data.title, data.description, data.enabled, data.configuration, data.plan, data.budget]});
+				let service = await this.create([
+					script,
+					data.type,
+					data.title,
+					data.description,
+					data.enabled,
+					data.configuration,
+					data.plan,
+					data.budget,
+					{log_level: data.log_level}
+				]);
 				if (!quiet) {
 					this.serviceCreated(service);
 				}
@@ -245,6 +220,7 @@ export default {
 				this.getDescriptionField(),
 				this.getServiceTypeField(),
 				this.getEnabledField(),
+				this.getLogLevelField(),
 				this.supportsBillingPlans ? this.getBillingPlanField() : null,
 				this.supportsBilling ? this.getBudgetField() : null,
 				this.getConfigField()
@@ -273,6 +249,7 @@ export default {
 					this.getTitleField(service.title),
 					this.getDescriptionField(service.description),
 					this.getEnabledField(service.enabled),
+					this.getLogLevelField(service.log_level),
 					this.supportsBillingPlans ? this.getBillingPlanField(service.plan) : null,
 					this.supportsBilling ? this.getBudgetField(service.budget) : null,
 					this.getConfigField(service.configuration)
