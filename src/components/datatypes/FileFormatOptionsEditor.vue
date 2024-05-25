@@ -21,7 +21,7 @@
 import ParameterDataTypes from '../ParameterDataTypes.vue';
 import Utils from '../../utils.js';
 import Description from '@openeo/vue-components/components/Description.vue';
-import { ProcessParameter } from '@openeo/js-commons';
+import { ProcessParameter, ProcessDataType } from '@openeo/js-commons';
 
 export default {
 	name: 'FileFormatOptionsEditor',
@@ -69,16 +69,15 @@ export default {
 					schema.examples = [schema.example];
 					delete schema.example;
 				}
-				parameters.push(new ProcessParameter({
+				const parameter = new ProcessParameter({
 					name: name,
 					description: schema.description,
-					schema: [
-						{subtype: 'undefined', not: {}},
-						schema
-					],
+					schema,
 					optional: !schema.required,
 					default: schema.default
-				}));
+				});
+				parameter.schemas.push(new ProcessDataType({subtype: 'undefined', not: {}}, parameter));
+				parameters.push(parameter);
 			}
 			return parameters;
 		},

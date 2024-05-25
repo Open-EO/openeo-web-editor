@@ -1,8 +1,8 @@
 <template>
 	<div :class="{editor: true, array: !isObject, object: isObject}">
 		<div class="buttons">
-			<button type="button" class="addBtn" v-if="editable" :disabled="count >= maxCount" @click="add()"><i class="fas fa-plus"></i> Add</button>
-			<FullscreenButton :element="() => this.$el" />
+			<button type="button" class="addBtn" v-if="editable && additionalProperties" :disabled="count >= maxCount" @click="add()"><i class="fas fa-plus"></i> Add</button>
+			<FullscreenButton v-if="additionalProperties" :element="() => this.$el" />
 		</div>
 		<div v-if="!elements.length" class="empty description">
 			<i class="fas fa-info-circle"></i>
@@ -76,6 +76,9 @@ export default {
 		},
 		minCount() {
 			return (this.isObject ? this.schema.schema.minProperties : this.schema.schema.minItems) || 0;
+		},
+		additionalProperties() {
+			return this.isObject && this.schema.schema.additionalProperties !== false;
 		},
 		prefill() {
 			let schema = this.schema.schema;

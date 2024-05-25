@@ -4,11 +4,11 @@
 			<select name="dataType" :value="selectedType" @input="onSelectType" :disabled="!editable">
 				<template v-if="selectableTypes.length > 1">
 					<optgroup v-for="group in selectableTypes" :key="group.name" :label="group.name">
-						<option v-for="type in group.types" :key="type.dataType()" :value="type.dataType()">{{ type | dataTypeTitle }}</option>
+						<option v-for="(type, key) in group.types" :key="key" :value="key">{{ type | dataTypeTitle }}</option>
 					</optgroup>
 				</template>
 				<template v-else>
-					<option v-for="type in selectableTypes[0].types" :key="type.dataType()" :value="type.dataType()">{{ type | dataTypeTitle }}</option>
+					<option v-for="(type, key) in selectableTypes[0].types" :key="key" :value="key">{{ type | dataTypeTitle }}</option>
 				</template>
 			</select>
 		</div>
@@ -225,7 +225,7 @@ export default {
 			}
 			else {
 				for(let type of this.parameter.schemas) {
-					let name = type.dataType();
+					const name = this.getUniqueKey(allowed, type.dataType());
 					allowed[name] = type;
 				}
 			}
@@ -238,8 +238,8 @@ export default {
 				if (s.any === false) {
 					continue;
 				}
-				let name = s.subtype || s.type;
-				let schema = Object.assign({}, API_TYPES[name], s);
+				const name = s.subtype || s.type;
+				const schema = Object.assign({}, API_TYPES[name], s);
 				map[name] = new ProcessDataType(schema, this.parameter);
 			}
 			return map;
@@ -249,12 +249,10 @@ export default {
 			for(let type in this.allowedTypes) {
 				let schema = this.allowedTypes[type];
 				let group = schema.group();
-				if (!Array.isArray(grouped[group])) {
-					grouped[group] = [schema];
+				if (!Utils.isObject(grouped[group])) {
+					grouped[group] = {};
 				}
-				else {
-					grouped[group].push(schema);
-				}
+				grouped[group][type] = schema;
 			}
 			let groups = TYPE_GROUPS
 				.map(group => ({
@@ -263,6 +261,16 @@ export default {
 				}))
 				.filter(group => group.types.length !== 0);
 			return groups;
+		},
+		detectableTypes() {
+			const detectable = {};
+			for(let key in this.allowedTypes) {
+				let type = this.allowedTypes[key];
+				if (!type.schema.noAutoDetect) {
+					detectable[key] = type;
+				}
+			}
+			return detectable;
 		}
 	},
 	watch: {
@@ -290,6 +298,15 @@ export default {
 		}
 	},
 	methods: {
+		getUniqueKey(obj, basename) {
+			let name = basename;
+			let index = 2;
+			while (obj[name]) {
+				name = basename + String(index);
+				index++;
+			}
+			return name;
+		},
 		async isValueInvalid(value, schema) {
 			let schema2 = Utils.deepClone(schema);
 			// Allow from_node and from_parameter in values, see https://github.com/Open-EO/openeo-web-editor/issues/179
@@ -312,13 +329,14 @@ export default {
 		 * @return {string[]} - Returns matching indices (as strings!).
 		 */
 		async getTypeForValue(types, value) {
-			var validTypes = [];
-			for(var type of types) {
+			const validTypes = [];
+			for(let key in types) {
+				let type = types[key];
 				try {
 					if (await this.isValueInvalid(value, type.schema)) {
 						continue;
 					}
-					validTypes.push(type.dataType());
+					validTypes.push(key);
 				} catch (error) {}
 			}
 			return validTypes;
@@ -342,8 +360,7 @@ export default {
 				}
 			}
 			else {
-				let detectableTypes = Object.values(this.allowedTypes).filter(type => !type.schema.noAutoDetect);
-				let types = await this.getTypeForValue(detectableTypes, this.state);
+				let types = await this.getTypeForValue(this.detectableTypes, this.state);
 				if (types.length === 0) {
 					await this.setSelected('json');
 				}
