@@ -45,6 +45,7 @@ Example: <https://editor.openeo.org?server=https://earthengine.openeo.org&discov
 Here we collection information for back-end implementors that want to improve the experience with the Web Editor by fine-tuning their implementation.
 
 * [GeoTiff / COG support](docs/geotiff.md)
+* [OIDC setup](docs/oidc.md)
 * and more...
 
 ## Contributions
