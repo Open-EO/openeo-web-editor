@@ -67,6 +67,7 @@ it is important for an openEO back-end to properly set up a couple of things:
   - Include the appropriate grant type under the `grant_types` field:
     - `authorization_code` for the Authorization Code Flow
     - `authorization_code+pkce` for the Authorization Code Flow with PKCE
+    - `implicit` for the Implicit Flow (**discouraged**)
   - List the same redirect URIs discussed above again under the `redirect_urls` field.
     This listing allows the openEO Web Editor to hide authentication options
     that won't work because redirect URIs configuration.
