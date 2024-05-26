@@ -2,9 +2,9 @@
 	<div class="kernel-editor">
 		<div class="size">
 			Kernel Size (rows &times; columns):
-			<input type="number" :value="rows" min="0" :disabled="!editable" @blur="updateRows" />
+			<input type="number" :value="rows" min="0" :disabled="!editable" @change="updateRows" />
 			&times;
-			<input type="number" :value="cols" min="0" :disabled="!editable || rows === 0" @blur="updateCols" />
+			<input type="number" :value="cols" min="0" :disabled="!editable || rows === 0" @change="updateCols" />
 		</div>
 		<p v-if="!rows || !cols" class="kernel">Empty kernel</p>
 		<div v-else class="kernel">
@@ -16,7 +16,7 @@
 				<tr v-for="(row, y) in rowsArray" :key="row">
 					<th>{{ row }}</th>
 					<td v-for="(col, x) in colsArray" :key="col">
-						<input v-if="editable" type="number" v-model="data[y][x]" />
+						<input v-if="editable" type="number" v-model.number="data[y][x]" />
 						<span v-else class="number">{{ data[y][x] }}</span>
 					</td>
 				</tr>
