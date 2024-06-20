@@ -7,7 +7,7 @@
 			<ChooseBoundingBox v-model="spatial_extent" :max="max_spatial_extent" />
 		</WizardTab>
 		<WizardTab :pos="2" :parent="parent" title="Temporal Coverage" :beforeChange="() => temporal_extent !== null">
-			<ChooseTime v-model="temporal_extent" />
+			<ChooseTime v-model="temporal_extent" :options="temporal_values" />
 		</WizardTab>
 		<WizardTab :pos="3" :parent="parent" title="File Format" :beforeChange="() => format !== null">
 			<ChooseFormat v-model="format" />
@@ -48,7 +48,8 @@ export default {
 			mode: "",
 			spatial_extent: null,
 			max_spatial_extent: null,
-			temporal_extent: null
+			temporal_extent: null,
+			temporal_values: null
 		};
 	},
 	computed: {
@@ -63,6 +64,17 @@ export default {
 				}
 				if (this.collection !== id || this.temporal_extent == null) {
 					this.temporal_extent = defaults.temporal_extent;
+
+					if (Utils.isObject(defaults.dimensions)) {
+						let t = Object.values(defaults.dimensions).find(dim => dim.type === 'temporal');
+						if (t && Array.isArray(t.values) && t.values.length > 0) {
+							this.temporal_values = t.values;
+							this.temporal_extent = null;
+						}
+						else {
+							this.temporal_values = null;
+						}
+					}
 				}
 			}
 			this.collection = id;
