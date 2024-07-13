@@ -432,20 +432,20 @@ export default {
 
 		showServerSelector() {
 			this.broadcast(
-				'showListModal', 
+				"showListModal",
 				"Select previously used server",
 				this.storedServers,
 				[
 					{
-						callback: (url) => {
+						callback: url => {
 							this.serverUrl = url;
 							return true;  // return true to close the modal
 						}
 					},
 					{
-						callback: (url) => this.removeServer(url),
+						callback: url => this.removeServer(url),
 						icon: 'trash',
-						title: 'Delete entry from history'
+						title: 'Delete'
 					}
 				]
 			);

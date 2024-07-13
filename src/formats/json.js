@@ -1,4 +1,3 @@
-import { isIterable } from 'core-js';
 import Utils from '../utils';
 import { SupportedFormat } from './format';
 

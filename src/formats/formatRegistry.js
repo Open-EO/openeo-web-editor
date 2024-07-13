@@ -45,7 +45,6 @@ export default class FormatRegistry {
 
 	createFileFromAsset(asset, stac) {
 		try {
-
 			// Detect by media type
 			if (typeof asset.type === 'string') {
 				let mime = contentType.parse(asset.type.toLowerCase());

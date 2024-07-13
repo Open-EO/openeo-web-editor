@@ -40,30 +40,29 @@ export default {
 			show: true
 		};
 	},
-    computed: {
+	computed: {
 		listCount() {
 			return Utils.size(this.listItems);
 		},
-        listItems() {
-            return (typeof this.list == 'function' ? this.list() : this.list);
+		listItems() {
+			return (typeof this.list == 'function' ? this.list() : this.list);
 		},
 		otherListActions() {
 			return Array.isArray(this.listActions) && this.listActions.length > 1 ? this.listActions.slice(1) : [];
 		}
-    },
+	},
 	methods: {
-        doListAction(item, key, callback) {
-            const closeAfterCompletion = callback(Array.isArray(this.listItems) ? item : key);
-            if(closeAfterCompletion === true) {
-                this.show = false;
-            }
+		doListAction(item, key, callback) {
+			const closeAfterCompletion = callback(item, key);
+			if(closeAfterCompletion === true) {
+				this.show = false;
+			}
 		},
-
-        doMainListAction(item, key) {
-            if(this.listActions.length > 0) {
-                this.doListAction(item, key, this.listActions[0].callback);
-            }
-        }
+		doMainListAction(item, key) {
+			if(this.listActions.length > 0) {
+				this.doListAction(item, key, this.listActions[0].callback);
+			}
+		}
 	}
 };
 </script>
@@ -100,7 +99,7 @@ export default {
 }
 
 .listEmpty {
-    display: block;
-    text-align: center;
+		display: block;
+		text-align: center;
 }
 </style>
