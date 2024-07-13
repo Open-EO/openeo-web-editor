@@ -52,15 +52,15 @@ export default {
 		}
 	},
 	methods: {
-		doListAction(item, key, callback) {
-			const closeAfterCompletion = callback(item, key);
+		async doListAction(item, key, callback) {
+			const closeAfterCompletion = await callback(item, key);
 			if(closeAfterCompletion === true) {
 				this.show = false;
 			}
 		},
-		doMainListAction(item, key) {
+		async doMainListAction(item, key) {
 			if(this.listActions.length > 0) {
-				this.doListAction(item, key, this.listActions[0].callback);
+				await this.doListAction(item, key, this.listActions[0].callback);
 			}
 		}
 	}

@@ -14,7 +14,8 @@
 
 <script>
 import FullscreenButton from '../FullscreenButton.vue';
-import Utils from '../../utils';
+
+const unknown = '-';
 
 export default {
 	name: 'ImageViewer',
@@ -34,7 +35,7 @@ export default {
 			img: null,
 			error: null,
 			context: null,
-			value: '-'
+			value: unknown
 		};
 	},
 	async mounted() {
@@ -78,20 +79,31 @@ export default {
 			}
 		},
 		resetPixelValue() {
-			this.value = '-';
+			this.value = unknown;
 		},
 		getPixelValue(event) {
 			try {
-				let size = this.$refs.canvas.getBoundingClientRect();
-				let xScale = this.img.naturalWidth / size.width;
-				let yScale = this.img.naturalHeight / size.height;
-				let x = event.offsetX * xScale;
-				let y = event.offsetY * yScale;
-				let rgba = this.context.getImageData(Math.ceil(x), Math.ceil(y), 1, 1).data;
-				this.value = Utils.displayRGBA(rgba);
+				const size = this.$refs.canvas.getBoundingClientRect();
+				const xScale = this.img.naturalWidth / size.width;
+				const yScale = this.img.naturalHeight / size.height;
+				const x = event.offsetX * xScale;
+				const y = event.offsetY * yScale;
+				const rgba = Array.from(this.context.getImageData(Math.ceil(x), Math.ceil(y), 1, 1).data);
+				const alpha = rgba.pop();
+				// Fully transparent
+				if (alpha === 0) {
+					this.value = 'no data';
+				}
+				// Grayscale (all values are the same)
+				else if (rgba.every(v => v === rgba[0])) {
+					this.value = rgba[0];
+				}
+				// RGB and others
+				else {
+					this.value = rgba.join(' / ');
+				}
 			} catch (error) {
-				this.value = 'n/a';
-				console.log(error);
+				this.value = unknown;
 			}
 		}
 	}
@@ -134,7 +146,6 @@ canvas {
 	cursor: zoom-in;
 	object-fit: contain;
 	box-sizing: border-box;
-	background-color: white;
 }
 canvas.fullsize, .fullscreen canvas {
 	max-width: none;

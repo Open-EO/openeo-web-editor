@@ -1,7 +1,10 @@
 <template>
-	<div v-show="channels.length > 0" class="ol-unselectable ol-control channels">
+	<div v-show="channels.length > 0" class="channels">
 		<table>
 			<thead>
+				<tr v-if="title">
+					<th :colspan="cols">{{ title }}</th>
+				</tr>
 				<tr>
 					<th v-if="!isGray">Channel</th>
 					<th v-if="multiBand">Band</th>
@@ -41,6 +44,10 @@ export default {
 		ControlMixin
 	],
 	props: {
+		title: {
+			type: String,
+			default: ''
+		},
 		bands: {
 			type: Array,
 			default: () => []
@@ -69,6 +76,9 @@ export default {
 			channels: this.defaultChannels,
 			isGray: this.defaultChannels.length === 1 || this.bands.length === 1
 		}
+	},
+	mounted() {
+		//this.emit();
 	},
 	watch: {
 		bands: {
@@ -122,17 +132,22 @@ export default {
 }
 </script>
 
-<style lang="scss">
-.ol-control.channels {
-	bottom: calc(22px + 1em);
-    right: 8px;
-	position: absolute;
-
+<style lang="scss" scoped>
+.channels {
 	input {
 		max-width: 4em;
 	}
 	select {
 		max-width: 10em;
+	}
+	table {
+		th {
+			font-weight: 600;
+			font-family: monospace;
+		}
+		th, td {
+			padding: 2px;
+		}
 	}
 }
 </style>

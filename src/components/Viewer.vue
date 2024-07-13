@@ -1,6 +1,6 @@
 <template>
 	<div class="viewerContainer" @drop="onDrop" @dragover="allowDrop">
-		<Tabs id="viewerTabs" ref="tabs" @empty="onTabsEmpty">
+		<Tabs id="viewerTabs" ref="tabs" @empty="onTabsEmpty" allowTabRename>
 			<template #empty>Nothing to show right now...</template>
 			<template #dynamic="{ tab }">
 				<LogViewer v-if="logViewerIcons.includes(tab.icon)" :data="tab.data" @mounted="onMounted" @options="onOptionsChanged" />
@@ -45,6 +45,7 @@ export default {
 		this.listen('viewLogs', this.showLogs);
 		this.listen('removeWebService', this.closeTabWithLogs);
 		this.listen('removeBatchJob', this.closeTabWithLogs);
+		this.listen('addToMapChooser', this.addToMapChooser);
 
 		if (this.appMode) {
 			this.showJobResults(this.appMode.data, null, this.appMode.title);
@@ -217,6 +218,36 @@ export default {
 				tab => this.onShow(tab),
 				tab => this.onHide(tab),
 				onClose
+			);
+		},
+		addToMapChooser({asset, context}) {
+			const openMapTabs = this.$refs.tabs.tabs.filter(tab => tab.icon === 'fa-map');
+			const maps = [
+				"New Map",
+				...openMapTabs.map(tab => tab.name)
+			];
+			this.broadcast(
+				"showListModal", 
+				"Select a map to add the data to",
+				maps,
+				[
+					{
+						callback: async (value, key) => {
+							const file = this.registry.createFileFromAsset(asset, context);
+							await file.loadData(this.connection);
+							if (key === 0) {
+								this.showViewer([file], file.title)
+									.catch(error => Utils.exception(this, error));
+							}
+							else {
+								const tab = openMapTabs[key - 1];
+								this.$refs.tabs.selectTab(tab);
+								tab.$children[0].addGeoTiff(file, file.title);
+							}	
+							return true; // return true to close the modal
+						}
+					}
+				]
 			);
 		},
 		async showViewer(files, title = null, id = null, reUseExistingTab = false) {

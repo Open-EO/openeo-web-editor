@@ -74,7 +74,7 @@ export default {
 		options: {
 			type: Object,
 			default: () => ({
-        		responsive: true,
+				responsive: true,
 				maintainAspectRatio: false
 			})
 		},
@@ -85,6 +85,10 @@ export default {
 		height: {
 			type: Number,
 			default: 350
+		},
+		title: {
+			type: String,
+			default: ""
 		}
 	},
 	computed: {
@@ -110,8 +114,16 @@ export default {
 		chartOptions() {
 			let options = Object.assign({}, this.options);
 
+			// Show title
+			if (this.title) {
+				options.plugins = options.plugins || {};
+				options.plugins.title = {
+					display: true,
+        	text: this.title
+				};
+      }
 			// Detect timeseries from labels
-			if (this.labels.find(label => !DateTime.fromISO(label).isValid) === undefined) {
+			if (this.labels.every(label => DateTime.fromISO(label).isValid)) {
 				options.scales = {
 					x: {
 						type: 'timeseries',

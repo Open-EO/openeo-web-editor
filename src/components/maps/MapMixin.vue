@@ -118,24 +118,6 @@ export default {
 			this.map = new Map(mapOptions);
 
 			this.listen('windowResized', this.updateMapSize);
-			
-			let layers = this.map.getLayers();
-			layers.on('add', evt => {
-				let layer = evt.element;
-
-				let events = layer.get('events');
-				for(let event in events) {
-					this.map.on(event, events[event]);
-				}
-			});
-			layers.on('remove', evt => {
-				let layer = evt.element;
-
-				let events = layer.get('events');
-				for(let event in events) {
-					this.map.un(event, events[event]);
-				}
-			});
 		},
 
 		addLayerSwitcher() {

@@ -4,8 +4,19 @@
 			<div :id="id" class="map-viewer">
 				<ProgressControl ref="progress" :map="map" />
 				<UserLocationControl :map="map" />
-				<TextControl v-if="isGeoTiff" :text="textControlText" />
-				<ChannelControl v-if="isGeoTiff && !colorMap" :bands="bands" :defaultChannels="defaultChannels" @update="updateGeoTiffStyle" />
+				<template v-if="isGeoTiff">
+					<TextControl :text="textControlText" />
+					<div class="ol-unselectable ol-control geotiff-channels">
+						<template v-for="state in geotiffs">
+							<ChannelControl
+								v-if="!state.colorMap" :key="state.layer.id"
+								:bands="state.bands" :defaultChannels="state.defaultChannels"
+								:title="geotiffs.length > 1 ? state.layer.get('title') : ''"
+								@update="(type, data) => updateGeoTiffStyle(state, type, data)"
+							/>
+						</template>
+					</div>
+				</template>
 				<div v-if="loading" class="map-loading">
 					<i class="fas fa-spinner fa-spin"></i>
 					<span>Loading map...</span>
@@ -19,20 +30,21 @@
 </template>
 
 <script>
-import { GeoTIFFImage } from 'geotiff';
-
 import Utils from '../../utils.js';
-import GeoTIFF from '../../formats/geotiff';
+import { default as GeoTiffFile } from '../../formats/geotiff';
 import JSON_ from '../../formats/json';
 
 import { Splitpanes, Pane } from 'splitpanes';
 
+import ScatterChart from './ScatterChart.vue';
+import ChannelControl from '../maps/ChannelControl.vue';
 import ExtentMixin from '../maps/ExtentMixin.vue';
 import GeocoderMixin from '../maps/GeocoderMixin.vue';
-import GeoTiffMixin from '../maps/GeoTiffMixin.vue';
 import MapMixin from '../maps/MapMixin.vue';
-import ScatterChart from './ScatterChart.vue';
+import TextControl from '../maps/TextControl.vue';
 import WebServiceMixin from '../maps/WebServiceMixin.vue';
+import GeoTiffState from '../maps/geotiff/state';
+import '../maps/geotiff/fix';
 
 import { Service } from '@openeo/js-client';
 
@@ -40,108 +52,44 @@ import Feature from 'ol/Feature';
 import { fromExtent as PolygonFromExtent } from 'ol/geom/Polygon';
 import { transformExtent } from 'ol/proj';
 import VectorLayer from 'ol/layer/Vector';
+import TileLayer from 'ol/layer/WebGLTile';
+import { default as OlGeoTiff } from 'ol/source/GeoTIFF';
 import VectorSource from 'ol/source/Vector';
-
-// Integrate changes/fixes from https://github.com/geotiffjs/geotiff.js/pull/303 until released/integrated by geotiff.js
-GeoTIFFImage.prototype.getSampleByteSize = function(i) {
-    if (!this.fileDirectory.BitsPerSample || this.fileDirectory.BitsPerSample.length === 0) {
-      return;
-    }
-    if (i >= this.fileDirectory.BitsPerSample.length) {
-      i = 0;
-    }
-    return Math.ceil(this.fileDirectory.BitsPerSample[i] / 8);
-};
-
-GeoTIFFImage.prototype.getReaderForSample = function(sampleIndex) {
-    const format = this.getSampleFormat(sampleIndex);
-    const bitsPerSample = this.getBitsPerSample(sampleIndex);
-    switch (format) {
-      case 1: // unsigned integer data
-        if (bitsPerSample <= 8) {
-          return DataView.prototype.getUint8;
-        } else if (bitsPerSample <= 16) {
-          return DataView.prototype.getUint16;
-        } else if (bitsPerSample <= 32) {
-          return DataView.prototype.getUint32;
-        }
-        break;
-      case 2: // twos complement signed integer data
-        if (bitsPerSample <= 8) {
-          return DataView.prototype.getInt8;
-        } else if (bitsPerSample <= 16) {
-          return DataView.prototype.getInt16;
-        } else if (bitsPerSample <= 32) {
-          return DataView.prototype.getInt32;
-        }
-        break;
-      case 3:
-        switch (bitsPerSample) {
-          case 16:
-            return function (offset, littleEndian) {
-              return getFloat16(this, offset, littleEndian);
-            };
-          case 32:
-            return DataView.prototype.getFloat32;
-          case 64:
-            return DataView.prototype.getFloat64;
-          default:
-            break;
-        }
-        break;
-      default:
-        break;
-    }
-    throw Error('Unsupported data format/bitsPerSample');
-};
-
-GeoTIFFImage.prototype.getSampleFormat = function(sampleIndex = 0) {
-    if (!this.fileDirectory.SampleFormat || this.fileDirectory.SampleFormat.length === 0) {
-      return 1;
-    }
-    return typeof this.fileDirectory.SampleFormat[sampleIndex] !== 'undefined'
-      ? this.fileDirectory.SampleFormat[sampleIndex] : this.fileDirectory.SampleFormat[0];
-};
-
-GeoTIFFImage.prototype.getBitsPerSample = function(sampleIndex = 0) {
-    if (!this.fileDirectory.BitsPerSample || this.fileDirectory.BitsPerSample.length === 0) {
-      return;
-    }
-    return typeof this.fileDirectory.BitsPerSample[sampleIndex] !== 'undefined'
-      ? this.fileDirectory.BitsPerSample[sampleIndex] : this.fileDirectory.BitsPerSample[0];
-};
-// End of geotiff.js fixes
 
 export default {
 	name: 'MapViewer',
 	mixins: [
 		ExtentMixin,
 		GeocoderMixin,
-		GeoTiffMixin,
 		MapMixin,
 		WebServiceMixin
 	],
 	components: {
+		ChannelControl,
 		Pane,
 		ScatterChart,
 		Splitpanes,
+		TextControl
 	},
 	props: {
 		data: {}
 	},
 	data() {
 		return {
+			textControlText: 'Value: -',
 			loading: true,
-			chart: null
+			chart: null,
+			geotiffs: []
 		};
 	},
 	computed: {
 		...Utils.mapState(['connection']),
+		...Utils.mapState('editor', ['appMode']),
 		isWebService() {
 			return this.data instanceof Service && typeof this.data.type === 'string';
 		},
 		isGeoTiff() {
-			return this.data instanceof GeoTIFF;
+			return this.data instanceof GeoTiffFile;
 		},
 		isGeoJson() {
 			return this.data instanceof JSON_ && this.data.isGeoJson;
@@ -176,6 +124,22 @@ export default {
 				}
 
 				await this.createMap(view);
+
+				const layers = this.map.getLayers();
+				layers.on('add', evt => {
+					const state = evt.element.get('geotiff');
+					if (state) {
+						this.geotiffs.push(state);
+					}
+				});
+				layers.on('remove', evt => {
+					const state = evt.element.get('geotiff');
+					const index = array.indexOf(state);
+					if (index > -1) {
+						this.geotiffs.splice(index, 1);
+					}
+				});
+
 				this.addLayerSwitcher();
 				this.addGeocoder(data => {
 					if (!data) {
@@ -195,7 +159,7 @@ export default {
 					if (proj.basemap || ['EPSG:3857', 'EPSG:4326'].includes(proj.getCode())) {
 						this.addBasemaps();
 					}
-					this.addGeoTiff(data);
+					this.addGeoTiff(data, data.title);
 					let stac = this.data.getContext();
 					if (stac) {
 						this.addExtent(stac, false);
@@ -210,6 +174,9 @@ export default {
 					this.map.getViewport().addEventListener('dragover', event => event.preventDefault());
 					this.map.getViewport().addEventListener('drop', this.$listeners.drop);
 				}
+
+				this.map.on('pointermove', this.onPointerMove);
+				this.map.on('click', this.onClick);
 			} catch (error) {
 				Utils.exception(this, error);
 			}
@@ -242,7 +209,161 @@ export default {
 			} catch (error) {
 				console.log(error);
 			}
+		},
+
+		getPixelValues(pixel) {
+			return this.geotiffs.map(state => {
+				const layer = state.layer;
+				// Get data into an array
+				let data = layer.getData(pixel);
+				data = data ? Array.from(data) : [];
+				
+				// Handle transparency / no-data
+				const noData = state.noData;
+				const alpha = noData.length > 0 ? data.pop() : undefined;
+				data = data.map(x => ((alpha === 0 || noData.includes(x)) ? NaN : x));
+
+				// Get labels
+				const labels = data.map((_, i) => {
+					const band = state.bands[i];
+					if (band) {
+						const name = String(band.name || band.id);
+						if (name.length > 0) {
+							return name;
+						}
+					}
+					return String(i);
+				});
+
+				// Collection information and add to array
+				return {
+					title: layer.get('title'),
+					data,
+					labels
+				};
+			});
+		},
+		formatCoords(coords) {
+			return coords.map(x => String(parseFloat(x.toFixed(6)))).join(', ');
+		},
+		formatValue({data}) {
+			if (!Array.isArray(data) || data.length === 0) {
+				return '-';
+			}
+			return data
+				.map(x => {
+					x = parseFloat(x.toFixed(6));
+					if (isNaN(x)) {
+						return 'no data';
+					}
+					return x;
+				})
+				.join(' / ');
+		},
+		onPointerMove(evt) {
+			const values = this.getPixelValues(evt.pixel);
+			let text = '-';
+			if (values.length === 1) {
+				text = this.formatValue(values[0]);
+			}
+			else if (values.length > 1) {
+				text = values.map(x => `\r\n- ${x.title}: ${this.formatValue(x)}`).join('');
+			}
+			const plural = values.length > 1 ? 's' : '';
+			const coords = this.formatCoords(evt.coordinate);
+			this.textControlText = [
+				`Value${plural}: ${text}`,
+				`Pixel Value${plural}: ${text}\r\nCoordinate: ${coords}`
+			];
+		},
+		onClick(evt) {
+			const data = this.getPixelValues(evt.pixel);
+
+			const validValues = data
+				.map(x => x.data)
+				.flat()
+				.filter(x => isFinite(x));
+			
+			if (validValues.length < 2) {
+				this.chart = null;
+				return;
+			}
+
+			let labels = data.map(x => x.labels).flat();
+			labels = Array.from(new Set(labels));
+
+			const datasets = data.map(x => {
+				const map = {};
+				for (let i in x.data) {
+					map[x.labels[i]] = x.data[i];
+				}
+				return {
+					label: x.title,
+					data: map
+				};
+			});
+
+			const coords = this.formatCoords(evt.coordinate);
+			this.chart = {
+				title: `Coordinate: ${coords}`,
+				labels,
+				datasets
+			};
+		},
+
+		async addGeoTiff(geotiff, title = "GeoTiff") {
+			const tiffState = new GeoTiffState(geotiff);
+			if (this.appMode && this.appMode.channels) {
+				tiffState.channels = this.appMode.channels;
+				tiffState.defaultChannels = this.appMode.channels;
+			}
+
+			const sourceOpts = {
+				nodata: tiffState.noData[0] // OL only supports passing one no data value
+			};
+			if (geotiff.getBlob()) {
+				sourceOpts.blob = geotiff.getBlob();
+			}
+			else {
+				sourceOpts.url = geotiff.getUrl();
+			}
+
+			const source = new OlGeoTiff({
+				interpolate: false,
+				normalize: false,
+				convertToRGB: geotiff.convertToRGB,
+				sources: [sourceOpts]
+			});
+
+			const layer = new TileLayer({
+				id: geotiff.getUrl(),
+				title,
+				source: source,
+				cacheSize: 2048 // https://github.com/openlayers/openlayers/issues/13670
+			});
+			tiffState.layer = layer;
+			layer.set('geotiff', tiffState);
+			layer.once('prerender', () => tiffState.setStyle());
+			this.addLayerToMap(layer);
+
+			let extent = geotiff.getExtent();
+			if (extent) {
+				this.map.getView().fit(extent, this.getFitOptions(10));
+			}
+
+			return layer;
+		},
+
+		updateGeoTiffStyle(state, type, data) {
+			switch(type) {
+				case 'channels':
+					state.channels = data;
+					this.setOptions('channels', data);
+					break;
+			}
+			state.setStyle();
 		}
+		
 	}
 
 }
@@ -272,5 +393,13 @@ export default {
 			font-size: 2em;
 		}
 	}
+}
+
+.ol-control.geotiff-channels {
+	bottom: calc(22px + 1em);
+  right: 8px;
+	position: absolute;
+	max-height: 150px;
+	overflow-y: auto;
 }
 </style>

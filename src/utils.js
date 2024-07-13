@@ -32,35 +32,6 @@ class Utils extends VueUtils {
 		}
 	}
 
-	static displayRGBA(data, nodata = [NaN, null], hasAlpha = true) {
-		let NA = 'no data';
-		if (typeof data === 'undefined' || data === null) {
-			return NA;
-		}
-		let values = Array.from(data).map(v => parseFloat(v.toFixed(6)));
-		if (values.length === 0) {
-			return '-';
-		}
-
-		let a = 1;
-		if (hasAlpha && data.length > 1) {
-			a = values.pop();
-		}
-
-		// Transparent (no-data)
-		if (a === 0 || values.find(v => nodata.includes(v)) !== undefined) {
-			return NA;
-		}
-		// Grayscale (all values are the same)
-		else if (values.every(v => v === values[0])) {
-			return values[0];
-		}
-		// RGB and others
-		else {
-			return values.join(' | ');
-		}
-	}
-
 	static isActiveJobStatusCode(status) {
 		if (typeof status !== 'string') {
 			return null;
