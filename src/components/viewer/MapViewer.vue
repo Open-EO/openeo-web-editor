@@ -56,6 +56,9 @@ import TileLayer from 'ol/layer/WebGLTile';
 import { default as OlGeoTiff } from 'ol/source/GeoTIFF';
 import VectorSource from 'ol/source/Vector';
 
+import 'ol-ext/control/Swipe.css';
+import Swipe from '../maps/Swipe.js';
+
 export default {
 	name: 'MapViewer',
 	mixins: [
@@ -79,7 +82,9 @@ export default {
 			textControlText: 'Value: -',
 			loading: true,
 			chart: null,
-			geotiffs: []
+			geotiffs: [],
+			swipe: null,
+			layerId: 0
 		};
 	},
 	computed: {
@@ -130,13 +135,15 @@ export default {
 					const state = evt.element.get('geotiff');
 					if (state) {
 						this.geotiffs.push(state);
+						this.updateSwiper();
 					}
 				});
 				layers.on('remove', evt => {
 					const state = evt.element.get('geotiff');
-					const index = array.indexOf(state);
+					const index = this.geotiffs.indexOf(state);
 					if (index > -1) {
 						this.geotiffs.splice(index, 1);
+						this.updateSwiper();
 					}
 				});
 
@@ -339,11 +346,13 @@ export default {
 				id: geotiff.getUrl(),
 				title,
 				source: source,
+				className: `geotiff${this.layerId++}`, // https://github.com/Viglino/ol-ext/issues/1047 (for Swipe)
 				cacheSize: 2048 // https://github.com/openlayers/openlayers/issues/13670
 			});
 			tiffState.layer = layer;
 			layer.set('geotiff', tiffState);
 			layer.once('prerender', () => tiffState.setStyle());
+			layer.on('change:visible', () => this.updateSwiper());
 			this.addLayerToMap(layer);
 
 			let extent = geotiff.getExtent();
@@ -352,6 +361,27 @@ export default {
 			}
 
 			return layer;
+		},
+
+		updateSwiper() {
+			const layers = this.map.getLayers().getArray()
+				.filter(layer => layer.get('geotiff') && layer.getVisible());
+			if (layers.length === 2) {
+				if (this.swipe && layers.every((l, i) => l === this.swipe.layers[i])) {
+					return;
+				}
+				const opts = {
+					layers: layers[0],
+					rightLayers: layers[1]
+				};
+				const control = new Swipe(opts);
+				this.swipe = { control, layers };
+				this.map.addControl(control);
+			}
+			else if (layers.length !== 2 && this.swipe) {
+				this.map.removeControl(this.swipe.control);
+				this.swipe = null;
+			}
 		},
 
 		updateGeoTiffStyle(state, type, data) {
