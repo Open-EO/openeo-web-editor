@@ -139,7 +139,8 @@ export default {
 		},
 
 		addLayerSwitcher() {
-			this.map.addControl(new LayerSwitcher({trash: this.removableLayers}));
+			const opts = {trash: this.removableLayers, extent: true};
+			this.map.addControl(new LayerSwitcher(opts));
 		},
 
 		addBasemaps() {
