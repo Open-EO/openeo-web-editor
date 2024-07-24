@@ -2,6 +2,7 @@ import Vue from 'vue';
 import Utils from '../utils';
 import { Job, Service, UserProcess } from '@openeo/js-client';
 import { ProcessGraph } from '@openeo/js-processgraphs';
+import FormatRegistry from '../formats/formatRegistry.js';
 
 const serverStorage = "serverUrls";
 
@@ -20,7 +21,8 @@ const getDefaultState = () => {
 		openWizardProps: {},
 		collectionPreview: null,
 		viewerOptions: {},
-		modelDnD: null
+		modelDnD: null,
+		formatRegistry: new FormatRegistry(),
 	};
 };
 

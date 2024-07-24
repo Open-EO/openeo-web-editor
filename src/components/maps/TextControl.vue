@@ -3,7 +3,7 @@
 </template>
 
 <script>
-import ControlMixin from './ControlMixin.vue';
+import ControlMixin from './ControlMixin';
 
 export default {
 	name: 'TextControl',

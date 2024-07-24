@@ -20,6 +20,7 @@ import EventBusMixin from './components/EventBusMixin.js';
 import Utils from './utils';
 import ConnectForm from './components/ConnectForm.vue';
 import axios from 'axios';
+import AddMapDataModal from './components/modals/AddMapDataModal.vue';
 
 // Making axios available globally for the OpenEO JS client
 window.axios = axios;
@@ -30,6 +31,7 @@ export default {
 	components: {
 		ConnectForm,
 		IDE: () => import('./components/IDE.vue'),
+		AddMapDataModal: () => import('./components/modals/AddMapDataModal.vue'),
 		CollectionModal: () => import('./components/modals/CollectionModal.vue'),
 		DataModal: () => import('./components/modals/DataModal.vue'),
 		DownloadAssetsModal: () => import('./components/modals/DownloadAssetsModal.vue'),

@@ -1,25 +1,29 @@
 /* Customize layerswitcher control */
-.ol-layerswitcher > button {
-    font-size: 1.14em;
+.ol-layerswitcher {
+	top: 2.75em !important;
+	
+	> button {
+    font-size: 1em;
 
-	&:before,
-	&:after {
-		background: transparent;
-		background-image: none;
-		box-shadow: none;
-		position: inherit;
-		transform: none;
-		display: inline-block;
-		width: auto;
-		height: auto;
-	}
+		&:before,
+		&:after {
+			background: transparent;
+			background-image: none;
+			box-shadow: none;
+			position: inherit;
+			transform: none;
+			display: inline-block;
+			width: auto;
+			height: auto;
+		}
 
-	&:after {
-		font-family: "Font Awesome\ 5 Free";
-		content: "\f5fd";
-		font-weight: 900;
-		left: 1px;
-		top: 1px;
+		&:after {
+			font-family: "Font Awesome\ 5 Free";
+			content: "\f5fd";
+			font-weight: 900;
+			left: 1px;
+			top: 1px;
+		}
 	}
 }
 

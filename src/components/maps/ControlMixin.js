@@ -1,4 +1,3 @@
-<script>
 import { Control } from 'ol/control.js';
 
 export default {
@@ -30,4 +29,3 @@ export default {
 		}
 	}
 }
-</script>

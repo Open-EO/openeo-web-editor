@@ -42,7 +42,7 @@ const getDefaultState = () => {
 		udfRuntimes: {},
 		processesUpdated: 0,
 		collections: [],
-		processNamespaces: Config.processNamespaces || []
+		processNamespaces: Config.processNamespaces || [],
 	};
 };
 

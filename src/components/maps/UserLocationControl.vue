@@ -7,7 +7,7 @@
 </template>
 
 <script>
-import ControlMixin from './ControlMixin.vue';
+import ControlMixin from './ControlMixin';
 import { fromLonLat } from 'ol/proj';
 
 export default {

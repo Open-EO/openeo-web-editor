@@ -4,6 +4,7 @@
 			<div :id="id" class="map-viewer">
 				<ProgressControl ref="progress" :map="map" />
 				<UserLocationControl :map="map" />
+				<AddDataControl :map="map" @add="addData" />
 				<template v-if="isGeoTiff">
 					<TextControl :text="textControlText" />
 					<div class="ol-unselectable ol-control geotiff-channels">
@@ -37,6 +38,7 @@ import JSON_ from '../../formats/json';
 import { Splitpanes, Pane } from 'splitpanes';
 
 import ScatterChart from './ScatterChart.vue';
+import AddDataControl from '../maps/AddDataControl.vue';
 import ChannelControl from '../maps/ChannelControl.vue';
 import ExtentMixin from '../maps/ExtentMixin.vue';
 import GeocoderMixin from '../maps/GeocoderMixin.vue';
@@ -68,6 +70,7 @@ export default {
 		WebServiceMixin
 	],
 	components: {
+		AddDataControl,
 		ChannelControl,
 		Pane,
 		ScatterChart,
@@ -361,6 +364,26 @@ export default {
 			}
 
 			return layer;
+		},
+
+		async addData(files) {
+			if (files.length > 5 && !Utils.confirmOpenAll(files)) {
+				return;
+			}
+	
+			const promises = files.map(async (file) => {
+				await file.loadData(this.connection);
+				if (file instanceof GeoTiffFile) {
+					return await this.addGeoTiff(file, file.title);
+				}
+				else if (file instanceof JSON_ && file.isGeoJson) {
+					return await this.addGeoJson(file, false, file.title);
+				}
+				else {
+					Utils.error(this, new Error(`Sorry, the given data at ${file.href} is not supported.`));
+				}
+			});
+			await Promise.all(promises);
 		},
 
 		updateSwiper() {

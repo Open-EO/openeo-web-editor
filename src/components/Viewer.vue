@@ -57,7 +57,6 @@ export default {
 	},
 	data() {
 		return {
-			registry: new FormatRegistry(),
 			tabTitleCounter: {},
 			tabIdCounter: 0,
 			logViewerIcons: [
@@ -70,7 +69,7 @@ export default {
 	},
 	computed: {
 		...Utils.mapState(['connection']),
-		...Utils.mapState('editor', ['appMode']),
+		...Utils.mapState('editor', ['appMode', 'formatRegistry']),
 		...Utils.mapGetters('editor', ['getModelNodeFromDnD']),
 		nextTabId() {
 			return `viewer~${this.tabIdCounter}`;
@@ -156,7 +155,7 @@ export default {
 		showSyncResults(result) {
 			let title = this.makeTitle("Result");
 			// result.data should always be a blob
-			let files = this.registry.createFilesFromBlob(result.data);
+			let files = this.formatRegistry.createFilesFromBlob(result.data);
 			// Download files to disc so that nothing gets lost
 			files.forEach(file => file.download());
 			// Show the data in the viewer
@@ -185,12 +184,12 @@ export default {
 			if (job && job.id) {
 				id = job.id;
 			}
-			let files = this.registry.createFilesFromSTAC(stac, job);
+			let files = this.formatRegistry.createFilesFromSTAC(stac, job);
 			if (files.length === 0) {
 				Utils.error(this, 'No results available for "' + title + '".');
 				return;
 			}
-			else if (files.length > 5 && !confirm(`You are about to open ${files.length} individual files / tabs, which could slow down the web browser. Are you sure you want to open all of them?`)) {
+			else if (files.length > 5 &&  !Utils.confirmOpenAll(files)) {
 				return;
 			}
 			this.showViewer(files, title, file => `${id}-${file.getUrl()}`, true)
@@ -233,7 +232,7 @@ export default {
 				[
 					{
 						callback: async (value, key) => {
-							const file = this.registry.createFileFromAsset(asset, context);
+							const file = this.formatRegistry.createFileFromAsset(asset, context);
 							await file.loadData(this.connection);
 							if (key === 0) {
 								this.showViewer([file], file.title)
