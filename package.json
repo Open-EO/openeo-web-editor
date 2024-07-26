@@ -63,7 +63,7 @@
     "jsonlint-mod": "^1.7.6",
     "luxon": "^2.4.0",
     "node-polyfill-webpack-plugin": "^2.0.0",
-    "ol": "^9.0.0",
+    "ol": "^9.2.0",
     "ol-ext": "^4.0.19",
     "proj4": "^2.7.5",
     "splitpanes": "^2.3.6",

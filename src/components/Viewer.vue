@@ -23,7 +23,6 @@ import EventBusMixin from './EventBusMixin.js';
 import Utils from '../utils.js';
 import Tabs from '@openeo/vue-components/components/Tabs.vue';
 import { Service } from '@openeo/js-client';
-import FormatRegistry from '../formats/formatRegistry';
 import { Format } from '../formats/format';
 
 export default {
