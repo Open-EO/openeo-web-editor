@@ -1,12 +1,21 @@
 <template>
 	<div class="discovery-toolbar">
 		<SearchBox v-model="searchTerm" />
-		<label class="show-deprecated" title="Show deprecated elements?">
-			<input type="checkbox" v-model="showDeprecated">
-			Show deprecated
-		</label>
+		<div class="filters">
+			<span class="label">
+				Show
+			</span>
+			<label class="show-deprecated" title="Show deprecated elements?">
+				<input type="checkbox" v-model="showDeprecated">
+				deprecated
+			</label>
+			<label class="show-experimental" title="Show experimental elements?">
+				<input type="checkbox" v-model="showExperimental">
+				experimental
+			</label>
+		</div>
 		<div class="search-results">
-			<Collections class="category" :collections="collections" :searchTerm="searchTerm" :offerDetails="false" :collapsed="collapsed" :hideDeprecated="!showDeprecated">
+			<Collections class="category" :collections="collections" :searchTerm="searchTerm" :offerDetails="false" :collapsed="collapsed" :hideDeprecated="!showDeprecated" :hideExperimental="!showExperimental">
 				<template #summary="{ item }">
 					<div class="discovery-entity" :draggable="supportsLoadCollection" @dragstart="onDrag($event, 'collection', item)">
 						<div class="discovery-info" @click="showCollectionInfo(item.id)">
@@ -18,7 +27,7 @@
 				</template>
 			</Collections>
 
-			<Processes class="category" :processes="allProcesses" :searchTerm="searchTerm" :offerDetails="false" :collapsed="collapsed" :hideDeprecated="!showDeprecated">
+			<Processes class="category" :processes="allProcesses" :searchTerm="searchTerm" :offerDetails="false" :collapsed="collapsed" :hideDeprecated="!showDeprecated" :hideExperimental="!showExperimental">
 				<template #summary="{ item }">
 					<div class="discovery-entity" draggable="true" @dragstart="onDrag($event, 'process', item)">
 						<div class="discovery-info" @click="showProcess(item)">
@@ -31,7 +40,7 @@
 				</template>
 			</Processes>
 
-			<UdfRuntimes v-if="hasUdfRuntimes" class="category" :runtimes="udfRuntimes" :searchTerm="searchTerm" :offerDetails="false" :collapsed="collapsed" :hideDeprecated="!showDeprecated">
+			<UdfRuntimes v-if="hasUdfRuntimes" class="category" :runtimes="udfRuntimes" :searchTerm="searchTerm" :offerDetails="false" :collapsed="collapsed" :hideDeprecated="!showDeprecated" :hideExperimental="!showExperimental">
 				<template #summary="{ summary, item }">
 					<div class="discovery-entity" :draggable="supportsRunUdf" @dragstart="onDrag($event, 'udf', {runtime: summary.identifier, version: item.default})">
 						<div class="discovery-info" @click="showUdfInfo(summary.identifier, item)">
@@ -42,7 +51,7 @@
 				</template>
 			</UdfRuntimes>
 
-			<FileFormats class="category" :formats="fileFormats" :showInput="false" heading="Export File Formats" :searchTerm="searchTerm" :offerDetails="false" :collapsed="collapsed" :hideDeprecated="!showDeprecated">
+			<FileFormats class="category" :formats="fileFormats" :showInput="false" heading="Export File Formats" :searchTerm="searchTerm" :offerDetails="false" :collapsed="collapsed" :hideDeprecated="!showDeprecated" :hideExperimental="!showExperimental">
 				<template #summary="{ item }">
 					<div class="discovery-entity" :draggable="supportsSaveResult" @dragstart="onDrag($event, 'fileformat', item)">
 						<div class="discovery-info" @click="showFileFormatInfo(item)">
@@ -93,7 +102,8 @@ export default {
 		return {
 			internalSearchTerm: '',
 			collapsed: true,
-			showDeprecated: false
+			showDeprecated: this.$config.showDeprecatedByDefault || false,
+			showExperimental: this.$config.showExperimentalByDefault || false,
 		};
 	},
 	computed: {
@@ -229,10 +239,23 @@ export default {
 .search-box {
 	margin: 1rem 1rem 0.25rem 1rem;
 }
-.show-deprecated {
-	margin: 0.25rem 1rem 0.25rem 1rem;
-	text-align: center;
-	font-size: 0.9em;
+.filters {
+	display: flex;
+	justify-content: center;
+	flex-flow: row wrap;
+
+	.show-deprecated, .show-experimental, .label {
+		align-content: center;
+		display: inline-block;
+		white-space: nowrap;
+		margin: 0.25rem;
+		font-size: 0.9em;
+		cursor: pointer;
+	}
+	.label {
+		cursor: default;
+	}
+
 }
 
 .category {

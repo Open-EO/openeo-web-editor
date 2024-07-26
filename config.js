@@ -95,6 +95,10 @@ export default {
 
 	// refresh interval for jobs/user data/services etc. in minutes - doesn't apply to logs.
 	// It's recommended to use a value between 1 and 5 minutes.
-	dataRefreshInterval: 2
+	dataRefreshInterval: 2,
+
+	// Show or hide experimental and/or deprecated entites by default (e.g. processes, collections)
+	showExperimentalByDefault: false,
+	showDeprecatedByDefault: false,
 	
 };
