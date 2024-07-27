@@ -25,6 +25,7 @@
 			</div>
 		</Pane>
 		<Pane v-if="chart" id="chart" :size="33">
+			<span class="close" @click="closeChart"><i class="fa fa-times" aria-hidden="true"></i></span>
 			<ScatterChart v-bind="chart" :height="220" />
 		</Pane>
 	</Splitpanes>
@@ -320,6 +321,9 @@ export default {
 				datasets
 			};
 		},
+		closeChart() {
+			this.chart = null;
+		},
 
 		async addGeoTiff(geotiff, title = "GeoTiff") {
 			const tiffState = new GeoTiffState(geotiff);
@@ -454,5 +458,22 @@ export default {
 	position: absolute;
 	max-height: 150px;
 	overflow-y: auto;
+}
+
+#chart {
+	position: relative;
+
+	.close {
+		position: absolute;
+		top: 0;
+		right: 0.5em;
+		padding: 0.5em;
+		cursor: pointer;
+		color: black;
+
+		&:hover {
+			color: red;
+		}
+	}
 }
 </style>
