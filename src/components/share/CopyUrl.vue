@@ -1,7 +1,7 @@
 <template>
 	<ShareInterface v-if="canCopy"
-		id="share-copy" icon="fa-file-code" title="STAC metadata" :description="description" :action="copy"
-		actionDefaultIcon="fa-clipboard" actionSuccessIcon="fa-clipboard-check" @stateChanged="state => this.state = state">
+		id="share-copy" icon="fa-file-code" :title="name" :description="description" :action="copy"
+		actionDefaultIcon="fa-clipboard" actionSuccessIcon="fa-clipboard-check" @stateChanged="updateState">
 	</ShareInterface>
 </template>
 
@@ -24,6 +24,9 @@ export default {
 		};
 	},
 	computed: {
+		name() {
+			return this.type === 'service' ? 'Web Service' : 'STAC metadata';
+		},
 		description() {
 			if (this.state === 'error') {
 				return 'Copying to clipboard failed';
@@ -32,11 +35,14 @@ export default {
 				return 'Copied to clipboard';
 			}
 			else {
-				return 'Copy the public URL of the STAC metadata to your clipboard';
+				return `Copy the public URL of the ${this.name} to your clipboard`;
 			}
 		}
 	},
 	methods: {
+		updateState(state) {
+			this.state = state;
+		},
 		copy() {
 			return this.$clipboard(this.url);
 		}

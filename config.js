@@ -53,6 +53,7 @@ export default {
 
 	// List of supported web service sharing services
 	supportedWebServiceSharingServices: [
+		'ShareEditor',
 		'CopyUrl',
 		'TwitterShare'
 	],

@@ -244,7 +244,7 @@ export default new Vuex.Store({
 				}
 			}
 
-			// Request batch job result for app mode
+			// Request results for app mode
 			if (!refresh) {
 				try {
 					await cx.dispatch('editor/loadForAppMode');

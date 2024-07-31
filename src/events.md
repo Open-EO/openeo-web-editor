@@ -15,7 +15,7 @@ Sends the current custom process and inserts it into the currently active editor
 Shows a list in a modal.
 
 ### showWebEditorInfo()
-Showa information about the web editor in a modal.
+Shows information about the web editor in a modal.
 
 ### showCollection(id)
 Shows collection information in a modal.

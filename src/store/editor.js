@@ -122,14 +122,16 @@ export default {
 				return;
 			}
 
-			try {
-				let response = await axios(cx.state.appMode.resultUrl);
-				if (Utils.isObject(response.data)) {
-					cx.commit('setAppModeData', response.data);
+			if (cx.state.appMode.resultType !== 'service') {
+				try {
+					let response = await axios(cx.state.appMode.resultUrl);
+					if (Utils.isObject(response.data)) {
+						cx.commit('setAppModeData', response.data);
+					}
+				} catch (error) {
+					console.error(error);
+					throw new Error("Sorry, the shared data is not available anymore!");
 				}
-			} catch (error) {
-				console.error(error);
-				throw new Error("Sorry, the shared data is not available anymore!");
 			}
 		}
 	},

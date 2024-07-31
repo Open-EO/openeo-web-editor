@@ -72,10 +72,12 @@ export default {
 		});
 		this.setCollectionPreview(Utils.param('preview-collection'));
 
-		let resultUrl = Utils.param('result');
+		const resultUrl = Utils.param('result');
+		const resultType = Utils.param('result-type') || 'job';
 		if (resultUrl) {
 			this.setAppMode({
 				resultUrl,
+				resultType,
 				...Utils.paramsForPrefix('app')
 			});
 		}

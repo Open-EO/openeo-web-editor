@@ -43,7 +43,11 @@ export default {
 		editorUrl() {
 			const url = new URL(window.location.href);
 			const query = new URLSearchParams(url.search);
+			query.set('result-type', this.type);
 			query.set('result', this.url); // Pass canonical link, implies discover = 1
+			if (this.type === 'service') {
+				query.set('app~service', this.context.type);
+			}
 			url.search = query;
 			return url.toString();
 		}

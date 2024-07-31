@@ -48,11 +48,7 @@ export default {
 		this.listen('addToMapChooser', this.addToMapChooser);
 
 		if (this.appMode) {
-			this.showJobResults(this.appMode.data, null, this.appMode.title);
-			if (typeof this.appMode.expires === 'string') {
-				const expires = Formatters.formatTimestamp(this.appMode.expires);
-				Utils.info(this, `The shared data is available until ${expires}`);
-			}
+			this.showAppMode();
 		}
 	},
 	data() {
@@ -78,6 +74,25 @@ export default {
 	methods: {
 		...Utils.mapActions(['describeCollection']),
 		...Utils.mapMutations('editor', ['setViewerOptions', 'setModelDnD']),
+		showAppMode() {
+			if (this.appMode.resultType === 'service') {
+				console.log(this.appMode);
+				const service = new Service(this.connection, 'app');
+				service.title = this.appMode.title;
+				service.url = this.appMode.resultUrl;
+				service.type = this.appMode.service;
+				service.enabled = true;
+				console.log(service);
+				this.showWebService(service);
+			}
+			else {
+				this.showJobResults(this.appMode.data, null, this.appMode.title);
+				if (typeof this.appMode.expires === 'string') {
+					const expires = Formatters.formatTimestamp(this.appMode.expires);
+					Utils.info(this, `The shared data is available until ${expires}`);
+				}
+			}
+		},
 		isCollectionPreview(data) {
 			return (data instanceof Service && Utils.isObject(data.attributes) && data.attributes.preview === true);
 		},
