@@ -147,24 +147,6 @@ export default {
 			state.initialNode = node;
 		},
 		setAppMode(state, appMode) {
-			if (appMode.channels) {
-				try {
-					appMode.channels = appMode.channels
-						.split(',')
-						.map((row, i) => {
-							let parts = row.split('|');
-							return {
-								id: parseInt(parts[0], 10),
-								name: parts[1],
-								min: parts[2] ? parseFloat(parts[2]) : undefined,
-								max: parts[3] ? parseFloat(parts[3]) : undefined
-							};
-						});
-				} catch (error) {
-					console.error(error);
-					delete appMode.channels;
-				}
-			}
 			state.appMode = {
 				...appMode,
 				title: 'Results',

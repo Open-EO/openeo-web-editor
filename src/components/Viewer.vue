@@ -24,6 +24,7 @@ import Utils from '../utils.js';
 import Tabs from '@openeo/vue-components/components/Tabs.vue';
 import { Service } from '@openeo/js-client';
 import { Format } from '../formats/format';
+import { Formatters } from '@radiantearth/stac-fields';
 
 export default {
 	name: 'Viewer',
@@ -49,7 +50,7 @@ export default {
 		if (this.appMode) {
 			this.showJobResults(this.appMode.data, null, this.appMode.title);
 			if (typeof this.appMode.expires === 'string') {
-				let expires = this.appMode.expires.replace('T', '').replace(/(\.\d)?(Z|[+-]\d\d:\d\d])$/, ''); // todo: improve date rendering
+				const expires = Formatters.formatTimestamp(this.appMode.expires);
 				Utils.info(this, `The shared data is available until ${expires}`);
 			}
 		}

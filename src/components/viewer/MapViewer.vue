@@ -327,11 +327,6 @@ export default {
 
 		async addGeoTiff(geotiff, title = "GeoTiff") {
 			const tiffState = new GeoTiffState(geotiff);
-			if (this.appMode && this.appMode.channels) {
-				tiffState.channels = this.appMode.channels;
-				tiffState.defaultChannels = this.appMode.channels;
-			}
-
 			const sourceOpts = {
 				nodata: tiffState.noData[0] // OL only supports passing one no data value
 			};

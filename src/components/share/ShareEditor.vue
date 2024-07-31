@@ -1,7 +1,7 @@
 <template>
 	<ShareInterface v-if="canCopy"
 		id="share-editor-copy" icon="fa-columns" :title="name" :description="description" :action="copy"
-		actionDefaultIcon="fa-clipboard" actionSuccessIcon="fa-clipboard-check" @stateChanged="state => this.state = state">
+		actionDefaultIcon="fa-clipboard" actionSuccessIcon="fa-clipboard-check" @stateChanged="updateState">
 	</ShareInterface>
 </template>
 
@@ -41,18 +41,17 @@ export default {
 			return this.$config.appName;
 		},
 		editorUrl() {
-			let url = new URL(window.location.href);
-			let query = new URLSearchParams(url.search);
+			const url = new URL(window.location.href);
+			const query = new URLSearchParams(url.search);
 			query.set('result', this.url); // Pass canonical link, implies discover = 1
-			if (Array.isArray(this.viewerOptions.channels) && this.viewerOptions.channels.length > 0) {
-				let channels = this.viewerOptions.channels.map(ch => `${ch.id}|${ch.name}|${ch.min}|${ch.max}`).join(',');
-				query.set('app~channels', channels);
-			}
 			url.search = query;
 			return url.toString();
 		}
 	},
 	methods: {
+		updateState(state) {
+			this.state = state;
+		},
 		copy() {
 			return this.$clipboard(this.editorUrl);
 		}
