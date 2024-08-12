@@ -21,6 +21,7 @@
 import Modal from './Modal.vue';
 import Collection from '../Collection.vue';
 import Utils from '../../utils.js';
+import StacMigrate from '@radiantearth/stac-migrate';
 
 export default {
 	name: 'CollectionModal',
@@ -82,7 +83,7 @@ export default {
 			}
 			let next = await this.itemsIterator.next();
 			if (next && next.value && !next.done) {
-				this.items.push(next.value);
+				this.items.push(StacMigrate.item(next.value, null, false));
 			}
 		}
 	}

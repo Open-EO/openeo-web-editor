@@ -47,7 +47,7 @@ export default {
 					let collection = this.$store.state.collections.find(c => c.id == this.context);
 					if (Utils.isObject(collection)) {
 						try {
-							state = collection.summaries['eo:bands'].map(band => band.name);
+							state = collection.summaries['bands'].map(band => band.name);
 						} catch (error) {}
 						if (state.length === 0 && Utils.isObject(collection['cube:dimensions'])) {
 							try {

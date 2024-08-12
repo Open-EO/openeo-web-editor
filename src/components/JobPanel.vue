@@ -29,6 +29,7 @@ import Utils from '../utils.js';
 import { Job } from '@openeo/js-client';
 import { cancellableRequest, showCancellableRequestError, CancellableRequestError } from './cancellableRequest';
 import FieldMixin from './FieldMixin';
+import StacMigrate from '@radiantearth/stac-migrate';
 
 const WorkPanelMixinInstance = WorkPanelMixin('jobs', 'batch job', 'batch jobs');
 
@@ -261,6 +262,7 @@ export default {
 				if (updatedJob.status === 'finished') {
 					try {
 						result = await updatedJob.getResultsAsStac();
+						result = StacMigrate.stac(result, false);
 					} catch (error) {
 						Utils.exception(this, error, "Load Results Error: " + Utils.getResourceTitle(updatedJob));
 					}
@@ -342,6 +344,7 @@ export default {
 			// Doesn't need to go through job store as it doesn't change job-related data
 			try {
 				let stac = await job.getResultsAsStac();
+				stac = StacMigrate.stac(stac, false);
 				this.broadcast('viewJobResults', stac, job);
 			} catch(error) {
 				Utils.exception(this, error, 'View Result Error: ' + Utils.getResourceTitle(job));
@@ -351,6 +354,7 @@ export default {
 			// Doesn't need to go through job store as it doesn't change job-related data
 			try {
 				let result = await job.getResultsAsStac();
+				result = StacMigrate.stac(result, false);
 				if(Utils.size(result.assets) == 0) {
 					Utils.error(this, 'No results available for job "' + Utils.getResourceTitle(job) + '".');
 					return;
@@ -363,6 +367,7 @@ export default {
 		async shareResults(job) {
 			if (this.canShare) {
 				let result = await job.getResultsAsStac();
+				result = StacMigrate.stac(result, false);
 				let url;
 				let link;
 				if (Array.isArray(result.links)) {

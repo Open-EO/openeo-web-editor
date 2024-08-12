@@ -128,7 +128,7 @@ export default {
 				return false;
 			}
 
-			if (c.summaries && !c.summaries["eo:bands"]) {
+			if (c.summaries && !c.summaries["bands"]) {
 				// Has summaries (so is likely fully loaded), but has no bands that we can work with
 				return false;
 			}
@@ -196,7 +196,7 @@ export default {
 			return b.toJSON();
 		},
 		getAvailableBands(collection) {
-			let bands = collection?.summaries && collection?.summaries["eo:bands"];
+			let bands = collection?.summaries && collection?.summaries["bands"];
 			if (Array.isArray(bands)) {
 				let availableBands = {};
 				const stacNames = Object.values(MAPPING);
@@ -206,7 +206,7 @@ export default {
 					if (!band.name) {
 						continue; // Ignore bands without a name
 					}
-					let i = stacNames.indexOf(band['common_name']);
+					let i = stacNames.indexOf(band['eo:common_name']);
 					if (i !== -1) {
 						availableBands[asiNames[i]] = band;
 					}

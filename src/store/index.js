@@ -3,6 +3,7 @@ import Vuex from 'vuex';
 
 import { OpenEO, FileTypes, Formula } from '@openeo/js-client';
 import { ProcessRegistry } from '@openeo/js-commons';
+import StacMigrate from '@radiantearth/stac-migrate';
 import Utils from '../utils.js';
 import ProcessRegistryExtension from '../registryExtension.js';
 import Config from '../../config';
@@ -272,6 +273,7 @@ export default new Vuex.Store({
 			let collection = cx.state.collections.find(c => c.id === id);
 			if (!collection || !collection._loaded) {
 				collection = await cx.state.connection.describeCollection(id);
+				collection = StacMigrate.collection(collection, false);
 				cx.commit('fillCollection', collection);
 			}
 			return collection;
@@ -384,6 +386,7 @@ export default new Vuex.Store({
 		},
 		collections(state, data) {
 			state.collections = data.collections
+				.map(c => StacMigrate.collection(c, false))
 				.filter(c => (typeof c.id === 'string'))
 				.sort(Utils.sortById);
 		},

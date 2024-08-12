@@ -16,8 +16,8 @@ class GeoTIFF extends SupportedFormat {
 
 	constructor(asset, stac) {
 		super(asset, "MapViewer", 'fa-map', { removableLayers: true });
-		this.bands = [];
-		this.nodata = [];
+		this._bands = [];
+		this._nodata = [];
 		this.img = null;
 		this.projection = null;
 		this.extent = null;
@@ -53,17 +53,12 @@ class GeoTIFF extends SupportedFormat {
 
 		// Get nodata from STAC file:nodata
 		if (Array.isArray(this['file:nodata']) && this['file:nodata'].length > 0) {
-			this.nodata = Utils.parseNodata(this['file:nodata']);
+			this._nodata = Utils.parseNodata(this['file:nodata']);
 		}
 
-		// Get band names from STAC eo:bands
-		if (Array.isArray(this['eo:bands']) && this['eo:bands'].length > 0) {
-			this['eo:bands'].forEach((band, i) => this.setBandInfo(i, { name: band.name }));
-		}
-
-		// Get min/max/nodata from STAC raster:bands
-		if (Array.isArray(this['raster:bands']) && this['raster:bands'].length > 0) {
-			this['raster:bands'].forEach((band, i) => {
+		// Get min/max/nodata from STAC bands
+		if (Array.isArray(this.bands) && this.bands.length > 0) {
+			this.bands.forEach((band, i) => {
 				// Get name from band
 				if (band.name) {
 					this.setBandInfo(i, {
@@ -80,8 +75,8 @@ class GeoTIFF extends SupportedFormat {
 				}
 
 				// per-band no-data values are not supported, simply read the no-data from the first occurance if not defined yet
-				if (this.nodata.length === 0 && typeof band.nodata !== 'undefined') {
-					this.nodata.push(Utils.parseNodata(band.nodata));
+				if (this._nodata.length === 0 && typeof band.nodata !== 'undefined') {
+					this._nodata.push(Utils.parseNodata(band.nodata));
 				}
 			});
 		}
@@ -103,10 +98,10 @@ class GeoTIFF extends SupportedFormat {
 			// Use min/max for data type (as fallback)
 			try {
 				let dummy = this.img.getArrayForSample(i);
-				if (!Number.isFinite(this.bands[i].min)) {
+				if (!Number.isFinite(this._bands[i].min)) {
 					data.min = this.getMinForDataType(dummy);
 				}
-				if (!Number.isFinite(this.bands[i].max)) {
+				if (!Number.isFinite(this._bands[i].max)) {
 					data.max = this.getMaxForDataType(dummy);
 				}
 			} catch (error) {}
@@ -129,8 +124,8 @@ class GeoTIFF extends SupportedFormat {
 
 			// get no-data values if needed
 			let nodata = this.img.getGDALNoData();
-			if (this.nodata.length === 0 && nodata !== null) {
-				this.nodata.push(nodata);
+			if (this._nodata.length === 0 && nodata !== null) {
+				this._nodata.push(nodata);
 			}
 		}
 
@@ -176,7 +171,7 @@ class GeoTIFF extends SupportedFormat {
 					Math.trunc(map[i] / 65536 * 256),
 					Math.trunc(map[i + greenOffset] / 65536 * 256),
 					Math.trunc(map[i + blueOffset] / 65536 * 256),
-					this.nodata.includes(i) ? 0 : 1
+					this._nodata.includes(i) ? 0 : 1
 				]);
 			}
 		}
@@ -196,11 +191,11 @@ class GeoTIFF extends SupportedFormat {
 	}
 
 	setBandInfo(i, data) {
-		if (this.bands[i]) {
-			Object.assign(this.bands[i], data);
+		if (this._bands[i]) {
+			Object.assign(this._bands[i], data);
 		}
 		else {
-			this.bands.push(Object.assign({ id: i + 1 }, data));
+			this._bands.push(Object.assign({ id: i + 1 }, data));
 		}
 	}
 
@@ -209,7 +204,7 @@ class GeoTIFF extends SupportedFormat {
 	}
 
 	getNoData() {
-		return this.nodata;
+		return this._nodata;
 	}
 
 	getContext() {
@@ -217,7 +212,7 @@ class GeoTIFF extends SupportedFormat {
 	}
 
 	getBands() {
-		return this.bands;
+		return this._bands;
 	}
 
 	getProjection() {

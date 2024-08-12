@@ -16,10 +16,10 @@ What is required by back-ends to give users an ideal experience with GeoTiff ima
 	5. The [`PhotometricInterpretation`](https://www.awaresystems.be/imaging/tiff/tifftags/photometricinterpretation.html) of the image should be set to `1` (BlackIsZero) if an RGB interpretation is not clear. If RGB is set as interpretation (`2`) and you have more than 3 samples per pixel ([`SamplesPerPixel`](https://www.awaresystems.be/imaging/tiff/tifftags/samplesperpixel.html)), the [`ExtraSamples`](https://www.awaresystems.be/imaging/tiff/tifftags/extrasamples.html) should be set.
 	6. [`ColorMap`](https://www.awaresystems.be/imaging/tiff/tifftags/colormap.html)s are supported.
 7. For batch jobs, the STAC metadata is recommended to contain per asset:
-    1. The no-data value either in `file:nodata` (deprecated) or in `nodata` in `raster:bands`
-	2. The `minimum` and `maximum` values per band in the `statistics` object in `raster:bands`
-	3. A band `name` either in `raster:bands` (unspecified) or `eo:bands`
-	4. The projection in `proj:epsg` (recommended), `proj:wkt2` (not well suported by OpenLayers) or `proj:proj4` (deprecated by STAC)
+    1. The no-data value either in `file:nodata` (deprecated) or in `nodata` in `bands`
+	2. The `minimum` and `maximum` values per band in the `statistics` object in `bands`
+	3. A band `name` in `bands`
+	4. The projection in `proj:code` (recommended), `proj:wkt2` (not well suported by OpenLayers) or `proj:proj4` (deprecated by STAC)
 	5. The `type` must be set to the corresponding media type (see below)
 8. For synchronous execution, the `Content-Type` in the header of the response must be set to the corresponding media type (see below)
 
