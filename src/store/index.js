@@ -21,8 +21,8 @@ Formula.arrayOperatorMapping = {
 	'sum': '+'
 };
 Formula.reverseOperatorMapping = (() => {
-	let mapping = {};
-	for(var op in Formula.operatorMapping) {
+	const mapping = {};
+	for(const op in Formula.operatorMapping) {
 		mapping[Formula.operatorMapping[op]] = op;
 	}
 	return Object.assign(mapping, Formula.arrayOperatorMapping);
@@ -60,7 +60,7 @@ export default new Vuex.Store({
 	getters: {
 		title: (state) => {
 			if (state.connection !== null && state.connection.capabilities() !== null) {
-				var title = state.connection.capabilities().title();
+				const title = state.connection.capabilities().title();
 				return title ? title : state.connection.getUrl();
 			}
 			return null;
@@ -68,7 +68,7 @@ export default new Vuex.Store({
 		capabilities: (state) => state.connection !== null ? state.connection.capabilities() : null,
 		supports: (state) => (feature) => state.connection !== null && state.connection.capabilities() !== null && state.connection.capabilities().hasFeature(feature),
 		currency: (state) => {
-			var currency = '';
+			let currency = '';
 			if (state.connection && state.connection.capabilities().currency() !== null) {
 				currency = state.connection.capabilities().currency();
 			}
@@ -81,17 +81,17 @@ export default new Vuex.Store({
 		apiVersion: (state) => state.connection !== null ? state.connection.capabilities().apiVersion() : null,
 		fileFormats: (state) => state.fileFormats instanceof FileTypes ? state.fileFormats.toJSON() : {input: {}, output: {}},
 		collectionDefaults: (state) => (id) => {
-			var collection = state.collections.find(c => c.id === id);
+			const collection = state.collections.find(c => c.id === id);
 			if (!Utils.isObject(collection)) {
 				return {};
 			}
 
-			var spatial_extent = null;
+			let spatial_extent = null;
 			try {
 				spatial_extent = Utils.extentToBBox(collection.extent.spatial.bbox[0]);
 			} catch (error) {}
 
-			var temporal_extent = null;
+			let temporal_extent = null;
 			try {
 				temporal_extent = collection.extent.temporal.interval[0];
 				if (temporal_extent[0] === null && temporal_extent[1] === null) {
@@ -102,7 +102,7 @@ export default new Vuex.Store({
 				}
 			} catch (error) {}
 	
-			var bands = null;
+			let bands = null;
 			return {id, spatial_extent, temporal_extent, bands};
 		},
 		processes: (state) => {
@@ -133,7 +133,7 @@ export default new Vuex.Store({
 			await cx.dispatch('logout');
 
 			// Connect and request capabilities
-			var connection = null;
+			let connection = null;
 			try {
 				connection = await OpenEO.connect(url, {addNamespaceToProcess: true});
 			} catch (error) {
@@ -146,7 +146,7 @@ export default new Vuex.Store({
 
 			// Request auth provider list
 			try {
-				var providers = await connection.listAuthProviders();
+				const providers = await connection.listAuthProviders();
 				cx.commit('authProviders', providers);
 			} catch (error) {
 				cx.commit('setConnectionError', error);
@@ -230,7 +230,7 @@ export default new Vuex.Store({
 			}
 
 			// Request user account information
-			var promise = cx.dispatch('describeAccount')
+			const promise = cx.dispatch('describeAccount')
 				.catch(error => errors.push(error));
 			promises.push(promise);
 
@@ -261,7 +261,7 @@ export default new Vuex.Store({
 		// Request user account info
 		async describeAccount(cx) {
 			if (cx.getters.supports('describeAccount') && cx.state.isAuthenticated) {
-				var response = await cx.state.connection.describeAccount();
+				const response = await cx.state.connection.describeAccount();
 				cx.commit('userInfo', response);
 			}
 			else {
@@ -280,7 +280,7 @@ export default new Vuex.Store({
 		},
 
 		async loadProcess(cx, {id, namespace}) {
-			process = cx.getters.processes.get(id, namespace);
+			const process = cx.getters.processes.get(id, namespace);
 			if (!Utils.isObject(process)) {
 				return null;
 			}
@@ -310,7 +310,7 @@ export default new Vuex.Store({
 
 			if (cx.state.isAuthenticated) {
 				// Logout (mostly for OIDC)
-				var authProvider = cx.state.connection.getAuthProvider();
+				const authProvider = cx.state.connection.getAuthProvider();
 				if (authProvider !== null) {
 					await authProvider.logout();
 				}
@@ -347,8 +347,8 @@ export default new Vuex.Store({
 		serviceTypes(state, serviceTypes) {
 			// Make keys uppercase for simplicity
 			if (Utils.isObject(serviceTypes)) {
-				var obj = {};
-				for(var key in serviceTypes) {
+				const obj = {};
+				for(const key in serviceTypes) {
 					obj[key.toUpperCase()] = serviceTypes[key];
 				}
 				state.serviceTypes = obj;
