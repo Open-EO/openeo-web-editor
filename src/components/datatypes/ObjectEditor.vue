@@ -1,51 +1,47 @@
 <template>
-	<div :class="{editor: true, array: !isObject, object: isObject}">
-		<div class="buttons">
-			<button type="button" class="addBtn" v-if="editable && canAdd" :disabled="count >= maxCount" @click="add()"><i class="fas fa-plus"></i> Add</button>
-			<FullscreenButton :element="() => this.$el" />
-		</div>
-		<div v-if="!elements.length" class="empty description">
-			<i class="fas fa-info-circle"></i>
-			<template v-if="isObject">&nbsp;Object is empty</template>
-			<template v-else>&nbsp;Array is empty</template>
-		</div>
-		<draggable v-else v-model="elements" handle=".mover">
-			<div class="fieldValue element" v-for="(e, k) in elements" :key="e.id">
-				<div class="row">
-					<label class="fieldLabel">
-						<template v-if="isObject && (e.prop.title || e.prop.required)">{{ e.prop.title || e.key }}</template>
-						<input v-else-if="isObject" v-model="e.key" type="text" :disabled="!editable"/>
-						<template v-else>{{ k+1 }}</template>
-					</label>
-					<ParameterDataTypes :editable="editable" :parameter="elementSchema(k, e.key)" :isItem="true" :parent="parent" :context="context" v-model="e.value" />
-					<button v-if="editable && !e.prop.required" :disabled="count <= minCount" class="deleteBtn" type="button" @click="remove(k)"><i class="fas fa-trash"></i></button>
-					<button v-show="editable && !isObject" class="mover" type="button"><i class="fas fa-arrows-alt"></i></button>
-				</div>
-				<div class="row" v-if="e.prop.description">
-					<div class="description">
-						<i class="fas fa-info-circle"></i>
-						<Description :description="e.prop.description" :compact="true" />
-					</div>
-				</div>
-			</div>
-		</draggable>
+	<div class="object-editor" @drop="onDrop" @dragover="allowDrop">
+		<template v-if="isTopLevel">
+			<Tabs ref="tabs" id="object-tabs" position="bottom">
+				<Tab id="visual" name="Visual" icon="fa-project-diagram" :selected="true" @show="showVisual">
+					<ObjectEditorDnD v-if="visual" :parameter="parameter" :editable="editable" :schema="schema" :parent="parent" :value="data" :isObject="isObject" ref="visual" @input="updateFromVisual" />
+				</Tab>
+				<Tab id="source" name="Code" icon="fa-code" @show="showCode">
+					<TextEditor ref="sourceEditor" :editable="editable" :value="data" id="object-texteditor" language="json" @input="updateFromCode"></TextEditor>
+				</Tab>
+			</Tabs>
+			<small v-if="editable" class="info">
+				To easily import an object, you can drag &amp; drop a JSON file into this area.
+			</small>
+		</template>
+		<template v-else>
+			<ObjectEditorDnD :parameter="parameter" :editable="editable" :schema="schema" :parent="parent" :value="data" :isObject="isObject" ref="visual" @input="updateFromVisual" />
+		</template>
 	</div>
 </template>
 
 <script>
-import draggable from 'vuedraggable';
-import Description from '@openeo/vue-components/components/Description.vue';
-import FullscreenButton from '../FullscreenButton.vue';
-import { ProcessUtils, ProcessSchema } from '@openeo/js-commons';
+import Tabs from '@openeo/vue-components/components/Tabs.vue';
+import Tab from '@openeo/vue-components/components/Tab.vue';
+
+import ObjectEditorDnD from './ObjectEditorDnD.vue';
+import TextEditor from '../TextEditor.vue';
+
 import Utils from '../../utils';
 
 export default {
 	name: 'ObjectEditor',
 	components: {
-		draggable,
-		Description,
-		FullscreenButton,
-		ParameterDataTypes: () => import('../ParameterDataTypes.vue')
+		ObjectEditorDnD,
+		Tab,
+		Tabs,
+		TextEditor
+	},
+	data() {
+		return {
+			data: this.value,
+			visual: true,
+			isTopLevel: true
+		};
 	},
 	props: {
 		parameter: Object,
@@ -62,179 +58,105 @@ export default {
 		parent: Object,
 		context: {}
 	},
-	data() {
-		return {
-			elements: []
-		};
-	},
-	computed: {
-		count() {
-			return Utils.size(this.elements);
+	watch: {
+		value(value) {
+			this.data = value;
 		},
-		maxCount() {
-			return (this.isObject ? this.schema.schema.maxProperties : this.schema.schema.maxItems) || Number.MAX_VALUE;
-		},
-		minCount() {
-			return (this.isObject ? this.schema.schema.minProperties : this.schema.schema.minItems) || 0;
-		},
-		canAdd() {
-			return !this.isObject || this.schema.schema.additionalProperties !== false;
-		},
-		prefill() {
-			let schema = this.schema.schema;
-			if (this.isObject && Utils.isObject(schema.properties)) {
-				let arr = [];
-				for (let name in schema.properties) {
-					let required = false;
-					if (Array.isArray(schema.required) && schema.required.includes(name)) {
-						required = true;
-					}
-					arr.push(Object.assign({name, required}, schema.properties[name]));
-				}
-				return arr;
-			}
-			else if (!this.isObject && this.minCount > 0) {
-				return [...Array(this.minCount).keys()].map(key => ({
-					name: key
-				}));
-			}
-			return [];
-		},
-		newValue() {
-			if (this.isObject) {
-				let obj = {};
-				for(let e of this.elements) {
-					obj[e.key] = e.value;
-				}
-				return obj;
-			}
-			else {
-				return this.elements.map(v => v.value);
-			}
+		data(data) {
+			this.$emit('input', data);
 		}
 	},
-	watch: {
-		newValue: {
-			deep: true,
-			handler(newValue) {
-				this.$emit('input', newValue);
+	mounted() {
+		// Check if there is another ObjectEditor in the parents.
+		// If there's one we don't want to show the tabs, we only want code editing at the top level.
+		let parent = this.$parent;
+		while (parent) {
+			if (parent.$options.name === 'ObjectEditor') {
+				this.isTopLevel = false;
+				break;
 			}
-		},
-		value: {
-			immediate: true,
-			handler(value) {
-				if (this.newValue !== value) {
-					this.elements = [];
-					
-					// Prefill if empty
-					if (Utils.size(value) === 0 && this.prefill.length > 0) {
-						for(let prop of this.prefill) {
-							this.add(prop.name, undefined, prop);
-						}
-					}
-					// Convert to internal state object
-					else if (value && typeof value === 'object') {
-						for(let key in value) {
-							this.add(key, value[key]);
-						}
-					}
-				}
-			}
+			parent = parent.$parent
 		}
 	},
 	methods: {
-		elementSchema(index, key = null) {
-			let element = ProcessUtils.getElementJsonSchema(this.schema.schema, key || index);
-			let schema = new ProcessSchema(element);
-			if (this.schema.parent instanceof ProcessSchema) {
-				schema.refs = this.schema.parent.refs || [];
-			}
-			return schema;
+		showVisual() {
+			this.visual = true;
 		},
-		add(key = null, value = undefined, prop = {}) {
-			let obj = {
-				id: String(this.elements.length),
-				value: value
-			};
-			if (this.isObject) {
-				obj.key = key ? key : "unnamed" + this.elements.length;
-			}
-			obj.prop = prop;
-			if (typeof obj.value === 'undefined') {
-				if (typeof prop.default !== 'undefined') {
-					obj.value = prop.default;
-				}
-				else {
-					obj.value = this.elementSchema(this.elements.length, obj.key).default;
-				}
-			}
-			this.elements.push(obj);
+		showCode() {
+			this.visual = false;
+			this.$refs.sourceEditor.updateState();
 		},
-		remove(k) {
-			this.elements.splice(k, 1);
-		}
+		updateFromCode(value) {
+			if (!this.visual) {
+				this.data = value;
+			}
+		},
+		updateFromVisual(value) {
+			if (this.visual) {
+				this.data = value;
+			}
+		},
+		allowDrop(event) {
+			if (this.editable && this.isTopLevel) {
+				event.preventDefault();
+			}
+		},
+		onDrop(event) {
+			// Read a files that have been dropped
+			let files = event.dataTransfer.files;
+			if (files.length === 1) {
+				let file = event.dataTransfer.files[0];
+				let jsonTypes = ['text/json', 'application/json', 'application/geo+json', 'text/plain'];
+				let name = file.name.toLowerCase();
+				let isJson = jsonTypes.includes(file.type) || name.endsWith('.geojson') || name.endsWith('.json');
+				if (isJson) {
+					var reader = new FileReader();
+					reader.onload = async e => {
+						let json;
+						try {
+							json = JSON.parse(e.target.result);
+						} catch(error) {
+							console.error(error);
+							return Utils.error(this, "The provided file is not a valid JSON file");
+						}
+						if ((this.isObject && Utils.isObject(json)) || (!this.isObject && Array.isArray(json))) {
+							this.data = json;
+						}
+						else {
+							Utils.error(this, "The provided file doesn't seem to be a JSON file that contains an object");
+						}
+					};
+					reader.onerror = error => Utils.exception(this, error, "Reading the file failed");
+					reader.readAsText(file, "UTF-8");
+				}
+			}
+			else {
+				Utils.error(this, "Please provide a single JSON file");
+			}
+			return event.preventDefault();
+		},
 	}
-};
+
+}
 </script>
 
-<style scoped>
-.editor, .editor > div {
+<style lang="scss" scoped>
+.object-editor {
 	width: 100%;
-}
-.element {
-	border: 1px solid #ccc;
-	border-radius: 3px;
-	padding: 0.4em 0.25em;
-	margin: 0.4em 0.25em;
-}
-.array .element.sortable-chosen {
-	background: #eee;
-}
-.array .element.sortable-chosen .deleteBtn {
-	visibility: hidden;
-}
-.parameters .fieldRow .array .element .fieldLabel {
+	min-height: 300px;
+	max-height: calc(70vh + 1.5em);
 	display: flex;
-	align-items: center;
-	min-width: 1.5em;
-	width: auto;
-	padding: 0 0.5em;
+	flex-direction: column;
 }
-.parameters .fieldRow .object .element .fieldLabel {
-	min-width: 20%;
+#object-tabs {
+	max-height: 70vh;
 }
-.parameters .fieldRow .element .fieldValue {
+.info {
 	display: block;
-}
-.element > .row {
-	width: 100%;
-	display: flex;
-	align-items: stretch;
-}
-.element > .row > .description {
-	padding: 0 0.5em;
+	text-align: center;
+	font-style: italic;
+	color: #555;
 	margin-top: 0.5em;
-	margin-bottom: 0;
-}
-.array .deleteBtn {
-	margin: 0 0.5em 0 1em;
-}
-.object .deleteBtn {
-	margin-left: 10px;
-}
-.addBtn {
-	margin: 0 0.25em;
-}
-.empty.description {
-	padding: 0.5em 0.25em;
-}
-.fullscreen {
-	padding: 1em;
-	box-sizing: border-box;
-}
-.mover {
-	cursor: pointer;
-	border: 0;
-	background-color: transparent;
+	line-height: 1em;
 }
 </style>

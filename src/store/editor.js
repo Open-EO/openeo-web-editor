@@ -136,7 +136,7 @@ export default {
 		}
 	},
 	mutations: {
-		setModelDnd(state, obj = null) {
+		setModelDnD(state, obj = null) {
 			state.modelDnD = obj;
 		},
 		setDiscoverySearchTerm(state, searchTerm) {

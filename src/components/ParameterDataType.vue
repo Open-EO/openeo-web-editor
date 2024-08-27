@@ -3,7 +3,7 @@
 		<!-- Result Node -->
 		<template v-if="isResult">
 			<div class="fieldValue externalData fromNode">
-				<span>Output of <tt>#{{ state.from_node }}</tt></span>
+				<span>Output of <code>#{{ state.from_node }}</code></span>
 			</div>
 			<button type="button" v-if="nativeParameterType === 'array'" @click="convertToArray()"><i class="fas fa-list"></i> Convert to array</button>
 		</template>
@@ -14,7 +14,7 @@
 		<!-- Process Parameter -->
 		<template v-else-if="isPgParameter">
 			<div class="fieldValue externalData fromArgument">
-				<span>Value of process parameter <tt>{{ state.from_parameter }}</tt></span>
+				<span>Value of process parameter <code>{{ state.from_parameter }}</code></span>
 			</div>
 			<button type="button" v-if="nativeParameterType === 'array'" @click="convertToArray()"><i class="fas fa-list"></i> Convert to array</button>
 		</template>
@@ -26,7 +26,7 @@
 		<!-- Null -->
 		<div class="description" v-else-if="type === 'null'">
 			<i class="fas fa-info-circle"></i>
-			<p>This is set to <strong><tt>null</tt></strong>, which is usually used as placeholder for no-data values or a default value.</p>
+			<p>This is set to <strong><code>null</code></strong>, which is usually used as placeholder for no-data values or a default value.</p>
 		</div>
 		<!-- Select Boxes (collection id, job id, epsg code, in/output format, service type, billing plan, enums) -->
 		<SelectBox v-else-if="isSelection" v-model="state" :key="type" :type="type" :editable="editable" :schema="schema" :context="dependency" @onDetails="onSelectDetails"></SelectBox>
@@ -61,7 +61,7 @@
 		<!-- URL -->
 		<input class="fieldValue" v-else-if="type === 'url' || type === 'uri'" v-model="state" type="url" :name="name" :disabled="!editable" />
 		<!-- Objects / Arrays -->
-		<ObjectEditor  v-else-if="nativeType === 'object' || nativeType === 'array'" :editable="editable" :parameter="parameter" :schema="schema" :isObject="nativeType === 'object'" v-model="state" :parent="parent" :context="context" />
+		<ObjectEditor  v-else-if="nativeType === 'object' || nativeType === 'array'" :key="type" :editable="editable" :parameter="parameter" :schema="schema" :isObject="nativeType === 'object'" v-model="state" :parent="parent" :context="context" />
 		<!-- String and all other -->
 		<input class="fieldValue" v-else v-model="state" type="text" :name="name" :disabled="!editable" />
 	</div>

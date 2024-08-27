@@ -158,10 +158,10 @@ export default {
 		}
 	},
 	methods: {
-		...Utils.mapMutations('editor', ['setDiscoverySearchTerm', 'setModelDnd']),
+		...Utils.mapMutations('editor', ['setDiscoverySearchTerm', 'setModelDnD']),
 		...Utils.mapActions(['loadProcess']),
 		onDrag(event, type, data) {
-			let fn = (loading) => this.setModelDnd({type, data, loading});
+			let fn = (loading) => this.setModelDnD({type, data, loading});
 			if (type === 'process') {
 				fn(true);
 				this.loadProcess(data).then(() => fn(false));

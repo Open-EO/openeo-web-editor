@@ -60,7 +60,7 @@ const SUPPORTED_TYPES = [
 		{type: 'object', default: {}, group: 'Basics', properties: {
 			from_node: { not: {} },
 			from_parameter: { not: {} }
-		}},
+		}, default: {}},
 
 		{type: 'string', subtype: 'date-time', format: 'date-time', title: 'Date and Time', group: 'Temporal', default: () => now()},
 		{type: 'string', subtype: 'date', format: 'date', title: 'Date only', group: 'Temporal', default: () => now().substring(0, 10)},
