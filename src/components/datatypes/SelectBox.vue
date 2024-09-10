@@ -1,7 +1,7 @@
 <template>
 	<div class="select-container">
 		<template v-if="loaded">
-			<MultiSelect v-model="selected" :key="type" ref="htmlElement" label="label" track-by="id" :multiple="multiple" :options="selectOptions" :allowEmpty="false" :preselectFirst="preselect" :disabled="!editable" :deselectLabel="deselectLabel" :taggable="taggable" :tagPlaceholder="tagPlaceholder" @tag="addValue"></MultiSelect>
+			<MultiSelect v-model="selected" :key="type" ref="htmlElement" label="label" track-by="id" :multiple="multiple" :options="selectOptions" :allowEmpty="false" :preselectFirst="preselect" :disabled="!editable" :deselectLabel="deselectLabel" :taggable="taggable" :tagPlaceholder="tagPlaceholder" :openDirection="openDirection" @tag="addValue"></MultiSelect>
 			<button v-if="showDetails" type="button" title="Details" @click="$emit('onDetails')"><i class="fas fa-info"></i></button>
 		</template>
 		<div class="loading" v-else><i class="fas fa-spinner fa-spin"></i> Loading options...</div>
@@ -37,6 +37,10 @@ export default {
 		optionFilter: {
 			type: Function,
 			default: null
+		},
+		openDirection: {
+			type: String,
+			default: 'auto'
 		}
 	},
 	computed: {

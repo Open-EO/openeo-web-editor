@@ -3,18 +3,18 @@
 		<template v-if="isTopLevel">
 			<Tabs ref="tabs" id="object-tabs" position="bottom">
 				<Tab id="visual" name="Visual" icon="fa-project-diagram" :selected="true" @show="showVisual">
-					<ObjectEditorDnD v-if="visual" :parameter="parameter" :editable="editable" :schema="schema" :parent="parent" :value="data" :isObject="isObject" ref="visual" @input="updateFromVisual" />
+					<ObjectEditorDnD v-if="visual" :parameter="parameter" :editable="editable" :schema="schema" :parent="parent" :context="context" :value="data" :isObject="isObject" ref="visual" @input="updateFromVisual" />
 				</Tab>
 				<Tab id="source" name="Code" icon="fa-code" @show="showCode">
 					<TextEditor ref="sourceEditor" :editable="editable" :value="data" id="object-texteditor" language="json" @input="updateFromCode"></TextEditor>
 				</Tab>
 			</Tabs>
-			<small v-if="editable" class="info">
+			<small v-if="editable && isObject" class="info">
 				To easily import an object, you can drag &amp; drop a JSON file into this area.
 			</small>
 		</template>
 		<template v-else>
-			<ObjectEditorDnD :parameter="parameter" :editable="editable" :schema="schema" :parent="parent" :value="data" :isObject="isObject" ref="visual" @input="updateFromVisual" />
+			<ObjectEditorDnD :parameter="parameter" :editable="editable" :schema="schema" :parent="parent" :context="context" :value="data" :isObject="isObject" ref="visual" @input="updateFromVisual" />
 		</template>
 	</div>
 </template>
@@ -140,13 +140,22 @@ export default {
 }
 </script>
 
+<style lang="scss">
+.object-editor .multiselect__content-wrapper {
+	max-height: 200px !important;
+}
+</style>
 <style lang="scss" scoped>
 .object-editor {
 	width: 100%;
-	min-height: 300px;
+	min-height: 400px;
 	max-height: calc(70vh + 1.5em);
 	display: flex;
 	flex-direction: column;
+
+	.multiselect__content-wrapper {
+		max-height: 200px;
+	}
 }
 #object-tabs {
 	max-height: 70vh;

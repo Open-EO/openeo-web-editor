@@ -29,7 +29,7 @@
 			<p>This is set to <strong><code>null</code></strong>, which is usually used as placeholder for no-data values or a default value.</p>
 		</div>
 		<!-- Select Boxes (collection id, job id, epsg code, in/output format, service type, billing plan, enums) -->
-		<SelectBox v-else-if="isSelection" v-model="state" :key="type" :type="type" :editable="editable" :schema="schema" :context="dependency" @onDetails="onSelectDetails"></SelectBox>
+		<SelectBox v-else-if="isSelection" v-model="state" :key="type" :type="type" :editable="editable" :schema="schema" :context="dependency" :openDirection="type === 'band-name' ? 'below' : 'auto'" @onDetails="onSelectDetails"></SelectBox>
 		<!-- Temporal (date, time, date-time, temporal-interval) -->
 		<TemporalPicker v-else-if="isTemporal" v-model="state" :key="type" :type="type" :editable="editable"></TemporalPicker>
 		<!-- Bounding Box -->
