@@ -29,7 +29,7 @@
 				<div v-if="showHelpOverlay" class="model-overlay">
 					<h2>Welcome!</h2>
 					<p>
-						What you are seeing in this area of the {{ $config.appName }} is the visual model builder.
+						What you are seeing in this area is the visual model builder.
 						You can start building your model by dragging collections, processes etc. from the left area and dropping them here.
 						</p>
 					<p>
