@@ -4,6 +4,10 @@ import { ProcessSchema, ProcessDataType } from '@openeo/js-commons';
 export default class Process {
 
 	static isMathProcess(p, operatorMapping = {}) {
+		if (!Utils.isObject(p)) {
+			return false;
+		}
+
 		// Skip processes handled by operators, if given
 		let operatorProcesses = Object.values(operatorMapping);
 		if (operatorProcesses.includes(p.id)) {
