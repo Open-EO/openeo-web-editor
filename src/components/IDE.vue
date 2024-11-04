@@ -21,6 +21,7 @@
 								<template #file-toolbar>
 									<button type="button" @click="importProcess" title="Import process from external source"><i class="fas fa-cloud-download-alt"></i></button>
 									<button type="button" v-show="saveSupported" :disabled="!hasProcess" @click="saveProcess" :title="'Save to ' + contextTitle"><i class="fas fa-save"></i></button>
+									<button type="button" @click="exportJSON" :disabled="!hasProcess" title="Download as JSON file"><i class="fas fa-file-download"></i></button>
 									<button type="button" @click="exportCode" :disabled="!hasProcess" title="Export into another programming language"><i class="fas fa-file-export"></i></button>
 									<button type="button" v-show="validateSupported" :disabled="!hasProcess" @click="validateProcess" title="Validate process on server-side"><i class="fas fa-tasks"></i></button>
 								</template>
@@ -55,6 +56,7 @@ import DiscoveryToolbar from './DiscoveryToolbar.vue';
 import { ProcessParameter } from '@openeo/js-commons';
 import { Job, Service, UserProcess } from '@openeo/js-client';
 import { Splitpanes, Pane } from 'splitpanes';
+import { OpenEO } from '@openeo/js-client';
 
 export default {
 	name: 'IDE',
@@ -184,6 +186,11 @@ export default {
 
 		saveProcess() {
 			this.broadcast('replaceProcess', this.context, this.process);
+		},
+
+		exportJSON() {
+			const filename = (this.contextTitle || "openeo-process") + '.json';
+			OpenEO.Environment.saveToFile(JSON.stringify(this.process, null, 2), filename);
 		},
 
 		async exportCode() {
