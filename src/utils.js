@@ -413,7 +413,7 @@ class Utils extends VueUtils {
 		}
 	}
 
-	confirmOpenAll(files) {
+	static confirmOpenAll(files) {
 		return confirm(`You are about to open ${files.length} individual files / tabs, which could slow down the web browser. Are you sure you want to open all of them?`);
 	}
 
