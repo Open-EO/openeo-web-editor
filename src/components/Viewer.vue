@@ -76,13 +76,11 @@ export default {
 		...Utils.mapMutations('editor', ['setViewerOptions', 'setModelDnD']),
 		showAppMode() {
 			if (this.appMode.resultType === 'service') {
-				console.log(this.appMode);
 				const service = new Service(this.connection, 'app');
 				service.title = this.appMode.title;
 				service.url = this.appMode.resultUrl;
 				service.type = this.appMode.service;
 				service.enabled = true;
-				console.log(service);
 				this.showWebService(service);
 			}
 			else {
