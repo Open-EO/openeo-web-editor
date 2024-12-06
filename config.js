@@ -105,5 +105,8 @@ export default {
 	// Show or hide experimental and/or deprecated entites by default (e.g. processes, collections)
 	showExperimentalByDefault: false,
 	showDeprecatedByDefault: false,
+
+	// number of items to show per page in the UI (jobs, services, files, UDPs) - null to disable pagination
+	pageLimit: 50,
 	
 };

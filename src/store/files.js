@@ -3,6 +3,7 @@ import storeFactory from './storeFactory';
 export default storeFactory({
 	namespace: 'files',
 	listFn: 'listFiles',
+	paginateFn: 'paginateFiles',
 	createFn: 'uploadFile',
 	updateFn: 'uploadFile',
 	deleteFn: 'deleteFile',
