@@ -4,6 +4,7 @@ import Utils from '../utils';
 export default storeFactory({
 	namespace: 'userProcesses',
 	listFn: 'listUserProcesses',
+	paginateFn: null,
 	createFn: 'setUserProcess',
 	updateFn: 'replaceUserProcess',
 	deleteFn: 'deleteUserProcess',
