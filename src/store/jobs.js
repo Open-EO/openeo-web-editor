@@ -3,6 +3,7 @@ import storeFactory from './storeFactory';
 export default storeFactory({
 	namespace: 'jobs',
 	listFn: 'listJobs',
+	paginateFn: 'paginateJobs',
 	createFn: 'createJob',
 	updateFn: 'updateJob',
 	deleteFn: 'deleteJob',

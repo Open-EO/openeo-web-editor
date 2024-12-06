@@ -2,14 +2,16 @@ import { UserProcess } from '@openeo/js-client';
 import { Utils } from '@openeo/js-commons';
 import Vue from 'vue';
 
-export default ({namespace, listFn, createFn, updateFn, deleteFn, readFn, readFnById, customizations, primaryKey}) => {
+export default ({namespace, listFn, paginateFn, createFn, updateFn, deleteFn, readFn, readFnById, customizations, primaryKey}) => {
 	if (!primaryKey) {
 		primaryKey = 'id';
 	}
 	const getDefaultState = () => {
-		let data = {};
-		data[namespace] = [];
-		return data;
+		return {
+			pages: null,
+			hasMore: false,
+			[namespace]: []
+		};
 	};
 	let definition = {
 		namespaced: true,
@@ -76,19 +78,46 @@ export default ({namespace, listFn, createFn, updateFn, deleteFn, readFn, readFn
 				return updated;
 			},
 			async list(cx) {
-				var data = [];
+				cx.commit('reset');
 				if (cx.getters.supportsList) {
 					// Pass over existing data so that it can be updated (for all complete entities, only update fields that exist in the new object)
 					// instead of getting replaced, see https://github.com/Open-EO/openeo-web-editor/issues/234
-					data = await cx.rootState.connection[listFn](cx.state[namespace]);
+					if (paginateFn) {
+						const pages = cx.rootState.connection[paginateFn](cx.rootState.pageLimit, cx.state[namespace]);
+						cx.commit('pages', pages);
+						cx.commit('data', await pages.next());
+					}
+					else {
+						const data = await cx.rootState.connection[listFn](cx.state[namespace]);
+						cx.commit('data', data);
+					}
 				}
-				cx.commit('data', data);
-				return data;
+				return cx.state[namespace];
+			},
+			async nextPage(cx) {
+				if (!cx.state.pages || !cx.state.hasMore) {
+					return;
+				}
+				cx.commit('data', await cx.state.pages.next());
+				return cx.state[namespace];
 			}
 		},
 		mutations: {
 			data(state, data) {
-				state[namespace] = data.map(d => Vue.observable(d));
+				let hasMore = false;
+				if (Utils.isObject(data)) {
+					hasMore = !data.done;
+					data = data.value;
+				}
+				if (Array.isArray(data)) {
+					for (let d of data) {
+						state[namespace].push(d);
+					}
+				}
+				state.hasMore = hasMore;
+			},
+			pages(state, pages) {
+				state.pages = pages;
 			},
 			upsert(state, data) {
 				let id = data[primaryKey];
