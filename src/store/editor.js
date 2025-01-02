@@ -3,6 +3,7 @@ import Utils from '../utils';
 import { Job, Service, UserProcess } from '@openeo/js-client';
 import { ProcessGraph } from '@openeo/js-processgraphs';
 import FormatRegistry from '../formats/formatRegistry.js';
+import StacMigrate from '@radiantearth/stac-migrate';
 
 const serverStorage = "serverUrls";
 
@@ -157,6 +158,10 @@ export default {
 			};
 		},
 		setAppModeData(state, data) {
+			if (data.type) {
+				data = StacMigrate.stac(data, false);
+			}
+
 			Vue.set(state.appMode, 'data', data);
 
 			let process, title, expires;
