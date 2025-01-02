@@ -73,7 +73,10 @@ export default {
 		this.setCollectionPreview(Utils.param('preview-collection'));
 
 		const resultUrl = Utils.param('result');
-		const resultType = Utils.param('result-type') || 'job';
+		let resultType = 'job';
+		if (Utils.param('app~service')) {
+			resultType = 'service';
+		}
 		if (resultUrl) {
 			this.setAppMode({
 				resultUrl,

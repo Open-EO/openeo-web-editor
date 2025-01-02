@@ -2,15 +2,15 @@
 	<div class="metadataViewer">
 		<Collection v-if="isCollection" :data="data">
 			<template #spatial-extents="p">
-				<MapExtentViewer class="jobMap" :footprint="p.extents"></MapExtentViewer>
+				<MapExtentViewer class="resultMap" :footprint="p.extents"></MapExtentViewer>
 			</template>
 		</Collection>
 		<Item v-else-if="isItem" :data="data">
 			<template #location="p">
-				<MapExtentViewer class="jobMap" :footprint="p.geometry || p.bbox"></MapExtentViewer>
+				<MapExtentViewer class="resultMap" :footprint="p.geometry || p.bbox"></MapExtentViewer>
 			</template>
 		</Item>
-		<ul class="list">
+		<ul v-else class="list">
 			<StacAsset v-for="(asset, id) in data.assets" :key="id" :asset="asset" :id="id" :context="data" />
 		</ul>
 	</div>
@@ -57,5 +57,9 @@ export default {
 	width: 98%;
 	height: 98%;
 	padding: 1%;
+}
+.resultMap {
+	height: 300px;
+	max-width: 600px;
 }
 </style>
