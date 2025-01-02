@@ -11,10 +11,10 @@
 				</ul>
 			</header>
 			<Splitpanes class="default-theme" @resize="resized" @pane-maximize="resized">
-				<Pane id="discovery" :size="splitpaneSizeH[0]">
+				<Pane v-if="!appMode || isAuthenticated" id="discovery" :size="splitpaneSizeH[0]">
 					<DiscoveryToolbar class="toolbar tour-ide-discovery" :onAddProcess="insertProcess" :collectionPreview="true" :persist="true" />
 				</Pane>
-				<Pane id="workspace" :size="splitpaneSizeH[1]">
+				<Pane v-if="!appMode || isAuthenticated || hasProcess" id="workspace" :size="splitpaneSizeH[1]">
 					<Splitpanes class="default-theme" horizontal @resize="resized" @pane-maximize="resized">
 						<Pane id="editor" :size="splitpaneSizeV[0]">
 							<Editor ref="editor" class="mainEditor tour-ide-editor" id="main" :value="process" @input="updateEditor" :title="contextTitle" showIntro>
@@ -27,7 +27,7 @@
 								</template>
 							</Editor>
 						</Pane>
-						<Pane id="user" :size="splitpaneSizeV[1]">
+						<Pane v-if="!appMode || isAuthenticated" id="user" :size="splitpaneSizeV[1]">
 							<UserWorkspace v-if="isAuthenticated" class="userContent tour-ide-workspace" />
 							<div v-else class="message info" title="Login is required to interact with the server.">
 								<i class="fas fa-sign-in-alt"></i>
