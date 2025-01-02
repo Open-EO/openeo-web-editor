@@ -48,14 +48,18 @@ export default {
 	supportedBatchJobSharingServices: [
 		'ShareEditor',
 		'CopyUrl',
-		'TwitterShare'
+		'BlueskyShare',
+		'MastodonSocialShare',
+		'XShare'
 	],
 
 	// List of supported web service sharing services
 	supportedWebServiceSharingServices: [
 		'ShareEditor',
 		'CopyUrl',
-		'TwitterShare'
+		'BlueskyShare',
+		'MastodonSocialShare',
+		'XShare'
 	],
 
 	// List of supported wizards

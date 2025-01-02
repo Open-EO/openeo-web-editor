@@ -1,8 +1,8 @@
 <template>
-	<ShareInterface id="share-twitter" :icon="['fab', 'fa-twitter']" title="Twitter" description="Share your STAC metadata as a tweet">
+	<ShareInterface id="share-mastodon" :icon="['fab', 'fa-mastodon']" title="Mastodon.social" description="Share your STAC metadata as a toot on Mastodon.social">
 		<template #customize>
 			<textarea v-model="text"></textarea><br />
-			<button @click="tweet">Open Twitter</button>
+			<button @click="action">Open Mastodon.social</button>
 		</template>
 	</ShareInterface>
 </template>
@@ -12,7 +12,7 @@ import ShareMixin from './ShareMixin';
 import ShareInterface from './ShareInterface.vue';
 
 export default {
-	name: 'TwitterShare',
+	name: 'MastodonSocialShare',
 	components: {
 		ShareInterface
 	},
@@ -28,9 +28,9 @@ export default {
 		ShareMixin
 	],
 	methods: {
-		tweet() {
-            let text = encodeURIComponent(this.text);
-            let url = `https://twitter.com/intent/tweet?text=${text}`;
+		action() {
+			let text = encodeURIComponent(this.text);
+			let url = `https://mastodon.social/share?text=${text}`;
 			window.open(url, '_blank').focus();
 		}
 	}
@@ -38,9 +38,9 @@ export default {
 </script>
 
 <style lang="scss">
-#share-twitter {
+#share-mastodon {
 	&.shareable:not(.expanded) > .entry {
-		color: #1DA1F2;
+		color: #6364FF;
 	}
 	textarea {
 		width: 100%;
