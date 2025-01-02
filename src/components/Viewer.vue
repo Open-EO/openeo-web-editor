@@ -5,6 +5,7 @@
 			<template #dynamic="{ tab }">
 				<LogViewer v-if="logViewerIcons.includes(tab.icon)" :data="tab.data" @mounted="onMounted" @options="onOptionsChanged" />
 				<component v-else-if="tab.data.component" :is="tab.data.component" v-on="tab.data.events" v-bind="tab.data.props" @mounted="onMounted" @options="onOptionsChanged" /> <!-- for file formats -->
+				<MetadataViewer v-if="tab.icon === 'fa-info'" :data="tab.data" @mounted="onMounted" @options="onOptionsChanged" /> <!-- for STAC metadata -->
 				<MapViewer v-else-if="tab.icon === 'fa-map'" :data="tab.data" :removableLayers="isCollectionPreview(tab.data)" @mounted="onMounted" @options="onOptionsChanged" /> <!-- for services -->
 				<div class="unsupported" v-else>
 					Sorry, the viewer doesn't support showing this type of data.
@@ -35,7 +36,8 @@ export default {
 		TableViewer: () => import('./viewer/TableViewer.vue'),
 		ImageViewer: () => import('./viewer/ImageViewer.vue'),
 		LogViewer: () => import('./viewer/LogViewer.vue'),
-		MapViewer: () => import('./viewer/MapViewer.vue')
+		MapViewer: () => import('./viewer/MapViewer.vue'),
+		MetadataViewer: () => import('./viewer/MetadataViewer.vue')
 	},
 	mounted() {
 		this.listen('viewSyncResult', this.showSyncResults);
@@ -84,7 +86,7 @@ export default {
 				this.showWebService(service);
 			}
 			else {
-				this.showJobResults(this.appMode.data, null, this.appMode.title);
+				this.showJobResults(this.appMode.data, null, this.appMode.title, true);
 				if (typeof this.appMode.expires === 'string') {
 					const expires = Formatters.formatTimestamp(this.appMode.expires);
 					Utils.info(this, `The shared data is available until ${expires}`);
@@ -181,7 +183,7 @@ export default {
 					}
 				});
 		},
-		showJobResults(stac, job = null, title = null) {
+		showJobResults(stac, job = null, title = null, showMetadata = false) {
 			if (title === null) {
 				if (stac.title) {
 					title = stac.title;
@@ -204,6 +206,9 @@ export default {
 			}
 			else if (files.length > 5 &&  !Utils.confirmOpenAll(files)) {
 				return;
+			}
+			if (showMetadata) {
+				this.showMetadataViewer(stac, id, title);
 			}
 			this.showViewer(files, title, file => `${id}-${file.getUrl()}`, true)
 				.catch(error => Utils.exception(this, error));
@@ -230,6 +235,20 @@ export default {
 				tab => this.onShow(tab),
 				tab => this.onHide(tab),
 				onClose
+			);
+		},
+		showMetadataViewer(resource, id = null, title = null) {
+			if (!title) {
+				title = Utils.getResourceTitle(resource, true);
+			}
+			if (!id) {
+				id = this.nextTabId;
+				this.tabIdCounter++;
+			}
+			this.$refs.tabs.addTab(
+				title, "fa-info", resource, id, true, true,
+				tab => this.onShow(tab),
+				tab => this.onHide(tab)
 			);
 		},
 		addToMapChooser({asset, context}) {
