@@ -22,10 +22,11 @@ export default (namespace, singular, plural, loadInitially = true) => {
 		},
 		computed: {
 			...Utils.mapState(namespace, {data: namespace}),
+			...Utils.mapState(namespace, ['pages', 'hasMore']),
 			...Utils.mapGetters(namespace, ['supportsList', 'supportsCreate', 'supportsRead', 'supportsUpdate', 'supportsDelete'])
 		},
 		methods: {
-			...Utils.mapActions(namespace, ['list', 'create', 'read', 'update', 'delete']),
+			...Utils.mapActions(namespace, ['list', 'nextPage', 'create', 'read', 'update', 'delete']),
 			getTable() { // To be overridden
 				return this.$refs && this.$refs.table ? this.$refs.table : null;
 			},
