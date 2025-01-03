@@ -2,7 +2,7 @@
 	<Modal width="80%" :title="collection.id" @closed="$emit('closed')">
 		<div class="docgen">
 			<Collection :data="collection" />
-			<section v-if="currentItems">
+			<section class="items" v-if="currentItems">
 				<Items :items="currentItems">
 					<template #item-location="p">
 						<MapExtentViewer :footprint="p.geometry"></MapExtentViewer>
@@ -35,7 +35,7 @@ export default {
 		return {
 			items: [],
 			itemsPage: 0,
-			itemsIterator: null
+			itemPages: null
 		};
 	},
 	props: {
@@ -56,14 +56,12 @@ export default {
 			return (this.itemsPage > 0);
 		},
 		hasNextItems() {
-			return (this.itemsPage < this.items.length - 1);
+			return this.itemPages.hasNextPage() || (this.itemsPage < this.items.length - 1);
 		}
 	},
 	async mounted() {
 		if (this.supports('listCollectionItems')) {
 			await this.nextItems();
-			// Always request a page in advance so that we know whether a next page is available.
-			this.nextItems();
 		}
 	},
 	methods: {
@@ -78,13 +76,12 @@ export default {
 			this.itemsPage += step;
 		},
 		async nextItems() {
-			if (!this.itemsIterator) {
-				this.itemsIterator = await this.connection.listCollectionItems(this.collection.id);
+			if (!this.itemPages) {
+				this.itemPages = await this.connection.listCollectionItems(this.collection.id);
 			}
-			let next = await this.itemsIterator.next();
-			if (next && next.value && !next.done) {
-				this.items.push(StacMigrate.item(next.value, null, false));
-			}
+			let items = await this.itemPages.nextPage();
+			items = items.map(item => StacMigrate.item(item, this.collection, false));
+			this.items.push(items);
 		}
 	}
 }
@@ -105,16 +102,14 @@ export default {
 		font-size: 1.15em;
 	}
 }
-.docgen {
-	.collection > h2 {
-		display: none;
-	}
+.vue-component.collection > h2 {
+	display: none;
+}
 
-	.items > h2 {
-		display: block;
-		font-size: 1.4em;
-		margin-top: 1.5em;
-		border-bottom-style: dotted;
-	}
+.vue-component.items > .searchable-list > h2 {
+	display: block;
+	font-size: 1.4em;
+	margin-top: 1.5em;
+	border-bottom-style: dotted;
 }
 </style>

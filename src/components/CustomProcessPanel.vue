@@ -1,8 +1,8 @@
 <template>
-	<DataTable ref="table" :data="data" :columns="columns" class="CustomProcessPanel">
+	<DataTable ref="table" fa :data="data" :columns="columns" :next="next" class="CustomProcessPanel">
 		<template slot="toolbar">
 			<button title="Add new custom process" @click="addProcessFromScript" v-show="supportsCreate" :disabled="!this.hasProcess"><i class="fas fa-plus"></i> Add</button>
-			<SyncButton name="custom processes" :sync="() => updateData(true)" />
+			<SyncButton v-if="supportsList" :name="plualizedName" :sync="reloadData" />
 		</template>
 		<template #actions="p">
 			<button title="Details" @click="processInfo(p.row)" v-show="supportsRead"><i class="fas fa-info"></i></button>

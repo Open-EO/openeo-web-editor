@@ -1,7 +1,7 @@
 <template>
 	<div id="FilePanel" @dragenter="dropZoneInfo(true)" @dragleave="dropZoneInfo(false)" @drop="uploadFiles" @dragover="allowDrop">
 		<div class="dropZone" v-show="showUploadDropHint">To upload files, drop them here.</div>
-		<DataTable ref="table" :data="data" :columns="columns">
+		<DataTable ref="table" fa :data="data" :columns="columns" :next="next">
 			<template slot="toolbar">
 				<div v-show="supportsCreate" class="upload">
 					<div class="percent" :class="{active: this.uploadProgress > 0}"><div class="used" :class="{error: uploadErrored}" :style="'width: ' + this.uploadProgress + '%; opacity: ' + this.uploadFadeOut"></div></div>
@@ -9,7 +9,7 @@
 						<input type="file" name="uploadUserFile" class="uploadUserFile" ref="uploadUserFile" @change="uploadFiles" multiple>
 					</div>
 				</div>
-				<SyncButton name="files" :sync="() => updateData(true)" />
+				<SyncButton v-if="supportsList" :name="plualizedName" :sync="reloadData" />
 			</template>
 			<template #actions="p">
 				<button title="Download" @click="downloadFile(p.row)" v-show="supportsRead"><i class="fas fa-download"></i></button>
@@ -25,7 +25,7 @@ import SyncButton from './SyncButton.vue';
 import Utils from '../utils.js';
 
 export default {
-  	name: 'FilePanel',
+	name: 'FilePanel',
 	mixins: [WorkPanelMixin('files', 'file', 'files')],
 	components: {
 		SyncButton

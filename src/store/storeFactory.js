@@ -78,14 +78,17 @@ export default ({namespace, listFn, paginateFn, createFn, updateFn, deleteFn, re
 				return updated;
 			},
 			async list(cx) {
+				const count = cx.state[namespace].length;
 				cx.commit('reset');
 				if (cx.getters.supportsList) {
 					// Pass over existing data so that it can be updated (for all complete entities, only update fields that exist in the new object)
 					// instead of getting replaced, see https://github.com/Open-EO/openeo-web-editor/issues/234
+					let pageLimit = Math.max(cx.rootState.pageLimit, count);
 					if (paginateFn) {
-						const pages = cx.rootState.connection[paginateFn](cx.rootState.pageLimit, cx.state[namespace]);
+						const pages = cx.rootState.connection[paginateFn](pageLimit, cx.state[namespace]);
+						const data = await pages.nextPage();
 						cx.commit('pages', pages);
-						cx.commit('data', await pages.next());
+						cx.commit('data', data);
 					}
 					else {
 						const data = await cx.rootState.connection[listFn](cx.state[namespace]);
@@ -98,23 +101,18 @@ export default ({namespace, listFn, paginateFn, createFn, updateFn, deleteFn, re
 				if (!cx.state.pages || !cx.state.hasMore) {
 					return;
 				}
-				cx.commit('data', await cx.state.pages.next());
+				cx.commit('data', await cx.state.pages.nextPage());
 				return cx.state[namespace];
 			}
 		},
 		mutations: {
 			data(state, data) {
-				let hasMore = false;
-				if (Utils.isObject(data)) {
-					hasMore = !data.done;
-					data = data.value;
-				}
 				if (Array.isArray(data)) {
 					for (let d of data) {
 						state[namespace].push(d);
 					}
 				}
-				state.hasMore = hasMore;
+				state.hasMore = state.pages ? state.pages.hasNextPage() : false;
 			},
 			pages(state, pages) {
 				state.pages = pages;

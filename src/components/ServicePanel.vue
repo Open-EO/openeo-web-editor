@@ -1,9 +1,9 @@
 <template>
-	<DataTable ref="table" :data="data" :columns="columns" class="ServicePanel">
+	<DataTable ref="table" fa :data="data" :columns="columns" :next="next" class="ServicePanel">
 		<template slot="toolbar">
 			<button title="Add new permanently stored web service" @click="createServiceFromScript()" v-show="supportsCreate" :disabled="!this.hasProcess"><i class="fas fa-plus"></i> Create</button>
 			<button title="Quickly show the process on map without storing it permanently" @click="quickViewServiceFromScript()" v-show="supportsQuickView" :disabled="!this.hasProcess"><i class="fas fa-map"></i> Show on Map</button>
-			<SyncButton name="web services" :sync="() => updateData(true)" />
+			<SyncButton v-if="supportsList" :name="plualizedName" :sync="reloadData" />
 		</template>
 		<template #actions="p">
 			<button title="Details" @click="serviceInfo(p.row)" v-show="supportsRead"><i class="fas fa-info"></i></button>

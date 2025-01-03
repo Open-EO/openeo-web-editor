@@ -1,9 +1,9 @@
 <template>
-	<DataTable ref="table" :data="data" :columns="columns" :hasMore="hasMore" class="JobPanel" @next="nextPage()">
+	<DataTable ref="table" fa :data="data" :columns="columns" :next="next" class="JobPanel">
 		<template slot="toolbar">
 			<button title="Add new job for batch processing" @click="createJobFromScript()" v-show="supportsCreate" :disabled="!this.hasProcess"><i class="fas fa-plus"></i> Create Batch Job</button>
 			<button title="Run the process directly and view the results without storing them permanently" @click="executeProcess" v-show="supports('computeResult')" :disabled="!this.hasProcess"><i class="fas fa-play"></i> Run now</button>
-			<SyncButton v-if="supportsList" name="batch jobs" :sync="() => updateData(true)" />
+			<SyncButton v-if="supportsList" :name="plualizedName" :sync="reloadData" />
 		</template>
 		<template #actions="p">
 			<button title="Details" @click="showJobInfo(p.row)" v-show="supportsRead"><i class="fas fa-info"></i></button>
