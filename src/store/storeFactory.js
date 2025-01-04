@@ -79,7 +79,6 @@ export default ({namespace, listFn, paginateFn, createFn, updateFn, deleteFn, re
 			},
 			async list(cx) {
 				const count = cx.state[namespace].length;
-				cx.commit('reset');
 				if (cx.getters.supportsList) {
 					// Pass over existing data so that it can be updated (for all complete entities, only update fields that exist in the new object)
 					// instead of getting replaced, see https://github.com/Open-EO/openeo-web-editor/issues/234
@@ -87,11 +86,13 @@ export default ({namespace, listFn, paginateFn, createFn, updateFn, deleteFn, re
 					if (paginateFn) {
 						const pages = cx.rootState.connection[paginateFn](pageLimit, cx.state[namespace]);
 						const data = await pages.nextPage();
+						cx.commit('reset'); // Keep close to the update to avoid flickering
 						cx.commit('pages', pages);
 						cx.commit('data', data);
 					}
 					else {
 						const data = await cx.rootState.connection[listFn](cx.state[namespace]);
+						cx.commit('reset'); // Keep close to the update to avoid flickering
 						cx.commit('data', data);
 					}
 				}

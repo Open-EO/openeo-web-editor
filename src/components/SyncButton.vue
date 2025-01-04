@@ -1,5 +1,5 @@
 <template>
-  <AsyncButton fa confirm icon="fas fa-sync" :title="title" :fn="sync" />
+  <AsyncButton fa confirm consistent icon="fas fa-sync" :title="title" :fn="sync" />
 </template>
 
 <script>

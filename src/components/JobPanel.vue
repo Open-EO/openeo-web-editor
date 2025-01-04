@@ -1,22 +1,22 @@
 <template>
 	<DataTable ref="table" fa :data="data" :columns="columns" :next="next" class="JobPanel">
 		<template slot="toolbar">
-			<button title="Add new job for batch processing" @click="createJobFromScript()" v-show="supportsCreate" :disabled="!this.hasProcess"><i class="fas fa-plus"></i> Create Batch Job</button>
-			<button title="Run the process directly and view the results without storing them permanently" @click="executeProcess" v-show="supports('computeResult')" :disabled="!this.hasProcess"><i class="fas fa-play"></i> Run now</button>
+			<AsyncButton title="Add new job for batch processing" :fn="createJobFromScript" v-show="supportsCreate" :disabled="!this.hasProcess" fa confirm icon="fas fa-plus">Create Batch Job</AsyncButton>
+			<AsyncButton title="Run the process directly and view the results without storing them permanently" :fn="executeProcess" v-show="supports('computeResult')" :disabled="!this.hasProcess" fa confirm icon="fas fa-play">Run now</AsyncButton>
 			<SyncButton v-if="supportsList" :name="plualizedName" :sync="reloadData" />
 		</template>
 		<template #actions="p">
-			<button title="Details" @click="showJobInfo(p.row)" v-show="supportsRead"><i class="fas fa-info"></i></button>
-			<button title="Estimate" @click="estimateJob(p.row)" v-show="supportsEstimate"><i class="fas fa-file-invoice-dollar"></i></button>
-			<button title="Edit metadata" @click="editMetadata(p.row)" v-show="supportsUpdate" :disabled="!isJobInactive(p.row)"><i class="fas fa-edit"></i></button>
-			<button title="Edit process" @click="showInEditor(p.row)" v-show="supportsRead"><i class="fas fa-project-diagram"></i></button>
-			<button title="Delete" @click="deleteJob(p.row)" v-show="supportsDelete"><i class="fas fa-trash"></i></button>
-			<button title="Start processing" @click="queueJob(p.row)" v-show="supportsStart && isJobInactive(p.row)"><i class="fas fa-play-circle"></i></button>
-			<button title="Cancel processing" @click="cancelJob(p.row)" v-show="supportsStop && isJobActive(p.row)"><i class="fas fa-stop-circle"></i></button>
-			<button title="Download" @click="downloadResults(p.row)" v-show="supportsDownloadResults && mayHaveResults(p.row)"><i class="fas fa-download"></i></button>
-			<button title="View results" @click="viewResults(p.row, true)" v-show="supportsDownloadResults && mayHaveResults(p.row)"><i class="fas fa-eye"></i></button>
-			<button title="Export / Share" @click="shareResults(p.row)" v-show="canShare && supports('downloadResults') && mayHaveResults(p.row)"><i class="fas fa-share"></i></button>
-			<button title="View logs" @click="showLogs(p.row)" v-show="supportsDebug"><i class="fas fa-bug"></i></button>
+			<AsyncButton title="Details" :fn="() => showJobInfo(p.row)" v-show="supportsRead" fa icon="fas fa-info"></AsyncButton>
+			<AsyncButton title="Estimate" :fn="() => estimateJob(p.row)" v-show="supportsEstimate" fa icon="fas fa-file-invoice-dollar"></AsyncButton>
+			<AsyncButton title="Edit metadata" :fn="() => editMetadata(p.row)" v-show="supportsUpdate" :disabled="!isJobInactive(p.row)" fa icon="fas fa-edit"></AsyncButton>
+			<AsyncButton title="Edit process" confirm :fn="() => showInEditor(p.row)" v-show="supportsRead" fa icon="fas fa-project-diagram"></AsyncButton>
+			<AsyncButton title="Delete" :fn="() => deleteJob(p.row)" v-show="supportsDelete" fa icon="fas fa-trash"></AsyncButton>
+			<AsyncButton title="Start processing" :fn="() => queueJob(p.row)" v-show="supportsStart && isJobInactive(p.row)" fa icon="fas fa-play-circle"></AsyncButton>
+			<AsyncButton title="Cancel processing" :fn="() => cancelJob(p.row)" v-show="supportsStop && isJobActive(p.row)" fa icon="fas fa-stop-circle"></AsyncButton>
+			<AsyncButton title="Download" :fn="() => downloadResults(p.row)" v-show="supportsDownloadResults && mayHaveResults(p.row)" fa icon="fas fa-download"></AsyncButton>
+			<AsyncButton title="View results" :fn="() => viewResults(p.row, true)" v-show="supportsDownloadResults && mayHaveResults(p.row)" fa icon="fas fa-eye"></AsyncButton>
+			<AsyncButton title="Export / Share" :fn="() => shareResults(p.row)" v-show="canShare && supports('downloadResults') && mayHaveResults(p.row)" fa icon="fas fa-share"></AsyncButton>
+			<AsyncButton title="View logs" :fn="() => showLogs(p.row)" v-show="supportsDebug" fa icon="fas fa-bug"></AsyncButton>
 		</template>
 	</DataTable>
 </template>
@@ -25,6 +25,7 @@
 import EventBusMixin from './EventBusMixin';
 import WorkPanelMixin from './WorkPanelMixin';
 import SyncButton from './SyncButton.vue';
+import AsyncButton from '@openeo/vue-components/components/internal/AsyncButton.vue';
 import Utils from '../utils.js';
 import { Job } from '@openeo/js-client';
 import { cancellableRequest, showCancellableRequestError, CancellableRequestError } from './cancellableRequest';
@@ -41,6 +42,7 @@ export default {
 		FieldMixin
 	],
 	components: {
+		AsyncButton,
 		SyncButton
 	},
 	data() {
@@ -70,25 +72,30 @@ export default {
 					name: 'Batch Job',
 					computedValue: row => Utils.getResourceTitle(row),
 					format: value => Utils.formatIdOrTitle(value),
-					edit: this.supportsUpdate ? this.updateTitle : null
+					edit: this.supportsUpdate ? this.updateTitle : null,
+					width: '30%'
 				},
 				status: {
 					name: 'Status',
-					stylable: true
+					stylable: true,
+					width: '10%'
 				},
 				created: {
 					name: 'Submitted',
 					format: 'Timestamp',
-					sort: 'desc'
+					sort: 'desc',
+					width: '15%'
 				},
 				updated: {
 					name: 'Last update',
-					format: 'Timestamp'
+					format: 'Timestamp',
+					width: '15%'
 				},
 				actions: {
 					name: 'Actions',
 					filterable: false,
-					sort: false
+					sort: false,
+					width: '30%'
 				}
 			};
 		},
@@ -143,8 +150,8 @@ export default {
 				clearTimeout(this.jobUpdater);
 			}
 		},
-		showInEditor(job) {
-			this.refreshElement(job, updatedJob => this.broadcast('editProcess', updatedJob));
+		async showInEditor(job) {
+			await this.refreshElement(job, updatedJob => this.broadcast('editProcess', updatedJob));
 		},
 		async startAndQueueProcess(options) {
 			let job = await this.createJob(this.process, options);
@@ -213,7 +220,7 @@ export default {
 				return null;
 			}
 		},
-		createJobFromScript() {
+		async createJobFromScript() {
 			var fields = [
 				this.getTitleField(),
 				this.getDescriptionField(),
@@ -221,7 +228,13 @@ export default {
 				this.supportsBillingPlans ? this.getBillingPlanField() : null,
 				this.supportsBilling ? this.getBudgetField() : null
 			];
-			this.broadcast('showDataForm', "Create new batch job", fields, data => this.createJob(this.process, data));
+			return new Promise((resolve, reject) => {
+				this.broadcast('showDataForm', "Create new batch job", fields, data => {
+					this.createJob(this.process, data)
+						.then(job => job ? resolve(job) : reject())
+						.catch(reject);
+				});
+			});
 		},
 		async deleteJob(job) {
 			if (!confirm(`Do you really want to delete the batch job "${Utils.getResourceTitle(job)}"?`)) {
@@ -231,6 +244,9 @@ export default {
 			try {
 				await this.delete({data: job});
 				this.broadcast('removeBatchJob', job.id);
+				if (this.hasMore) {
+					this.reloadData();
+				}
 			} catch(error) {
 				Utils.exception(this, error, 'Delete Job Error: ' + Utils.getResourceTitle(job));
 			}
@@ -256,8 +272,8 @@ export default {
 				});
 			}
 		},
-		showJobInfo(job) {
-			this.refreshElement(job, async (updatedJob) => {
+		async showJobInfo(job) {
+			await this.refreshElement(job, async (updatedJob) => {
 				let result = null;
 				if (updatedJob.status === 'finished') {
 					try {
@@ -292,8 +308,8 @@ export default {
 				}
 			}
 		},
-		editMetadata(oldJob) {
-			this.refreshElement(oldJob, job => {
+		async editMetadata(oldJob) {
+			await this.refreshElement(oldJob, job => {
 				var fields = [
 					this.getTitleField(job.title),
 					this.getDescriptionField(job.description),
@@ -315,8 +331,8 @@ export default {
 				Utils.exception(this, error, 'Update Job Error: ' + Utils.getResourceTitle(job));
 			}
 		},
-		queueJob(job) {
-			this.refreshElement(job, async (updatedJob) => {
+		async queueJob(job) {
+			await this.refreshElement(job, async (updatedJob) => {
 				if (updatedJob.status === 'finished' && !confirm(`The batch job "${Utils.getResourceTitle(updatedJob)}" has already finished with results. Queueing the job again may discard all previous results! Do you really want to queue it again?`)) {
 					return;
 				}
@@ -400,12 +416,8 @@ export default {
 
 <style lang="scss">
 .JobPanel {
-	.title {
-		width: 25%;
-
-		.id {
-			color: #777;
-		}
+	.title .id {
+		color: #777;
 	}
 	.consumed_credits, .updated, .created {
 		text-align: right;

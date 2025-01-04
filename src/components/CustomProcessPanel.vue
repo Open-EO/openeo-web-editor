@@ -1,13 +1,13 @@
 <template>
 	<DataTable ref="table" fa :data="data" :columns="columns" :next="next" class="CustomProcessPanel">
 		<template slot="toolbar">
-			<button title="Add new custom process" @click="addProcessFromScript" v-show="supportsCreate" :disabled="!this.hasProcess"><i class="fas fa-plus"></i> Add</button>
+			<AsyncButton title="Add new custom process" :fn="addProcessFromScript" v-show="supportsCreate" :disabled="!this.hasProcess" fa confirm icon="fas fa-plus">Add</AsyncButton>
 			<SyncButton v-if="supportsList" :name="plualizedName" :sync="reloadData" />
 		</template>
 		<template #actions="p">
-			<button title="Details" @click="processInfo(p.row)" v-show="supportsRead"><i class="fas fa-info"></i></button>
-			<button title="Edit process" @click="showInEditor(p.row)" v-show="supportsRead"><i class="fas fa-project-diagram"></i></button>
-			<button title="Delete" @click="deleteProcess(p.row)" v-show="supportsDelete"><i class="fas fa-trash"></i></button>
+			<AsyncButton title="Details" :fn="() => processInfo(p.row)" v-show="supportsRead" fa icon="fas fa-info"></AsyncButton>
+			<AsyncButton title="Edit process" confirm :fn="() => showInEditor(p.row)" v-show="supportsRead" fa icon="fas fa-project-diagram"></AsyncButton>
+			<AsyncButton title="Delete" :fn="() => deleteProcess(p.row)" v-show="supportsDelete" fa icon="fas fa-trash"></AsyncButton>
 		</template>
 	</DataTable>
 </template>
@@ -16,6 +16,7 @@
 import EventBusMixin from './EventBusMixin';
 import WorkPanelMixin from './WorkPanelMixin';
 import SyncButton from './SyncButton.vue';
+import AsyncButton from '@openeo/vue-components/components/internal/AsyncButton.vue';
 import Utils from '../utils.js';
 import { UserProcess } from '@openeo/js-client';
 
@@ -23,6 +24,7 @@ export default {
 	name: 'CustomProcessPanel',
 	mixins: [WorkPanelMixin('userProcesses', 'custom process', 'custom processes', false), EventBusMixin],
 	components: {
+		AsyncButton,
 		SyncButton
 	},
 	data() {
@@ -31,15 +33,18 @@ export default {
 				id: {
 					name: 'ID',
 					primaryKey: true,
-					sort: 'asc'
+					sort: 'asc',
+					width: '30%'
 				},
 				summary: {
-					name: 'Summary'
+					name: 'Summary',
+					width: '50%'
 				},
 				actions: {
 					name: 'Actions',
 					filterable: false,
-					sort: false
+					sort: false,
+					width: '20%'
 				}
 			}
 		};
@@ -53,8 +58,8 @@ export default {
 		this.listen('replaceProcess', this.replaceProcess);
 	},
 	methods: {
-		showInEditor(process) {
-			this.refreshElement(process, updatedProcess => this.broadcast('editProcess', updatedProcess));
+		async showInEditor(process) {
+			await this.refreshElement(process, updatedProcess => this.broadcast('editProcess', updatedProcess));
 		},
 		getIdField(value = undefined) {
 			return {
@@ -69,7 +74,7 @@ export default {
 				default: null
 			};
 		},
-		addProcessFromScript() {
+		async addProcessFromScript() {
 			let fields = [];
 			if (!this.process.id) {
 				fields.push(this.getIdField());
@@ -90,13 +95,17 @@ export default {
 				});
 				fields.push(this.getIdField(this.process.id));
 			}
-			let store = data => this.addProcess(this.normalize(this.process, data));
-			if (fields.length > 0) {
-				this.broadcast('showDataForm', 'Store a new custom process', fields, store);
-			}
-			else {
-				store();
-			}
+			return new Promise((resolve, reject) => {
+				let store = data => this.addProcess(this.normalize(this.process, data))
+					.then(ok => ok ? resolve() : reject())
+					.catch(reject);
+				if (fields.length > 0) {
+					this.broadcast('showDataForm', 'Store a new custom process', fields, store);
+				}
+				else {
+					store();
+				}
+			});
 		},
 		normalize(process, data = {}) {
 			return Object.assign(
@@ -105,9 +114,14 @@ export default {
 				data
 			);
 		},
-		addProcess(process) {
-			this.create([process.id, process])
-				.catch(error => Utils.exception(this, error, 'Store Process Error' + (process.id ? `: ${process.id}` : '')));
+		async addProcess(process) {
+			try {
+				await this.create([process.id, process]);
+				return true;
+			} catch (error) {
+				Utils.exception(this, error, 'Store Process Error' + (process.id ? `: ${process.id}` : ''));
+				return false;
+			};
 		},
 		processInfo(process) {
 			this.broadcast('showProcess', process);
@@ -125,19 +139,16 @@ export default {
 				Utils.exception(this, error, 'Update Process Error' + (process.id ? `: ${process.id}` : ''));
 			}
 		},
-		deleteProcess(process) {
+		async deleteProcess(process) {
 			if (!confirm(`Do you really want to delete the process "${Utils.getResourceTitle(process)}"?`)) {
 				return;
 			}
-			this.delete({data: process})
-				.catch(error => Utils.exception(this, error, 'Delete Process Error' + (process.id ? `: ${process.id}` : '')));
+			try {
+				await this.delete({data: process});
+			} catch (error) {
+				Utils.exception(this, error, 'Delete Process Error' + (process.id ? `: ${process.id}` : ''));
+			}
 		}
 	}
 }
 </script>
-
-<style>
-.CustomProcessPanel .id {
-	width: 25%;
-}
-</style>
