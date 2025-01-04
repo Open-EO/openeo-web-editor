@@ -60,11 +60,11 @@ export default {
 		if (this.$config.importCommunityExamples) {
 			try {
 				// Get folders from repo and find the processes folder
-				let response = await axios('https://api.github.com/repos/Open-EO/openeo-community-examples/git/trees/main');
+				let response = await Utils.axios().get('https://api.github.com/repos/Open-EO/openeo-community-examples/git/trees/main');
 				let folder = response.data.tree.find(file => file.path === 'processes');
 				if (folder) {
 					// Get files in the folder
-					let response2 = await axios(folder.url);
+					let response2 = await Utils.axios.get(folder.url);
 					this.gh = response2.data.tree
 						.filter(file => file.path.endsWith('.json'))
 						.map(file => ({
@@ -144,7 +144,7 @@ export default {
 				if (!Utils.isUrl(url)) {
 					throw new Error('Please provide a valid URL');
 				}
-				let response = await axios(url);
+				let response = await Utils.axios().get(url);
 				this.process = this.checkProcess(response.data);
 			} catch(error) {
 				Utils.exception(this, error, "Download failed");

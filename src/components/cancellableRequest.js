@@ -52,7 +52,7 @@ export async function cancellableRequest(vm, callback, entity) {
 
     await callback(abortController);
   } catch(error) {
-    if (axios.isCancel(error)) {
+    if (Utils.axios().isCancel(error)) {
       throw new CancellableRequestError(`Cancelled successfully`, toastTitle, error, false, false);
     }
     else if (typeof error.message === 'string' && Utils.isObject(error.response) && [400,500].includes(error.response.status)) {

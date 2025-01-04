@@ -19,11 +19,7 @@
 import EventBusMixin from './components/EventBusMixin.js';
 import Utils from './utils';
 import ConnectForm from './components/ConnectForm.vue';
-import axios from 'axios';
-import AddMapDataModal from './components/modals/AddMapDataModal.vue';
-
-// Making axios available globally for the OpenEO JS client
-window.axios = axios;
+import { Environment } from '@openeo/js-client';
 
 export default {
 	name: 'openeo-web-editor',
@@ -93,12 +89,12 @@ export default {
 			this.skipLogin = false;
 		}
 
+		const axios = Utils.axios();
 		// Count active requests
 		axios.interceptors.request.use(config => {
 			this.startActiveRequest();
 			return config;
 		});
-
 		// Add a response interceptor
 		axios.interceptors.response.use(response => {
 			this.endActiveRequest();

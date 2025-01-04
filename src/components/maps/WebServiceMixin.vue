@@ -53,7 +53,7 @@ export default {
 					let url = new URL(service.url);
 					url.searchParams.set('service', 'wmts');
 					url.searchParams.set('request', 'GetCapabilities');
-					let response = await axios.get(url.toString(), { responseType: 'text' });
+					let response = await Utils.axios().get(url.toString(), { responseType: 'text' });
 					var parser = new WMTSCapabilities();
 					this.WMTSCapabilities[service.url] = parser.read(response.data);
 				} catch (error) {

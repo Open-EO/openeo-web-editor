@@ -92,7 +92,7 @@ export default {
 				return; // Process already loaded (usually during a later login)
 			}
 			if (Utils.isUrl(cx.state.initialProcess)) {
-				let response = await axios(cx.state.initialProcess);
+				let response = await Utils.axios().get(cx.state.initialProcess);
 				if (Utils.isObject(response.data)) {
 					var pg = new ProcessGraph(response.data);
 					pg.parse();
@@ -125,7 +125,7 @@ export default {
 
 			if (cx.state.appMode.resultType !== 'service') {
 				try {
-					let response = await axios(cx.state.appMode.resultUrl);
+					let response = await Utils.axios().get(cx.state.appMode.resultUrl);
 					if (Utils.isObject(response.data)) {
 						cx.commit('setAppModeData', response.data);
 					}

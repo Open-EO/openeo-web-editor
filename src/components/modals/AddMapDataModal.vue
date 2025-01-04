@@ -96,7 +96,7 @@ export default {
 			try {
 				let files = [];
 				if (this.format === 'stac') {
-					const response = await axios.get(this.url);
+					const response = await Utils.axios().get(this.url);
 					files = this.formatRegistry.createFilesFromSTAC(response.data);
 					if (files.length === 0) {
 						Utils.error(this, 'No displayable data available in the provided STAC.');

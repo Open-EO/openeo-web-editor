@@ -94,7 +94,7 @@ export default {
 			else if (this.language === 'R') {
 				filename = 'code.r';
 			}
-			OpenEO.Environment.saveToFile(this.code, filename);
+			Utils.saveToFile(this.code, filename);
 		}
 	}
 }
