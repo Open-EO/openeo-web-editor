@@ -190,7 +190,7 @@ export default {
 
 		exportJSON() {
 			const filename = (this.contextTitle || "openeo-process") + '.json';
-			OpenEO.Environment.saveToFile(JSON.stringify(this.process, null, 2), filename);
+			Utils.saveToFile(JSON.stringify(this.process, null, 2), filename);
 		},
 
 		async exportCode() {

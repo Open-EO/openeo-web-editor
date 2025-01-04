@@ -111,7 +111,7 @@ export default {
 			}
 			let data;
 			try {
-				const response = await axios(url);
+				const response = await Utils.axios().get(url);
 				data = response.data;
 			} catch(error) {
 				throw new Error('Failed to load process from the given URL');

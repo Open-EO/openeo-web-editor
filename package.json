@@ -48,7 +48,7 @@
   "dependencies": {
     "@kirtandesai/ol-geocoder": "^5.0.6",
     "@musement/iso-duration": "^1.0.0",
-    "@openeo/js-client": "^2.6.0",
+    "@openeo/js-client": "^2.7.0",
     "@openeo/js-commons": "^1.5.0",
     "@openeo/js-processgraphs": "^1.4.1",
     "@openeo/vue-components": "^2.17.0",
