@@ -126,9 +126,14 @@ export default {
 		processInfo(process) {
 			this.broadcast('showProcess', process);
 		},
-		replaceProcess(process, newProcess) {
+		async replaceProcess(process, newProcess, resolve, reject) {
 			if (process instanceof UserProcess) {
-				this.updateMetadata(process, newProcess)
+				try {
+					await this.updateMetadata(process, newProcess);
+					resolve();
+				} catch (error) {
+					reject(error);
+				}
 			}
 		},
 		async updateMetadata(process, data) {

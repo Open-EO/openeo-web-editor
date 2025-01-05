@@ -275,9 +275,14 @@ export default {
 				this.broadcast('showModal', 'ServiceInfoModal', {service: updatedService.getAll()});
 			});
 		},
-		replaceProcess(service, process) {
+		async replaceProcess(service, process, resolve, reject) {
 			if (service instanceof Service) {
-				this.updateService(service, {process: process});
+				try {
+					await this.updateService(service, {process: process});
+					resolve();
+				} catch(error) {
+					reject(error);
+				}
 			}
 		},
 		updateTitle(service, newTitle) {

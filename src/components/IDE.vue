@@ -19,11 +19,11 @@
 						<Pane id="editor" :size="splitpaneSizeV[0]">
 							<Editor ref="editor" class="mainEditor tour-ide-editor" id="main" :value="process" @input="updateEditor" :title="contextTitle" showIntro>
 								<template #file-toolbar>
-									<button type="button" @click="importProcess" title="Import process from external source"><i class="fas fa-cloud-download-alt"></i></button>
-									<button type="button" v-show="saveSupported" :disabled="!hasProcess" @click="saveProcess" :title="'Save to ' + contextTitle"><i class="fas fa-save"></i></button>
-									<button type="button" @click="exportJSON" :disabled="!hasProcess" title="Download as JSON file"><i class="fas fa-file-download"></i></button>
-									<button type="button" @click="exportCode" :disabled="!hasProcess" title="Export into another programming language"><i class="fas fa-file-export"></i></button>
-									<button type="button" v-show="validateSupported" :disabled="!hasProcess" @click="validateProcess" title="Validate process on server-side"><i class="fas fa-tasks"></i></button>
+									<button @click="importProcess" title="Import process from external source"><i class="fas fa-cloud-download-alt"></i></button>
+									<AsyncButton v-show="saveSupported" :disabled="!hasProcess" :fn="saveProcess" :title="'Save to ' + contextTitle" fa confirm icon="fas fa-save"></AsyncButton>
+									<button @click="exportJSON" :disabled="!hasProcess" title="Download as JSON file"><i class="fas fa-file-download"></i></button>
+									<button @click="exportCode" :disabled="!hasProcess" title="Export into another programming language"><i class="fas fa-file-export"></i></button>
+									<AsyncButton v-show="validateSupported" :disabled="!hasProcess" :fn="validateProcess" title="Validate process on server-side" fa confirm icon="fas fa-tasks"></AsyncButton>
 								</template>
 							</Editor>
 						</Pane>
@@ -56,12 +56,13 @@ import DiscoveryToolbar from './DiscoveryToolbar.vue';
 import { ProcessParameter } from '@openeo/js-commons';
 import { Job, Service, UserProcess } from '@openeo/js-client';
 import { Splitpanes, Pane } from 'splitpanes';
-import { OpenEO } from '@openeo/js-client';
+import AsyncButton from '@openeo/vue-components/components/internal/AsyncButton.vue';
 
 export default {
 	name: 'IDE',
 	mixins: [EventBusMixin],
 	components: {
+		AsyncButton,
 		DiscoveryToolbar,
 		Editor,
 		Logo,
@@ -184,8 +185,10 @@ export default {
 			this.broadcast('showModal', 'ImportProcessModal', {}, events);
 		},
 
-		saveProcess() {
-			this.broadcast('replaceProcess', this.context, this.process);
+		async saveProcess() {
+			return new Promise((resolve, reject) => {
+				this.broadcast('replaceProcess', this.context, this.process, resolve, reject);
+			});
 		},
 
 		exportJSON() {
@@ -209,22 +212,27 @@ export default {
 
 		async validateProcess() {
 			if (!this.validateSupported) {
-				return Utils.error(this, "Server doesn't support validation");
+				Utils.error(this, "Server doesn't support validation");
+				return false;
 			}
 			else if (!this.hasProcess) {
-				return Utils.info(this, 'Nothing to validate...');
+				Utils.info(this, 'Nothing to validate...');
+				return true;
 			}
 			try {
 				let errors = await this.connection.validateProcess(this.process);
 				if (errors.length > 0) {
 					errors.forEach(error => error.level = 'error');
 					this.broadcast('viewLogs', errors, 'Validation Result', 'fa-tasks');
+					return false;
 				}
 				else {
 					Utils.ok(this, "The process is valid");
+					return true;
 				}
 			} catch (error) {
 				Utils.exception(this, error, "Validation rejected");
+				return false;
 			}
 		},
 

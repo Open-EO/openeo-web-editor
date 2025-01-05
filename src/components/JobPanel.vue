@@ -298,13 +298,20 @@ export default {
 		showLogs(job) {
 			this.broadcast('viewLogs', job);
 		},
-		replaceProcess(job, process) {
+		async replaceProcess(job, process, resolve, reject) {
 			if (job instanceof Job) {
 				if (this.isJobActive(job)) {
 					Utils.error(this, "Can't update process while batch job is running.");
+					reject();
 				}
 				else {
-					this.updateJob(job, {process: process});
+					try {
+						await this.updateJob(job, {process: process});
+						resolve();
+						return;
+					} catch (error) {
+						reject(error)
+					}
 				}
 			}
 		},
