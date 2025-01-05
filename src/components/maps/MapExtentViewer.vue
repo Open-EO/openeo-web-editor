@@ -1,5 +1,5 @@
 <template>
-	<div :id="id">
+	<div :id="id" class="map-extent">
 		<ProgressControl ref="progress" :map="map" />
 	</div>
 </template>
@@ -20,6 +20,15 @@ export default {
 			// geometry: GeoJSON Object (WGS84)
 			type: [Array, Object],
 			default: () => null
+		},
+		fill: {
+			type: Boolean,
+			default: true
+		}
+	},
+	watch: {
+		footprint() {
+			this.renderMap();
 		}
 	},
 	methods: {
@@ -53,7 +62,7 @@ export default {
 
 			await this.createMap(isWebMercatorCompatible ? "EPSG:3857" : "EPSG:4326");
 			this.addBasemaps();
-			this.addExtent(value);
+			this.addExtent(value, this.fill);
 		}
 
 	}

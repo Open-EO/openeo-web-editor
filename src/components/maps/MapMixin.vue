@@ -211,7 +211,7 @@ export default {
 			// Make a bigger extent visible so that user can get a better overview
 			var size = this.map.getSize();
 			if (size && paddingPc > 0) {
-				fitOptions.padding = [size[0]*paddingPc/100, size[1]*paddingPc/100, size[0]*paddingPc/100, size[1]*paddingPc/100];
+				fitOptions.padding = [size[1]*paddingPc/100, size[0]*paddingPc/100, size[1]*paddingPc/100, size[0]*paddingPc/100];
 			}
 			else {
 				fitOptions.padding = [30,30,30,30];
