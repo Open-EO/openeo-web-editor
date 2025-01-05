@@ -39,6 +39,10 @@ export default {
 			type: String,
 			default: "auto"
 		},
+		height: {
+			type: String,
+			default: "auto"
+		},
 		show: {
 			type: Boolean,
 			default: true
@@ -68,6 +72,9 @@ export default {
 			};
 			if (this.minWidth) {
 				style['min-width'] = this.minWidth;
+			}
+			if (this.height) {
+				style['height'] = this.height;
 			}
 			if (Array.isArray(this.position)) {
 				style.position = 'absolute';

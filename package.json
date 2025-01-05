@@ -51,7 +51,7 @@
     "@openeo/js-client": "^2.7.0",
     "@openeo/js-commons": "^1.5.0",
     "@openeo/js-processgraphs": "^1.4.1",
-    "@openeo/vue-components": "^2.18.0",
+    "@openeo/vue-components": "^2.18.1",
     "@radiantearth/stac-fields": "^1.5.0-beta.2",
     "@radiantearth/stac-migrate": "^2.0.0-beta.1",
     "@tmcw/togeojson": "^5.5.0",
