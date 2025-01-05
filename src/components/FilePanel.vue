@@ -1,7 +1,7 @@
 <template>
 	<div id="FilePanel" @dragenter="dropZoneInfo(true)" @dragleave="dropZoneInfo(false)" @drop="uploadFiles" @dragover="allowDrop">
 		<div class="dropZone" v-show="showUploadDropHint">To upload files, drop them here.</div>
-		<DataTable ref="table" :data="data" :columns="columns">
+		<DataTable ref="table" fa :data="data" :columns="columns" :next="next">
 			<template slot="toolbar">
 				<div v-show="supportsCreate" class="upload">
 					<div class="percent" :class="{active: this.uploadProgress > 0}"><div class="used" :class="{error: uploadErrored}" :style="'width: ' + this.uploadProgress + '%; opacity: ' + this.uploadFadeOut"></div></div>
@@ -9,11 +9,11 @@
 						<input type="file" name="uploadUserFile" class="uploadUserFile" ref="uploadUserFile" @change="uploadFiles" multiple>
 					</div>
 				</div>
-				<SyncButton name="files" :sync="() => updateData(true)" />
+				<SyncButton v-if="supportsList" :name="plualizedName" :sync="reloadData" />
 			</template>
 			<template #actions="p">
-				<button title="Download" @click="downloadFile(p.row)" v-show="supportsRead"><i class="fas fa-download"></i></button>
-				<button title="Delete" @click="deleteFile(p.row)" v-show="supportsDelete"><i class="fas fa-trash"></i></button>
+				<AsyncButton title="Download" :fn="() => downloadFile(p.row)" v-show="supportsRead" fa icon="fas fa-download"></AsyncButton>
+				<AsyncButton title="Delete" :fn="() => deleteFile(p.row)" v-show="supportsDelete" fa icon="fas fa-trash"></AsyncButton>
 			</template>
 		</DataTable>
 	</div>
@@ -21,13 +21,15 @@
 
 <script>
 import WorkPanelMixin from './WorkPanelMixin';
+import AsyncButton from '@openeo/vue-components/components/internal/AsyncButton.vue';
 import SyncButton from './SyncButton.vue';
 import Utils from '../utils.js';
 
 export default {
-  	name: 'FilePanel',
+	name: 'FilePanel',
 	mixins: [WorkPanelMixin('files', 'file', 'files')],
 	components: {
+		AsyncButton,
 		SyncButton
 	},
 	data() {
@@ -37,21 +39,25 @@ export default {
 					name: 'Path',
 					primaryKey: true,
 					sortFn: Utils.sortByPath,
-					sort: 'asc'
+					sort: 'asc',
+					width: '60%'
 				},
 				size: {
 					name: 'Size',
 					format: "FileSize",
-					filterable: false
+					filterable: false,
+					width: '10%'
 				},
 				modified: {
 					name: 'Last modified',
-					format: 'Timestamp'
+					format: 'Timestamp',
+					width: '15%'
 				},
 				actions: {
 					name: 'Actions',
 					filterable: false,
-					sort: false
+					sort: false,
+					width: '15%'
 				}
 			},
 			uploadProgress: 0,
@@ -138,15 +144,21 @@ export default {
 				}
 			}, 100);
 		},
-		downloadFile(file) {
-			file.downloadFile(file.path);
+		async downloadFile(file) {
+			await file.downloadFile(file.path);
 		},
-		deleteFile(file) {
+		async deleteFile(file) {
 			if (!confirm(`Do you really want to delete the file "${file.path}"?`)) {
 				return;
 			}
-			this.delete({data: file})
-				.catch(error => Utils.exception(this, error, 'Delete File Error: ' + file.path));
+			try {
+				await this.delete({data: file});
+				if (this.hasMore) {
+					this.reloadData();
+				}
+			} catch (error) {
+				Utils.exception(this, error, 'Delete File Error: ' + file.path);
+			}
 		}
 	}
 }
@@ -192,9 +204,6 @@ export default {
 		button {
 			margin: 0;
 		}
-	}
-	.path {
-		width: 50%;
 	}
 	td.path {
 		word-break: break-all;

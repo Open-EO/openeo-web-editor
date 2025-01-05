@@ -2,14 +2,16 @@ import { UserProcess } from '@openeo/js-client';
 import { Utils } from '@openeo/js-commons';
 import Vue from 'vue';
 
-export default ({namespace, listFn, createFn, updateFn, deleteFn, readFn, readFnById, customizations, primaryKey}) => {
+export default ({namespace, listFn, paginateFn, createFn, updateFn, deleteFn, readFn, readFnById, customizations, primaryKey}) => {
 	if (!primaryKey) {
 		primaryKey = 'id';
 	}
 	const getDefaultState = () => {
-		let data = {};
-		data[namespace] = [];
-		return data;
+		return {
+			pages: null,
+			hasMore: false,
+			[namespace]: []
+		};
 	};
 	let definition = {
 		namespaced: true,
@@ -76,19 +78,45 @@ export default ({namespace, listFn, createFn, updateFn, deleteFn, readFn, readFn
 				return updated;
 			},
 			async list(cx) {
-				var data = [];
+				const count = cx.state[namespace].length;
 				if (cx.getters.supportsList) {
 					// Pass over existing data so that it can be updated (for all complete entities, only update fields that exist in the new object)
 					// instead of getting replaced, see https://github.com/Open-EO/openeo-web-editor/issues/234
-					data = await cx.rootState.connection[listFn](cx.state[namespace]);
+					let pageLimit = Math.max(cx.rootState.pageLimit, count);
+					if (paginateFn) {
+						const pages = cx.rootState.connection[paginateFn](pageLimit, cx.state[namespace]);
+						const data = await pages.nextPage();
+						cx.commit('reset'); // Keep close to the update to avoid flickering
+						cx.commit('pages', pages);
+						cx.commit('data', data);
+					}
+					else {
+						const data = await cx.rootState.connection[listFn](cx.state[namespace]);
+						cx.commit('reset'); // Keep close to the update to avoid flickering
+						cx.commit('data', data);
+					}
 				}
-				cx.commit('data', data);
-				return data;
+				return cx.state[namespace];
+			},
+			async nextPage(cx) {
+				if (!cx.state.pages || !cx.state.hasMore) {
+					return;
+				}
+				cx.commit('data', await cx.state.pages.nextPage());
+				return cx.state[namespace];
 			}
 		},
 		mutations: {
 			data(state, data) {
-				state[namespace] = data.map(d => Vue.observable(d));
+				if (Array.isArray(data)) {
+					for (let d of data) {
+						state[namespace].push(d);
+					}
+				}
+				state.hasMore = state.pages ? state.pages.hasNextPage() : false;
+			},
+			pages(state, pages) {
+				state.pages = pages;
 			},
 			upsert(state, data) {
 				let id = data[primaryKey];

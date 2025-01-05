@@ -44,6 +44,7 @@ const getDefaultState = () => {
 		processesUpdated: 0,
 		collections: [],
 		processNamespaces: Config.processNamespaces || [],
+		pageLimit: Config.pageLimit,
 	};
 };
 

@@ -19,7 +19,6 @@
 import EventBusMixin from './components/EventBusMixin.js';
 import Utils from './utils';
 import ConnectForm from './components/ConnectForm.vue';
-import { Environment } from '@openeo/js-client';
 
 export default {
 	name: 'openeo-web-editor',
