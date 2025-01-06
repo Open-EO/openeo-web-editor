@@ -4,17 +4,17 @@
 			<header class="navbar">
 				<Logo />
 				<ul id="menu">
-					<li><div class="menuItem" @click="showHelp" title="Start a guided tour"><i class="fas fa-question-circle fa-fw"></i>Help</div></li>
-					<li><div class="menuItem" @click="showWizard()" title="Start the process wizard"><i class="fas fa-magic fa-fw"></i>Wizard</div></li>
+					<li v-if="!simpleMode"><div class="menuItem" @click="showHelp" title="Start a guided tour"><i class="fas fa-question-circle fa-fw"></i>Help</div></li>
+					<li v-if="!simpleMode"><div class="menuItem" @click="showWizard()" title="Start the process wizard"><i class="fas fa-magic fa-fw"></i>Wizard</div></li>
 					<li><div class="menuItem" @click="showServerInfo" title="Get server information"><i class="fas fa-info-circle fa-fw"></i>Server</div></li>
 					<li><UserMenu /></li>
 				</ul>
 			</header>
 			<Splitpanes class="default-theme" @resize="resized" @pane-maximize="resized">
-				<Pane v-if="!appMode || isAuthenticated" id="discovery" :size="splitpaneSizeH[0]">
+				<Pane v-if="!simpleMode" id="discovery" :size="splitpaneSizeH[0]">
 					<DiscoveryToolbar class="toolbar tour-ide-discovery" :onAddProcess="insertProcess" :collectionPreview="true" :persist="true" />
 				</Pane>
-				<Pane v-if="!appMode || isAuthenticated || hasProcess" id="workspace" :size="splitpaneSizeH[1]">
+				<Pane v-if="!simpleMode || hasProcess" id="workspace" :size="splitpaneSizeH[1]">
 					<Splitpanes class="default-theme" horizontal @resize="resized" @pane-maximize="resized">
 						<Pane id="editor" :size="splitpaneSizeV[0]">
 							<Editor ref="editor" class="mainEditor tour-ide-editor" id="main" :value="process" @input="updateEditor" :title="contextTitle" showIntro>
@@ -27,7 +27,7 @@
 								</template>
 							</Editor>
 						</Pane>
-						<Pane v-if="!appMode || isAuthenticated" id="user" :size="splitpaneSizeV[1]">
+						<Pane v-if="!simpleMode" id="user" :size="splitpaneSizeV[1]">
 							<UserWorkspace v-if="isAuthenticated" class="userContent tour-ide-workspace" />
 							<div v-else class="message info" title="Login is required to interact with the server.">
 								<i class="fas fa-sign-in-alt"></i>
@@ -37,7 +37,7 @@
 					</Splitpanes>
 				</Pane>
 				<Pane id="viewer" :class="{empty: !showViewer}" :size="splitpaneSizeH[2]">
-					<Viewer class="tour-ide-viewer" @empty="onViewerEmpty" />
+					<Viewer class="tour-ide-viewer" :editable="!simpleMode" @empty="onViewerEmpty" />
 				</Pane>
 			</Splitpanes>
 		</div>
@@ -102,6 +102,9 @@ export default {
 		},
 		validateSupported() {
 			return this.supports('validateProcess');
+		},
+		simpleMode() {
+			return this.appMode && !this.isAuthenticated;
 		},
 		splitpaneSizeH() {
 			if (this.appMode) {
