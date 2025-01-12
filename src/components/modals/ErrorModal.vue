@@ -26,13 +26,26 @@ export default {
 	},
 	computed: {
 		log() {
+			let data;
+			if (Utils.isObject(this.error.config)) {
+				if (this.error.config?.headers?.Authorization) {
+					this.error.config.headers.Authorization = 'removed for security reasons';
+				}
+				data = {
+					config: this.error.config,
+					stack: this.error.stack
+				};
+			}
+			else {
+				data = this.error.stack;
+			}
 			return {
 				id: this.error.id,
 				code: this.error.code,
 				level: 'error',
 				message: this.error.message,
 				time: new Date().toISOString(),
-				data: this.error,
+				data,
 				links: this.error.links
 			};
 		},
