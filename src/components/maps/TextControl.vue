@@ -36,7 +36,7 @@ export default {
 	},
 	props: {
 		text: {
-			text: [
+			type: [
 				String,
 				Array
 			],
