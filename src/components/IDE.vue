@@ -19,11 +19,11 @@
 						<Pane id="editor" :size="splitpaneSizeV[0]">
 							<Editor ref="editor" class="mainEditor tour-ide-editor" id="main" :value="process" @input="updateEditor" :title="contextTitle" showIntro>
 								<template #file-toolbar>
-									<button @click="importProcess" title="Import process from external source"><i class="fas fa-cloud-download-alt"></i></button>
-									<AsyncButton v-show="saveSupported" :disabled="!hasProcess" :fn="saveProcess" :title="'Save to ' + contextTitle" fa confirm icon="fas fa-save"></AsyncButton>
-									<button @click="exportJSON" :disabled="!hasProcess" title="Download as JSON file"><i class="fas fa-file-download"></i></button>
-									<button @click="exportCode" :disabled="!hasProcess" title="Export into another programming language"><i class="fas fa-file-export"></i></button>
-									<AsyncButton v-show="validateSupported" :disabled="!hasProcess" :fn="validateProcess" title="Validate process on server-side" fa confirm icon="fas fa-tasks"></AsyncButton>
+									<BButton @click="importProcess" title="Import a process from an external source"><i class="fas fa-cloud-download-alt"></i></BButton>
+									<AsyncButton v-show="saveSupported" :disabled="!hasProcess" :fn="saveProcess" :title="'Save this process to ' + contextTitle" fa confirm icon="fas fa-save"></AsyncButton>
+									<BButton @click="exportJSON" :disabled="!hasProcess" title="Download this process as a JSON file"><i class="fas fa-file-download"></i></BButton>
+									<BButton @click="exportCode" :disabled="!hasProcess" title="Export this process into another programming language"><i class="fas fa-file-export"></i></BButton>
+									<AsyncButton v-show="validateSupported" :disabled="!hasProcess" :fn="validateProcess" title="Validate this process directly on the server" fa confirm icon="fas fa-tasks"></AsyncButton>
 								</template>
 							</Editor>
 						</Pane>
@@ -56,6 +56,7 @@ import DiscoveryToolbar from './DiscoveryToolbar.vue';
 import { ProcessParameter } from '@openeo/js-commons';
 import { Job, Service, UserProcess } from '@openeo/js-client';
 import { Splitpanes, Pane } from 'splitpanes';
+import BButton from '@openeo/vue-components/components/internal/BButton.vue';
 import AsyncButton from '@openeo/vue-components/components/internal/AsyncButton.vue';
 
 export default {
@@ -63,6 +64,7 @@ export default {
 	mixins: [EventBusMixin],
 	components: {
 		AsyncButton,
+		BButton,
 		DiscoveryToolbar,
 		Editor,
 		Logo,

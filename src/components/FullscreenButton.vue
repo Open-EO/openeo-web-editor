@@ -1,17 +1,21 @@
 <template>
-	<button v-show="element" type="button" @click="toggleFullscreen" :title="isFullscreen ? 'Close fullscreen' : 'Show fullscreen'">
+	<BButton v-show="element" @click="toggleFullscreen" :title="isFullscreen ? 'Close fullscreen' : 'Show fullscreen'">
 		<span v-show="isFullscreen"><i class="fas fa-compress"></i></span>
 		<span v-show="!isFullscreen"><i class="fas fa-expand"></i></span>
-	</button>
+	</BButton>
 </template>
 
 <script>
 import EventBusMixin from './EventBusMixin.js';
 import Utils from '../utils.js';
+import BButton from '@openeo/vue-components/components/internal/BButton.vue';
 
 export default {
 	name: 'FullscreenButton',
 	mixins: [EventBusMixin],
+	components: {
+		BButton
+	},
 	props: {
 		element: {
 			required: true

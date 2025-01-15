@@ -4,21 +4,21 @@
 			<strong v-if="title">{{ title }}</strong>
 			<div class="sourceToolbar">
 				<span class="sepr" v-if="editable">
-					<button type="button" @click="confirmClear" title="New script / Clear current script"><i class="fas fa-file"></i></button>
+					<BButton @click="confirmClear" title="Start from scratch - Clears the current script"><i class="fas fa-file"></i></BButton>
 					<slot name="file-toolbar"></slot>
 				</span>
 				<span class="sepr" v-if="editable">
-					<button type="button" @click="$refs.blocks.undo()" :disabled="!canUndo" title="Revert last change"><i class="fas fa-undo-alt"></i></button>
-					<button type="button" @click="$refs.blocks.redo()" :disabled="!canRedo" title="Redo last reverted change"><i class="fas fa-redo-alt"></i></button>
-					<button type="button" @click="$refs.blocks.deleteSelected()" :disabled="!hasSelection" title="Delete selected elements"><i class="fas fa-trash"></i></button>
+					<BButton @click="$refs.blocks.undo()" :disabled="!canUndo" title="Revert the last change"><i class="fas fa-undo-alt"></i></BButton>
+					<BButton @click="$refs.blocks.redo()" :disabled="!canRedo" title="Redo the last reverted change"><i class="fas fa-redo-alt"></i></BButton>
+					<BButton @click="$refs.blocks.deleteSelected()" :disabled="!hasSelection" title="Delete the selected elements from the process"><i class="fas fa-trash"></i></BButton>
 				</span>
 				<span class="sepr" v-if="editable">
-					<button type="button" v-if="!parent" @click="() => editProcess(value)" title="Edit Process Metadata"><i class="fas fa-edit"></i></button>
-					<button type="button" @click="addParameter" title="Add Parameter"><i class="fas fa-parking"></i></button>
-					<button type="button" v-if="supportsMath" :class="{highlightFormula: isMath}" @click="showExpressionModal" title="Insert/Edit formula"><i class="fas fa-square-root-alt"></i></button>
+					<BButton v-if="!parent" @click="() => editProcess(value)" title="Edit the process metadata"><i class="fas fa-edit"></i></BButton>
+					<BButton @click="addParameter" title="Add a parameter to the process"><i class="fas fa-parking"></i></BButton>
+					<BButton v-if="supportsMath" :class="{highlightFormula: isMath}" @click="showExpressionModal" title="Insert or edit a formula as part of the process"><i class="fas fa-square-root-alt"></i></BButton>
 				</span>
-				<button type="button" @click="$refs.blocks.toggleCompact()" :class="{compactMode: compactMode}" title="Compact Mode"><i class="fas fa-compress-arrows-alt"></i></button>
-				<button type="button" @click="$refs.blocks.perfectScale()" title="Scale to perfect size"><i class="fas fa-arrows-alt"></i></button>
+				<BButton @click="$refs.blocks.toggleCompact()" :class="{compactMode: compactMode}" :title="compactMode ? 'Show the process more compact and less detailed' : 'Shows the process less compact and more detailed'"><i class="fas fa-compress-arrows-alt"></i></BButton>
+				<BButton @click="$refs.blocks.perfectScale()" title="Scale the view to match the available space"><i class="fas fa-arrows-alt"></i></BButton>
 				<FullscreenButton :element="() => this.$refs.visualEditor" @changed="enabled => {this.$refs.blocks.perfectScale(); isFullScreen = enabled}" />
 				<slot name="toolbar"></slot>
 			</div>
@@ -35,9 +35,9 @@
 					<p>
 						Alternatively, you can also import existing processes into the model builder:
 						<ul>
-							<li v-if="canPaste">Paste the JSON from your clipboard by clicking <button type="button" @click="paste" title="Paste from clipboard"><i class="fas fa-paste"></i></button> or use <kbd>CTRL</kbd> + <kbd>V</kbd> (Windows, Linux) or <kbd>⌘</kbd> + <kbd>V</kbd> (MacOS) when the model builder is in focus.</li>
+							<li v-if="canPaste">Paste the JSON from your clipboard by clicking <BButton @click="paste" title="Paste a process from your clipboard"><i class="fas fa-paste"></i></BButton> or use <kbd>CTRL</kbd> + <kbd>V</kbd> (Windows, Linux) or <kbd>⌘</kbd> + <kbd>V</kbd> (MacOS) when the model builder is in focus.</li>
 							<li>Drag and drop a JSON file from your computer</li>
-							<li>Import a JSON file from your computer or another source such as the internet by clicking <button type="button" @click="importProcess" title="Import process from external source"><i class="fas fa-cloud-download-alt"></i></button></li>
+							<li>Import a JSON file from your computer or another source such as the internet by clicking <BButton @click="importProcess" title="Import a process from an external source"><i class="fas fa-cloud-download-alt"></i></BButton></li>
 						</ul>
 					</p>
 					<p>
@@ -83,6 +83,7 @@ import Utils from '../utils.js';
 import DiscoveryToolbar from './DiscoveryToolbar.vue';
 import EventBusMixin from './EventBusMixin.js';
 import FullscreenButton from './FullscreenButton.vue';
+import BButton from '@openeo/vue-components/components/internal/BButton.vue';
 import { ProcessParameter } from '@openeo/js-commons';
 import JavaScript from '../export/javascript';
 
@@ -90,6 +91,7 @@ export default {
 	name: 'VisualEditor',
 	mixins: [EventBusMixin],
 	components: {
+		BButton,
 		ModelBuilder,
 		DiscoveryToolbar,
 		FullscreenButton

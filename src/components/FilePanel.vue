@@ -12,8 +12,8 @@
 				<SyncButton v-if="supportsList" :name="plualizedName" :sync="reloadData" />
 			</template>
 			<template #actions="p">
-				<AsyncButton title="Download" :fn="() => downloadFile(p.row)" v-show="supportsRead" fa icon="fas fa-download"></AsyncButton>
-				<AsyncButton title="Delete" :fn="() => deleteFile(p.row)" v-show="supportsDelete" fa icon="fas fa-trash"></AsyncButton>
+				<AsyncButton title="Download this file to your computer" :fn="() => downloadFile(p.row)" v-show="supportsRead" fa icon="fas fa-download"></AsyncButton>
+				<AsyncButton title="Delete this file from the server" :fn="() => deleteFile(p.row)" v-show="supportsDelete" fa icon="fas fa-trash"></AsyncButton>
 			</template>
 		</DataTable>
 	</div>

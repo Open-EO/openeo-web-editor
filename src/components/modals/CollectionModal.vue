@@ -12,8 +12,8 @@
 						</template>
 						<template #after-search-box>
 							<div class="pagination">
-								<AsyncButton title="Previous page" :fn="() => paginate(-1)" :disabled="!hasPrevItems" fa icon="fas fa-arrow-left">Previous Page</AsyncButton>
-								<AsyncButton title="Next page" :fn="() => paginate(1)" :disabled="!hasNextItems" fa icon="fas fa-arrow-right">Next Page</AsyncButton>
+								<AsyncButton :fn="() => paginate(-1)" :disabled="!hasPrevItems" fa icon="fas fa-arrow-left">Previous Page</AsyncButton>
+								<AsyncButton :fn="() => paginate(1)" :disabled="!hasNextItems" fa icon="fas fa-arrow-right">Next Page</AsyncButton>
 							</div>
 						</template>
 						<template #item-location="p">
@@ -21,8 +21,8 @@
 						</template>
 					</Items>
 					<div class="pagination">
-						<AsyncButton title="Previous page" :fn="() => paginate(-1)" :disabled="!hasPrevItems" fa icon="fas fa-arrow-left">Previous Page</AsyncButton>
-						<AsyncButton title="Next page" :fn="() => paginate(1)" :disabled="!hasNextItems" fa icon="fas fa-arrow-right">Next Page</AsyncButton>
+						<AsyncButton :fn="() => paginate(-1)" :disabled="!hasPrevItems" fa icon="fas fa-arrow-left">Previous Page</AsyncButton>
+						<AsyncButton :fn="() => paginate(1)" :disabled="!hasNextItems" fa icon="fas fa-arrow-right">Next Page</AsyncButton>
 					</div>
 				</section>
 				<section v-else>Individual items are not available for this collection.</section>

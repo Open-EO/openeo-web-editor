@@ -1,13 +1,13 @@
 <template>
 	<DataTable ref="table" fa :data="data" :columns="columns" :next="next" class="CustomProcessPanel">
 		<template slot="toolbar">
-			<AsyncButton title="Add new custom process" :fn="addProcessFromScript" v-show="supportsCreate" :disabled="!this.hasProcess" fa confirm icon="fas fa-plus">Add</AsyncButton>
+			<AsyncButton title="Store the process in the process editor on the server" :fn="addProcessFromScript" v-show="supportsCreate" :disabled="!this.hasProcess" fa confirm icon="fas fa-plus">Add</AsyncButton>
 			<SyncButton v-if="supportsList" :name="plualizedName" :sync="reloadData" />
 		</template>
 		<template #actions="p">
-			<AsyncButton title="Details" :fn="() => processInfo(p.row)" v-show="supportsRead" fa icon="fas fa-info"></AsyncButton>
-			<AsyncButton title="Edit process" confirm :fn="() => showInEditor(p.row)" v-show="supportsRead" fa icon="fas fa-project-diagram"></AsyncButton>
-			<AsyncButton title="Delete" :fn="() => deleteProcess(p.row)" v-show="supportsDelete" fa icon="fas fa-trash"></AsyncButton>
+			<AsyncButton title="Show details about this process" :fn="() => processInfo(p.row)" v-show="supportsRead" fa icon="fas fa-info"></AsyncButton>
+			<AsyncButton title="Edit this process in the process editor" confirm :fn="() => showInEditor(p.row)" v-show="supportsRead" fa icon="fas fa-project-diagram"></AsyncButton>
+			<AsyncButton title="Delete this custom process from the server" :fn="() => deleteProcess(p.row)" v-show="supportsDelete" fa icon="fas fa-trash"></AsyncButton>
 		</template>
 	</DataTable>
 </template>

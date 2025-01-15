@@ -1,22 +1,22 @@
 <template>
 	<DataTable ref="table" fa :data="data" :columns="columns" :next="next" class="JobPanel">
 		<template slot="toolbar">
-			<AsyncButton title="Add new job for batch processing" :fn="createJobFromScript" v-show="supportsCreate" :disabled="!this.hasProcess" fa confirm icon="fas fa-plus">Create Batch Job</AsyncButton>
-			<AsyncButton title="Run the process directly and view the results without storing them permanently" :fn="executeProcess" v-show="supports('computeResult')" :disabled="!this.hasProcess" fa confirm icon="fas fa-play">Run now</AsyncButton>
+			<AsyncButton title="Create a new job from the process in the process editor for batch processing" :fn="createJobFromScript" v-show="supportsCreate" :disabled="!this.hasProcess" fa confirm icon="fas fa-plus">Create Batch Job</AsyncButton>
+			<AsyncButton title="Run the process in the process editor directly and view the results without storing them permanently" :fn="executeProcess" v-show="supports('computeResult')" :disabled="!this.hasProcess" fa confirm icon="fas fa-play">Run now</AsyncButton>
 			<SyncButton v-if="supportsList" :name="plualizedName" :sync="reloadData" />
 		</template>
 		<template #actions="p">
-			<AsyncButton title="Details" :fn="() => showJobInfo(p.row)" v-show="supportsRead" fa icon="fas fa-info"></AsyncButton>
-			<AsyncButton title="Estimate" :fn="() => estimateJob(p.row)" v-show="supportsEstimate" fa icon="fas fa-file-invoice-dollar"></AsyncButton>
-			<AsyncButton title="Edit metadata" :fn="() => editMetadata(p.row)" v-show="supportsUpdate" :disabled="!isJobInactive(p.row)" fa icon="fas fa-edit"></AsyncButton>
-			<AsyncButton title="Edit process" confirm :fn="() => showInEditor(p.row)" v-show="supportsRead" fa icon="fas fa-project-diagram"></AsyncButton>
-			<AsyncButton title="Delete" :fn="() => deleteJob(p.row)" v-show="supportsDelete" fa icon="fas fa-trash"></AsyncButton>
-			<AsyncButton title="Start processing" :fn="() => queueJob(p.row)" v-show="supportsStart && isJobInactive(p.row)" fa icon="fas fa-play-circle"></AsyncButton>
-			<AsyncButton title="Cancel processing" :fn="() => cancelJob(p.row)" v-show="supportsStop && isJobActive(p.row)" fa icon="fas fa-stop-circle"></AsyncButton>
-			<AsyncButton title="Download" :fn="() => downloadResults(p.row)" v-show="supportsDownloadResults && mayHaveResults(p.row)" fa icon="fas fa-download"></AsyncButton>
-			<AsyncButton title="View results" :fn="() => viewResults(p.row, true)" v-show="supportsDownloadResults && mayHaveResults(p.row)" fa icon="fas fa-eye"></AsyncButton>
-			<AsyncButton title="Export / Share" :fn="() => shareResults(p.row)" v-show="canShare && supports('downloadResults') && mayHaveResults(p.row)" fa icon="fas fa-share"></AsyncButton>
-			<AsyncButton title="View logs" :fn="() => showLogs(p.row)" v-show="supportsDebug" fa icon="fas fa-bug"></AsyncButton>
+			<AsyncButton title="Show details about this job" :fn="() => showJobInfo(p.row)" v-show="supportsRead" fa icon="fas fa-info"></AsyncButton>
+			<AsyncButton title="Create a cost and time estimate for this job" :fn="() => estimateJob(p.row)" v-show="supportsEstimate" fa icon="fas fa-file-invoice-dollar"></AsyncButton>
+			<AsyncButton title="Edit the metadata of this job" :fn="() => editMetadata(p.row)" v-show="supportsUpdate" :disabled="!isJobInactive(p.row)" fa icon="fas fa-edit"></AsyncButton>
+			<AsyncButton title="Edit the process of this job in the process editor" confirm :fn="() => showInEditor(p.row)" v-show="supportsRead" fa icon="fas fa-project-diagram"></AsyncButton>
+			<AsyncButton title="Delete this job from the server, including all results" :fn="() => deleteJob(p.row)" v-show="supportsDelete" fa icon="fas fa-trash"></AsyncButton>
+			<AsyncButton title="Start the processing on the server" :fn="() => queueJob(p.row)" v-show="supportsStart && isJobInactive(p.row)" fa icon="fas fa-play-circle"></AsyncButton>
+			<AsyncButton title="Cancel the processing" :fn="() => cancelJob(p.row)" v-show="supportsStop && isJobActive(p.row)" fa icon="fas fa-stop-circle"></AsyncButton>
+			<AsyncButton title="Download the results to your computer" :fn="() => downloadResults(p.row)" v-show="supportsDownloadResults && mayHaveResults(p.row)" fa icon="fas fa-download"></AsyncButton>
+			<AsyncButton title="View the results" :fn="() => viewResults(p.row, true)" v-show="supportsDownloadResults && mayHaveResults(p.row)" fa icon="fas fa-eye"></AsyncButton>
+			<AsyncButton title="Export and/or share this job" :fn="() => shareResults(p.row)" v-show="canShare && supports('downloadResults') && mayHaveResults(p.row)" fa icon="fas fa-share"></AsyncButton>
+			<AsyncButton title="View the logs of this job" :fn="() => showLogs(p.row)" v-show="supportsDebug" fa icon="fas fa-bug"></AsyncButton>
 		</template>
 	</DataTable>
 </template>

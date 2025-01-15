@@ -4,12 +4,12 @@
 			<strong v-if="title">{{ title }}</strong>
 			<div class="sourceToolbar">
 				<span class="sepr">
-					<button type="button" v-if="editable" @click="confirmClear" title="New script / Clear current script"><i class="fas fa-file"></i></button>
+					<BButton v-if="editable" @click="confirmClear" title="Start from scratch - Clears the current script"><i class="fas fa-file"></i></BButton>
 					<slot name="file-toolbar"></slot>
 				</span>
 				<span class="sepr" v-if="editable">
-					<button type="button" @click="editor.undo()" :disabled="!canUndo" title="Revert last change"><i class="fas fa-undo-alt"></i></button>
-					<button type="button" @click="editor.redo()" :disabled="!canRedo" title="Redo last reverted change"><i class="fas fa-redo-alt"></i></button>
+					<BButton @click="editor.undo()" :disabled="!canUndo" title="Revert the last change"><i class="fas fa-undo-alt"></i></BButton>
+					<BButton @click="editor.redo()" :disabled="!canRedo" title="Redo the last reverted change"><i class="fas fa-redo-alt"></i></BButton>
 					<slot name="edit-toolbar"></slot>
 				</span>
 				<FullscreenButton :element="element" />
@@ -23,6 +23,7 @@
 <script>
 import Utils from '../utils.js';
 import FullscreenButton from './FullscreenButton.vue';
+import BButton from '@openeo/vue-components/components/internal/BButton.vue';
 import { ProcessGraph } from '@openeo/js-processgraphs';
 
 import CodeMirror from 'codemirror';
@@ -48,6 +49,7 @@ window.jsonlint = jsonlint;
 export default {
 	name: 'TextEditor',
 	components: {
+		BButton,
 		FullscreenButton
 	},
 	props: {
