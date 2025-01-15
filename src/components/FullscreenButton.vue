@@ -35,13 +35,13 @@ export default {
 			el.addEventListener('keydown', this.keyDownFn);
 		}
 	},
-    beforeDestroy() {
+	beforeDestroy() {
 		let el = this.getElement();
 		if (el) {
 			el.removeEventListener('keydown', this.keyDownFn);
 		}
-    },
-    computed: {
+	},
+	computed: {
 		...Utils.mapState('editor', ['hightestModalZIndex'])
 	},
 	methods: {
@@ -52,7 +52,7 @@ export default {
 				this.toggleFullscreen();
 				e.preventDefault();
 				e.stopPropagation();
-    		}
+			}
 		},
 		getElement() {
 			if (typeof this.element === 'string') {

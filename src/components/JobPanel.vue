@@ -4,6 +4,7 @@
 			<AsyncButton title="Create a new job from the process in the process editor for batch processing" :fn="createJobFromScript" v-show="supportsCreate" :disabled="!this.hasProcess" fa confirm icon="fas fa-plus">Create Batch Job</AsyncButton>
 			<AsyncButton title="Run the process in the process editor directly and view the results without storing them permanently" :fn="executeProcess" v-show="supports('computeResult')" :disabled="!this.hasProcess" fa confirm icon="fas fa-play">Run now</AsyncButton>
 			<SyncButton v-if="supportsList" :name="plualizedName" :sync="reloadData" />
+			<FullscreenButton :element="() => this.$el" />
 		</template>
 		<template #actions="p">
 			<AsyncButton title="Show details about this job" :fn="() => showJobInfo(p.row)" v-show="supportsRead" fa icon="fas fa-info"></AsyncButton>
@@ -25,6 +26,7 @@
 import EventBusMixin from './EventBusMixin';
 import WorkPanelMixin from './WorkPanelMixin';
 import SyncButton from './SyncButton.vue';
+import FullscreenButton from './FullscreenButton.vue';
 import AsyncButton from '@openeo/vue-components/components/internal/AsyncButton.vue';
 import Utils from '../utils.js';
 import { Job } from '@openeo/js-client';
@@ -43,6 +45,7 @@ export default {
 	],
 	components: {
 		AsyncButton,
+		FullscreenButton,
 		SyncButton
 	},
 	data() {

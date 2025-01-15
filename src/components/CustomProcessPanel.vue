@@ -3,6 +3,7 @@
 		<template slot="toolbar">
 			<AsyncButton title="Store the process in the process editor on the server" :fn="addProcessFromScript" v-show="supportsCreate" :disabled="!this.hasProcess" fa confirm icon="fas fa-plus">Add</AsyncButton>
 			<SyncButton v-if="supportsList" :name="plualizedName" :sync="reloadData" />
+			<FullscreenButton :element="() => this.$el" />
 		</template>
 		<template #actions="p">
 			<AsyncButton title="Show details about this process" :fn="() => processInfo(p.row)" v-show="supportsRead" fa icon="fas fa-info"></AsyncButton>
@@ -15,6 +16,7 @@
 <script>
 import EventBusMixin from './EventBusMixin';
 import WorkPanelMixin from './WorkPanelMixin';
+import FullscreenButton from './FullscreenButton.vue';
 import SyncButton from './SyncButton.vue';
 import AsyncButton from '@openeo/vue-components/components/internal/AsyncButton.vue';
 import Utils from '../utils.js';
@@ -25,6 +27,7 @@ export default {
 	mixins: [WorkPanelMixin('userProcesses', 'custom process', 'custom processes', false), EventBusMixin],
 	components: {
 		AsyncButton,
+		FullscreenButton,
 		SyncButton
 	},
 	data() {

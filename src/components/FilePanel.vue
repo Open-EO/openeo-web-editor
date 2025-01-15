@@ -10,6 +10,7 @@
 					</div>
 				</div>
 				<SyncButton v-if="supportsList" :name="plualizedName" :sync="reloadData" />
+				<FullscreenButton :element="() => this.$el" />
 			</template>
 			<template #actions="p">
 				<AsyncButton title="Download this file to your computer" :fn="() => downloadFile(p.row)" v-show="supportsRead" fa icon="fas fa-download"></AsyncButton>
@@ -22,6 +23,7 @@
 <script>
 import WorkPanelMixin from './WorkPanelMixin';
 import AsyncButton from '@openeo/vue-components/components/internal/AsyncButton.vue';
+import FullscreenButton from './FullscreenButton.vue';
 import SyncButton from './SyncButton.vue';
 import Utils from '../utils.js';
 
@@ -30,6 +32,7 @@ export default {
 	mixins: [WorkPanelMixin('files', 'file', 'files')],
 	components: {
 		AsyncButton,
+		FullscreenButton,
 		SyncButton
 	},
 	data() {
