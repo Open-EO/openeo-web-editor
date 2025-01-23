@@ -26,13 +26,13 @@ You can also build the files yourself and deploy them to any web host:
 You can use some query parameters to set initial state to the Editor.
 
 * `server`: Set a openEO back-end to connect to by default, e.g. `https://earthengine.openeo.org`
-* `discover`: If you want to skip authentication and just show the capabiltiies of the back-end, simply set to `1`.
+* `discover`: If you want to skip authentication and just show the capabilities of the back-end, simply set to `1`.
 * `process`: Loads a process from a URL and shows it in the Model Builder. You can also pass a single process name with an optional namespace to the parameter (format: `process@namespace`) to simply add a single process node for that process by default.
-* `namespaces`: Loads a additional process namespaces. Multiple namespaces can be separated by a comma (e.g. `vector,sar`).
+* `namespaces`: Loads an additional process namespaces. Multiple namespaces can be separated by a comma (e.g. `vector,sar`).
 * `edit-node`: Opens the parameter editor for a single process node on start-up. Must have the `process` parameter being set, otherwise will be ignored. You can set two types of values:
   * `1`: If only a single node is being added, opens this node without explicitly naming it.
   * Otherwise, the value must correspond to the node identifier without `#` at the beginning.
-* `wizard`: Opens a specific wizard on start-up. The value must correspond to the component name of the wizard. Wizard options can be set by provding them as query parameter prefixed with `wizard~`, e.g. `&wizard~collection=SENTINEL2-L2A`.
+* `wizard`: Opens a specific wizard on start-up. The value must correspond to the component name of the wizard. Wizard options can be set by providing them as query parameter prefixed with `wizard~`, e.g., `&wizard~collection=SENTINEL2-L2A`.
   * Usecase "Run UDP": For `wizard=UDP` you can provide a process in the query parameter `wizard~process` which has the same format as in `process` above and will open a wizard for this UDP.
 * `preview-collection`: Shows the preview of a Collection on the map upon start.
 * `result`: Loads a STAC Item or Collection in "App mode".
@@ -42,7 +42,7 @@ Example: <https://editor.openeo.org?server=https://earthengine.openeo.org&discov
 
 ## Implementation guide for back-ends
 
-Here we collection information for back-end implementors that want to improve the experience with the Web Editor by fine-tuning their implementation.
+Here we collect information for back-end implementers that want to improve the experience with the Web Editor by fine-tuning their implementation.
 
 * [GeoTiff / COG support](docs/geotiff.md)
 * [OIDC setup](docs/oidc.md)
@@ -68,7 +68,7 @@ This package received major contributions from the following organizations:
 ## Docker
 
 ### Local build
-This repository contains a Dockerfile. It can be build with
+This repository contains a Dockerfile. It can be built with
 ```
 docker build . -t openeo-web-editor
 ```
@@ -76,12 +76,12 @@ and then tested locally with
 ```
 docker run -p 8080:80 openeo-web-editor
 ```
-After sucessfull startup, the webeditor can be reached locally at http://127.0.0.1:8080/
+After successful startup, the webeditor can be reached locally at http://127.0.0.1:8080/
 
 More startup information can be seen at the [official nginx docker image](https://hub.docker.com/_/nginx/) which is used.
 
 ### Use image from Dockerhub
-The same Dockerimage is build and pushed to Dockerhub with the help of a github action. It is available [here](https://hub.docker.com/repository/docker/mundialis/openeo-web-editor).
+The same Docker Image is built and pushed to Dockerhub with the help of a github action. It is available [here](https://hub.docker.com/repository/docker/mundialis/openeo-web-editor).
 
 To use it locally, run
 ```
@@ -91,10 +91,10 @@ Then run it with
 ```
 docker run -p 8080:80 mundialis/openeo-web-editor:latest
 ```
-After sucessfull startup, the webeditor can be reached locally at http://127.0.0.1:8080/
+After successful startup, the webeditor can be reached locally at http://127.0.0.1:8080/
 
-To test a certain commit, simply pull the according tag (available from 2021-09-02), e.g.
+To test a certain commit, simply pull the according tag (available from 2021-09-02), e.g.,
 ```
 docker pull mundialis/openeo-web-editor:sha-4636d41
 ```
-The Dockerimage is maintained by mundialis.
+The Docker Image is maintained by mundialis.
