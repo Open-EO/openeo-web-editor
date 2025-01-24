@@ -69,4 +69,4 @@ it is important for an openEO back-end to properly set up a couple of things:
     - `implicit` for the Implicit Flow (**discouraged**)
   - List the same redirect URIs discussed above again under the `redirect_urls` field.
     This listing allows the openEO Web Editor to hide authentication options
-    that won't work because redirect URIs configuration.
+    that won't work because of the redirect URIs configuration.
