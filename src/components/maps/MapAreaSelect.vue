@@ -11,6 +11,7 @@ import GeoJsonMixin from './ExtentMixin.vue';
 import GeocoderMixin from './GeocoderMixin.vue';
 import MapMixin from './MapMixin.vue';
 import Utils from '../../utils.js';
+import {shiftKeyOnly} from 'ol/events/condition.js';
 import ExtentInteraction from 'ol/interaction/Extent';
 import { transformExtent } from 'ol/proj';
 import { containsXY } from 'ol/extent';
@@ -157,14 +158,13 @@ export default {
 				else if (this.interaction.handlingDownUpSequence || this.interaction.snapToVertex_(event.pixel, event.map)) {
 					return true;
 				}
-				return false;
+        return shiftKeyOnly(event);
 			};
 
 			this.interaction = new ExtentInteraction({
 				extent: this.projectedExtent,
 				condition,
-				boxStyle: createDefaultStyle(),
-				pixelTolerance: 15
+				boxStyle: createDefaultStyle()
 			});
 
 			if (this.editable) {
