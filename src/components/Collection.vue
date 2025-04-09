@@ -1,5 +1,5 @@
 <template>
-	<VueCollection :data="data">
+	<VueCollection :data="data" :federation="federation">
 		<template #spatial-extents="p">
 			<span v-if="p.worldwide" class="worldwide"><i class="fas fa-globe"></i> Worldwide</span>
 			<MapExtentViewer v-else class="map" :footprint="p.extents"></MapExtentViewer>
@@ -25,6 +25,7 @@ export default {
 	},
 	computed: {
 		...Utils.mapState(['connection']),
+		...Utils.mapState(['federation']),
 		...Utils.mapGetters(['supports']),
 		bbox() {
 			try {
