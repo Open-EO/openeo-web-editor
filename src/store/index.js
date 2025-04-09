@@ -435,7 +435,14 @@ export default new Vuex.Store({
 			}
 		},
 		federation(state, federation) {
-			state.federation = federation;
+			if (Array.isArray(federation)) {
+				// convert array of objects, which each have an `id` property, into an object with those IDs as the keys
+				// e.g. [ {id:'f',name:'foo'} ] -> { 'f': {id:'f',name:'foo'} }
+				state.federation = federation.reduce((arr, val) => ({ ...arr, [val.id]: val }), {})
+			} else {
+				// otherwise expect that it is already in that format
+				state.federation = federation;
+			}
 		},
 		federationMissing(state, federationMissing) {
 			state.federationMissing = federationMissing;
