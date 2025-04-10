@@ -182,7 +182,7 @@ export default new Vuex.Store({
 
 			// Note down federation things from capabilities
 			let federation = capabilities.listFederation();
-			if (Object.keys(federation).length > 0) {   // empty object = no federation -> don't commit (leaving default value)
+			if (federation.length > 0) {   // empty array = no federation -> don't commit (leaving default value)
 				cx.commit('federation', federation);
 			}
 
