@@ -1,7 +1,7 @@
 <template>
 	<div class="step choose-collection">
 		<p>Please select the collection which you want to download data for.</p>
-		<Collections heading="" :collections="filteredCollections" :offerDetails="false">
+		<Collections heading="" :collections="filteredCollections" :offerDetails="false" :federation="federation" :missing="federationMissing.collections">
 			<template #summary="{ item }">
 				<div :class="{element: true, selected: item.id == value}">
 					<div class="summary" @click="update(item.id)">
@@ -39,7 +39,7 @@ export default {
 		}
 	},
 	computed: {
-		...Utils.mapState(['collections']),
+		...Utils.mapState(['collections', 'federation', 'federationMissing']),
 		filteredCollections() {
 			if (typeof this.filter === 'function') {
 				return this.collections.filter(this.filter);

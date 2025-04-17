@@ -9,12 +9,13 @@
 					See below for details about this parameter:
 				</span>
 			</p>
-			<ProcessParameter :parameter="parameter" />
+			<ProcessParameter :parameter="parameter" :federation="federation" />
 		</div>
 	</Modal>
 </template>
 
 <script>
+import Utils from '../../utils.js';
 import Modal from './Modal.vue';
 import ProcessParameter from '@openeo/vue-components/components/internal/ProcessParameter.vue';
 
@@ -34,6 +35,7 @@ export default {
 		}
 	},
 	computed: {
+		...Utils.mapState(['federation']),
 		title() {
 			return this.parameter.name || 'Unnamed Parameter';
 		}
