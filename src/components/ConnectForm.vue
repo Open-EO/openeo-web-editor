@@ -104,6 +104,8 @@ import TermsOfServiceConsent from './TermsOfServiceConsent.vue';
 import Utils from '../utils.js';
 import { OidcProvider } from '@openeo/js-client';
 
+OidcProvider.redirectUrl += '/';
+
 export default {
 	name: 'ConnectForm',
 	mixins: [EventBusMixin],

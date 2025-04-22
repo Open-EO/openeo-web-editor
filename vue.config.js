@@ -11,7 +11,7 @@ module.exports = {
 	devServer: {
 		// Port where the development server runs (int)
 		// This is only needed for `npm start`
-		port: 80
+		port: 1410
 	},
 	configureWebpack: {
 		devtool: 'source-map',
