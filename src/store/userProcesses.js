@@ -21,6 +21,7 @@ export default storeFactory({
 					.map(p => Object.assign(p, {namespace: 'user'}))
 					.filter(p => (typeof p.id === 'string'))
 					.sort(Utils.sortById);
+				state.missing = data['federation:missing'];
 			}
 		}
 	}
