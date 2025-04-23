@@ -3,7 +3,7 @@
 		<template slot="toolbar">
 			<AsyncButton title="Create a new job from the process in the process editor for batch processing" :fn="createJobFromScript" v-show="supportsCreate" :disabled="!this.hasProcess" fa confirm icon="fas fa-plus">Create Batch Job</AsyncButton>
 			<AsyncButton title="Run the process in the process editor directly and view the results without storing them permanently" :fn="executeProcess" v-show="supports('computeResult')" :disabled="!this.hasProcess" fa confirm icon="fas fa-play">Run now</AsyncButton>
-			<SyncButton v-if="supportsList" :name="plualizedName" :sync="reloadData" />
+			<SyncButton v-if="supportsList" :name="pluralizedName" :sync="reloadData" />
 			<FullscreenButton :element="() => this.$el" />
 		</template>
 		<template #actions="p">

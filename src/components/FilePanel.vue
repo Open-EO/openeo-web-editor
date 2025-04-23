@@ -9,7 +9,7 @@
 						<input type="file" name="uploadUserFile" class="uploadUserFile" ref="uploadUserFile" @change="uploadFiles" multiple>
 					</div>
 				</div>
-				<SyncButton v-if="supportsList" :name="plualizedName" :sync="reloadData" />
+				<SyncButton v-if="supportsList" :name="pluralizedName" :sync="reloadData" />
 				<FullscreenButton :element="() => this.$el" />
 			</template>
 			<template #actions="p">

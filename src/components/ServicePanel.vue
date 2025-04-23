@@ -3,7 +3,7 @@
 		<template slot="toolbar">
 			<AsyncButton title="Create a new permanent service from the process in the process editor" :fn="createServiceFromScript" v-show="supportsCreate" :disabled="!this.hasProcess" fa confirm icon="fas fa-plus">Create</AsyncButton>
 			<AsyncButton title="Quickly show the process on map without storing it permanently" :fn="quickViewServiceFromScript" v-show="supportsQuickView" :disabled="!this.hasProcess" fa confirm icon="fas fa-map">Show on Map</AsyncButton>
-			<SyncButton v-if="supportsList" :name="plualizedName" :sync="reloadData" />
+			<SyncButton v-if="supportsList" :name="pluralizedName" :sync="reloadData" />
 			<FullscreenButton :element="() => this.$el" />
 		</template>
 		<template #actions="p">

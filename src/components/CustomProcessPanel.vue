@@ -2,7 +2,7 @@
 	<DataTable ref="table" fa :data="data" :columns="columns" :next="next" class="CustomProcessPanel">
 		<template slot="toolbar">
 			<AsyncButton title="Store the process in the process editor on the server" :fn="addProcessFromScript" v-show="supportsCreate" :disabled="!this.hasProcess" fa confirm icon="fas fa-plus">Add</AsyncButton>
-			<SyncButton v-if="supportsList" :name="plualizedName" :sync="reloadData" />
+			<SyncButton v-if="supportsList" :name="pluralizedName" :sync="reloadData" />
 			<FullscreenButton :element="() => this.$el" />
 		</template>
 		<template #actions="p">

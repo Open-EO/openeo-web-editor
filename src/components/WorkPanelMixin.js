@@ -9,7 +9,7 @@ export default (namespace, singular, plural, loadInitially = true) => {
 		data() {
 			return {
 				name: singular,
-				plualizedName: plural,
+				pluralizedName: plural,
 				syncTimer: null,
 				lastSyncTime: null
 			};
