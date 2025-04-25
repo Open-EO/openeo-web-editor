@@ -26,9 +26,8 @@ export default (namespace, singular, plural, loadInitially = true) => {
 		},
 		computed: {
 			...Utils.mapState(['federation']),
-			...Utils.mapState(namespace, ['missing']),
 			...Utils.mapState(namespace, {data: namespace}),
-			...Utils.mapState(namespace, ['pages', 'hasMore']),
+			...Utils.mapState(namespace, ['missing', 'pages', 'hasMore']),
 			...Utils.mapGetters(namespace, ['supportsList', 'supportsCreate', 'supportsRead', 'supportsUpdate', 'supportsDelete']),
 			next() {
 				return this.hasMore ? this.nextPage : null;

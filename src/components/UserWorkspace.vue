@@ -66,7 +66,7 @@ export default {
 
 <style lang="scss">
 #userContent {
-	section.vue-component.federation-backends.compact {  // the "section" is important to increase specificity and overwrite other rule elsewhere
+	section.vue-component.federation-missing-notice.compact {  // the "section" is important to increase specificity and overwrite other rule elsewhere
 		margin: 0.5em 0.5em 0;
 	}
 	.data-table {

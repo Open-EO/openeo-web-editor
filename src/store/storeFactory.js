@@ -10,7 +10,8 @@ export default ({namespace, listFn, paginateFn, createFn, updateFn, deleteFn, re
 		return {
 			pages: null,
 			hasMore: false,
-			[namespace]: []
+			[namespace]: [],
+			missing: []
 		};
 	};
 	let definition = {
