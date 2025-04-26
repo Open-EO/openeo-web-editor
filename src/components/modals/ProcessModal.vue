@@ -3,7 +3,7 @@
 		<div class="docgen">
 			<!-- ToDo: Implement processUrl -->
 			<!-- ToDo: Show info (badge?) that process is custom -->
-			<Process :process="process" :provideDownload="false" :showGraph="true">
+			<Process :process="process" :provideDownload="false" :showGraph="true" :federation="federation">
 				<template #process-graph>
 					<Editor :value="process" :editable="false" class="infoViewer" id="pgInfoViewer" />
 				</template>
@@ -31,6 +31,7 @@ export default {
 		}
 	},
 	computed: {
+		...Utils.mapState(['federation']),
 		minWidth() {
 			if (Utils.isObject(this.process) && this.process.process_graph) {
 				return "80%";

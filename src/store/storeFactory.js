@@ -10,7 +10,8 @@ export default ({namespace, listFn, paginateFn, createFn, updateFn, deleteFn, re
 		return {
 			pages: null,
 			hasMore: false,
-			[namespace]: []
+			[namespace]: [],
+			missing: []
 		};
 	};
 	let definition = {
@@ -112,6 +113,7 @@ export default ({namespace, listFn, paginateFn, createFn, updateFn, deleteFn, re
 					for (let d of data) {
 						state[namespace].push(d);
 					}
+					state.missing = data['federation:missing'];  // yes, accessing a property on an array
 				}
 				state.hasMore = state.pages ? state.pages.hasNextPage() : false;
 			},

@@ -1,6 +1,7 @@
 <template>
 	<div id="FilePanel" @dragenter="dropZoneInfo(true)" @dragleave="dropZoneInfo(false)" @drop="uploadFiles" @dragover="allowDrop">
 		<div class="dropZone" v-show="showUploadDropHint">To upload files, drop them here.</div>
+		<FederationMissingNotice v-if="Array.isArray(missing) && missing.length > 0" :missing="missing" :federation="federation" :compact="true" />
 		<DataTable ref="table" fa :data="data" :columns="columns" :next="next">
 			<template slot="toolbar">
 				<div v-show="supportsCreate" class="upload">
@@ -9,7 +10,7 @@
 						<input type="file" name="uploadUserFile" class="uploadUserFile" ref="uploadUserFile" @change="uploadFiles" multiple>
 					</div>
 				</div>
-				<SyncButton v-if="supportsList" :name="plualizedName" :sync="reloadData" />
+				<SyncButton v-if="supportsList" :name="pluralizedName" :sync="reloadData" />
 				<FullscreenButton :element="() => this.$el" />
 			</template>
 			<template #actions="p">

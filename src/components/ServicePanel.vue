@@ -1,21 +1,24 @@
 <template>
-	<DataTable ref="table" fa :data="data" :columns="columns" :next="next" class="ServicePanel">
-		<template slot="toolbar">
-			<AsyncButton title="Create a new permanent service from the process in the process editor" :fn="createServiceFromScript" v-show="supportsCreate" :disabled="!this.hasProcess" fa confirm icon="fas fa-plus">Create</AsyncButton>
-			<AsyncButton title="Quickly show the process on map without storing it permanently" :fn="quickViewServiceFromScript" v-show="supportsQuickView" :disabled="!this.hasProcess" fa confirm icon="fas fa-map">Show on Map</AsyncButton>
-			<SyncButton v-if="supportsList" :name="plualizedName" :sync="reloadData" />
-			<FullscreenButton :element="() => this.$el" />
-		</template>
-		<template #actions="p">
-			<AsyncButton title="Show details about this service" :fn="() => serviceInfo(p.row)" v-show="supportsRead" fa icon="fas fa-info"></AsyncButton>
-			<AsyncButton title="Edit the metadata of this service" :fn="() => editMetadata(p.row)" v-show="supportsUpdate" fa icon="fas fa-edit"></AsyncButton>
-			<AsyncButton title="Edit the process of this service in the process editor" confirm :fn="() => showInEditor(p.row)" v-show="supportsRead" fa icon="fas fa-project-diagram"></AsyncButton>
-			<AsyncButton title="Delete this service from the server" :fn="() => deleteService(p.row)" v-show="supportsDelete" fa icon="fas fa-trash"></AsyncButton>
-			<AsyncButton title="View this service" :fn="() => viewService(p.row)" v-show="p.row.enabled && isMapServiceSupported(p.row.type)" fa icon="fas fa-map"></AsyncButton>
-			<AsyncButton title="Export and/or share this service" :fn="() => shareResults(p.row)" v-show="p.row.enabled && canShare" fa icon="fas fa-share"></AsyncButton>
-			<AsyncButton title="View the logs of this service" :fn="() => showLogs(p.row)" v-show="supportsDebug" fa icon="fas fa-bug"></AsyncButton>
-		</template>
-	</DataTable>
+	<div id="ServicePanel">
+		<FederationMissingNotice v-if="Array.isArray(missing) && missing.length > 0" :missing="missing" :federation="federation" :compact="true" />
+		<DataTable ref="table" fa :data="data" :columns="columns" :next="next" class="ServicePanel">
+			<template slot="toolbar">
+				<AsyncButton title="Create a new permanent service from the process in the process editor" :fn="createServiceFromScript" v-show="supportsCreate" :disabled="!this.hasProcess" fa confirm icon="fas fa-plus">Create</AsyncButton>
+				<AsyncButton title="Quickly show the process on map without storing it permanently" :fn="quickViewServiceFromScript" v-show="supportsQuickView" :disabled="!this.hasProcess" fa confirm icon="fas fa-map">Show on Map</AsyncButton>
+				<SyncButton v-if="supportsList" :name="pluralizedName" :sync="reloadData" />
+				<FullscreenButton :element="() => this.$el" />
+			</template>
+			<template #actions="p">
+				<AsyncButton title="Show details about this service" :fn="() => serviceInfo(p.row)" v-show="supportsRead" fa icon="fas fa-info"></AsyncButton>
+				<AsyncButton title="Edit the metadata of this service" :fn="() => editMetadata(p.row)" v-show="supportsUpdate" fa icon="fas fa-edit"></AsyncButton>
+				<AsyncButton title="Edit the process of this service in the process editor" confirm :fn="() => showInEditor(p.row)" v-show="supportsRead" fa icon="fas fa-project-diagram"></AsyncButton>
+				<AsyncButton title="Delete this service from the server" :fn="() => deleteService(p.row)" v-show="supportsDelete" fa icon="fas fa-trash"></AsyncButton>
+				<AsyncButton title="View this service" :fn="() => viewService(p.row)" v-show="p.row.enabled && isMapServiceSupported(p.row.type)" fa icon="fas fa-map"></AsyncButton>
+				<AsyncButton title="Export and/or share this service" :fn="() => shareResults(p.row)" v-show="p.row.enabled && canShare" fa icon="fas fa-share"></AsyncButton>
+				<AsyncButton title="View the logs of this service" :fn="() => showLogs(p.row)" v-show="supportsDebug" fa icon="fas fa-bug"></AsyncButton>
+			</template>
+		</DataTable>
+	</div>
 </template>
 
 <script>
