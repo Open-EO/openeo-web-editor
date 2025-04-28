@@ -228,7 +228,7 @@ export default {
 				let errors = await this.connection.validateProcess(this.process);
 				if (errors.length > 0) {
 					errors.forEach(error => error.level = 'error');
-					this.broadcast('viewLogs', errors, 'Validation Result', 'fa-tasks');
+					this.broadcast('viewLogs', errors, 'Validation Result', true, 'fa-tasks');
 					return false;
 				}
 				else {
