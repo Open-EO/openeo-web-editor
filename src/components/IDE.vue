@@ -225,14 +225,35 @@ export default {
 				return true;
 			}
 			try {
+				let isFederated = Utils.size(this.connection.capabilities().toJSON().federation) > 0;
 				let errors = await this.connection.validateProcess(this.process);
 				if (errors.length > 0) {
+					// show errors
 					errors.forEach(error => error.level = 'error');
 					this.broadcast('viewLogs', errors, 'Validation Result', true, 'fa-tasks');
+					// and notify via toast
+					if(isFederated) {
+						if(Array.isArray(errors['federation:backends'])) {
+							Utils.error(this, "The process is invalid, as checked by these back-ends of the federation: " + errors['federation:backends'].join(', '));
+						} else {
+							Utils.error(this, "The process could not be validated successfully by any of the back-ends or the federation component itself");
+						}
+					} else {
+						Utils.error(this, "The process is invalid");
+					}
 					return false;
 				}
 				else {
-					Utils.ok(this, "The process is valid");
+					// only notify via toast
+					if(isFederated) {
+						if(Array.isArray(errors['federation:backends'])) {
+							Utils.ok(this, "The process is valid and supported by these back-ends of the federation: " + errors['federation:backends'].join(', '));
+						} else {
+							Utils.ok(this, "The process is valid, supported by at least one back-end of the federation");
+						}
+					} else {
+						Utils.ok(this, "The process is valid");
+					}
 					return true;
 				}
 			} catch (error) {
