@@ -228,19 +228,28 @@ export default {
 				let isFederated = Utils.size(this.connection.capabilities().toJSON().federation) > 0;
 				let errors = await this.connection.validateProcess(this.process);
 				if (errors.length > 0) {
-					// show errors
+					// log entries require a `level` attribute
 					errors.forEach(error => error.level = 'error');
-					this.broadcast('viewLogs', errors, 'Validation Result', true, 'fa-tasks');
-					// and notify via toast
+					// build applicable message and possibly add it to the `errors` object so that it shows up in the logs
+					let message;
 					if(isFederated) {
 						if(Array.isArray(errors['federation:backends'])) {
-							Utils.error(this, "The process is invalid, as checked by these back-ends of the federation: " + errors['federation:backends'].join(', '));
+							message = "The process is invalid, as checked by these back-ends of the federation: " + errors['federation:backends'].join(', ');
 						} else {
-							Utils.error(this, "The process could not be validated successfully by any of the back-ends or the federation component itself");
+							message = "The process could not be validated successfully by any of the back-ends or the federation component itself";
 						}
+						let messageAsLogEntry = {
+							id: 'InsertedByWebEditor',
+							message: message,
+							level: 'info'
+						};
+						errors = [messageAsLogEntry, ...errors];   // like this instead of .push() to prepend instead of append (loses the federation:backends attribute but that's okay at this point)
 					} else {
-						Utils.error(this, "The process is invalid");
+						message = "The process is invalid";
 					}
+					// notify via toast and show errors in logs area
+					Utils.error(this, message);
+					this.broadcast('viewLogs', errors, 'Validation Result', true, 'fa-tasks');
 					return false;
 				}
 				else {
