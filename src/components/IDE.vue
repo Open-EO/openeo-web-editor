@@ -231,40 +231,33 @@ export default {
 					// log entries require a `level` attribute
 					errors.forEach(error => error.level = 'error');
 					// build applicable message and possibly add it to the `errors` object so that it shows up in the logs
-					let message;
+					let toastMessage, logMessage;
 					if(isFederated) {
 						if(Array.isArray(errors['federation:backends'])) {
 							let backendTitles = errors['federation:backends'].map(backendId => this.federation[backendId].title);
-							message = "The process is invalid, as checked by these back-ends of the federation: " + backendTitles.join(', ');
+							toastMessage = "The process is invalid (see logs for details)"
+							logMessage = "The process is invalid, as checked by these back-ends of the federation: " + backendTitles.join(', ');
 						} else {
-							message = "The process could not be validated successfully by any of the back-ends or the federation component itself";
+							toastMessage = "The process could not be validated successfully by any of the back-ends or the federation component itself";
+							logMessage = toastMessage;
 						}
-						let messageAsLogEntry = {
+						let logEntry = {
 							id: 'InsertedByWebEditor',
-							message: message,
+							message: logMessage,
 							level: 'info'
 						};
-						errors = [messageAsLogEntry, ...errors];   // like this instead of .push() to prepend instead of append (loses the federation:backends attribute but that's okay at this point)
+						errors = [logEntry, ...errors];   // like this instead of .push() to prepend instead of append (loses the federation:backends attribute but that's okay at this point)
 					} else {
-						message = "The process is invalid";
+						toastMessage = "The process is invalid";
 					}
 					// notify via toast and show errors in logs area
-					Utils.error(this, message);
+					Utils.error(this, toastMessage);
 					this.broadcast('viewLogs', errors, 'Validation Result', true, 'fa-tasks');
 					return false;
 				}
 				else {
-					// only notify via toast
-					if(isFederated) {
-						if(Array.isArray(errors['federation:backends'])) {
-							let backendTitles = errors['federation:backends'].map(backendId => this.federation[backendId].title);
-							Utils.ok(this, "The process is valid and supported by these back-ends of the federation: " + backendTitles.join(', '));
-						} else {
-							Utils.ok(this, "The process is valid, supported by at least one back-end of the federation");
-						}
-					} else {
-						Utils.ok(this, "The process is valid");
-					}
+					// only notify via toast and ignore potential information in `errors['federation:backends']` because it's not so important in the positive case and the space in the toast is limited
+					Utils.ok(this, "The process is valid");
 					return true;
 				}
 			} catch (error) {
