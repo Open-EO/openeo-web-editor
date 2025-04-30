@@ -82,7 +82,7 @@ export default {
 		};
 	},
 	computed: {
-		...Utils.mapState(['connection', 'isAuthenticated']),
+		...Utils.mapState(['connection', 'isAuthenticated', 'federation']),
 		...Utils.mapState('editor', ['appMode', 'context', 'process', 'collectionPreview', 'openWizard', 'openWizardProps']),
 		...Utils.mapGetters(['title', 'apiVersion', 'supports']),
 		...Utils.mapGetters('editor', ['hasProcess']),
@@ -234,7 +234,8 @@ export default {
 					let message;
 					if(isFederated) {
 						if(Array.isArray(errors['federation:backends'])) {
-							message = "The process is invalid, as checked by these back-ends of the federation: " + errors['federation:backends'].join(', ');
+							let backendTitles = errors['federation:backends'].map(backendId => this.federation[backendId].title);
+							message = "The process is invalid, as checked by these back-ends of the federation: " + backendTitles.join(', ');
 						} else {
 							message = "The process could not be validated successfully by any of the back-ends or the federation component itself";
 						}
@@ -256,7 +257,8 @@ export default {
 					// only notify via toast
 					if(isFederated) {
 						if(Array.isArray(errors['federation:backends'])) {
-							Utils.ok(this, "The process is valid and supported by these back-ends of the federation: " + errors['federation:backends'].join(', '));
+							let backendTitles = errors['federation:backends'].map(backendId => this.federation[backendId].title);
+							Utils.ok(this, "The process is valid and supported by these back-ends of the federation: " + backendTitles.join(', '));
 						} else {
 							Utils.ok(this, "The process is valid, supported by at least one back-end of the federation");
 						}
