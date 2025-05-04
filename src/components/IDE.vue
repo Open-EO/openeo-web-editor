@@ -233,7 +233,7 @@ export default {
 					// build applicable message and possibly add it to the `errors` object so that it shows up in the logs
 					let toastMessage, logMessage;
 					if(isFederated) {
-						if(Array.isArray(errors['federation:backends'])) {
+						if(Array.isArray(errors['federation:backends']) && errors['federation:backends'].length > 0) {
 							let backendTitles = errors['federation:backends'].map(backendId => this.federation[backendId].title);
 							toastMessage = "The process is invalid (see logs for details)"
 							logMessage = "The process is invalid, as checked by these back-ends of the federation: " + backendTitles.join(', ');
