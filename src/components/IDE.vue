@@ -82,7 +82,7 @@ export default {
 		};
 	},
 	computed: {
-		...Utils.mapState(['connection', 'isAuthenticated']),
+		...Utils.mapState(['connection', 'isAuthenticated', 'federation']),
 		...Utils.mapState('editor', ['appMode', 'context', 'process', 'collectionPreview', 'openWizard', 'openWizardProps']),
 		...Utils.mapGetters(['title', 'apiVersion', 'supports']),
 		...Utils.mapGetters('editor', ['hasProcess']),
@@ -225,13 +225,38 @@ export default {
 				return true;
 			}
 			try {
+				let isFederated = Utils.size(this.connection.capabilities().toJSON().federation) > 0;
 				let errors = await this.connection.validateProcess(this.process);
 				if (errors.length > 0) {
+					// log entries require a `level` attribute
 					errors.forEach(error => error.level = 'error');
-					this.broadcast('viewLogs', errors, 'Validation Result', 'fa-tasks');
+					// build applicable message and possibly add it to the `errors` object so that it shows up in the logs
+					let toastMessage, logMessage;
+					if(isFederated) {
+						if(Array.isArray(errors['federation:backends']) && errors['federation:backends'].length > 0) {
+							let backendTitles = errors['federation:backends'].map(backendId => this.federation[backendId].title);
+							toastMessage = "The process is invalid (see logs for details)"
+							logMessage = "The process is invalid, as checked by these back-ends of the federation: " + backendTitles.join(', ');
+						} else {
+							toastMessage = "The process could not be validated successfully by any of the back-ends or the federation component itself";
+							logMessage = toastMessage;
+						}
+						let logEntry = {
+							id: 'InsertedByWebEditor',
+							message: logMessage,
+							level: 'info'
+						};
+						errors = [logEntry, ...errors];   // like this instead of .push() to prepend instead of append (loses the federation:backends attribute but that's okay at this point)
+					} else {
+						toastMessage = "The process is invalid";
+					}
+					// notify via toast and show errors in logs area
+					Utils.error(this, toastMessage);
+					this.broadcast('viewLogs', errors, 'Validation Result', true, 'fa-tasks');
 					return false;
 				}
 				else {
+					// only notify via toast and ignore potential information in `errors['federation:backends']` because it's not so important in the positive case and the space in the toast is limited
 					Utils.ok(this, "The process is valid");
 					return true;
 				}
