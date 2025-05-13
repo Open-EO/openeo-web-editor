@@ -35,7 +35,7 @@ export default {
 		}
 	},
 	computed: {
-		...Utils.mapState(['federation']),
+		...Utils.mapGetters(['federation']),
 		title() {
 			return this.parameter.name || 'Unnamed Parameter';
 		}

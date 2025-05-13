@@ -109,8 +109,8 @@ export default {
 	computed: {
 		...Utils.mapState(['collections', 'udfRuntimes']),
 		...Utils.mapState('editor', ['discoverySearchTerm']),
-		...Utils.mapState(['federation', 'federationMissing']),
-		...Utils.mapGetters(['supports', 'fileFormats', 'processes']),
+		...Utils.mapState(['federationMissing']),
+		...Utils.mapGetters(['federation', 'supports', 'fileFormats', 'processes']),
 		supportsLoadCollection() {
 			return this.processes.has('load_collection');
 		},

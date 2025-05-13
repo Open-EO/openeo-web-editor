@@ -27,7 +27,7 @@ export default {
 		}
 	},
 	computed: {
-		...Utils.mapState(['federation']),
+		...Utils.mapGetters(['federation']),
 		title() {
 			return this.data.title || this.id;
 		}

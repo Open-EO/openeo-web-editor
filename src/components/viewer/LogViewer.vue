@@ -1,7 +1,7 @@
 <template>
 	<div class="log-viewer">
 		<div v-if="logs === null" class="no-data"><i class="fas fa-spinner fa-spin fa-lg"></i> Loading logs...</div>
-		<Logs v-else :logs="logs" />
+		<Logs v-else :logs="logs" :missing="missing" :federation="federation" />
 	</div>
 </template>
 
@@ -25,11 +25,13 @@ export default {
 	data() {
 		return {
 			logs: null,
+			missing: null,
 			syncTimer: null
 		};
 	},
 	computed: {
 		...Utils.mapState(['connection']),
+		...Utils.mapGetters(['federation']),
 		isJob() {
 			return Utils.isObject(this.data) && typeof this.data.debugJob === 'function';
 		},
@@ -44,6 +46,11 @@ export default {
 				return this.data.debugService();
 			}
 			return null;
+		}
+	},
+	watch: {
+		logIterator(it) {
+			this.missing = it ? it.getMissingBackends() : null;
 		}
 	},
 	created() {

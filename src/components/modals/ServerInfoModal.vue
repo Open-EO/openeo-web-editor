@@ -34,8 +34,8 @@ export default {
 	},
 	computed: {
 		...Utils.mapState(['connection', 'serviceTypes', 'udfRuntimes']),
-		...Utils.mapState(['federation', 'federationMissing']),
-		...Utils.mapGetters(['fileFormats']),
+		...Utils.mapState(['federationMissing']),
+		...Utils.mapGetters(['federation', 'fileFormats']),
 		capabilities() {
 			return this.connection.capabilities().toJSON();
 		},

@@ -82,9 +82,9 @@ export default {
 		};
 	},
 	computed: {
-		...Utils.mapState(['connection', 'isAuthenticated', 'federation']),
+		...Utils.mapState(['connection', 'isAuthenticated']),
 		...Utils.mapState('editor', ['appMode', 'context', 'process', 'collectionPreview', 'openWizard', 'openWizardProps']),
-		...Utils.mapGetters(['title', 'apiVersion', 'supports']),
+		...Utils.mapGetters(['title', 'apiVersion', 'supports', 'federation']),
 		...Utils.mapGetters('editor', ['hasProcess']),
 		...Utils.mapGetters('jobs', {supportsJobUpdate: 'supportsUpdate'}),
 		...Utils.mapGetters('services', {supportsServiceUpdate: 'supportsUpdate'}),

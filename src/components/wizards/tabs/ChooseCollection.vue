@@ -39,7 +39,8 @@ export default {
 		}
 	},
 	computed: {
-		...Utils.mapState(['collections', 'federation', 'federationMissing']),
+		...Utils.mapState(['collections', 'federationMissing']),
+		...Utils.mapGetters(['federation']),
 		filteredCollections() {
 			if (typeof this.filter === 'function') {
 				return this.collections.filter(this.filter);

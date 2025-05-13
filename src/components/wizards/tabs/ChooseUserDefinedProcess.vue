@@ -46,8 +46,8 @@ export default {
 		}
 	},
 	computed: {
-		...Utils.mapGetters(['processes']),
-		...Utils.mapState(['federation', 'federationMissing']),
+		...Utils.mapGetters(['federation', 'processes']),
+		...Utils.mapState(['federationMissing']),
 		filteredProcesses() {
 			return this.processes.namespace(this.namespace || 'user');
 		}

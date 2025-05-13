@@ -31,7 +31,7 @@ export default {
 		}
 	},
 	computed: {
-		...Utils.mapState(['federation']),
+		...Utils.mapGetters(['federation']),
 		minWidth() {
 			if (Utils.isObject(this.process) && this.process.process_graph) {
 				return "80%";

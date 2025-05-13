@@ -25,8 +25,7 @@ export default {
 	},
 	computed: {
 		...Utils.mapState(['connection']),
-		...Utils.mapState(['federation']),
-		...Utils.mapGetters(['supports']),
+		...Utils.mapGetters(['federation', 'supports']),
 		bbox() {
 			try {
 				return this.data.extent.spatial.bbox[0];

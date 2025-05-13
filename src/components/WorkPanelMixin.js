@@ -1,12 +1,10 @@
 import DataTable from '@openeo/vue-components/components/DataTable.vue';
-import FederationMissingNotice from '@openeo/vue-components/components/FederationMissingNotice.vue';
 import Utils from '../utils.js';
 
 export default (namespace, singular, plural, loadInitially = true) => {
 	return {
 		components: {
-			DataTable,
-			FederationMissingNotice
+			DataTable
 		},
 		data() {
 			return {
@@ -25,7 +23,7 @@ export default (namespace, singular, plural, loadInitially = true) => {
 			this.stopSyncTimer();
 		},
 		computed: {
-			...Utils.mapState(['federation']),
+			...Utils.mapGetters(['federation']),
 			...Utils.mapState(namespace, {data: namespace}),
 			...Utils.mapState(namespace, ['missing', 'pages', 'hasMore']),
 			...Utils.mapGetters(namespace, ['supportsList', 'supportsCreate', 'supportsRead', 'supportsUpdate', 'supportsDelete']),

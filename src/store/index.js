@@ -45,7 +45,6 @@ const getDefaultState = () => {
 		collections: [],
 		processNamespaces: Config.processNamespaces || [],
 		pageLimit: Config.pageLimit,
-		federation: null,
 		federationMissing: {
 			collections: [],
 			processes: [],
@@ -73,6 +72,7 @@ export default new Vuex.Store({
 			return null;
 		},
 		capabilities: (state) => state.connection !== null ? state.connection.capabilities() : null,
+
 		supports: (state) => (feature) => state.connection !== null && state.connection.capabilities() !== null && state.connection.capabilities().hasFeature(feature),
 		currency: (state) => {
 			let currency = '';
@@ -80,6 +80,18 @@ export default new Vuex.Store({
 				currency = state.connection.capabilities().currency();
 			}
 			return currency;
+		},
+		federation: (state) => {
+			if (!state.connection) {
+				return null;
+			}
+			const federation = state.connection.capabilities().listFederation();
+			if (federation.length === 0) {
+				return null;
+			}
+			// convert array of objects, which each have an `id` property, into an object with those IDs as the keys
+			// e.g. [ {id:'f',name:'foo'} ] -> { 'f': {id:'f',name:'foo'} }
+			return federation.reduce((arr, val) => ({ ...arr, [val.id]: val }), {})
 		},
 		isConnected: (state) => state.connection !== null && state.connection.capabilities() !== null,
 		isDiscovered: (state) => state.connection !== null && state.discoveryCompleted,
@@ -179,12 +191,6 @@ export default new Vuex.Store({
 			let promises = [];
 			let errors = [];
 			let capabilities = cx.state.connection.capabilities();
-
-			// Note down federation things from capabilities
-			let federation = capabilities.listFederation();
-			if (federation.length > 0) {   // empty array = no federation -> don't commit (leaving default value)
-				cx.commit('federation', federation);
-			}
 
 			// Request collections
 			if (capabilities.hasFeature('listCollections')) {
@@ -432,16 +438,6 @@ export default new Vuex.Store({
 			}
 			else {
 				Vue.delete(state.beforeLogoutListener, key);
-			}
-		},
-		federation(state, federation) {
-			if (Array.isArray(federation)) {
-				// convert array of objects, which each have an `id` property, into an object with those IDs as the keys
-				// e.g. [ {id:'f',name:'foo'} ] -> { 'f': {id:'f',name:'foo'} }
-				state.federation = federation.reduce((arr, val) => ({ ...arr, [val.id]: val }), {})
-			} else {
-				// otherwise expect that it is already in that format
-				state.federation = federation;
 			}
 		},
 		federationMissing(state, federationMissing) {

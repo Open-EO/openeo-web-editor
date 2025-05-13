@@ -1,7 +1,6 @@
 <template>
 	<div id="ServicePanel">
-		<FederationMissingNotice v-if="Array.isArray(missing) && missing.length > 0" :missing="missing" :federation="federation" :compact="true" />
-		<DataTable ref="table" fa :data="data" :columns="columns" :next="next" class="ServicePanel">
+		<DataTable ref="table" fa :data="data" :columns="columns" :next="next" :missing="missing" :federation="federation" class="ServicePanel">
 			<template slot="toolbar">
 				<AsyncButton title="Create a new permanent service from the process in the process editor" :fn="createServiceFromScript" v-show="supportsCreate" :disabled="!this.hasProcess" fa confirm icon="fas fa-plus">Create</AsyncButton>
 				<AsyncButton title="Quickly show the process on map without storing it permanently" :fn="quickViewServiceFromScript" v-show="supportsQuickView" :disabled="!this.hasProcess" fa confirm icon="fas fa-map">Show on Map</AsyncButton>

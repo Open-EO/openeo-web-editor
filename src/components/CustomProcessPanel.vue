@@ -1,7 +1,6 @@
 <template>
 	<div id="CustomProcessPanel">
-		<FederationMissingNotice v-if="Array.isArray(missing) && missing.length > 0" :missing="missing" :federation="federation" :compact="true" />
-		<DataTable ref="table" fa :data="data" :columns="columns" :next="next" class="CustomProcessPanel">
+		<DataTable ref="table" fa :data="data" :columns="columns" :next="next" :missing="missing" :federation="federation" class="CustomProcessPanel">
 			<template slot="toolbar">
 				<AsyncButton title="Store the process in the process editor on the server" :fn="addProcessFromScript" v-show="supportsCreate" :disabled="!this.hasProcess" fa confirm icon="fas fa-plus">Add</AsyncButton>
 				<SyncButton v-if="supportsList" :name="pluralizedName" :sync="reloadData" />
