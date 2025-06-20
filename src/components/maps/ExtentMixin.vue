@@ -16,7 +16,7 @@ export default {
 		addExtent(data, fill = true) {
 			let footprint = null;
 			if (Utils.isObject(data)) {
-				if (typeof data.west !== 'undefined' && typeof data.east !== 'undefined' && typeof data.south !== 'undefined' && typeof data.north !== 'undefined') {
+				if (typeof data.west == 'number' && typeof data.east == 'number' && typeof data.south == 'number' && typeof data.north == 'number') {
 					footprint = [data];
 				}
 				else if (data.type === 'Collection') {
