@@ -1,0 +1,2 @@
+"use strict";(globalThis["webpackChunk_openeo_web_editor"]=globalThis["webpackChunk_openeo_web_editor"]||[]).push([[424],{50424:(e,o,r)=>{r.r(o),r.d(o,{default:()=>s});var a=r(89969),n=r(50797);class s extends n.A{decodeBlock(e){return(0,a.UD)(new Uint8Array(e)).buffer}}}}]);
+//# sourceMappingURL=424.7181dfa3.js.map
