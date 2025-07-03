@@ -19,6 +19,7 @@
 import EventBusMixin from './components/EventBusMixin.js';
 import Utils from './utils';
 import ConnectForm from './components/ConnectForm.vue';
+import "fontsource-ubuntu/index.css";
 
 export default {
 	name: 'openeo-web-editor',
@@ -202,8 +203,7 @@ export default {
 </script>
 
 <style lang="scss">
-@import "fontsource-ubuntu/index.css";
-@import '../theme.scss';
+@use '../theme' as *;
 
 html, body, .container {
 	height: 100%;

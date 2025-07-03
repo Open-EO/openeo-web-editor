@@ -348,7 +348,7 @@ export default {
 <style src="vue-multiselect/dist/vue-multiselect.min.css"></style>
 
 <style lang="scss">
-@import '../../../theme.scss';
+@use '../../../theme' as *;
 
 .select-container {
 	display: flex;

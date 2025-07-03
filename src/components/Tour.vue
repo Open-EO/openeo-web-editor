@@ -6,6 +6,7 @@
 import Utils from '../utils.js';
 import VueTour from 'vue-tour';
 import Vue from 'vue';
+import 'vue-tour/dist/vue-tour.css';
 
 Vue.use(VueTour);
 
@@ -178,8 +179,7 @@ export default {
 </script>
 
 <style lang="scss">
-@import '~vue-tour/dist/vue-tour.css';
-@import '../../theme.scss';
+@use '../../theme' as *;
 
 .web-editor-tour {
 	.v-step {

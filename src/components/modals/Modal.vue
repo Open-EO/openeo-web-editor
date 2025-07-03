@@ -175,7 +175,7 @@ export default {
 </script>
 
 <style lang="scss">
-@import '../../../theme.scss';
+@use '../../../theme' as *;
 
 .modal {
 	position: fixed;

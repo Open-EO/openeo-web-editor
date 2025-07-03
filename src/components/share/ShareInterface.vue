@@ -170,7 +170,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-@import '../../../theme.scss';
+@use '../../../theme' as *;
 
 .shareable {
 	> .entry {

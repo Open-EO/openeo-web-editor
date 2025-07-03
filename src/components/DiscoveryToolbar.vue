@@ -221,7 +221,7 @@ export default {
 </style>
 
 <style lang="scss" scoped>
-@import '../../theme.scss';
+@use '../../theme' as *;
 
 .discovery-toolbar {
 	width: 100%;

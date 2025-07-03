@@ -85,8 +85,8 @@
     "@vue/cli-plugin-babel": "~5.0.8",
     "@vue/cli-service": "~5.0.8",
     "epsg-index": "^1.0.0",
-    "sass": "^1.35.2",
-    "sass-loader": "^10.2.0"
+    "sass": "^1.80.0",
+    "sass-loader": "^14.0.0"
   },
   "browserslist": [
     "> 2%",

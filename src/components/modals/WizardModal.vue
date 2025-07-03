@@ -367,7 +367,7 @@ export default {
 </script>
 
 <style lang="scss">
-@import '../../../theme.scss';
+@use '../../../theme' as *;
 #WizardModal .modal-container {
 	height: 90%;
 }

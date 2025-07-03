@@ -58,6 +58,7 @@ import { Job, Service, UserProcess } from '@openeo/js-client';
 import { Splitpanes, Pane } from 'splitpanes';
 import BButton from '@openeo/vue-components/components/internal/BButton.vue';
 import AsyncButton from '@openeo/vue-components/components/internal/AsyncButton.vue';
+import 'splitpanes/dist/splitpanes.css';
 
 export default {
 	name: 'IDE',
@@ -322,8 +323,7 @@ export default {
 </script>
 
 <style lang="scss">
-@import '../../theme.scss';
-@import '~splitpanes/dist/splitpanes.css';
+@use '../../theme' as *;
 
 .splitpanes.default-theme {
   .splitpanes__pane {

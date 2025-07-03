@@ -150,7 +150,7 @@ export default {
 </style>
 
 <style lang="scss">
-@import '../../theme.scss';
+@use '../../theme' as *;
 
 .parameters {
 	.fieldRow {

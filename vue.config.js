@@ -13,6 +13,13 @@ module.exports = {
 		// This is only needed for `npm start`
 		port: 80
 	},
+	css: {
+		loaderOptions: {
+			sass: {
+				api: 'modern-compiler' // Use modern Sass API
+			}
+		}
+	},
 	configureWebpack: {
 		devtool: 'source-map',
         externals: {
