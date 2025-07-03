@@ -41,11 +41,12 @@
     "url": "https://github.com/sponsors/m-mohr"
   },
   "scripts": {
-    "build:database": "node src/build-database.js",
-    "start": "npm run build:database && npx vue-cli-service serve",
-    "build": "npm run build:database && npx vue-cli-service build --report"
+    "pre-build": "node src/build.js",
+    "start": "npm run pre-build && npx vue-cli-service serve",
+    "build": "npm run pre-build && npx vue-cli-service build --report"
   },
   "dependencies": {
+    "@fortawesome/fontawesome-free": "^6.7.2",
     "@kirtandesai/ol-geocoder": "^5.0.6",
     "@musement/iso-duration": "^1.0.0",
     "@openeo/js-client": "^2.8.0",
@@ -62,6 +63,7 @@
     "codemirror": "^5.58.2",
     "content-type": "^1.0.4",
     "core-js": "^3.7.0",
+    "fontsource-ubuntu": "^4.0.0",
     "jsonlint-mod": "^1.7.6",
     "luxon": "^2.4.0",
     "node-polyfill-webpack-plugin": "^4.0.0",

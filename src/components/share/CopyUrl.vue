@@ -50,13 +50,21 @@ export default {
 	mounted() {
 		this.canCopy = navigator && navigator.clipboard && typeof navigator.clipboard.writeText === 'function';
 
-		let link = document.createElement('link');
-		link.as = "font";
-		link.type = "font/woff2";
-		link.crossOrigin = "";
-		link.href = "https://use.fontawesome.com/releases/v5.13.0/webfonts/fa-brands-400.woff2";
-		let head = document.getElementsByTagName("head")[0];
-		head.appendChild(link);
+		const head = document.getElementsByTagName("head")[0];
+
+		const font = document.createElement('link');
+		font.as = "font";
+		font.type = "font/woff2";
+		font.crossOrigin = "";
+		font.href = "./fontawesome/webfonts/fa-brands-400.woff2";
+		head.appendChild(font);
+	
+		const css = document.createElement('link');
+		css.rel = "stylesheet";
+		css.type = "text/css";
+		css.media = "all";
+		css.href = "./fontawesome/css/brands.min.css";
+		head.appendChild(css);
 	}
 }
 </script>

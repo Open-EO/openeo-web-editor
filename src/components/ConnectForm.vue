@@ -480,7 +480,6 @@ export default {
 	border: 1px solid black;
 	border-radius: 3em;
 	padding: 2.5em 3em;
-	font-family: 'Ubuntu', sans-serif;
 }
 .connectContainer .helpBtn {
 	float: right;

@@ -202,7 +202,7 @@ export default {
 </script>
 
 <style lang="scss">
-@import 'https://fonts.googleapis.com/css?family=Ubuntu&display=swap';
+@import "fontsource-ubuntu/index.css";
 @import '../theme.scss';
 
 html, body, .container {
