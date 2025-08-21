@@ -105,7 +105,7 @@ export default {
 					.then(ok => ok ? resolve() : reject())
 					.catch(reject);
 				if (fields.length > 0) {
-					this.broadcast('showDataForm', 'Store a new custom process', fields, store);
+					this.broadcast('showDataForm', 'Store a new custom process', fields, store, reject);
 				}
 				else {
 					store();

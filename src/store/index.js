@@ -41,6 +41,13 @@ const getDefaultState = () => {
 		fileFormats: {},
 		serviceTypes: {},
 		udfRuntimes: {},
+		processingParameters: {
+			create_job_parameters: [],
+			create_service_parameters: [],
+			create_synchronous_parameters: [],
+			'federation:missing': [],
+			'federation:backends': [] // currently not used
+		},
 		processesUpdated: 0,
 		collections: [],
 		processNamespaces: Config.processNamespaces || [],
@@ -249,6 +256,13 @@ export default new Vuex.Store({
 					.catch(error => errors.push(error)));
 			}
 
+			// Request supported processing parameters
+			if (capabilities.hasFeature('listProcessingParameters')) {
+				promises.push(cx.state.connection.listProcessingParameters()
+					.then(response => cx.commit('processingParameters', response))
+					.catch(error => errors.push(error)));
+			}
+
 			// Request user account information
 			const promise = cx.dispatch('describeAccount')
 				.catch(error => errors.push(error));
@@ -380,6 +394,15 @@ export default new Vuex.Store({
 		},
 		udfRuntimes(state, udfRuntimes) {
 			state.udfRuntimes = udfRuntimes;
+		},
+		processingParameters(state, parameters) {
+			for (const key in state.processingParameters) {
+				const params = parameters[key];
+				if (Array.isArray(params)) {
+					params.sort((a,b) => Utils.compareStringCaseInsensitive(a.name, b.name));
+					state.processingParameters[key] = params;
+				}
+			}
 		},
 		updateProcesses(state) {
 			state.processesUpdated++;

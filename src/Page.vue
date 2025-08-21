@@ -329,8 +329,10 @@ kbd {
 .vue-component .tabular {
 	margin: 0.5em 0;
 }
-.vue-component .tabular .value ul {
-	padding-left: 20px;
+.vue-component .tabular .value {
+	ul, ol {
+		padding-left: 20px;
+	}
 }
 
 .container {

@@ -1,6 +1,6 @@
 <template>
 	<Modal width="80%" :title="title" @closed="$emit('closed')">
-		<Service :service="service" :currency="currency" :federation="federation">
+		<Service :service="service" :currency="currency" :federation="federation" :processingParameters="processingParameters.create_service_parameters">
 			<template #process-graph>
 				<Editor :value="service.process" :editable="false" class="infoViewer" id="servicePgViewer" />
 			</template>
@@ -27,6 +27,7 @@ export default {
 		}
 	},
 	computed: {
+		...Utils.mapState(['processingParameters']),
 		...Utils.mapGetters(['currency', 'federation']),
 		title() {
 			return "Web Service: " + (this.service.title || "#" + this.service.id);

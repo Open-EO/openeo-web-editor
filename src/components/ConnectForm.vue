@@ -59,7 +59,7 @@
 							<form @submit.prevent="initDiscovery(tab.data)">
 								<div class="row help">
 									<i class="fas fa-info-circle"></i>
-									<span>The <tt>HTTP Basic</tt> authentication method is mostly used for development and testing purposes.</span>
+									<span>The <code>HTTP Basic</code> authentication method is mostly used for development and testing purposes.</span>
 								</div>
 								<div class="row">
 									<label for="username">Username:</label>

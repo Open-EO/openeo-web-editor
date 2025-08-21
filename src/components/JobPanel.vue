@@ -3,7 +3,8 @@
 		<DataTable ref="table" fa :data="data" :columns="columns" :next="next" :missing="missing" :federation="federation" class="JobPanel">
 			<template slot="toolbar">
 				<AsyncButton title="Create a new job from the process in the process editor for batch processing" :fn="createJobFromScript" v-show="supportsCreate" :disabled="!this.hasProcess" fa confirm icon="fas fa-plus">Create Batch Job</AsyncButton>
-				<AsyncButton title="Run the process in the process editor directly and view the results without storing them permanently" :fn="executeProcess" v-show="supports('computeResult')" :disabled="!this.hasProcess" fa confirm icon="fas fa-play">Run now</AsyncButton>
+				<AsyncButton title="Run the process from the process editor with default settings now, and view the results without storing them permanently" :fn="executeProcess" v-show="supports('computeResult')" :disabled="!this.hasProcess" fa confirm icon="fas fa-play">Run directly</AsyncButton>
+				<AsyncButton title="Run the process from the process editor with custom settings, and view the results without storing them permanently" :fn="executeProcessWithOptions" v-show="supports('computeResult')" :disabled="!this.hasProcess" fa confirm icon="fas fa-play">Run with options</AsyncButton>
 				<SyncButton v-if="supportsList" :name="pluralizedName" :sync="reloadData" />
 				<FullscreenButton :element="() => this.$el" />
 			</template>
@@ -26,6 +27,7 @@
 
 <script>
 import EventBusMixin from './EventBusMixin';
+import ProcessingParametersMixin from './ProcessingParametersMixin';
 import WorkPanelMixin from './WorkPanelMixin';
 import SyncButton from './SyncButton.vue';
 import FullscreenButton from './FullscreenButton.vue';
@@ -41,6 +43,7 @@ const WorkPanelMixinInstance = WorkPanelMixin('jobs', 'batch job', 'batch jobs')
 export default {
 	name: 'JobPanel',
 	mixins: [
+		ProcessingParametersMixin,
 		WorkPanelMixinInstance,
 		EventBusMixin,
 		FieldMixin
@@ -63,7 +66,7 @@ export default {
 	},
 	computed: {
 		...Utils.mapState(['connection']),
-		...Utils.mapGetters(['supports', 'supportsBilling', 'supportsBillingPlans']),
+		...Utils.mapGetters(['supports']),
 		...Utils.mapGetters('editor', ['hasProcess']),
 		...Utils.mapState('editor', ['process']),
 		columns() {
@@ -159,12 +162,32 @@ export default {
 			await this.refreshElement(job, updatedJob => this.broadcast('editProcess', updatedJob));
 		},
 		async startAndQueueProcess(options) {
-			let job = await this.createJob(this.process, options);
+			const job = await this.createJob(this.process, options);
 			await this.queueJob(job);
 		},
-		async executeProcess() {
+		async executeProcessWithOptions() {
+			const fields = [
+				this.getLogLevelField(),
+				this.supportsBillingPlans ? this.getBillingPlanField() : null,
+				this.supportsBilling ? this.getBudgetField() : null
+			];
+			this.addProcessingParameters(fields, "synchronous");
+			return new Promise((resolve, reject) => {
+				this.broadcast('showDataForm', "Run process directly", fields, data => {
+					data = this.normalizeData(data, fields);
+					this.executeProcess(data).then(resolve).catch(reject);
+				}, reject);
+			});
+		},
+		async executeProcess(options = {}) {
 			const callback = async (abortController) => {
-				const result = await this.connection.computeResult(this.process, null, null, abortController);
+				const result = await this.connection.computeResult(
+					this.process,
+					options.plan || null,
+					options.budget || null,
+					abortController,
+					options
+				);
 				this.broadcast('viewSyncResult', result);
 			};
 			try {
@@ -176,11 +199,10 @@ export default {
 				else {
 					Utils.exception(this, error);
 				}
-
 			}
 		},
 		jobCreated(job) {
-			var buttons = [];
+			const buttons = [];
 			if (this.supports('estimateJob')) {
 				buttons.push({text: 'Estimate', action: () => this.estimateJob(job)});
 			}
@@ -192,31 +214,15 @@ export default {
 			}
 			Utils.confirm(this, 'Job "' + Utils.getResourceTitle(job) + '" created!', buttons);
 		},
-		normalizeToDefaultData(data) {
-			if (typeof data.title !== 'undefined' && (typeof data.title !== 'string' || data.title.length === 0)) {
-				data.title = null;
-			}
-			if (typeof data.description !== 'undefined' && (typeof data.description !== 'string' || data.description.length === 0)) {
-				data.description = null;
-			}
-			if (typeof data.plan !== 'undefined' && (typeof data.plan !== 'string' || data.plan.length === 0)) {
-				data.plan = null;
-			}
-			if (typeof data.budget !== 'undefined' && (typeof data.budget !== 'number' || data.budget < 0)) {
-				data.budget = null;
-			}
-			return data;
-		},
 		async createJob(process, data) {
 			try {
-				data = this.normalizeToDefaultData(data);
 				let job = await this.create([
 					process,
 					data.title,
 					data.description,
 					data.plan,
 					data.budget,
-					{log_level: data.log_level}
+					data
 				]);
 				this.jobCreated(job);
 				return job;
@@ -226,19 +232,21 @@ export default {
 			}
 		},
 		async createJobFromScript() {
-			var fields = [
+			const fields = [
 				this.getTitleField(),
 				this.getDescriptionField(),
 				this.getLogLevelField(),
 				this.supportsBillingPlans ? this.getBillingPlanField() : null,
 				this.supportsBilling ? this.getBudgetField() : null
 			];
+			this.addProcessingParameters(fields, "job");
 			return new Promise((resolve, reject) => {
 				this.broadcast('showDataForm', "Create new batch job", fields, data => {
+					data = this.normalizeData(data, fields);
 					this.createJob(this.process, data)
 						.then(job => job ? resolve(job) : reject())
 						.catch(reject);
-				});
+				}, reject);
 			});
 		},
 		async deleteJob(job) {
@@ -257,10 +265,10 @@ export default {
 			}
 		},
 		executeWatchers() {
-			for(var i in this.watchers) {
+			for(const i in this.watchers) {
 				this.refreshElement(this.watchers[i], (updated, old) => {
 					if (old.status !== 'finished' && updated.status === 'finished') {
-						var buttons = [];
+						const buttons = [];
 						if (this.supports('downloadResults')) {
 							buttons.push({text: 'Download', action: () => this.downloadResults(updated)});
 							buttons.push({text: 'View', action: () => this.viewResults(updated)});
@@ -322,14 +330,18 @@ export default {
 		},
 		async editMetadata(oldJob) {
 			await this.refreshElement(oldJob, job => {
-				var fields = [
+				const fields = [
 					this.getTitleField(job.title),
 					this.getDescriptionField(job.description),
 					this.getLogLevelField(job.log_level),
 					this.supportsBillingPlans ? this.getBillingPlanField(job.plan) : null,
 					this.supportsBilling ? this.getBudgetField(job.budget) : null
 				];
-				this.broadcast('showDataForm', "Edit batch job", fields, data => this.updateJob(job, data));
+				this.addProcessingParameters(fields, "job", job);
+				this.broadcast('showDataForm', "Edit batch job", fields, data => {
+					data = this.normalizeData(data, fields);
+					return this.updateJob(job, data);
+				});
 			});
 		},
 		updateTitle(job, newTitle) {
@@ -337,7 +349,7 @@ export default {
 		},
 		async updateJob(job, parameters) {
 			try {
-				let updatedJob = await this.update({data: job, parameters: this.normalizeToDefaultData(parameters)});
+				let updatedJob = await this.update({data: job, parameters: this.normalizeData(parameters)});
 				Utils.ok(this, 'Job "' + Utils.getResourceTitle(updatedJob) + '" successfully updated.');
 			} catch(error) {
 				Utils.exception(this, error, 'Update Job Error: ' + Utils.getResourceTitle(job));

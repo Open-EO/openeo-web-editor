@@ -1,6 +1,6 @@
 <template>
 	<Modal width="80%" :title="title" @closed="$emit('closed')">
-		<Job :job="job" :currency="currency">
+		<Job :job="job" :currency="currency" :processingParameters="processingParameters.create_job_parameters">
 			<template #process-graph>
 				<Editor :value="job.process" :editable="false" class="infoViewer" id="jobPgViewer" />
 			</template>
@@ -42,6 +42,7 @@ export default {
 		Modal
 	},
 	computed: {
+		...Utils.mapState(['processingParameters']),
 		...Utils.mapGetters(['currency']),
 		resultType() {
 			if (Utils.isObject(this.result)) {

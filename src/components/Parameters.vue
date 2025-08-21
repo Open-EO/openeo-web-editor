@@ -92,11 +92,11 @@ export default {
 		},
 		displayLabel(param) {
 			if (typeof param.label === 'string' && param.label.length > 0) {
-                return param.label;
-            }
-            else {
-                return Utils.prettifyString(param.name);
-            }
+				return param.label;
+			}
+			else {
+				return Utils.prettifyString(param.name);
+			}
 		},
 		componentforParameter(name) {
 			if (name && Array.isArray(this.$refs[name]) && this.$refs[name][0]) {

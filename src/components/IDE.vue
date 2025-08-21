@@ -291,24 +291,24 @@ export default {
 		},
 
 		showDataForm(title, fields, saveCallback = null, closeCallback = null) {
-			var editable = typeof saveCallback === 'function';
-			var data = {};
-			var parameters = [];
+			const editable = typeof saveCallback === 'function';
+			const data = {};
+			const parameters = [];
 			for(let field of fields) {
-				if (field === null) {
+				if (!field) {
 					continue;
 				}
 				parameters.push(new ProcessParameter(field));
 				data[field.name] = field.value;
 			}
 	
-			let props = {
+			const props = {
 				title,
 				parameters,
 				data,
 				editable
 			};
-			let events = {};
+			const events = {};
 			if (typeof saveCallback === 'function') {
 				events.save = saveCallback;
 			}

@@ -38,17 +38,19 @@ export default {
 				label: 'Billing plan',
 				schema: {type: 'string', subtype: 'billing-plan'},
 				value: value,
-				optional: true
+				optional: true,
+				advanced: true
 			};
 		},
 		getBudgetField(value = null) {
 			return {
 				name: 'budget',
 				label: 'Budget limit',
-				schema: {type: 'number', subtype: 'budget'},
+				schema: {type: 'number', subtype: 'budget', minimum: 0},
 				default: null,
 				value: value,
-				optional: true
+				optional: true,
+				advanced: true
 			};
 		}
   }

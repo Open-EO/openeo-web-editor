@@ -6,7 +6,7 @@
 			<h3>Batch Job</h3>
 			<div class="tabular">
 				<label>ID:</label>
-				<tt class="value">{{ job.id }}</tt>
+				<code class="value">{{ job.id }}</code>
 			</div>
 			<div class="tabular" v-if="job.title">
 				<label>Title:</label>
