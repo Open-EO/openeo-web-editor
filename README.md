@@ -81,7 +81,7 @@ After successful startup, the webeditor can be reached locally at http://127.0.0
 More startup information can be seen at the [official nginx docker image](https://hub.docker.com/_/nginx/) which is used.
 
 ### Use image from Dockerhub
-The same Docker Image is built and pushed to Dockerhub with the help of a github action. It is available [here](https://hub.docker.com/repository/docker/mundialis/openeo-web-editor).
+The same Docker Image is built and pushed to Dockerhub with the help of a github action. It is available [here](https://hub.docker.com/r/mundialis/openeo-web-editor).
 
 To use it locally, run
 ```
