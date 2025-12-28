@@ -43,6 +43,7 @@ export class Format {
 			this.data = await this.fetchData(connection);
 			this.loaded = true;
 		}
+		return this.data;
 	}
 
 	getData() {
