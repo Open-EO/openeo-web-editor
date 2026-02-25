@@ -1,5 +1,5 @@
 <template>
-	<div :id="id">
+	<div :id="id" tabindex="1">
 		<ProgressControl ref="progress" :map="map" />
 		<UserLocationControl :map="map" />
 		<TextControl :text="help" :map="map" />
