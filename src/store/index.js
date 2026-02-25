@@ -314,6 +314,16 @@ export default new Vuex.Store({
 		},
 
 		async loadProcess(cx, {id, namespace}) {
+			// todo: this should live in the JS client by implementing the
+			// Remote Process Definition Extension
+			if (namespace && namespace.match(/^https?:\/\//i)) {
+				const response = await cx.state.connection._get(namespace);
+				if (!Utils.isObject(response.data) || response.data.id !== id) {
+					throw new Error('Invalid response received for process');
+				}
+				return response.data;
+			}
+
 			const process = cx.getters.processes.get(id, namespace);
 			if (!Utils.isObject(process)) {
 				return null;
