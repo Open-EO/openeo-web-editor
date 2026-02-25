@@ -9,7 +9,7 @@
 			<p v-else>Process not available.</p>
 		</WizardTab>
 		<WizardTab :pos="tabPos[2]" :parent="parent" title="Finish">
-			<ChooseProcessingMode v-model="mode" :title.sync="jobTitle" />
+			<ChooseProcessingMode v-model="mode" :title.sync="jobTitle" :process="graph" />
 		</WizardTab>
 	</div>
 </template>
