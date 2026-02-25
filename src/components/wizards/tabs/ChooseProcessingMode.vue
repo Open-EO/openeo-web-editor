@@ -7,7 +7,7 @@
 					<i class="fas fa-spinner fa-spin"></i>
 					Validation in progress...
 				</p>
-				<div v-else-if="validation.length > 0">
+				<div v-else-if="invalid">
 					<p class="error">❌ Validation failed.</p>
 					<p>Please see the details below for more information and go back to the previous steps to correct the issues.</p>
 					<Logs class="logs" hideHeader :logs="validation" />
@@ -18,22 +18,22 @@
 			<p>Please select how you'd like to execute this workflow?</p>
 			<ul class="mode">
 				<li v-if="supportsJobs">
-					<input type="radio" id="job" value="job" v-model="mode" />
+					<input type="radio" id="job" value="job" v-model="mode" :disabled="invalid" />
 					<label for="job">
 						<strong>Batch Jobs</strong><br />
 						Slower processing mode for large amounts of data. Creates and queues a batch job.<br />
 						It is recommended to provide a title for the batch job:
-						<input type="text" ref="title" v-model="titleInput" />
+						<input type="text" ref="title" v-model="titleInput" :disabled="invalid" />
 					</label>
 				</li>
 				<li v-if="supportsSync">
-					<input type="radio" id="sync" value="sync" v-model="mode" />
+					<input type="radio" id="sync" value="sync" v-model="mode" :disabled="invalid" />
 					<label for="sync">
 						<strong>Synchronous Processing</strong><br />
 						Fast processing mode for small amounts of data.
 					</label>
 				</li>
-				<li v-if="supportsSync">
+				<li>
 					<input type="radio" id="model" value="" v-model="mode" />
 					<label for="model">
 						<strong>Don't execute</strong><br />
@@ -86,6 +86,9 @@ export default {
 	computed: {
 		...Utils.mapState(['connection', 'isAuthenticated']),
 		...Utils.mapGetters(['supports']),
+		invalid() {
+			return this.validation && this.validation.length > 0;
+		},
 		titleInput: {
 			get() {
 				return this.title;
