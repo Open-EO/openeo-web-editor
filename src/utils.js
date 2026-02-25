@@ -3,7 +3,6 @@ import { Job, OpenEO, Service, UserFile, UserProcess } from '@openeo/js-client';
 import { mapState, mapActions, mapMutations, mapGetters } from 'vuex';
 import contentType from 'content-type';
 import Config from '../config';
-import axios from 'axios';
 
 class Utils extends VueUtils {
 
@@ -60,13 +59,24 @@ class Utils extends VueUtils {
 		var title = null; 
 		var message = alt;
 		if (Utils.isObject(error) && typeof error.message === 'string') {
-			if (error.code > 0) {
+			if (error.title) {
+				title = error.title;
+			}
+			else if (error.code > 0) {
 				title = "Error #" + error.code; 
 			}
 			else {
 				title = alt; 
 			}
 			message = error.message;
+			// Shorten overly long namespaces in error messages:
+			// https://github.com/Open-EO/openeo-web-editor/issues/365
+			message = message.replace(/\(namespace:\s+([^\)]+)\)/, (match, p1) => {
+				if (p1.length > 30) {
+					return `(namespace: ${p1.substr(0, 10)}…${p1.substr(-10)})`;
+				}
+				return `(namespace: ${p1})`;
+			})
 
 			buttons.push({
 				text: 'Show Details',

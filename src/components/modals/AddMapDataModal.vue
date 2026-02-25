@@ -113,7 +113,7 @@ export default {
 				this.$emit('save', files);
 				this.show = false;
 			} catch (error) {
-				Utils.error(this, error, 'URL provided does not return a supported file format.');
+				Utils.exception(this, error, 'URL provided does not return a supported file format.');
 			} finally {
 				this.loading = false;
 			}

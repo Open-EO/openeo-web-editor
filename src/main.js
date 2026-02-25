@@ -6,6 +6,7 @@ import Config from '../config';
 import Page from './Page.vue';
 import filters from './filters';
 import Clipboard from 'v-clipboard';
+import Utils from './utils';
 
 Vue.use(Snotify);
 Vue.use(Clipboard);
@@ -27,17 +28,7 @@ Vue.config.errorHandler = function (err, vm, info) {
 		return;
 	}
 
-	let message;
-	if (err instanceof Error) {
-		message = err.message;
-	}
-	else if (typeof err === 'string') {
-		message = err;
-	}
-
-	if (message) {
-		vm.$snotify.singleError(message, 'Error', Config.snotifyDefaults);
-	}
+	Utils.exception(vm, err);
 };
 Vue.prototype.$config = Config;
 
@@ -53,7 +44,7 @@ const app = new Vue({
 window.addEventListener("unhandledrejection", function(event) {
 	console.warn(event);
 	if (typeof event.reason === 'String' || event.reason instanceof Error) {
-		app.$snotify.singleError(event.reason, 'Error', Config.snotifyDefaults);
+		Utils.exception(app, event.reason);
 	}
 	event.preventDefault();
 	event.stopPropagation();

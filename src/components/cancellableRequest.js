@@ -13,7 +13,7 @@ export class CancellableRequestError extends Error {
 export function showCancellableRequestError(vm, error) {
   if (error instanceof CancellableRequestError) {
     if (error.isError) {
-      Utils.error(vm, error.message, error.title);
+      Utils.exception(vm, error);
     }
     else {
       Utils.ok(vm, error.message, error.title);

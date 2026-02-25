@@ -32,7 +32,7 @@ export default {
 	snotifyDefaults: {
 		timeout: 10000,
 		titleMaxLength: 30,
-		bodyMaxLength: 120,
+		bodyMaxLength: 200,
 		showProgressBar: true,
 		closeOnClick: true,
 		pauseOnHover: true

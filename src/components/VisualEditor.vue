@@ -185,7 +185,7 @@ export default {
 		},
 		async paste() {
 			if (!this.canPaste) {
-                Utils.error(this, 'error', 'Pasting is not supported by your browser.');
+				Utils.error(this, 'error', 'Pasting is not supported by your browser.');
 			}
 			try {
 				const text = await navigator.clipboard.readText();

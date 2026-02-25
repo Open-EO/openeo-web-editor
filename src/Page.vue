@@ -340,11 +340,11 @@ kbd {
 	height: 100%;
 }
 .container .snotifyToast__title {
-	font-size: 1em;
+	font-size: 0.95em;
 	font-weight: bold;
 }
 .container .snotifyToast__body {
-	font-size: 0.9em;
+	font-size: 0.85em;
 }
 
 p.aboutPage {

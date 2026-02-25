@@ -379,7 +379,7 @@ export default {
 					return await this.addGeoJson(file, false, file.title);
 				}
 				else {
-					Utils.error(this, new Error(`Sorry, the given data at ${file.href} is not supported.`));
+					Utils.error(this, `Sorry, the given data at ${file.href} is not supported.`);
 				}
 			});
 			await Promise.all(promises);

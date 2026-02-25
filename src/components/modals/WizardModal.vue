@@ -170,7 +170,7 @@ export default {
 		close(error = null) {
 			this.show = false;
 			if (error) {
-				Utils.error(this, error, "Wizard Error");
+				Utils.exception(this, error, "Wizard Error");
 			}
 		},
 		async execute({process, mode, modeOptions}) {
@@ -284,7 +284,7 @@ export default {
 		},
 		setValidationError(error) {
 			if (error) {
-				Utils.error(this, error);
+				Utils.exception(this, error);
 			}
 			this.tabs[this.activeTabIndex].validationError = error;
 		},
@@ -298,7 +298,7 @@ export default {
 					if (result instanceof Promise) {
 						result
 							.then(result => result ? callback() : this.setValidationError(fallbackMsg))
-							.catch(error => this.setValidationError(error.message))
+							.catch(error => this.setValidationError(error))
 					}
 					else if (result) {
 						callback();
@@ -307,7 +307,7 @@ export default {
 						this.setValidationError(fallbackMsg)
 					}
 				} catch(error) {
-					this.setValidationError(error.message);
+					this.setValidationError(error);
 				}
 			}
 			else {
