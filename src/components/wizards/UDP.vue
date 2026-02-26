@@ -8,7 +8,10 @@
 			<p class="center" v-else-if="loading"><i class="fas fa-spinner fa-spin"></i> Loading process...</p>
 			<p v-else>Process not available.</p>
 		</WizardTab>
-		<WizardTab :pos="tabPos[2]" :parent="parent" title="Finish">
+		<WizardTab v-if="needsSaveResult" :pos="tabPos[2]" :parent="parent" title="File Format" :beforeChange="() => format !== null">
+			<ChooseFormat v-model="format" :gisDataType="gisDataType" />
+		</WizardTab>
+		<WizardTab :pos="tabPos[3]" :parent="parent" title="Finish">
 			<ChooseProcessingMode v-model="mode" :title.sync="jobTitle" :process="graph" />
 		</WizardTab>
 	</div>
@@ -18,9 +21,12 @@
 import ChooseProcessingMode from './tabs/ChooseProcessingMode.vue';
 import ChooseProcessParameters from './tabs/ChooseProcessParameters.vue';
 import ChooseUserDefinedProcess from './tabs/ChooseUserDefinedProcess.vue';
+import ChooseFormat from './tabs/ChooseFormat.vue';
 import WizardMixin from './WizardMixin';
 import Utils from '../../utils';
 import { ProcessGraph } from '@openeo/js-processgraphs';
+import { Builder } from '@openeo/js-client';
+import { ProcessSchema } from '@openeo/js-commons';
 
 export default {
 	name: "UDP",
@@ -30,7 +36,8 @@ export default {
 	components: {
 		ChooseUserDefinedProcess,
 		ChooseProcessingMode,
-		ChooseProcessParameters
+		ChooseProcessParameters,
+		ChooseFormat
 	},
 	data() {
 		return {
@@ -43,38 +50,77 @@ export default {
 			args: {},
 			jobTitle: "",
 			mode: "",
+			format: null,
 		};
 	},
 	computed: {
 		...Utils.mapGetters(['processes']),
-		tabPos() {
-			if (this.noProcessSelection) {
-				return [null, 0, 1];
+		processSchema() {
+			if (!Utils.isObject(this.processSpec?.returns?.schema)) {
+				return null;
+			}
+			return new ProcessSchema(this.processSpec.returns.schema);
+		},
+		gisDataType() {
+			if (!this.processSchema) {
+				return null;
+			}
+			const types = [];
+			if (this.processSchema.is('raster-cube')) {
+				types.push('raster');
+			}
+			if (this.processSchema.is('vector-cube')) {
+				types.push('vector');
+			}
+			const dcSchema = this.processSchema.schemas.find(s => s.subtype === 'datacube');
+			if (Array.isArray(dcSchema?.dimensions)) {
+				const dimTypes = dcSchema.dimensions.map(d => d.type);
+				if (dimTypes.includes('spatial')) {
+					types.push('raster');
+				}
+				if (dimTypes.includes('geometry')) {
+					types.push('vector');
+				}
+			}
+			return types.length === 1 ? types[0] : null;
+		},
+		needsSaveResult() { // null = unknown, true = needs save_result, false = doesn't need save_result.
+			if (this.processSpec?.process_graph) {
+				// Detect whether the process graph contains a save_result node.
+				const graph = this.processSpec.process_graph;
+				return !Object.values(graph).some(node => node.process_id === 'save_result');
+			}
+			else if (this.processSchema) {
+				// Check what the return value process schema specifies.
+				const subtypes = this.processSchema.subtypes();
+				return subtypes.includes('datacube') || subtypes.includes('raster-cube') || subtypes.includes('vector-cube');
 			}
 			else {
-				return [0, 1, 2];
+				return null;
 			}
+		},
+		tabPos() {
+			const tabs = [
+				!this.noProcessSelection, // Process
+				true, // Parameters
+				this.needsSaveResult, // File Format
+				true // Finish
+			];
+			let index = 0;
+			return tabs.map(enabled => enabled ? index++ : null);
 		},
 		graph() {
 			if (!this.process || !this.processSpec) {
 				return null;
 			}
-			let node = {
-				process_id: this.process,
-				arguments: this.args,
-				result: true
-			};
-			if (Utils.hasText(this.processNamespace)) {
-				node.namespace = this.processNamespace;
+			const b = new Builder(this.processes);
+			b.addProcessSpec(this.processSpec, this.processNamespace);
+			let result = b.process(`${this.process}@${this.processNamespace}`, this.args, this.processSpec.summary);
+			if (this.needsSaveResult && this.format) {
+				result = b.save_result(result, this.format);
 			}
-			if (Utils.hasText(this.processSpec.summary)) {
-				node.description = this.processSpec.summary;
-			}
-			return {
-				process_graph: {
-					[this.process]: node
-				}
-			};
+			result.result = true;
+			return b.toJSON();
 		}
 	},
 	async beforeMount() {
