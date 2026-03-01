@@ -43,7 +43,7 @@
 			<UdfRuntimes v-if="hasUdfRuntimes" class="category" :runtimes="udfRuntimes" :searchTerm="searchTerm" :offerDetails="false" :collapsed="collapsed" :hideDeprecated="!showDeprecated" :hideExperimental="!showExperimental" :federation="federation">
 				<template #summary="{ summary, item }">
 					<div class="discovery-entity" :draggable="supportsRunUdf" @dragstart="onDrag($event, 'udf', {runtime: summary.identifier, version: item.default})">
-						<div class="discovery-info" @click="showUdfInfo(summary.identifier, item)">
+						<div class="discovery-info" @click="showUdfRuntime(summary.index)">
 							<strong :title="summary.identifier">{{ summary.identifier }} ({{ item.default }})</strong>
 							<small v-if="summary.summary" :title="summary.summary">{{ summary.summary }}</small>
 						</div>
@@ -54,7 +54,7 @@
 			<FileFormats class="category" :formats="fileFormats" :showInput="false" heading="Export File Formats" :searchTerm="searchTerm" :offerDetails="false" :collapsed="collapsed" :hideDeprecated="!showDeprecated" :hideExperimental="!showExperimental" :federation="federation" :missing="federationMissing.fileFormats">
 				<template #summary="{ item }">
 					<div class="discovery-entity" :draggable="supportsSaveResult" @dragstart="onDrag($event, 'fileformat', item)">
-						<div class="discovery-info" @click="showFileFormatInfo(item)">
+						<div class="discovery-info" @click="showOutputFileFormat(item)">
 							<strong :title="item.name">{{ item.name }}</strong>
 							<small v-if="item.title" :title="item.title">{{ item.title }}</small>
 						</div>
@@ -183,16 +183,12 @@ export default {
 		showProcess(process) {
 			this.broadcast('showProcess', process);
 		},
-		showUdfInfo(id, data) {
-			this.broadcast('showModal', 'UdfRuntimeModal', {id, data, version: data.default});
+		showUdfRuntime(runtime) {
+			this.broadcast('showUdfRuntime', runtime);
 		},
-		showFileFormatInfo(format) {
-			let props = {
-				id: format.name,
-				format: this.fileFormats.output[format.name],
-				type: "output"
-			};
-			this.broadcast('showModal', 'FileFormatModal', props);
+		showOutputFileFormat(format) {
+			const id = format.id.replace(/-output$/, '');
+			this.broadcast('showOutputFileFormat', id);
 		}
 	}
 }

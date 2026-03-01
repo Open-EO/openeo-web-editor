@@ -27,6 +27,10 @@ You can use some query parameters to set initial state to the Editor.
 
 * `server`: Set a openEO back-end to connect to by default, e.g. `https://earthengine.openeo.org`
 * `discover`: If you want to skip authentication and just show the capabilities of the back-end, simply set to `1`.
+* `collection`: Shows the collection information for the given ID.
+* `process-id`: Shows the process information for the given ID. You can also pass an ID with a namespace (format: `process@namespace`).
+* `udf-runtime`: Shows the UDF runtime information for the given identifier.
+* `file-format`: Shows the output file format information for the given identifier.
 * `process`: Loads a process from a URL and shows it in the Model Builder. You can also pass a single process name with an optional namespace to the parameter (format: `process@namespace`) to simply add a single process node for that process by default.
 * `namespaces`: Loads an additional process namespaces. Multiple namespaces can be separated by a comma (e.g. `vector,sar`).
 * `edit-node`: Opens the parameter editor for a single process node on start-up. Must have the `process` parameter being set, otherwise will be ignored. You can set two types of values:

@@ -198,7 +198,8 @@ export default {
 		};
 	},
 	async created() {
-		var serverFromQuery = Utils.param('server');
+		const params = Utils.params();
+		const serverFromQuery = params.get('server');
 		if (!this.$config.serverUrl && serverFromQuery) {
 			this.serverUrl = serverFromQuery;
 		}
@@ -209,7 +210,7 @@ export default {
 
 		// Allow enforcing a re-login with e.g. 'prompt=login' parameter on authentication request.
 		// See https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest
-		let prompt = Utils.param('oidc~prompt');
+		let prompt = params.get('oidc~prompt');
 		if (['none', 'login', 'consent', 'select_account'].includes(prompt)) {
 			this.oidcOptions.prompt = prompt;
 		}
@@ -405,7 +406,7 @@ export default {
 		},
 
 		makeUrl(server = true, discover = false) {
-			let params = new URLSearchParams(window.location.search);
+			let params = Utils.params();
 			if (server && !this.$config.serverUrl) {
 				params.set('server', this.serverUrl);
 			}

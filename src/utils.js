@@ -178,16 +178,25 @@ class Utils extends VueUtils {
 	}
 
 	static replaceParam(url, paramName, paramValue) {
-		var urlObj = new URL(url);
-		var query = new URLSearchParams(urlObj.search); 
-		query.set(paramName, paramValue);
+		const urlObj = new URL(url);
+		const query = new URLSearchParams(urlObj.search); 
+		if (typeof paramValue === 'undefined') {
+			query.delete(paramName);
+		} else {
+			query.set(paramName, paramValue);
+		}
 		urlObj.search = query.toString();
 		return urlObj.toString();
 	}
 
+	static replaceUrlParam(paramName, paramValue) {
+		const newUrl = Utils.replaceParam(window.location.href, paramName, paramValue);
+		window.history.replaceState({}, '', newUrl);
+	}
+
 	static paramsForPrefix(prefix, sep = '~') {
 		prefix += sep;
-		const urlParams = new URLSearchParams(window.location.search);
+		const urlParams = Utils.params();
 		let params = {};
 		for(let [key, value] of urlParams) {
 			if (key.startsWith(prefix)) {
@@ -197,12 +206,8 @@ class Utils extends VueUtils {
 		return params; 
 	}
 
-	static param(name) {
-		const urlParams = new URLSearchParams(window.location.search);
-		if (urlParams.has(name)) {
-			return urlParams.get(name);
-		}
-		return undefined;
+	static params() {
+		return new URLSearchParams(window.location.search)
 	}
 
 	static isBboxInWebMercator(bboxes) {

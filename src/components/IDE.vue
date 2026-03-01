@@ -159,6 +159,22 @@ export default {
 		if (this.openWizard) {
 			this.showWizard(this.openWizard, this.openWizardProps);
 		}
+
+		const params = Utils.params();
+		if (params.has('collection')) {
+			this.broadcast('showCollection', params.get('collection'));
+		}
+		if (params.has('process-id')) {
+			const pid = params.get('process-id');
+			const [id, namespace] = Utils.extractUDPParams(pid);
+			this.broadcast('showProcess', {id, namespace});
+		}
+		if (params.has('udf-runtime')) {
+			this.broadcast('showUdfRuntime', params.get('udf-runtime'));
+		}
+		if (params.has('file-format')) {
+			this.broadcast('showOutputFileFormat', params.get('file-format'));
+		}
 	},
 	beforeDestroy() {
 		if (this.resizeListener !== null) {
