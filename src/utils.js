@@ -437,6 +437,16 @@ class Utils extends VueUtils {
 		}
 	}
 
+	static debounce(fn, delay = 300) {
+		if (Utils._debounceTimer) {
+			clearTimeout(Utils._debounceTimer);
+		}
+		Utils._debounceTimer = setTimeout(() => {
+			Utils._debounceTimer = null;
+			fn();
+		}, delay);
+	}
+
 	static confirmOpenAll(files) {
 		return confirm(`You are about to open ${files.length} individual files / tabs, which could slow down the web browser. Are you sure you want to open all of them?`);
 	}

@@ -615,7 +615,17 @@ export default {
 			if (typeof saveCallback === 'function') {
 				events.save = saveCallback;
 			}
-			this.broadcast('showModal', 'ParameterModal', props, events);
+
+			const run = () => this.broadcast('showModal', 'ParameterModal', props, events);
+			if (selectParameterName) {
+				// If a parameter has been selected, then we likely come from the 
+				// editArguments of the ModelBuilder. Double clicks lead to issues in the UI,
+				// so debounce the opening of the modal in this case.
+				Utils.debounce(run, 250);
+			}
+			else {
+				run();
+			}
 		},
 		confirmClear() {
 			var confirmed = confirm("Do you really want to clear the existing model?");
