@@ -2,14 +2,20 @@
 	<div class="textEditor" :class="languageString">
 		<div class="sourceHeader">
 			<strong v-if="title">{{ title }}</strong>
-			<div class="sourceToolbar">
-				<span class="sepr">
-					<BButton v-if="editable" @click="confirmClear" title="Start from scratch - Clears the current script"><i class="fas fa-file"></i></BButton>
+			<div class="sourceToolbar" ref="sourceToolbar">
+				<span class="group">
+					<BButton v-if="editable" @click="confirmClear" title="Start from scratch - Clears the current script">
+						<i class="fas fa-file"></i> <span class="text">New</span>
+					</BButton>
 					<slot name="file-toolbar"></slot>
 				</span>
-				<span class="sepr" v-if="editable">
-					<BButton @click="editor.undo()" :disabled="!canUndo" title="Revert the last change"><i class="fas fa-undo-alt"></i></BButton>
-					<BButton @click="editor.redo()" :disabled="!canRedo" title="Redo the last reverted change"><i class="fas fa-redo-alt"></i></BButton>
+				<span class="group" v-if="editable">
+					<BButton @click="editor.undo()" :disabled="!canUndo" title="Revert the last change">
+						<i class="fas fa-undo-alt"></i> <span class="text">Undo</span>
+					</BButton>
+					<BButton @click="editor.redo()" :disabled="!canRedo" title="Redo the last reverted change">
+						<i class="fas fa-redo-alt"></i> <span class="text">Redo</span>
+					</BButton>
 					<slot name="edit-toolbar"></slot>
 				</span>
 				<FullscreenButton :element="element" />
@@ -23,6 +29,7 @@
 <script>
 import Utils from '../utils.js';
 import FullscreenButton from './FullscreenButton.vue';
+import ToolbarCompactMixin from './ToolbarCompactMixin.js';
 import BButton from '@openeo/vue-components/components/internal/BButton.vue';
 import { ProcessGraph } from '@openeo/js-processgraphs';
 
@@ -48,6 +55,7 @@ window.jsonlint = jsonlint;
 
 export default {
 	name: 'TextEditor',
+	mixins: [ToolbarCompactMixin],
 	components: {
 		BButton,
 		FullscreenButton

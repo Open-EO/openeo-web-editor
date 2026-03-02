@@ -19,11 +19,17 @@
 						<Pane id="editor" :size="splitpaneSizeV[0]">
 							<Editor ref="editor" class="mainEditor tour-ide-editor" id="main" :value="process" @input="updateEditor" :title="contextTitle" showIntro>
 								<template #file-toolbar>
-									<BButton @click="importProcess" title="Import a process from an external source"><i class="fas fa-cloud-download-alt"></i></BButton>
-									<AsyncButton v-show="saveSupported" :disabled="!hasProcess" :fn="saveProcess" :title="'Save this process to ' + contextTitle" fa confirm icon="fas fa-save"></AsyncButton>
-									<BButton @click="exportJSON" :disabled="!hasProcess" title="Download this process as a JSON file"><i class="fas fa-file-download"></i></BButton>
-									<BButton @click="exportCode" :disabled="!hasProcess" title="Export this process into another programming language"><i class="fas fa-file-export"></i></BButton>
-									<AsyncButton v-show="validateSupported" :disabled="!hasProcess" :fn="validateProcess" title="Validate this process directly on the server" fa confirm icon="fas fa-tasks"></AsyncButton>
+									<BButton @click="importProcess" title="Import a process from an external source">
+										<i class="fas fa-cloud-download-alt"></i> <span class="text">Import</span>
+									</BButton>
+									<AsyncButton v-show="saveSupported" :disabled="!hasProcess" :fn="saveProcess" :title="'Save this process to ' + contextTitle" fa confirm icon="fas fa-save">Save</AsyncButton>
+									<BButton @click="exportJSON" :disabled="!hasProcess" title="Download this process as a JSON file">
+										<i class="fas fa-file-download"></i> <span class="text">Download</span>
+									</BButton>
+									<BButton @click="exportCode" :disabled="!hasProcess" title="Export this process into another programming language">
+										<i class="fas fa-file-export"></i> <span class="text">Code Export</span>
+									</BButton>
+									<AsyncButton v-show="validateSupported" :disabled="!hasProcess" :fn="validateProcess" title="Validate this process directly on the server" fa confirm icon="fas fa-tasks">Validate</AsyncButton>
 								</template>
 							</Editor>
 						</Pane>

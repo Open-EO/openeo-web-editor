@@ -2,24 +2,44 @@
 	<div class="visualEditor" ref="visualEditor">
 		<div class="sourceHeader">
 			<strong v-if="title">{{ title }}</strong>
-			<div class="sourceToolbar">
-				<span class="sepr" v-if="editable">
-					<BButton @click="confirmClear" title="Start from scratch - Clears the current script"><i class="fas fa-file"></i></BButton>
+			<div class="sourceToolbar" ref="sourceToolbar">
+				<span class="group" v-if="editable">
+					<BButton @click="confirmClear" title="Start from scratch - Clears the current script">
+						<i class="fas fa-file"></i> <span class="text">New</span>
+					</BButton>
 					<slot name="file-toolbar"></slot>
 				</span>
-				<span class="sepr" v-if="editable">
-					<BButton @click="$refs.blocks.undo()" :disabled="!canUndo" title="Revert the last change"><i class="fas fa-undo-alt"></i></BButton>
-					<BButton @click="$refs.blocks.redo()" :disabled="!canRedo" title="Redo the last reverted change"><i class="fas fa-redo-alt"></i></BButton>
-					<BButton @click="$refs.blocks.deleteSelected()" :disabled="!hasSelection" title="Delete the selected elements from the process"><i class="fas fa-trash"></i></BButton>
+				<span class="group" v-if="editable">
+					<BButton @click="$refs.blocks.undo()" :disabled="!canUndo" title="Revert the last change">
+						<i class="fas fa-undo-alt"></i> <span class="text">Undo</span>
+					</BButton>
+					<BButton @click="$refs.blocks.redo()" :disabled="!canRedo" title="Redo the last reverted change">
+						<i class="fas fa-redo-alt"></i> <span class="text">Redo</span>
+					</BButton>
+					<BButton @click="$refs.blocks.deleteSelected()" :disabled="!hasSelection" title="Delete the selected elements from the process">
+						<i class="fas fa-trash"></i> <span class="text">Delete</span>
+					</BButton>
 				</span>
-				<span class="sepr" v-if="editable">
-					<BButton v-if="!parent" @click="() => editProcess(value)" title="Edit the process metadata"><i class="fas fa-edit"></i></BButton>
-					<BButton @click="addParameter" title="Add a parameter to the process"><i class="fas fa-parking"></i></BButton>
-					<BButton v-if="supportsMath" :class="{highlightFormula: isMath}" @click="showExpressionModal" title="Insert or edit a formula as part of the process"><i class="fas fa-square-root-alt"></i></BButton>
+				<span class="group" v-if="editable">
+					<BButton v-if="!parent" @click="() => editProcess(value)" title="Edit the process metadata">
+						<i class="fas fa-edit"></i> <span class="text">Metadata</span>
+					</BButton>
+					<BButton @click="addParameter" title="Add a parameter to the process">
+						<i class="fas fa-parking"></i> <span class="text">Add Parameter</span>
+					</BButton>
+					<BButton v-if="supportsMath" :class="{highlightFormula: isMath}" @click="showExpressionModal" title="Insert or edit a formula as part of the process">
+						<i class="fas fa-square-root-alt"></i> <span class="text">Formula Editor</span>
+					</BButton>
 				</span>
-				<BButton @click="$refs.blocks.toggleCompact()" :class="{compactMode: compactMode}" :title="compactMode ? 'Show the process more compact and less detailed' : 'Shows the process less compact and more detailed'"><i class="fas fa-compress-arrows-alt"></i></BButton>
-				<BButton @click="$refs.blocks.perfectScale()" title="Scale the view to match the available space"><i class="fas fa-arrows-alt"></i></BButton>
-				<FullscreenButton :element="() => this.$refs.visualEditor" @changed="enabled => {this.$refs.blocks.perfectScale(); isFullScreen = enabled}" />
+				<span class="group">
+					<BButton @click="$refs.blocks.toggleCompact()" :class="{compactMode: compactMode}" :title="compactMode ? 'Show the process more compact and less detailed' : 'Shows the process less compact and more detailed'">
+						<i class="fas fa-compress-arrows-alt"></i>
+					</BButton>
+					<BButton @click="$refs.blocks.perfectScale()" title="Scale the view to match the available space">
+						<i class="fas fa-arrows-alt"></i>
+					</BButton>
+					<FullscreenButton :element="() => this.$refs.visualEditor" @changed="enabled => {this.$refs.blocks.perfectScale(); isFullScreen = enabled}" />
+				</span>
 				<slot name="toolbar"></slot>
 			</div>
 		</div>
@@ -82,6 +102,7 @@ import ModelBuilder from '@openeo/vue-components/components/ModelBuilder.vue';
 import Utils from '../utils.js';
 import DiscoveryToolbar from './DiscoveryToolbar.vue';
 import EventBusMixin from './EventBusMixin.js';
+import ToolbarCompactMixin from './ToolbarCompactMixin.js';
 import FullscreenButton from './FullscreenButton.vue';
 import BButton from '@openeo/vue-components/components/internal/BButton.vue';
 import { ProcessParameter } from '@openeo/js-commons';
@@ -89,7 +110,7 @@ import JavaScript from '../export/javascript';
 
 export default {
 	name: 'VisualEditor',
-	mixins: [EventBusMixin],
+	mixins: [EventBusMixin, ToolbarCompactMixin],
 	components: {
 		BButton,
 		ModelBuilder,

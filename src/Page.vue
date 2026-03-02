@@ -482,8 +482,20 @@ h3.aboutPage {
 	}
 }
 .sourceToolbar {
-	text-align: right;
+	display: flex;
+	align-items: center;
+	gap: 0.5em;
 }
+.sourceToolbar .text {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	display: inline !important;
+}
+.sourceToolbar.compact .text {
+	display: none !important;
+}
+
 .tabContent > .textEditor {
 	border: 0 !important;
 }
