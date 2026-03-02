@@ -116,6 +116,7 @@ export default {
 		this.listen('showUdfRuntime', this.showUdfRuntime);
 		this.listen('showOutputFileFormat', this.showOutputFileFormat);
 		this.listen('showWebEditorInfo', this.showWebEditorInfo);
+		this.listen('showServerInfo', this.showServerInfo);
 		this.listen('title', this.setTitle);
 		this.listen('showTour', where => this.tourType = where);
 		this.listen('stopTour', this.stopTour);
@@ -172,6 +173,14 @@ export default {
 		},
 		showWebEditorInfo() {
 			this.showModal('WebEditorModal');
+		},
+		showServerInfo() {
+			Utils.replaceUrlParam('server-info', 1);
+			this.showModal(
+				'ServerInfoModal',
+				{},
+				{ closed: () => Utils.replaceUrlParam('server-info') }
+			);
 		},
 		showError(error) {
 			this.showModal('ErrorModal', {error});

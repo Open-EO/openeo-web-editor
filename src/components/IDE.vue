@@ -175,6 +175,9 @@ export default {
 		if (params.has('file-format')) {
 			this.broadcast('showOutputFileFormat', params.get('file-format'));
 		}
+		if (params.get('server-info') === '1') {
+			this.broadcast('showServerInfo');
+		}
 	},
 	beforeDestroy() {
 		if (this.resizeListener !== null) {
@@ -299,7 +302,7 @@ export default {
 		},
 
 		showServerInfo() {
-			this.broadcast('showModal', 'ServerInfoModal');
+			this.broadcast('showServerInfo');
 		},
 
 		showHelp() {
