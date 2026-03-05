@@ -35,14 +35,14 @@
 									<i class="fas fa-info-circle"></i>
 									<span>{{ tab.data.description }}</span>
 								</div>
-								<div v-if="$config.clientCredentials" class="row method">
+								<div v-if="clientCredentials" class="row method">
 									<label for="oidcGrant">Login method:</label>
 									<select id="oidcGrant" class="input" v-model="oidcGrant">
 										<option value="">User Credentials (default)</option>
 										<option value="client_credentials">Client Credentials</option>
 									</select>
 								</div>
-								<template v-if="$config.clientCredentials && oidcGrant === 'client_credentials'">
+								<template v-if="clientCredentials && oidcGrant === 'client_credentials'">
 									<div class="row">
 										<label for="ccClientId">Client ID:</label>
 										<input type="text" id="ccClientId" class="input" v-model.trim="clientCredentialsId" required />
@@ -215,6 +215,7 @@ export default {
 			message: this.$config.loginMessage,
 			userOidcClientId: '',
 			oidcGrant: '',
+			clientCredentials: this.$config.clientCredentials || false,
 			clientCredentialsId: '',
 			clientCredentialsSecret: '',
 			oidcOptions: {
@@ -251,6 +252,8 @@ export default {
 				Utils.exception(this, error);
 			}
 		}
+
+		this.checkClientCredentials();
 	},
 	mounted() {
 		window.onpopstate = evt => this.historyNavigate(evt);
@@ -264,6 +267,16 @@ export default {
 		...Utils.mapActions(['connect', 'discover', 'logout']),
 		...Utils.mapMutations(['reset']),
 		...Utils.mapMutations('editor', ['addServer', 'removeServer']),
+
+		async checkClientCredentials() {
+			if (!this.$config.clientCredentials) {
+				return;
+			}
+			const supported =  await this.provider.supportsClientCredentials();
+			if (supported !== null) {
+				this.clientCredentials = supported;
+			}
+		}
 
 		isLocalUrl(url) {
 			return Boolean(
@@ -420,7 +433,7 @@ export default {
 					await provider.login(this.username, this.password);
 				}
 				else if (authType === 'oidc') {
-					if (this.oidcGrant === 'client_credentials' && this.$config.clientCredentials) {
+					if (this.oidcGrant === 'client_credentials' && this.clientCredentials) {
 						provider.setGrant('client_credentials');
 						provider.setClientId(this.clientCredentialsId);
 						provider.setClientSecret(this.clientCredentialsSecret);
