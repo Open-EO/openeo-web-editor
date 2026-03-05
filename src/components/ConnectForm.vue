@@ -338,6 +338,9 @@ export default {
 					if (skipLogin) {
 						await this.initDiscovery();
 					}
+					else if (await this.tryResumeSession()) {
+						await this.initDiscovery();
+					}
 				}
 				else {
 					Utils.exception(this, this.connectionError);
@@ -350,6 +353,36 @@ export default {
 			if (!this.isConnected && this.allowOtherServers) {
 				this.autoConnect = false;
 			}
+		},
+
+		addOidcListeners(provider) {
+			provider.addListener('AccessTokenExpired', () => Utils.warn(this, "User session has expired, please login again."));
+			provider.addListener('SilentRenewError', () => Utils.error(this, "You'll be switching to Guest mode in less than a minute.", "Session renewal failed"));
+		},
+
+		async tryResumeSession() {
+			for (const provider of this.oidcProviders) {
+				const clientId = this.$config.oidcClientIds[provider.id];
+				if (clientId) {
+					provider.setClientId(clientId);
+				}
+				else if (!provider.defaultClient) {
+					continue;
+				}
+
+				try {
+					const resumed = await provider.resume(this.oidcOptions);
+					if (resumed) {
+						this.provider = provider;
+						this.addOidcListeners(provider);
+						return true;
+					}
+				}
+				catch (error) {
+					console.warn('Failed to resume OIDC session for provider ' + provider.getId(), error);
+				}
+			}
+			return false;
 		},
 
 		async initDiscovery(provider = null) {
@@ -369,8 +402,7 @@ export default {
 						offlineScope = client && Array.isArray(client.grant_types) && client.grant_types.includes('refresh_token');
 					}
 					await provider.login(this.oidcOptions, offlineScope);
-					provider.addListener('AccessTokenExpired', () => Utils.warn(this, "User session has expired, please login again."));
-					provider.addListener('SilentRenewError', () => Utils.error(this, "You'll be switching to Guest mode in less than a minute.", "Session renewal failed"));
+					this.addOidcListeners(provider);
 				}
 				else { // noauth/discovery
 					window.history.pushState({reset: true, serverUrl: this.serverUrl, autoConnect: true, skipLogin: true}, "", this.makeUrl(true, true));
