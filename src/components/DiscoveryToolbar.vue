@@ -256,7 +256,7 @@ export default {
 }
 
 .category {
-	margin: 0.75rem 1rem 0.5rem 1rem;
+	margin: 0.5rem 1rem 0.5rem 1rem;
 
 	strong {
 		cursor: pointer;
