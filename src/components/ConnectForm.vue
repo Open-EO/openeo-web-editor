@@ -35,19 +35,38 @@
 									<i class="fas fa-info-circle"></i>
 									<span>{{ tab.data.description }}</span>
 								</div>
-								<template v-if="!hasPredefinedOidcClientId">
+								<div v-if="$config.clientCredentials" class="row method">
+									<label for="oidcGrant">Login method:</label>
+									<select id="oidcGrant" class="input" v-model="oidcGrant">
+										<option value="">User Credentials (default)</option>
+										<option value="client_credentials">Client Credentials</option>
+									</select>
+								</div>
+								<template v-if="$config.clientCredentials && oidcGrant === 'client_credentials'">
 									<div class="row">
-										<label for="password">Client ID:</label>
-										<input type="text" class="input" v-model.trim="userOidcClientId" required="required" />
+										<label for="ccClientId">Client ID:</label>
+										<input type="text" id="ccClientId" class="input" v-model.trim="clientCredentialsId" required />
 									</div>
-									<div class="row help">
-										<i class="fas fa-exclamation-circle"></i>
-										<span>You need to specify the <em>Client ID</em> provided to you by the provider. You need to allow the <a :href="oidcRedirectUrl" target="_blank" :title="oidcRedirectUrl">URL of this service</a> as redirect URL with the authentication service.</span>
+									<div class="row">
+										<label for="ccClientSecret">Client Secret:</label>
+										<input type="password" id="ccClientSecret" class="input" v-model.trim="clientCredentialsSecret" required />
 									</div>
+								</template>
+								<template v-else>
+									<template v-if="!hasPredefinedOidcClientId">
+										<div class="row">
+											<label for="password">Client ID:</label>
+											<input type="text" class="input" v-model.trim="userOidcClientId" required="required" />
+										</div>
+										<div class="row help">
+											<i class="fas fa-exclamation-circle"></i>
+											<span>You need to specify the <em>Client ID</em> provided to you by the provider. You need to allow the <a :href="oidcRedirectUrl" target="_blank" :title="oidcRedirectUrl">URL of this service</a> as redirect URL with the authentication service.</span>
+										</div>
+									</template>
 								</template>
 								<div class="row bottom">
 									<TermsOfServiceConsent />
-									<div class="row help">
+									<div class="row help" v-if="oidcGrant !== 'client_credentials'">
 										<i class="fas fa-window-restore"></i>
 										<span>Clicking the button below may open a new window for login.</span>
 									</div>
@@ -103,6 +122,11 @@ import Tab from '@openeo/vue-components/components/Tab.vue';
 import TermsOfServiceConsent from './TermsOfServiceConsent.vue';
 import Utils from '../utils.js';
 import { OidcProvider } from '@openeo/js-client';
+import Config from '../../config.js';
+
+if (Config.redirectUrlAppendSlash && !OidcProvider.redirectUrl.endsWith('/')) {
+	OidcProvider.redirectUrl += '/';
+}
 
 export default {
 	name: 'ConnectForm',
@@ -190,6 +214,9 @@ export default {
 			loading: false,
 			message: this.$config.loginMessage,
 			userOidcClientId: '',
+			oidcGrant: '',
+			clientCredentialsId: '',
+			clientCredentialsSecret: '',
 			oidcOptions: {
 				automaticSilentRenew: true,
 				popupWindowFeatures: `location=no,toolbar=no,width=${w},height=${h},left=${l},top=${t}`
@@ -393,16 +420,24 @@ export default {
 					await provider.login(this.username, this.password);
 				}
 				else if (authType === 'oidc') {
-					let offlineScope = true;
-					if (this.oidcClientId) {
-						this.provider.setClientId(this.oidcClientId);
+					if (this.oidcGrant === 'client_credentials' && this.$config.clientCredentials) {
+						provider.setGrant('client_credentials');
+						provider.setClientId(this.clientCredentialsId);
+						provider.setClientSecret(this.clientCredentialsSecret);
+						await provider.login();
 					}
 					else {
-						const client = provider.detectDefaultClient();
-						offlineScope = client && Array.isArray(client.grant_types) && client.grant_types.includes('refresh_token');
+						let offlineScope = true;
+						if (this.oidcClientId) {
+							this.provider.setClientId(this.oidcClientId);
+						}
+						else {
+							const client = provider.detectDefaultClient();
+							offlineScope = client && Array.isArray(client.grant_types) && client.grant_types.includes('refresh_token');
+						}
+						await provider.login(this.oidcOptions, offlineScope);
+						this.addOidcListeners(provider);
 					}
-					await provider.login(this.oidcOptions, offlineScope);
-					this.addOidcListeners(provider);
 				}
 				else { // noauth/discovery
 					window.history.pushState({reset: true, serverUrl: this.serverUrl, autoConnect: true, skipLogin: true}, "", this.makeUrl(true, true));
@@ -551,10 +586,10 @@ label {
 .input input {
 	flex-grow: 1;
 }
-input {
+input, select {
 	padding: 0.3em;
 }
-input, button {
+input, button, select {
 	margin: 3px;
 }
 .connectBtn {
@@ -596,6 +631,9 @@ input, button {
 }
 #credentials.tabs form > div {
 	flex-grow: 1;
+}
+#credentials.tabs form > div.method {
+	flex-grow: 0;
 }
 #credentials.tabs form > div.bottom {
 	justify-content: flex-end;
