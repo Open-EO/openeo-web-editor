@@ -83,11 +83,11 @@
     "vuex": "^3.5.1"
   },
   "devDependencies": {
-    "@vue/cli-plugin-babel": "~5.0.8",
-    "@vue/cli-service": "~5.0.8",
-    "epsg-index": "^1.0.0",
+    "@vue/cli-plugin-babel": "~5.0.9",
+    "@vue/cli-service": "~5.0.9",
+    "epsg-index": "^2.0.0",
     "sass": "^1.80.0",
-    "sass-loader": "^14.0.0"
+    "sass-loader": "^16.0.0"
   },
   "browserslist": [
     "> 2%",
