@@ -193,8 +193,8 @@ export default class Exporter extends ProcessGraph {
 
 	async resolveCallback(node, key) {
 		let callback;
-		if (node.process_id === 'load_collection') {
-			let properties = node.getArgument('properties');
+		let properties = node.getArgument('properties');
+		if (Utils.isObject(properties) && properties[key] instanceof Exporter) {
 			callback = properties[key];
 		}
 		else {
