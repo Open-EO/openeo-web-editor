@@ -176,7 +176,9 @@ export default class Exporter extends ProcessGraph {
 					continue;
 				}
 				else {
-					newArgs[key] = await this.resolveArguments(value, onExporter, filter);
+					let resolved = await this.resolveArguments(value, onExporter, filter);
+					// Convert empty objects to null as they have no meaningful content
+					newArgs[key] = (Utils.isObject(resolved) && Object.keys(resolved).length === 0) ? null : resolved;
 				}
 			}
 			else if (Array.isArray(value)) {
