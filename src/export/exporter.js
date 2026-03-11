@@ -1,4 +1,5 @@
 import { BaseProcess, ProcessGraph } from '@openeo/js-processgraphs';
+import { ProcessUtils } from '@openeo/js-commons';
 import Utils from "../utils";
 
 class ProcessImpl extends BaseProcess {
@@ -176,7 +177,9 @@ export default class Exporter extends ProcessGraph {
 					continue;
 				}
 				else {
-					newArgs[key] = await this.resolveArguments(value, onExporter, filter);
+					let resolved = await this.resolveArguments(value, onExporter, filter);
+					// Convert empty objects to null as they have no meaningful content
+					newArgs[key] = (Utils.isObject(resolved) && Object.keys(resolved).length === 0) ? null : resolved;
 				}
 			}
 			else if (Array.isArray(value)) {
@@ -189,13 +192,33 @@ export default class Exporter extends ProcessGraph {
 		return newArgs;
 	}
 
-	async resolveCallback(node, key) {
-		let callback;
-		if (node.process_id === 'load_collection') {
-			let properties = node.getArgument('properties');
-			callback = properties[key];
+	findMetadataFilterCallback(node, key) {
+		// Find the callback by looking for parameters with subtype "metadata-filter" in the process spec
+		let spec = this.processRegistry ? this.processRegistry.get(node.process_id) : null;
+		if (spec && Array.isArray(spec.parameters)) {
+			for (let param of spec.parameters) {
+				let schemas = ProcessUtils.normalizeJsonSchema(param.schema);
+				if (schemas.some(s => s.subtype === 'metadata-filter')) {
+					let argValue = node.getArgument(param.name);
+					if (Utils.isObject(argValue) && argValue[key] instanceof Exporter) {
+						return argValue[key];
+					}
+				}
+			}
 		}
-		else {
+		// Fallback: search all object arguments for an Exporter at key (e.g. when spec is unavailable)
+		for (let argName of node.getArgumentNames()) {
+			let argValue = node.getArgument(argName);
+			if (Utils.isObject(argValue) && argValue[key] instanceof Exporter) {
+				return argValue[key];
+			}
+		}
+		return null;
+	}
+
+	async resolveCallback(node, key) {
+		let callback = this.findMetadataFilterCallback(node, key);
+		if (callback === null) {
 			callback = node.getArgument(key);
 		}
 		let parameters = callback.getCallbackParameters();
