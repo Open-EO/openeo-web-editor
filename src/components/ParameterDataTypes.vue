@@ -341,11 +341,20 @@ export default {
 			}
 			return validTypes;
 		},
+		isProcessGraphValue(value) {
+			return Utils.isObject(value) && Utils.isObject(value.process_graph);
+		},
 		async detectType() {
 			let keys = Object.keys(this.allowedTypes);
 			let valueUndefined = typeof this.state === 'undefined';
 			if (keys.length === 0) {
-				await this.setSelected('json');
+				// If the value looks like a process graph, use process-graph subtype
+				if (!valueUndefined && this.isProcessGraphValue(this.state)) {
+					await this.setSelected('process-graph');
+				}
+				else {
+					await this.setSelected('json');
+				}
 			}
 			else if (keys.length === 1) {
 				await this.setSelected(keys[0], valueUndefined);
@@ -362,7 +371,13 @@ export default {
 			else {
 				let types = await this.getTypeForValue(this.detectableTypes, this.state);
 				if (types.length === 0) {
-					await this.setSelected('json');
+					// If the value looks like a process graph, use process-graph subtype
+					if (this.isProcessGraphValue(this.state) && this.detectableTypes['process-graph']) {
+						await this.setSelected('process-graph');
+					}
+					else {
+						await this.setSelected('json');
+					}
 				}
 				else if (types.length === 1) {
 					await this.setSelected(types[0]);
@@ -372,6 +387,11 @@ export default {
 					if (types.includes('integer') && types.includes('number')) {
 						// Remove integer as they overlap and number always works
 						types = types.filter(type => type !== 'integer');
+					}
+
+					// If process-graph is detected and value has a process_graph property, prefer process-graph over native object
+					if (types.includes('process-graph') && this.isProcessGraphValue(this.state)) {
+						types = types.filter(type => type !== 'object');
 					}
 
 					if (!Utils.isRef(this.state) && types.length > 1) {
