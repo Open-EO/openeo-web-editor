@@ -1,4 +1,5 @@
 import { BaseProcess, ProcessGraph } from '@openeo/js-processgraphs';
+import { ProcessUtils } from '@openeo/js-commons';
 import Utils from "../utils";
 
 class ProcessImpl extends BaseProcess {
@@ -196,8 +197,8 @@ export default class Exporter extends ProcessGraph {
 		let spec = this.processRegistry ? this.processRegistry.get(node.process_id) : null;
 		if (spec && Array.isArray(spec.parameters)) {
 			for (let param of spec.parameters) {
-				let schemas = Array.isArray(param.schema) ? param.schema : (Utils.isObject(param.schema) ? [param.schema] : []);
-				if (schemas.some(s => Utils.isObject(s) && s.subtype === 'metadata-filter')) {
+				let schemas = ProcessUtils.normalizeJsonSchema(param.schema);
+				if (schemas.some(s => s.subtype === 'metadata-filter')) {
 					let argValue = node.getArgument(param.name);
 					if (Utils.isObject(argValue) && argValue[key] instanceof Exporter) {
 						return argValue[key];
