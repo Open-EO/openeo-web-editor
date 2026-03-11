@@ -76,8 +76,30 @@ export default {
 			}
 		},
 
+		isValidGeometry(geometry) {
+			if (!geometry) {
+				return false;
+			}
+			const type = geometry.getType();
+			if (type === 'Polygon' || type === 'MultiPolygon') {
+				return geometry.getArea() > 0;
+			}
+			if (type === 'LineString' || type === 'MultiLineString') {
+				return geometry.getLength() > 0;
+			}
+			return true;
+		},
+
 		geoJsonEditor(geojson) {
 			var layer = this.addGeoJson(geojson);
+
+			// Remove degenerate features (e.g. polygons with zero area from clicking
+			// the same point multiple times) as soon as they are added to the source
+			layer.getSource().on('addfeature', (e) => {
+				if (!this.isValidGeometry(e.feature.getGeometry())) {
+					layer.getSource().removeFeature(e.feature);
+				}
+			});
 
 			var mainbar = new Bar();
 			this.map.addControl(mainbar);
@@ -136,6 +158,10 @@ export default {
 			var olFeatures = this.geoJsonLayer.getSource().getFeatures();
 			var gjFeatures = [];
 			for(var i in olFeatures) {
+				// Skip features with degenerate geometries (e.g. zero-area polygons)
+				if (!this.isValidGeometry(olFeatures[i].getGeometry())) {
+					continue;
+				}
 				gjFeatures.push(geojson.writeFeatureObject(
 					olFeatures[i],
 					{
