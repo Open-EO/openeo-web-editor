@@ -1,4 +1,6 @@
 const NodePolyfillPlugin = require('node-polyfill-webpack-plugin')
+const webpack = require('webpack')
+const path = require('path')
 
 module.exports = {
 	// Path where this instance of the web editor is hosted (string)
@@ -42,5 +44,13 @@ module.exports = {
 	},
 	chainWebpack: webpackConfig => {
 		webpackConfig.plugin('polyfills').use(NodePolyfillPlugin);
+		webpackConfig.plugin('stac-fields-fix').use(webpack.NormalModuleReplacementPlugin, [
+			/StacFields\.vue$/,
+			function(resource) {
+				if (resource.context.includes('@openeo') && resource.context.includes('vue-components')) {
+					resource.request = path.resolve(__dirname, 'src/components/StacFields.vue');
+				}
+			}
+		]);
 	}
 }
