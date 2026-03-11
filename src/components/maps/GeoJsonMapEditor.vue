@@ -86,6 +86,7 @@ export default {
 			var editbar = new EditBar ({
 				source: layer.getSource(),
 				interactions: {
+					DrawPoint: false,
 					Info: false,
 					DrawHole: false,
 					Offset: false,
