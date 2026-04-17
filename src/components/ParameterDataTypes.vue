@@ -152,7 +152,8 @@ export default {
 		dataTypeTitle(type) {
 			// Set a human-readable title if none is set
 			if (type.schema && !type.schema.title) {
-				let supportedType = SUPPORTED_TYPES.find(st => st.subtype === type.schema.subtype || st.type === type.schema.type);
+				let supportedType = SUPPORTED_TYPES.find(st => st.subtype && st.subtype === type.schema.subtype)
+					|| SUPPORTED_TYPES.find(st => st.type === type.schema.type);
 				if (supportedType && supportedType.title) {
 					return supportedType.title;
 				}
