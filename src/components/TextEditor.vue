@@ -41,6 +41,7 @@ import 'codemirror/mode/markdown/markdown.js';
 import 'codemirror/mode/mathematica/mathematica.js';
 import 'codemirror/mode/python/python.js';
 import 'codemirror/mode/r/r.js';
+import 'codemirror/mode/yaml/yaml.js';
 
 import 'codemirror/addon/display/placeholder.js';
 
@@ -116,6 +117,13 @@ export default {
 				case 'json':
 				case 'processgraph':
 					options.mode = 'application/json';
+					options.gutters = ['CodeMirror-lint-markers'];
+					options.lint = true;
+					break;
+				case 'yaml':
+				case 'yaml':
+				case 'cwl':
+					options.mode = 'text/x-yaml';
 					options.gutters = ['CodeMirror-lint-markers'];
 					options.lint = true;
 					break;
