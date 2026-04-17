@@ -47,7 +47,7 @@
 		<!-- Budget -->
 		<Kernel v-else-if="type === 'kernel'" v-model="state" :editable="editable" />
 		<!-- UDF-Code -->
-		<TextEditor class="fieldValue textarea" v-else-if="type === 'udf-code'" :id="name" :editable="editable" v-model="state" :language="dependency" />
+		<TextEditor class="fieldValue textarea" v-else-if="type === 'udf-code'" :id="name" :editable="editable" v-model="state" :language="dependency" languageChooser />
 		<!-- CommonMark -->
 		<TextEditor class="fieldValue textarea" v-else-if="type === 'commonmark'" :id="name" :editable="editable" v-model="state" language="markdown" />
 		<!-- WKT / PROJ -->
@@ -205,11 +205,11 @@ export default {
 		},
 		newValue() {
 			if (this.type === 'number') {
-				var num = Number.parseFloat(this.state);
+				const num = Number.parseFloat(this.state);
 				return Number.isNaN(num) ? null : num;
 			}
 			else if (this.type === 'integer') {
-				var num = Number.parseInt(this.state);
+				const num = Number.parseInt(this.state);
 				return Number.isNaN(num) ? null : num;
 			}
 			else if (this.type === 'null') {

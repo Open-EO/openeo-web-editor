@@ -3,10 +3,22 @@
 		<div class="sourceHeader">
 			<strong v-if="title">{{ title }}</strong>
 			<div class="sourceToolbar" ref="sourceToolbar">
-				<span class="group">
-					<BButton v-if="editable" @click="confirmClear" title="Start from scratch - Clears the current script">
+				<select v-if="languageChooser" class="language-chooser" :value="editorLanguage"
+					@change="changeLanguage($event.target.value)" title="Select language">
+					<option value="">Plain Text</option>
+					<option value="javascript">JavaScript</option>
+					<option value="json">JSON</option>
+					<option value="markdown">Markdown</option>
+					<option value="math">Math</option>
+					<option value="python">Python</option>
+					<option value="r">R</option>
+					<option value="yaml">YAML</option>
+				</select>
+				<span class="group" v-if="editable">
+					<BButton @click="confirmClear" title="Start from scratch - Clears the current script">
 						<i class="fas fa-file"></i> <span class="text">New</span>
 					</BButton>
+					<AsyncButton :fn="upload" fa icon="fas fa-cloud-upload-alt" title="Upload a file from your computer - Clears the current script"><span class="text">Upload</span></AsyncButton>
 					<slot name="file-toolbar"></slot>
 				</span>
 				<span class="group" v-if="editable">
@@ -30,6 +42,7 @@
 import Utils from '../utils.js';
 import FullscreenButton from './FullscreenButton.vue';
 import ToolbarCompactMixin from './ToolbarCompactMixin.js';
+import AsyncButton from '@openeo/vue-components/components/internal/AsyncButton.vue';
 import BButton from '@openeo/vue-components/components/internal/BButton.vue';
 import { ProcessGraph } from '@openeo/js-processgraphs';
 
@@ -58,6 +71,7 @@ export default {
 	name: 'TextEditor',
 	mixins: [ToolbarCompactMixin],
 	components: {
+		AsyncButton,
 		BButton,
 		FullscreenButton
 	},
@@ -80,12 +94,28 @@ export default {
 		},
 		title: {
 			type: String
+		},
+		languageChooser: {
+			type: Boolean,
+			default: false
 		}
 	},
 	computed: {
 		...Utils.mapGetters(['processes']),
 		languageString() {
-			return typeof this.language === 'string' ? this.language.toLowerCase() : '';
+			return typeof this.activeLanguage === 'string' ? this.activeLanguage.toLowerCase() : '';
+		},
+		editorLanguage() {
+			// Some additional aliases for some languages
+			switch (this.languageString) {
+				case 'processgraph':
+					return 'json';
+				case 'cwl':
+				case 'eoap-cwl':
+					return 'yaml';
+				default:
+					return this.languageString;
+			}
 		},
 		editorOptions() {
 			let options = {
@@ -95,9 +125,13 @@ export default {
 				matchBrackets: true,
 				autoCloseBrackets: true,
 				readOnly: !this.editable,
-				placeholder: this.placeholder
+				placeholder: this.placeholder,
+				mode: null,
+				gutters: [],
+				lint: false,
+				lineWrapping: false
 			};
-			switch(this.languageString) {
+			switch(this.editorLanguage) {
 				case 'r':
 					options.mode = 'text/x-rsrc';
 					break;
@@ -115,17 +149,13 @@ export default {
 					options.mode = 'text/javascript';
 					break;
 				case 'json':
-				case 'processgraph':
 					options.mode = 'application/json';
 					options.gutters = ['CodeMirror-lint-markers'];
 					options.lint = true;
 					break;
 				case 'yaml':
-				case 'yaml':
-				case 'cwl':
 					options.mode = 'text/x-yaml';
 					options.gutters = ['CodeMirror-lint-markers'];
-					options.lint = true;
 					break;
 			}
 			return options;
@@ -137,7 +167,8 @@ export default {
 			canRedo: false,
 			editor: null,
 			emitValue: this.value,
-			element: null
+			element: null,
+			activeLanguage: this.language
 		}
 	},
 	watch: {
@@ -147,11 +178,13 @@ export default {
 				this.editor.clearHistory();
 			}
 		},
-		editorOptions() {
-			for(var key in this.editorOptions) {
-				this.editor.setOption(key, this.editorOptions[key]);
+		language(newLang) {
+			this.activeLanguage = newLang;
+		},
+		editorOptions(newOptions) {
+			for(var key in newOptions) {
+				this.editor.setOption(key, newOptions[key]);
 			}
-			this.updateContent();
 		}
 	},
 	mounted() {
@@ -177,12 +210,125 @@ export default {
 		this.element = this.$el;
 	},
 	methods: {
+		async upload() {
+			// Create temporary file input element to trigger file selection dialog
+			const fileInput = document.createElement('input');
+			fileInput.type = 'file';
+			fileInput.style.display = 'none';
+			document.body.appendChild(fileInput);
+			try {
+				// Click the file input to open the file dialog
+				fileInput.click();
+				// Wait for the user to select a file (or cancel)
+				const file = await new Promise(resolve => {
+					fileInput.addEventListener('change', () => {
+						resolve(fileInput.files[0] || null);
+					}, { once: true });
+					// Handle cancel: when focus returns without a change event
+					window.addEventListener('focus', () => {
+						setTimeout(() => resolve(null), 300);
+					}, { once: true });
+				});
+				if (!file) {
+					return false;
+				}
+				// Read the file content as text
+				const content = await new Promise((resolve, reject) => {
+					const reader = new FileReader();
+					reader.onload = () => resolve(reader.result);
+					reader.onerror = () => reject(reader.error);
+					reader.readAsText(file);
+				});
+				if (!this.confirmClear()) {
+					return false;
+				}
+				this.insert(content);
+				if (this.languageChooser) {
+					const lang = this.detectLanguage(file);
+					if (lang !== null) {
+						this.activeLanguage = lang;
+						this.$emit('update:language', lang);
+					}
+				}
+				this.commit();
+				return true;
+			} catch (error) {
+				Utils.exception(this, error, "Upload failed");
+				return false;
+			} finally {
+				// Clean up the temporary file input element
+				document.body.removeChild(fileInput);
+			}
+		},
+		detectLanguage(file) {
+			// Try to detect language from MIME type
+			if (typeof file.type === 'string' && file.type.includes('/')) {
+				switch (file.type.toLowerCase().replace(/;.*$/, '').trim()) {
+					case 'application/json':
+					case 'application/geo+json':
+					case 'text/json':
+						return 'json';
+					case 'application/javascript':
+					case 'text/javascript':
+						return 'javascript';
+					case 'text/markdown':
+						return 'markdown';
+					case 'text/x-python':
+					case 'application/x-python':
+						return 'python';
+					case 'application/x-yaml':
+					case 'text/yaml':
+					case 'text/x-yaml':
+						return 'yaml';
+					case 'text/plain':
+						break; // fall through to extension detection
+					default:
+						return null;
+				}
+			}
+			// Fallback: detect by file extension
+			if (typeof file.name === 'string') {
+				const ext = file.name.split('.').pop().trim().toLowerCase();
+				switch (ext) {
+					case 'json':
+					case 'geojson':
+						return 'json';
+					case 'js':
+					case 'mjs':
+					case 'cjs':
+						return 'javascript';
+					case 'md':
+					case 'markdown':
+						return 'markdown';
+					case 'py':
+						return 'python';
+					case 'r':
+						return 'r';
+					case 'yml':
+					case 'yaml':
+					case 'cwl':
+						return 'yaml';
+				}
+			}
+			return null;
+		},
+		changeLanguage(lang) {
+			this.activeLanguage = lang;
+			this.$emit('update:language', lang);
+			this.$nextTick(() => {
+				this.editor.refresh();
+			});
+		},
 		confirmClear() {
-			var confirmed = confirm("Do you really want to clear the existing code?");
+			if (this.editor.getValue().trim() === "") {
+				return true;
+			}
+			const confirmed = confirm("Do you really want to clear the existing code?");
 			if (confirmed) {
 				this.insert("");
 				this.emit(null);
 			}
+			return confirmed;
 		},
 		updateState() {
 			// Don't lint empty values
@@ -214,7 +360,10 @@ export default {
 					return this.emit(updateContext ? null : "");
 				case 'json':
 					if (value) {
-						return this.emit(JSON.parse(value));
+						if (typeof value === 'string') {
+							value = JSON.parse(value);
+						}
+						return this.emit(value);
 					}
 					else {
 						return this.emit(null);
@@ -256,7 +405,11 @@ export default {
 						}
 						break;
 					case 'json':
-						this.insert(JSON.stringify(this.value, null, this.editorOptions.indentUnit));
+						let value = this.value;
+						if (typeof this.value !== 'string') {
+							value = JSON.stringify(this.value, null, this.editorOptions.indentUnit);
+						}
+						this.insert(value);
 						break;
 					default:
 						this.insert(this.value);
@@ -292,6 +445,11 @@ export default {
 	flex-grow: 1;
 	height: 100%;
 	overflow: hidden;
+}
+.language-chooser {
+	padding: 2px 4px;
+	font-size: 0.9em;
+	width: auto !important;
 }
 </style>
 <style>
