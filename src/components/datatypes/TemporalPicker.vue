@@ -13,6 +13,8 @@
 import DatePicker from 'vue2-datepicker';
 import 'vue2-datepicker/index.css';
 
+const VALID_DATETIME_TYPES = ['date', 'time', 'date-time'];
+
 export default {
 	name: 'TemporalPicker',
 	components: {
@@ -27,7 +29,8 @@ export default {
 		},
 		intervalType: {
 			type: String,
-			default: null
+			default: null,
+			validator: value => VALID_DATETIME_TYPES.includes(value)
 		},
 		editable: {
 			type: Boolean,
@@ -43,7 +46,7 @@ export default {
 		},
 		realType() {
 			if (this.type === 'temporal-interval') {
-				if (this.intervalType) {
+				if (VALID_DATETIME_TYPES.includes(this.intervalType)) {
 					return this.intervalType;
 				}
 				let checkDate = dt => (typeof dt === 'string' && dt.length === 10);

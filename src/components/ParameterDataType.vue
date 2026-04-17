@@ -31,7 +31,7 @@
 		<!-- Select Boxes (collection id, job id, epsg code, in/output format, service type, billing plan, enums) -->
 		<SelectBox v-else-if="isSelection" v-model="state" :key="type" :type="type" :editable="editable" :schema="schema" :context="dependency" :openDirection="type === 'band-name' ? 'below' : 'auto'" @onDetails="onSelectDetails"></SelectBox>
 		<!-- Temporal (date, time, date-time, temporal-interval) -->
-		<TemporalPicker v-else-if="isTemporal" v-model="state" :key="type" :type="type" :editable="editable"></TemporalPicker>
+		<TemporalPicker v-else-if="isTemporal" v-model="state" :key="type" :type="type" :intervalType="temporalIntervalType" :editable="editable"></TemporalPicker>
 		<!-- Bounding Box -->
 		<MapAreaSelect v-else-if="type === 'bounding-box'" v-model="state" :key="type" :editable="editable" class="areaSelector"></MapAreaSelect>
 		<!-- GeoJSON -->
@@ -68,6 +68,8 @@
 </template>
 
 <script>
+import { ProcessSchema } from '@openeo/js-commons';
+
 import EventBusMixin from './EventBusMixin.js';
 
 import ObjectEditor from './datatypes/ObjectEditor.vue';
@@ -138,6 +140,15 @@ export default {
 		},
 		isTemporal() {
 			return (this.type === 'date' || this.type === 'time' || this.type === 'date-time' || this.type === 'temporal-interval' || this.type === 'year');
+		},
+		temporalIntervalType() {
+			if (this.type === 'temporal-interval') {
+				const itemSchema = new ProcessSchema(this.schema?.schema?.items);
+				return itemSchema.dataType() || null;
+			}
+			else {
+				return null;
+			}
 		},
 		isSelection() {
 			switch(this.type) {
