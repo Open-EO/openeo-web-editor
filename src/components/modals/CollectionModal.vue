@@ -27,6 +27,22 @@
 				</section>
 				<section v-else>Individual items are not available for this collection.</section>
 			</Tab>
+			<Tab id="queryables" name="Filters" icon="fa-filter" class="docgen queryables">
+				<h3>Metadata Filters</h3>
+				<section v-if="queryables">
+					<div class="vue-component process-parameter" v-for="(schema, name) in queryables" :key="name">
+						<h4>
+							<code>{{ name }}</code>
+						</h4>
+						<div class="details">
+							<div class="json-schema-container">
+								<JsonSchema :schema="schema" />
+							</div>
+						</div>
+					</div>
+				</section>
+				<section v-else>Filters are not available or unknown for this collection.</section>
+			</Tab>
 		</Tabs>
 	</Modal>
 </template>
@@ -39,6 +55,7 @@ import StacMigrate from '@radiantearth/stac-migrate';
 import AsyncButton from '@openeo/vue-components/components/internal/AsyncButton.vue';
 import Tabs from '@openeo/vue-components/components/Tabs.vue';
 import Tab from '@openeo/vue-components/components/Tab.vue';
+import { load } from 'ol/Image.js';
 
 export default {
 	name: 'CollectionModal',
@@ -48,6 +65,8 @@ export default {
 		Modal,
 		Collection,
 		Items: () => import('@openeo/vue-components/components/Items.vue'),
+		JsonSchema: () => import('@openeo/vue-components/components/JsonSchema.vue'),
+		ObjectTree: () => import('@openeo/vue-components/components/ObjectTree.vue'),
 		Tabs,
 		Tab
 	},
@@ -56,7 +75,8 @@ export default {
 			items: [],
 			itemsPage: 0,
 			itemPages: null,
-			showHiddenMap: false
+			showHiddenMap: false,
+			queryables: null
 		};
 	},
 	props: {
@@ -81,11 +101,32 @@ export default {
 		}
 	},
 	async mounted() {
-		if (this.supports('listCollectionItems')) {
-			await this.nextItems();
-		}
+		// Request other resources in parallel
+		await Promise.all([
+			this.nextItems(),
+			this.loadQueryables()
+		]).catch(errors => {
+			errors.forEach(error => {
+				console.error(error);
+			});
+		});
 	},
 	methods: {
+		async loadQueryables() {
+			if (!this.supports('describeCollectionQueryables') || this.queryables) {
+				return;
+			}
+			try {
+				// todo: No support for resolving $ref in the schema
+				const response = await this.connection.describeCollectionQueryables(this.collection);
+				if (Utils.size(response.properties) > 0) {
+					this.queryables = response.properties;
+				}
+			} catch(e) {
+				console.error('Failed to load queryables for collection', e);
+				return;
+			}
+		},
 		async paginate(step) {
 			if (step > 0) {
 				await this.nextItems();
@@ -97,6 +138,9 @@ export default {
 			this.itemsPage += step;
 		},
 		async nextItems() {
+			if (!this.supports('listCollectionItems')) {
+				return;
+			}
 			if (!this.itemPages) {
 				this.itemPages = await this.connection.listCollectionItems(this.collection.id, null, null, this.pageLimit);
 			}
@@ -153,6 +197,23 @@ export default {
 		> .tabsBody > .tabContent {
 			padding: 1em;
 			overflow: auto;
+		}
+	}
+}
+.queryables {
+	h3 {
+		margin-top: 0;
+	}
+	.vue-component.process-parameter {
+		h4 {
+			margin-top: 1rem;
+			margin-bottom: 0.5rem;
+		}
+		.details {
+			margin-left: 1.5em;
+		}
+		table.schema-attrs td {
+			border: 0;
 		}
 	}
 }
