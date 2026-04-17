@@ -1,2 +1,2 @@
 "use strict";(globalThis["webpackChunk_openeo_web_editor"]=globalThis["webpackChunk_openeo_web_editor"]||[]).push([[6824,7005],{62804(e,t,a){a.r(t),a.d(t,{default:()=>u});var o=function(){var e=this,t=e._self._c;return t("div",{staticClass:"step choose-time"},[t("p",[e._v("Please select the days for which you want to download data for.")]),t("TemporalPicker",{attrs:{type:"temporal-interval",intervalType:"date",value:e.value},on:{input:t=>e.$emit("input",t)}})],1)},l=[],n=a(80993);const r={name:"ChooseTime",components:{TemporalPicker:n["default"]},props:{value:{type:Array,default:null}}},s=r;var i=a(81656),p=(0,i.A)(s,o,l,!1,null,null,null);const u=p.exports}}]);
-//# sourceMappingURL=6824.6527095a.js.map
+//# sourceMappingURL=6824.c1aad40d.js.map
