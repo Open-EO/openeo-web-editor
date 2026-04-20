@@ -63,6 +63,10 @@ export default ({namespace, listFn, paginateFn, createFn, updateFn, deleteFn, re
 				let updated = null;
 				if (!(data instanceof UserProcess)) {
 					let id = Utils.isObject(data) ? data[primaryKey] : data;
+					if (typeof id === 'undefined' || id === null || id === '') {
+						console.warn("No id provided:", data);
+						return null;
+					}
 					// Try to get UserProcess from store
 					data = cx.getters.getById(id);
 					if (!data) {
