@@ -162,8 +162,7 @@ export default {
 			await this.refreshElement(job, updatedJob => this.broadcast('editProcess', updatedJob));
 		},
 		async startAndQueueProcess(options) {
-			const job = await this.createJob(this.process, options);
-			await this.queueJob(job);
+			await this.createJob(this.process, options, true);
 		},
 		async executeProcessWithOptions() {
 			const fields = [
@@ -201,20 +200,34 @@ export default {
 				}
 			}
 		},
-		jobCreated(job) {
+		jobAfterCreation(job, queueing = false) {
 			const buttons = [];
-			if (this.supports('estimateJob')) {
-				buttons.push({text: 'Estimate', action: () => this.estimateJob(job)});
+			if (job.status === 'created' && !queueing) {
+				if (this.supports('estimateJob') && job.status === 'created') {
+					buttons.push({text: 'Estimate', action: () => this.estimateJob(job)});
+				}
+				if (this.supports('startJob') && job.status === 'created') {
+					buttons.push({text: 'Start processing', action: () => this.queueJob(job)});
+				}
+			} else if (!queueing) {
+				if (this.supportsRead) { 
+					buttons.push({ text: 'Details', action: () => this.showJobInfo(job) });
+				}
+				if (job.status !== 'queued' && this.supportsDebug) { // not when created or queued
+					buttons.push({text: 'Logs', action: () => this.showLogs(job)});
+				}
 			}
-			if (this.supports('startJob')) {
-				buttons.push({text: 'Start processing', action: () => this.queueJob(job)});
-			}
-			if (this.supports('deleteJob')) {
+			if (this.supports('deleteJob')) { // always
 				buttons.push({text: 'Delete', action: () => this.deleteJob(job)});
 			}
-			Utils.confirm(this, 'Job "' + Utils.getResourceTitle(job) + '" created!', buttons);
+			const title = Utils.getResourceTitle(job);
+			let message = `Job "${title}" ${job.status || 'created'}!`;
+			if (queueing) {
+				message += ` Queuing for execution...`;
+			}
+			Utils.confirm(this, message, buttons);
 		},
-		async createJob(process, data) {
+		async createJob(process, data, queue = false) {
 			try {
 				let job = await this.create([
 					process,
@@ -224,7 +237,10 @@ export default {
 					data.budget,
 					data
 				]);
-				this.jobCreated(job);
+				this.jobAfterCreation(job, queue);
+				if (queue) {
+					job = await this.queueJob(job);
+				}
 				return job;
 			} catch (error) {
 				Utils.exception(this, error, 'Create Job Error: ' + (data.title || ''));
@@ -357,15 +373,15 @@ export default {
 		},
 		async queueJob(job) {
 			await this.refreshElement(job, async (updatedJob) => {
-				if (updatedJob.status === 'finished' && !confirm(`The batch job "${Utils.getResourceTitle(updatedJob)}" has already finished with results. Queueing the job again may discard all previous results! Do you really want to queue it again?`)) {
+				if (updatedJob.status === 'finished' && !confirm(`The batch job "${Utils.getResourceTitle(updatedJob)}" has already finished with results. Queuing the job again may discard all previous results! Do you really want to queue it again?`)) {
 					return;
 				}
 				
 				try {
-					let updatedJob = await this.queue({data: job});
-					Utils.ok(this, 'Job "' + Utils.getResourceTitle(updatedJob) + '" successfully queued.');
+					let updatedJob = await this.queue({data: updatedJob});
+					this.jobAfterCreation(updatedJob);
 				} catch(error) {
-					Utils.exception(this, error, 'Queue Job Error: ' + Utils.getResourceTitle(job));
+					Utils.exception(this, error, 'Queue Job Error: ' + Utils.getResourceTitle(updatedJob));
 				}
 			});
 		},
