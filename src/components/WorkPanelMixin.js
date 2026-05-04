@@ -58,11 +58,16 @@ export default (namespace, singular, plural, loadInitially = true) => {
 				return this.$config.dataRefreshInterval*60*1000; // Refresh data every x minutes
 			},
 			async refreshElement(obj, callback = null) {
-				var old = Object.assign({}, obj);
+				const old = Object.assign({}, obj);
 				try {
 					let updated = await this.read({data: obj});
 					if (typeof callback === 'function') {
-						callback(updated, old);
+						if (updated) {
+							callback(updated, old);
+						} else {
+							callback(old, old);
+							Utils.error(this, "Unable to update " + singular + ". Data may be outdated.");
+						}
 					}
 				} catch(error) {
 					Utils.exception(this, error, "Load " + singular + " error");
