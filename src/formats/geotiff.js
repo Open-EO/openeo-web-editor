@@ -91,6 +91,27 @@ class GeoTIFF extends SupportedFormat {
 		}
 		this.img = await tiff.getImage();
 
+		// get no-data value from the GeoTIFF if not already defined (needed to exclude it from the stretch)
+		let gdalNoData = this.img.getGDALNoData();
+		if (this._nodata.length === 0 && gdalNoData !== null) {
+			this._nodata.push(gdalNoData);
+		}
+
+		// Read (downsampled) raster data to compute a percentile-based stretch (p2 - p98)
+		let rasters = null;
+		try {
+			const maxSize = 1024;
+			const width = this.img.getWidth();
+			const height = this.img.getHeight();
+			const scale = Math.min(1, maxSize / Math.max(width, height));
+			rasters = await this.img.readRasters({
+				width: Math.max(1, Math.round(width * scale)),
+				height: Math.max(1, Math.round(height * scale))
+			});
+		} catch (error) {
+			console.warn(error);
+		}
+
 		// Get data for each band / sample
 		for (let i = 0; i < this.img.getSamplesPerPixel(); i++) {
 			let data = {};
@@ -120,13 +141,16 @@ class GeoTIFF extends SupportedFormat {
 				}
 			}
 
-			this.setBandInfo(i, data);
-
-			// get no-data values if needed
-			let nodata = this.img.getGDALNoData();
-			if (this._nodata.length === 0 && nodata !== null) {
-				this._nodata.push(nodata);
+			// Prefer a percentile-based stretch (p2 - p98) for a better default visualization
+			if (rasters && rasters[i]) {
+				let percentiles = this.getPercentiles(rasters[i], 2, 98);
+				if (percentiles) {
+					data.min = percentiles.min;
+					data.max = percentiles.max;
+				}
 			}
+
+			this.setBandInfo(i, data);
 		}
 
 		// Get projection from GeoTiff
@@ -225,6 +249,27 @@ class GeoTIFF extends SupportedFormat {
 
 	getColorMap() {
 		return this.colorMap;
+	}
+
+	getPercentiles(array, lower, upper) {
+		// Collect valid values (finite and not no-data)
+		let values = [];
+		for (let i = 0; i < array.length; i++) {
+			let v = array[i];
+			if (Number.isFinite(v) && !this._nodata.includes(v)) {
+				values.push(v);
+			}
+		}
+		if (values.length === 0) {
+			return null;
+		}
+		values.sort((a, b) => a - b);
+		let min = values[Math.floor((lower / 100) * (values.length - 1))];
+		let max = values[Math.ceil((upper / 100) * (values.length - 1))];
+		if (!Number.isFinite(min) || !Number.isFinite(max) || min >= max) {
+			return null;
+		}
+		return { min, max };
 	}
 
 	getMinForDataType(array) {
