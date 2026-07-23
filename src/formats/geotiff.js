@@ -252,11 +252,14 @@ class GeoTIFF extends SupportedFormat {
 	}
 
 	getPercentiles(array, lower, upper) {
-		// Collect valid values (finite and not no-data)
+		// Collect valid values (finite and not no-data). To keep this responsive, subsample very large rasters.
+		const nodata = new Set(this._nodata);
+		const maxSamples = 200000;
+		const stride = Math.max(1, Math.floor(array.length / maxSamples));
 		let values = [];
-		for (let i = 0; i < array.length; i++) {
-			let v = array[i];
-			if (Number.isFinite(v) && !this._nodata.includes(v)) {
+		for (let i = 0; i < array.length; i += stride) {
+			const v = array[i];
+			if (Number.isFinite(v) && !nodata.has(v)) {
 				values.push(v);
 			}
 		}
