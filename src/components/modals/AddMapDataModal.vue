@@ -16,6 +16,10 @@
 						<input type="radio" name="format" value="geotiff" id="f_geotiff" v-model="format" />
 						<label for="f_geotiff">Cloud-Optimized GeoTIFF</label>
 					</li>
+					<li v-if="isDesktop">
+						<input type="radio" name="format" value="auto" id="f_auto" v-model="format" />
+						<label for="f_auto">Other data file - detected automatically (e.g. netCDF, Zarr, GeoParquet, FlatGeobuf, GeoPackage, CoverageJSON)</label>
+					</li>
 					<li>
 						<input type="radio" name="format" value="stac" id="f_stac" v-model="format" />
 						<label for="f_stac">STAC Item / Collection - shows displayable assets</label>
@@ -37,6 +41,7 @@
 <script>
 import Utils from '../../utils';
 import Modal from './Modal.vue';
+import { isDesktop } from '../../platform';
 
 export default {
 	name: 'AddMapDataModal',
@@ -48,7 +53,8 @@ export default {
 			loading: false,
 			show: true,
 			url: null,
-			format: null
+			format: null,
+			isDesktop
 		};
 	},
 	computed: {

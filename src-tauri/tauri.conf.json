@@ -1,0 +1,33 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "openEO Web Editor",
+  "version": "../package.json",
+  "identifier": "org.openeo.webeditor",
+  "build": {
+    "beforeDevCommand": "npm run desktop:serve",
+    "devUrl": "http://localhost:1410",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "category": "Utility",
+    "shortDescription": "openEO Web Editor",
+    "longDescription": "Create, run and inspect openEO workflows and preview their results in many file formats.",
+    "copyright": "openEO Consortium",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  }
+}

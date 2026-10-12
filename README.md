@@ -21,6 +21,34 @@ You can also build the files yourself and deploy them to any web host:
     * Development: Run the development server by executing `npm start`.
     * Deployment: Build the project by executing `npm run build`. Afterwards upload the content of the `dist` folder to your server.
 
+### Desktop app
+
+The Web Editor can also be built as a desktop application with [Tauri](https://tauri.app).
+It works the same as the web version, but comes with a result viewer that supports many more file formats (see below), saves files via native dialogs and opens external links in the system browser.
+
+1. Install the [Tauri prerequisites](https://tauri.app/start/prerequisites/) (Rust and, on Windows, the MSVC C++ build tools incl. the Windows SDK).
+2. Install the dependencies by executing `npm install` on the command line.
+3. For...
+    * Development: Run `npm run desktop`.
+    * Deployment: Run `npm run desktop:build`. The installers are written to `src-tauri/target/release/bundle`.
+
+The app is served from `http://localhost:1410`, which is the redirect URL that the default OpenID Connect clients of many openEO back-ends allow.
+Thus, the port must be available when the app is running.
+
+### Supported file formats in the desktop app
+
+The result viewer of the desktop app decodes the data itself and can show the following formats on a map, as table and/or chart.
+The data can come from an openEO back-end or from local files, which can be added to a map via drag and drop or the buttons in the layer panel:
+
+* Raster data: GeoTIFF / COG, netCDF (classic and netCDF4/HDF5), Zarr (v2 and v3, as folder, zip file or URL), CoverageJSON (grids)
+* Vector data: GeoJSON, (Geo)Parquet, FlatGeobuf, GeoPackage, Shapefile (zipped), KML / KMZ, GPX, CoverageJSON (points, polygons)
+* Tables and time series: CSV, TSV, JSON (e.g. results of `aggregate_spatial`), Parquet
+* Images: PNG, JPEG, GIF, WebP
+* Web services: XYZ and WMTS
+
+Raster data is reprojected to Web Mercator on the fly, so any CRS that is supported by proj4js can be displayed.
+Data with a time dimension can be browsed with a time slider, and clicking on the map shows the values of all bands over time.
+
 ### Query Parameters
 
 You can use some query parameters to set initial state to the Editor.

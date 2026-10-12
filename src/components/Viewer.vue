@@ -6,6 +6,7 @@
 				<LogViewer v-if="logViewerIcons.includes(tab.icon)" :data="tab.data" @mounted="onMounted" @options="onOptionsChanged" />
 				<component v-else-if="tab.data.component" :is="tab.data.component" v-on="tab.data.events" v-bind="tab.data.props" @mounted="onMounted" @options="onOptionsChanged" /> <!-- for file formats -->
 				<MetadataViewer v-else-if="tab.icon === 'fa-info'" :data="tab.data" @mounted="onMounted" @options="onOptionsChanged" /> <!-- for STAC metadata -->
+				<PreviewPane v-else-if="tab.icon === 'fa-map' && isDesktop" :data="tab.data" @mounted="onMounted" /> <!-- for services in the desktop app -->
 				<MapViewer v-else-if="tab.icon === 'fa-map'" :data="tab.data" :removableLayers="isCollectionPreview(tab.data)" @mounted="onMounted" @options="onOptionsChanged" /> <!-- for services -->
 				<div class="unsupported" v-else>
 					Sorry, the viewer doesn't support showing this type of data.
@@ -26,6 +27,7 @@ import Tabs from '@openeo/vue-components/components/Tabs.vue';
 import { Service } from '@openeo/js-client';
 import { Format } from '../formats/format';
 import { Formatters } from '@radiantearth/stac-fields';
+import { isDesktop } from '../platform';
 
 export default {
 	name: 'Viewer',
@@ -37,7 +39,8 @@ export default {
 		ImageViewer: () => import('./viewer/ImageViewer.vue'),
 		LogViewer: () => import('./viewer/LogViewer.vue'),
 		MapViewer: () => import('./viewer/MapViewer.vue'),
-		MetadataViewer: () => import('./viewer/MetadataViewer.vue')
+		MetadataViewer: () => import('./viewer/MetadataViewer.vue'),
+		PreviewPane: () => import('./preview/PreviewPane.vue')
 	},
 	mounted() {
 		this.listen('viewSyncResult', this.showSyncResults);
@@ -62,7 +65,8 @@ export default {
 				'fa-bomb',
 				'fa-tasks'
 			],
-			options: null
+			options: null,
+			isDesktop
 		}
 	},
 	props: {
@@ -279,7 +283,13 @@ export default {
 							else {
 								const tab = openMapTabs[key - 1];
 								this.$refs.tabs.selectTab(tab);
-								tab.$children[0].addGeoTiff(file, file.title);
+								const viewer = tab.$children[0];
+								if (typeof viewer.addFile === 'function') {
+									await viewer.addFile(file);
+								}
+								else {
+									viewer.addGeoTiff(file, file.title);
+								}
 							}	
 							return true; // return true to close the modal
 						}

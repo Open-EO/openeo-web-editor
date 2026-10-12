@@ -1,0 +1,20 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Permissions for the main window, which is served from http://localhost:1410",
+  "windows": ["main"],
+  "remote": {
+    "urls": ["http://localhost:1410", "http://localhost:1410/*"]
+  },
+  "permissions": [
+    "core:default",
+    "dialog:allow-open",
+    "dialog:allow-save",
+    "fs:allow-write-file",
+    {
+      "identifier": "http:default",
+      "allow": [{ "url": "https://*/*" }, { "url": "https://*:*/*" }]
+    },
+    "opener:default"
+  ]
+}

@@ -36,8 +36,18 @@ module.exports = {
 		},
 		resolve: {
 			fallback: {
-				fs: false
+				fs: false,
+				worker_threads: false
 			}
+		},
+		module: {
+			rules: [
+				{
+					// e.g. sql.js for GeoPackage support, loaded via its URL
+					test: /\.wasm$/,
+					type: 'asset/resource'
+				}
+			]
 		}
 	},
 	chainWebpack: webpackConfig => {

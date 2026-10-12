@@ -1,4 +1,5 @@
 import Utils from '../utils.js';
+import { isDesktop, saveFile, saveUrl } from '../platform';
 
 export class Format {
 
@@ -28,6 +29,11 @@ export class Format {
 	}
 
 	download(filename = null) {
+		if (isDesktop) {
+			filename = filename || this.title || Utils.makeFileName("result", this.type);
+			const save = this.blob ? saveFile(this.blob, filename) : saveUrl(this.getUrl(), filename);
+			return save.catch(error => console.error(error));
+		}
 		let tempLink = document.createElement('a');
 		tempLink.style.display = 'none';
 		tempLink.href = this.getUrl();

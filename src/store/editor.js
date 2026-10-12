@@ -3,6 +3,8 @@ import Utils from '../utils';
 import { Job, Service, UserProcess } from '@openeo/js-client';
 import { ProcessGraph } from '@openeo/js-processgraphs';
 import FormatRegistry from '../formats/formatRegistry.js';
+import PreviewFormatRegistry from '../formats/previewFormatRegistry.js';
+import { isDesktop } from '../platform';
 import StacMigrate from '@radiantearth/stac-migrate';
 
 const serverStorage = "serverUrls";
@@ -23,7 +25,7 @@ const getDefaultState = () => {
 		collectionPreview: null,
 		viewerOptions: {},
 		modelDnD: null,
-		formatRegistry: new FormatRegistry(),
+		formatRegistry: isDesktop ? new PreviewFormatRegistry() : new FormatRegistry(),
 	};
 };
 

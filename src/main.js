@@ -7,6 +7,7 @@ import Page from './Page.vue';
 import filters from './filters';
 import Clipboard from 'v-clipboard';
 import Utils from './utils';
+import { installDesktopHandlers } from './platform';
 
 Vue.use(Snotify);
 Vue.use(Clipboard);
@@ -31,6 +32,7 @@ Vue.config.errorHandler = function (err, vm, info) {
 	Utils.exception(vm, err);
 };
 Vue.prototype.$config = Config;
+installDesktopHandlers();
 
 for(var name in filters) {
 	Vue.filter(name, filters[name]);
