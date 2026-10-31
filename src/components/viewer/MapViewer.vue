@@ -156,7 +156,7 @@ export default {
 					if (!data) {
 						return;
 					}
-					let extent = this.toExtent(data);
+					let extent = Utils.toMapExtent(this.toExtent(data));
 					extent = transformExtent(extent, 'EPSG:4326', this.map.getView().getProjection());
 					this.map.getView().fit(extent, this.getFitOptions());
 				});

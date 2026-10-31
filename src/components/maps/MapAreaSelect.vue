@@ -46,7 +46,7 @@ export default {
 	data() {
 		return {
 			interaction: null,
-			extent: this.toExtent(this.value)
+			extent: Utils.normalizeExtent(this.toExtent(this.value))
 		};
 	},
 	computed: {
@@ -55,7 +55,7 @@ export default {
 		},
 		projectedExtent() {
 			if (this.extent) {
-				return transformExtent(this.extent, 'EPSG:4326', this.map.getView().getProjection());
+				return transformExtent(Utils.toMapExtent(this.extent), 'EPSG:4326', this.map.getView().getProjection());
 			}
 			return null;
 		},
@@ -63,15 +63,17 @@ export default {
 			if (!this.showMaxExtent) {
 				return null;
 			}
-			let {west, east, north, south} = this.showMaxExtent;
+			// Continuous across the antimeridian (east > 180), the outer ring covers it
+			let [west, south, east, north] = Utils.toMapExtent(this.toExtent(this.showMaxExtent));
+			let maxEast = Math.max(180, east);
 			return {
 				"type": "Polygon",
 				"coordinates": [
 					[
 						[-180, 90],
 						[-180, -90],
-						[180, -90],
-						[180, 90],
+						[maxEast, -90],
+						[maxEast, 90],
 						[-180, 90]
 					],
 					[
@@ -94,7 +96,7 @@ export default {
 	methods: {
 		update(event) {
 			if (event.extent) {
-				this.extent = transformExtent(event.extent, this.map.getView().getProjection(), 'EPSG:4326');
+				this.extent = Utils.normalizeExtent(transformExtent(event.extent, this.map.getView().getProjection(), 'EPSG:4326'));
 			}
 			else {
 				this.extent = null;
@@ -110,7 +112,7 @@ export default {
 				if (!bbox) {
 					return;
 				}
-				let extent = this.toExtent(bbox);
+				let extent = Utils.toMapExtent(this.toExtent(bbox));
 				extent = transformExtent(extent, 'EPSG:4326', this.map.getView().getProjection());
 				this.interaction.setExtent(extent);
 				this.fitMap();
@@ -122,7 +124,7 @@ export default {
 				});
 				this.addGeoJson(this.outerArea, false, "unsupported area", style);
 
-				let extent = this.toExtent(this.showMaxExtent);
+				let extent = Utils.toMapExtent(this.toExtent(this.showMaxExtent));
 				extent = transformExtent(extent, 'EPSG:4326', this.map.getView().getProjection());
 				this.map.getView().fit(extent, this.getFitOptions(1));
 			}

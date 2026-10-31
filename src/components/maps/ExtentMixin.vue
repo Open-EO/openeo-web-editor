@@ -45,7 +45,7 @@ export default {
 		addRectangles(rectangles, fill = true) {
 			let mapProj = this.map.getView().getProjection();
 			let features = rectangles.map(bbox => {
-				let polygon = PolygonFromExtent([bbox.west, bbox.south, bbox.east, bbox.north]).transform("EPSG:4326", mapProj);
+				let polygon = PolygonFromExtent(Utils.toMapExtent([bbox.west, bbox.south, bbox.east, bbox.north])).transform("EPSG:4326", mapProj);
 				return new Feature(polygon);
 			});
 			let source = new VectorSource({
