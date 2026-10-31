@@ -252,6 +252,18 @@ class Utils extends VueUtils {
 		return [extent[0], extent[1], extent[2] + 360, extent[3]];
 	}
 
+	/**
+	 * Moves a WGS84 extent [west, south, east, north] by multiples of 360 degrees into the world copy that is
+	 * closest to the given longitude, e.g. to show several extents across the antimeridian together.
+	 */
+	static alignExtent(extent, longitude) {
+		if (!Array.isArray(extent) || extent.length < 4) {
+			return extent;
+		}
+		let shift = Math.round((longitude - (extent[0] + extent[2]) / 2) / 360) * 360;
+		return shift === 0 ? extent : [extent[0] + shift, extent[1], extent[2] + shift, extent[3]];
+	}
+
 	static normalizeLongitude(lon) {
 		if (lon >= -180 && lon <= 180) {
 			return lon;

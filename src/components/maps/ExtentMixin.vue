@@ -44,8 +44,12 @@ export default {
 
 		addRectangles(rectangles, fill = true) {
 			let mapProj = this.map.getView().getProjection();
-			let features = rectangles.map(bbox => {
-				let polygon = PolygonFromExtent(Utils.toMapExtent([bbox.west, bbox.south, bbox.east, bbox.north])).transform("EPSG:4326", mapProj);
+			// Extents that cross the antimeridian continue beyond 180. All extents are moved into the world copy of
+			// the first one (e.g. the overall extent of a STAC collection), so that they are shown and fitted together.
+			let extents = rectangles.map(bbox => Utils.toMapExtent([bbox.west, bbox.south, bbox.east, bbox.north]));
+			let center = extents.length > 0 ? (extents[0][0] + extents[0][2]) / 2 : 0;
+			let features = extents.map(extent => {
+				let polygon = PolygonFromExtent(Utils.alignExtent(extent, center)).transform("EPSG:4326", mapProj);
 				return new Feature(polygon);
 			});
 			let source = new VectorSource({
@@ -64,7 +68,10 @@ export default {
 			this.map.addLayer(layer);
 			// ToDo: The Collection component has some smart fitting behavior in setMapSize()
 			// Implement something similar here, too.
-			this.map.getView().fit(source.getExtent(), this.getFitOptions());
+			// A global first extent contains all others, but those that cross the antimeridian would extend beyond it
+			let isGlobal = extents.length > 0 && extents[0][2] - extents[0][0] >= 360;
+			let fitExtent = isGlobal ? features[0].getGeometry().getExtent() : source.getExtent();
+			this.map.getView().fit(fitExtent, this.getFitOptions());
 			return layer;
 		},
 

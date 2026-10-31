@@ -46,7 +46,8 @@ export default {
 	data() {
 		return {
 			interaction: null,
-			extent: Utils.normalizeExtent(this.toExtent(this.value))
+			// WGS84 extent as shown on the map, longitudes can exceed ±180 (see Utils.toMapExtent)
+			extent: Utils.toMapExtent(Utils.normalizeExtent(this.toExtent(this.value)))
 		};
 	},
 	computed: {
@@ -55,7 +56,7 @@ export default {
 		},
 		projectedExtent() {
 			if (this.extent) {
-				return transformExtent(Utils.toMapExtent(this.extent), 'EPSG:4326', this.map.getView().getProjection());
+				return transformExtent(this.extent, 'EPSG:4326', this.map.getView().getProjection());
 			}
 			return null;
 		},
@@ -63,31 +64,27 @@ export default {
 			if (!this.showMaxExtent) {
 				return null;
 			}
-			// Continuous across the antimeridian (east > 180), the outer ring covers it
-			let [west, south, east, north] = Utils.toMapExtent(this.toExtent(this.showMaxExtent));
-			let maxEast = Math.max(180, east);
+			let [west, south, east, north] = Utils.normalizeExtent(this.toExtent(this.showMaxExtent));
+			let rectangle = (w, e) => [[w, north], [w, south], [e, south], [e, north], [w, north]];
+			// The mask covers exactly one world from -180 to 180, which is repeated in all world copies like the
+			// basemaps (see renderMap). An extent across the antimeridian (west > east) is split into two holes.
+			let holes = west <= east ? [rectangle(west, east)] : [rectangle(west, 180), rectangle(-180, east)];
 			return {
 				"type": "Polygon",
 				"coordinates": [
 					[
 						[-180, 90],
 						[-180, -90],
-						[maxEast, -90],
-						[maxEast, 90],
+						[180, -90],
+						[180, 90],
 						[-180, 90]
 					],
-					[
-						[west, north],
-						[west, south],
-						[east, south],
-						[east, north],
-						[west, north]
-					]
+					...holes
 				]
 			};
 		},
 		bbox() {
-			return Utils.extentToBBox(this.extent);
+			return Utils.extentToBBox(Utils.normalizeExtent(this.extent));
 		},
 		help() {
 			return this.extent ? 'Click inside the bounding box to remove it.' : 'Click on the map to add a bounding box.';
@@ -96,12 +93,12 @@ export default {
 	methods: {
 		update(event) {
 			if (event.extent) {
-				this.extent = Utils.normalizeExtent(transformExtent(event.extent, this.map.getView().getProjection(), 'EPSG:4326'));
+				this.extent = transformExtent(event.extent, this.map.getView().getProjection(), 'EPSG:4326');
 			}
 			else {
 				this.extent = null;
 			}
-			this.$emit('input', this.returnAsObject ? this.bbox : this.extent);
+			this.$emit('input', this.returnAsObject ? this.bbox : Utils.normalizeExtent(this.extent));
 		},
 		async renderMap() {
 			let isWebMercatorCompatible = Utils.isBboxInWebMercator(this.bbox) !== false;
@@ -122,7 +119,8 @@ export default {
 					fill: new Fill({ color: '#00000099' }),
 					stroke: new Stroke({ width: 0, color: '#00000000' })
 				});
-				this.addGeoJson(this.outerArea, false, "unsupported area", style);
+				let mapProj = this.map.getView().getProjection();
+				this.addGeoJson(this.createGeoJsonSource(this.outerArea, mapProj, true), false, "unsupported area", style);
 
 				let extent = Utils.toMapExtent(this.toExtent(this.showMaxExtent));
 				extent = transformExtent(extent, 'EPSG:4326', this.map.getView().getProjection());
