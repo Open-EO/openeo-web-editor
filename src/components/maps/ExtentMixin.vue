@@ -68,9 +68,13 @@ export default {
 			this.map.addLayer(layer);
 			// ToDo: The Collection component has some smart fitting behavior in setMapSize()
 			// Implement something similar here, too.
-			// A global first extent contains all others, but those that cross the antimeridian would extend beyond it
-			let isGlobal = extents.length > 0 && extents[0][2] - extents[0][0] >= 360;
-			let fitExtent = isGlobal ? features[0].getGeometry().getExtent() : source.getExtent();
+			// Extents that cross the antimeridian would extend beyond a global first extent,
+			// so in this case only the longitudes of the overall extent are limited to the first extent.
+			let fitExtent = source.getExtent();
+			if (extents.length > 0 && extents[0][2] - extents[0][0] >= 360) {
+				let globalExtent = features[0].getGeometry().getExtent();
+				fitExtent = [globalExtent[0], fitExtent[1], globalExtent[2], fitExtent[3]];
+			}
 			this.map.getView().fit(fitExtent, this.getFitOptions());
 			return layer;
 		},
