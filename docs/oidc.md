@@ -20,18 +20,34 @@ it is important for an openEO back-end to properly set up a couple of things:
   How this OIDC client has to be configured practically,
   heavily depends on the OIDC provider,
   but here are some general guidelines and constraints
-  for the OIDC client configuration:
+  for the **OIDC client configuration**:
 
-  - (At least) support the **Authorization Code Flow** without client secrets
-    (which is sometimes labeled as a "public client").
-    Support for PKCE (Proof Key for Code Exchange) is recommended.
+  - (At least) support the **Authorization Code Flow** (grant type `authorization_code`)
+    without client secrets (sometimes labeled as a "public client"),
+    with PKCE (Proof Key for Code Exchange) enabled.
+    The web editor always uses PKCE and only detects default clients
+    that list `authorization_code+pkce` in `GET /credentials/oidc` (see below).
+
+    It is also recommended to enable the refresh token grant (`refresh_token`).
+    The web editor uses it to restore sessions after a page reload.
+    In that case, it requests the `offline_access` scope, so the client must allow that scope.
+
+    While not specific to web editor usage, it is also recommended
+    to enable the "Device Authorization Grant"
+    (grant type `urn:ietf:params:oauth:grant-type:device_code`, with PKCE),
+    which is vital for an optimal user experience in non-web based openEO contexts
+    (Python/Jupyter, R, ...).
 
   - **Allow-list the proper redirect URIs** related to your openEO Web Editor deployment.
 
     For example, if you host the web editor at `https://editor.openeo.example.org/`,
     you should allow the redirect URI `https://editor.openeo.example.org`.
 
-    Note that the redirect URIs should be allow-listed *without trailing slashes*.
+    Note that the redirect URIs should be allow-listed *without trailing slashes*
+    because the web editor strips the trailing slash (as well as query and fragment) from the current page URL
+    before passing it to the OIDC provider for validation.
+    Exception: if the web editor is configured with `redirectUrlAppendSlash: true`,
+    the redirect URIs must be allow-listed *with* a trailing slash.
 
     Make sure to cover all possible Web Editor domains you want to support with the client.
     For example, consider allow-listing:
@@ -56,17 +72,25 @@ it is important for an openEO back-end to properly set up a couple of things:
     - `http://localhost:8080`
     - `https://editor.openeo.org`
 
-- Handle the `GET /credentials/oidc` endpoint in your openEO back-end,
+- Handle the **`GET /credentials/oidc` endpoint** in your openEO back-end,
   based on the OIDC providers and OIDC clients discussed above.
 
   Apart from the full details discussed
   in the [`GET /credentials/oidc` specification](https://api.openeo.org/#tag/Account-Management/operation/authenticate-oidc)
   consider these additional notes on the `default_clients` items:
 
-  - Include the appropriate grant type under the `grant_types` field:
-    - `authorization_code` for the Authorization Code Flow
+  - Under the `grant_types` field: include the grant types corresponding to the OIDC client config,
+    e.g. typically:
     - `authorization_code+pkce` for the Authorization Code Flow with PKCE
-    - `implicit` for the Implicit Flow (**discouraged**)
-  - List the same redirect URIs discussed above again under the `redirect_urls` field.
-    This listing allows the openEO Web Editor to hide authentication options
-    that won't work because of the redirect URIs configuration.
+      (required for the Web Editor to detect the default client)
+    - `urn:ietf:params:oauth:grant-type:device_code+pkce` for the Device Authorization Grant (with PKCE)
+    - `refresh_token`
+  - Under the `redirect_urls` field: list the same redirect URIs discussed above.
+
+    This listing allows the openEO Web Editor to detect the default client automatically
+    instead of asking the user for a Client ID.
+
+    Note that the entries in this `redirect_urls` listing have no requirement to strip the trailing slash
+    (in contrast to the redirect URIs configured at the OIDC provider, where it is required as discussed above).
+    It is recommended to keep the trailing slash here (e.g. `https://editor.openeo.org/`),
+    as this works regardless of the web editor's `redirectUrlAppendSlash` setting.
