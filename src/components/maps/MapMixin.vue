@@ -129,7 +129,7 @@ export default {
 			let basemapOptions = {
 				opaque: true,
 				attributionsCollapsible: false,
-				wrapX: false
+				wrapX: true
 			};
 			let baselayers = [];
 			if (Array.isArray(this.$config.basemaps)) {
