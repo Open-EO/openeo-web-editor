@@ -44,6 +44,40 @@ export default {
 		pauseOnHover: true
 	},
 
+	// In-browser processing with the openEO Web Engine.
+	// The engine processes the data in your browser (Web Workers, WebGPU) on cloud-native data
+	// (STAC with COGs etc.) and only reads the data required for the results or the visible map.
+	// Set to `null` to disable.
+	// - collections: STAC collections (or catalogs) that are provided for `load_collection`,
+	//   each with `url` and optionally `id` and `title`. Use `{catalog: url}` to add all collections of a catalog.
+	// - examples: User-defined processes, batch jobs and web services that are added when the engine starts
+	//   for the first time in a browser, so that users can try it right away. Users can change and delete them,
+	//   deleted examples don't come back. `'demo'`: the examples of the engine, which use the collections below
+	//   (see `@openeo/web-engine/examples`). Your own: `{processGraphs: [...], jobs: [...], services: [...]}`,
+	//   each with a stable `id`. `null` for none.
+	// - parameters: Default processing parameters, e.g. `max_pixels`.
+	localEngine: {
+		collections: [
+			{
+				id: 'sentinel-2-l2a',
+				url: 'https://earth-search.aws.element84.com/v1/collections/sentinel-2-l2a',
+				title: 'Sentinel-2 L2A (Element 84 Earth Search, COG)'
+			},
+			{
+				id: 'sentinel-2-l2a-zarr',
+				url: 'https://stac.core.eopf.eodc.eu/collections/sentinel-2-l2a-zarr3',
+				title: 'Sentinel-2 L2A (EOPF Sample Service, Zarr)'
+			},
+			{
+				id: 'brp-crop-parcels',
+				url: 'https://data.source.coop/cholmes/portolan-nl/rvo/brp_gewaspercelen/collection.json',
+				title: 'BRP crop parcels, Netherlands (Portolan NL, GeoParquet)'
+			}
+		],
+		examples: 'demo',
+		parameters: {}
+	},
+
 	// List of supported web map services (all lower-cased)
 	supportedMapServices: [
 		'xyz',

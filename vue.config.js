@@ -42,5 +42,13 @@ module.exports = {
 	},
 	chainWebpack: webpackConfig => {
 		webpackConfig.plugin('polyfills').use(NodePolyfillPlugin);
+		// Service Worker of the openEO Web Engine (in-browser processing), must be served from the root
+		webpackConfig.plugin('copy').tap(args => {
+			args[0].patterns.push({
+				from: require.resolve('@openeo/web-engine/service-worker.js'),
+				to: 'openeo-local-sw.js'
+			});
+			return args;
+		});
 	}
 }

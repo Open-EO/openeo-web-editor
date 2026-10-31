@@ -1,7 +1,7 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
 
-import { OpenEO, FileTypes, Formula } from '@openeo/js-client';
+import { OpenEO, Connection, FileTypes, Formula } from '@openeo/js-client';
 import { ProcessRegistry } from '@openeo/js-commons';
 import StacMigrate from '@radiantearth/stac-migrate';
 import Utils from '../utils.js';
@@ -15,6 +15,9 @@ import services from './services';
 import userProcesses from './userProcesses';
 
 Vue.use(Vuex);
+
+// Pseudo server URL for in-browser processing (see `localEngine` in config.js)
+export const LOCAL_ENGINE_URL = 'local';
 
 Formula.arrayOperatorMapping = {
 	'product': '*',
@@ -160,6 +163,9 @@ export default new Vuex.Store({
 
 			// Connect and request capabilities
 			let connection = null;
+			if (url === LOCAL_ENGINE_URL) {
+				return await cx.dispatch('connectLocal');
+			}
 			try {
 				connection = await OpenEO.connect(url, {addNamespaceToProcess: true});
 			} catch (error) {
@@ -192,6 +198,34 @@ export default new Vuex.Store({
 			cx.commit('connection', connection);
 
 			return true;
+		},
+
+		async connectLocal(cx) {
+			if (!Config.localEngine) {
+				cx.commit('setConnectionError', new Error('In-browser processing is not enabled.'));
+				return false;
+			}
+			try {
+				// Loaded on demand, the engine runs in a Web Worker
+				const { connectLocalEngine } = await import('@openeo/web-engine');
+				const connection = await connectLocalEngine({Connection}, {
+					engine: {
+						collections: Config.localEngine.collections || [],
+						examples: Config.localEngine.examples || null,
+						parameters: Config.localEngine.parameters || {}
+					},
+					connectionOptions: {addNamespaceToProcess: true}
+				});
+				connection.on('processesChanged', () => cx.commit('updateProcesses'));
+				cx.commit('authProviders', []);
+				cx.commit('connection', connection);
+				// There's no login, all features are available directly
+				cx.commit('authenticated', true);
+				return true;
+			} catch (error) {
+				cx.commit('setConnectionError', error);
+				return false;
+			}
 		},
 
 		async discover(cx, refresh = false) {

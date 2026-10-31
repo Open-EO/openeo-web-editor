@@ -25,6 +25,12 @@
 					<div class="row">
 						<button type="submit" class="connectBtn tour-connect-retry" :class="{loading: loading}"><i class="fas fa-spinner fa-spin fa-lg"></i> Connect</button>
 					</div>
+					<template v-if="localEngineEnabled">
+						<div class="row or">or</div>
+						<div class="row">
+							<button type="button" class="connectBtn localBtn" :class="{loading: loading}" @click="connectLocal" title="Process data in your browser, no account or server required"><i class="fas fa-spinner fa-spin fa-lg"></i><i class="fas fa-laptop-code"></i> Process in your browser</button>
+						</div>
+					</template>
 				</form>
 				<div v-else-if="showLoginForm" class="login">
 					<h3>Log in to {{ title }}</h3>
@@ -121,6 +127,7 @@ import Tabs from '@openeo/vue-components/components/Tabs.vue';
 import Tab from '@openeo/vue-components/components/Tab.vue';
 import TermsOfServiceConsent from './TermsOfServiceConsent.vue';
 import Utils from '../utils.js';
+import { LOCAL_ENGINE_URL } from '../store/index.js';
 import { OidcProvider } from '@openeo/js-client';
 import Config from '../../config.js';
 
@@ -176,6 +183,9 @@ export default {
 		},
 		showConnectForm() {
 			return !this.isConnected || this.skipLogin;
+		},
+		localEngineEnabled() {
+			return Utils.isObject(this.$config.localEngine);
 		},
 		showLoginForm() {
 			return !this.showConnectForm && !this.isDiscovered && !this.skipLogin;
@@ -347,7 +357,31 @@ export default {
 			}
 		},
 
+		async connectLocal() {
+			this.serverUrl = LOCAL_ENGINE_URL;
+			await this.initConnection(true, false);
+		},
+
 		async initConnection(skipLogin = false, programmatically = false) {
+			if (this.serverUrl === LOCAL_ENGINE_URL) {
+				this.loading = true;
+				try {
+					if (await this.connect(LOCAL_ENGINE_URL)) {
+						if (!programmatically) {
+							window.history.pushState({reset: true, serverUrl: this.serverUrl, autoConnect: true, skipLogin: true}, "", this.makeUrl(true, true));
+						}
+						await this.initDiscovery();
+					}
+					else {
+						Utils.exception(this, this.connectionError);
+					}
+				} catch (error) {
+					Utils.exception(this, error);
+				}
+				this.loading = false;
+				return;
+			}
+
 			if (typeof this.serverUrl !== 'string' || !this.serverUrl) {
 				Utils.error(this, 'Please specify a server.');
 				return;

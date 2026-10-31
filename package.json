@@ -52,6 +52,7 @@
     "@musement/iso-duration": "^1.0.0",
     "@openeo/js-client": "^2.12.0",
     "@openeo/js-commons": "^1.5.0",
+    "@openeo/web-engine": "file:../openeo-web-engine",
     "@openeo/js-processgraphs": "^1.4.2",
     "@openeo/vue-components": "^2.23.3",
     "@radiantearth/stac-fields": "^1.5.0",
