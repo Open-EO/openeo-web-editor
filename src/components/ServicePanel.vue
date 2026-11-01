@@ -175,11 +175,11 @@ export default {
 				optional: true
 			};
 		},
-		getConfigField(value = undefined) {
+		getConfigField(value = undefined, serviceType = undefined) {
 			return {
 				name: 'configuration',
 				label: 'Service Configuration',
-				schema: {type: 'object', subtype: 'service-config'},
+				schema: {type: 'object', subtype: 'service-config', serviceType},
 				value: value,
 				optional: true
 			};
@@ -252,7 +252,7 @@ export default {
 					this.getLogLevelField(service.log_level),
 					this.supportsBillingPlans ? this.getBillingPlanField(service.plan) : null,
 					this.supportsBilling ? this.getBudgetField(service.budget) : null,
-					this.getConfigField(service.configuration)
+					this.getConfigField(service.configuration, service.type)
 				];
 				this.addProcessingParameters(fields, "service", service);
 				this.broadcast('showDataForm', "Edit web service", fields, data => {
