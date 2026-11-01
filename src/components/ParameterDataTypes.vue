@@ -91,6 +91,7 @@ const SUPPORTED_TYPES = [
 		{type: 'object', subtype: 'output-format-options', title: 'Export file format parameters', group: 'File and Folders', any: false},
 		{type: 'string', subtype: 'input-format', title: 'Import file format', group: 'File and Folders'},
 		{type: 'object', subtype: 'input-format-options', title: 'Import file format parameters', group: 'File and Folders', any: false},
+		{type: 'object', subtype: 'service-config', title: 'Web service configuration', any: false},
 
 	//	{type: 'array', subtype: 'kernel', title: 'Kernel'}, // ToDo
 		{type: 'object', subtype: 'process-graph', title: 'Custom Process'},
