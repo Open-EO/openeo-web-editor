@@ -1,7 +1,7 @@
 <template>
 	<div class="datatypeEditor serviceConfigEditor">
 		<template v-if="hasOptions">
-			<div class="fieldRow" v-for="parameter in parameters" :key="parameter.name">
+			<div class="fieldRow" v-for="parameter in parameters" :key="serviceType + '/' + parameter.name">
 				<label class="fieldLabel">
 					{{ parameter.label }}<strong class="required" v-if="!parameter.optional" title="required">*</strong>
 					<div v-if="parameter.description" class="description">
@@ -94,6 +94,17 @@ export default {
 		value(newValue) {
 			if (this.options !== newValue) {
 				this.options = Utils.isObject(newValue) ? newValue : {};
+			}
+		},
+		serviceType(newType, oldType) {
+			// Another service type was selected: remove the values of options that the new type doesn't have
+			if (!oldType || !this.service || !Utils.isObject(this.service.configuration)) {
+				return;
+			}
+			for (const name of Object.keys(this.options)) {
+				if (!(name in this.service.configuration)) {
+					this.$delete(this.options, name);
+				}
 			}
 		}
 	}
