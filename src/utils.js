@@ -220,6 +220,57 @@ class Utils extends VueUtils {
 		let maxBounds = {south: -85.06, north: 85.06}; // Max. south/north bounds for Web Mercator
 		return !bboxes.find(bbox => bbox.south < maxBounds.south || bbox.north > maxBounds.north);
 	}
+	/**
+	 * Converts a WGS84 extent [west, south, east, north] from a map, whose longitudes can exceed ±180 (the world
+	 * repeats horizontally), to longitudes from -180 to 180. As in GeoJSON, STAC and openEO, an extent that crosses
+	 * the antimeridian then has a west value greater than its east value.
+	 */
+	static normalizeExtent(extent) {
+		if (!Array.isArray(extent) || extent.length < 4) {
+			return extent;
+		}
+		let [west, south, east, north] = extent;
+		if (east - west >= 360) {
+			west = -180;
+			east = 180;
+		}
+		else {
+			west = Utils.normalizeLongitude(west);
+			east = Utils.normalizeLongitude(east);
+		}
+		return [west, south, east, north];
+	}
+
+	/**
+	 * Converts a WGS84 extent [west, south, east, north] to an extent for maps: if it crosses the antimeridian
+	 * (west > east), the east value is moved beyond 180 so that the extent is continuous.
+	 */
+	static toMapExtent(extent) {
+		if (!Array.isArray(extent) || extent.length < 4 || extent[0] <= extent[2]) {
+			return extent;
+		}
+		return [extent[0], extent[1], extent[2] + 360, extent[3]];
+	}
+
+	/**
+	 * Moves a WGS84 extent [west, south, east, north] by multiples of 360 degrees into the world copy that is
+	 * closest to the given longitude, e.g. to show several extents across the antimeridian together.
+	 */
+	static alignExtent(extent, longitude) {
+		if (!Array.isArray(extent) || extent.length < 4) {
+			return extent;
+		}
+		let shift = Math.round((longitude - (extent[0] + extent[2]) / 2) / 360) * 360;
+		return shift === 0 ? extent : [extent[0] + shift, extent[1], extent[2] + shift, extent[3]];
+	}
+
+	static normalizeLongitude(lon) {
+		if (lon >= -180 && lon <= 180) {
+			return lon;
+		}
+		return ((lon + 180) % 360 + 360) % 360 - 180;
+	}
+
 	static extentToBBox(extent) {
 		if (!Array.isArray(extent)) {
 			return null;

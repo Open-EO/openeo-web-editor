@@ -60,14 +60,14 @@ export default {
 				this.broadcast('showDataModal', props, title);
 			}
 		},
-		createGeoJsonSource(geojson, projection) {
+		createGeoJsonSource(geojson, projection, wrapX = false) {
 			let features = [];
 			if (Utils.detectGeoJson(geojson)) {
 				features = (new GeoJSON()).readFeatures(geojson, { featureProjection: projection })
 			}
 			return new VectorSource({
 				features,
-				wrapX: false
+				wrapX
 			});
 		}
 	}
