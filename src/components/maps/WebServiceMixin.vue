@@ -104,6 +104,8 @@ export default {
 				layerNames = [];
 			}
 			let allTimes = new Set();
+			// The times of each layer, so that each layer gets a time it provides
+			let layerTimes = new Map();
 			for(let layer of layerNames) {
 				if (!layer) {
 					continue;
@@ -137,6 +139,7 @@ export default {
 					source: this.trackTileProgress(source),
 					noSwitcherDelete: true
 				});
+				layerTimes.set(mapLayer, times);
 				layerCollection.push(mapLayer);
 			}
 
@@ -150,13 +153,13 @@ export default {
 				let run;
 				// Only allow the times that are provided by the service (if they are enumerated)
 				const availableTimes = Array.from(allTimes).sort();
-				const snapToAvailable = date => {
-					if (availableTimes.length === 0) {
+				const snapToAvailable = (date, times = availableTimes) => {
+					if (times.length === 0) {
 						return date.toISOString().substr(0, 10);
 					}
-					let best = availableTimes[0];
+					let best = times[0];
 					let bestDiff = Infinity;
-					for (const t of availableTimes) {
+					for (const t of times) {
 						const diff = Math.abs(new Date(t) - date);
 						if (diff < bestDiff) {
 							best = t;
@@ -177,8 +180,9 @@ export default {
 					run = window.setTimeout(() => {
 						try {
 							let date = snapToAvailable(e.date);
+							// Layers with other times get the closest of their own times
 							layerCollection.forEach(l => l.getSource().updateDimensions({
-								TIME: date
+								TIME: snapToAvailable(e.date, layerTimes.get(l) || [])
 							}));
 							let btns = document.getElementsByClassName('timeline-date-label');
 							btns[0].innerText = date;
@@ -204,13 +208,14 @@ export default {
 				title,
 				layers: layerCollection
 			});
-			// Show the extent of the layers (unless they are global)
-			const layerInfos = (capabilities.Contents.Layer || []).filter(l => layerNames.includes(l.Identifier));
-			for (const info of layerInfos) {
-				const bbox = info.WGS84BoundingBox;
-				if (Array.isArray(bbox) && bbox.length === 4 && !(bbox[0] <= -179 && bbox[2] >= 179)) {
-					this.addExtent({west: bbox[0], south: bbox[1], east: bbox[2], north: bbox[3]}, false);
-				}
+			// Show the extent of the layers (unless they are global) and fit the map to all of them at once
+			const extents = (capabilities.Contents.Layer || [])
+				.filter(l => layerNames.includes(l.Identifier))
+				.map(l => l.WGS84BoundingBox)
+				.filter(bbox => Array.isArray(bbox) && bbox.length === 4 && !(bbox[0] <= -179 && bbox[2] >= 179))
+				.map(bbox => ({west: bbox[0], south: bbox[1], east: bbox[2], north: bbox[3]}));
+			if (extents.length > 0) {
+				this.addExtent(extents, false);
 			}
 			group.on('change:visible',  () => {
 				if (this.timeline && this.timeline.element) {
