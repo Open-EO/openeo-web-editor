@@ -55,8 +55,24 @@ export default {
 					url.searchParams.set('request', 'GetCapabilities');
 					let response = await Utils.axios().get(url.toString(), { responseType: 'text' });
 					var parser = new WMTSCapabilities();
-					this.WMTSCapabilities[service.url] = parser.read(response.data);
+					let capabilities = parser.read(response.data);
+					if (!Utils.isObject(capabilities) || !Utils.isObject(capabilities.Contents)) {
+						throw new Error("The service did not return valid WMTS capabilities.");
+					}
+					this.WMTSCapabilities[service.url] = capabilities;
 				} catch (error) {
+					// Show the error message of the service instead of only the HTTP status
+					let data = error.response && error.response.data;
+					if (typeof data === 'string') {
+						try {
+							data = JSON.parse(data);
+						} catch (e) {
+							data = data.length > 0 && data.length < 500 ? {message: data} : null;
+						}
+					}
+					if (Utils.isObject(data) && typeof data.message === 'string') {
+						error.message = data.message;
+					}
 					Utils.exception(this, error, "WMTS Discovery failed");
 				}
 			}
@@ -68,7 +84,7 @@ export default {
 
 			let capabilities = await this.initWMTSLayer(service);
 			if (!capabilities) {
-				Utils.exception(this, error, "WMTS Discovery failed");
+				return null;
 			}
 
 			let minDate = null;
@@ -82,8 +98,14 @@ export default {
 				layerNames = attrs.layers;
 			}
 			else if (Array.isArray(capabilities.Contents.Layer)) {
-				layerNames = layers.map(l => l.Identifier);
+				layerNames = capabilities.Contents.Layer.map(l => l.Identifier);
 			}
+			else {
+				layerNames = [];
+			}
+			let allTimes = new Set();
+			// The times of each layer, so that each layer gets a time it provides
+			let layerTimes = new Map();
 			for(let layer of layerNames) {
 				if (!layer) {
 					continue;
@@ -97,6 +119,7 @@ export default {
 				}
 
 				let times = this.getWMTSTimes(capabilities, layer);
+				times.forEach(t => allTimes.add(t));
 				if (times.length) {
 					let min = new Date(times[0]);
 					let max = new Date(times[times.length -1]);
@@ -116,6 +139,7 @@ export default {
 					source: this.trackTileProgress(source),
 					noSwitcherDelete: true
 				});
+				layerTimes.set(mapLayer, times);
 				layerCollection.push(mapLayer);
 			}
 
@@ -127,8 +151,27 @@ export default {
 					maxDate: maxDate
 				});
 				let run;
+				// Only allow the times that are provided by the service (if they are enumerated)
+				const availableTimes = Array.from(allTimes).sort();
+				const snapToAvailable = (date, times = availableTimes) => {
+					if (times.length === 0) {
+						return date.toISOString().substr(0, 10);
+					}
+					let best = times[0];
+					let bestDiff = Infinity;
+					for (const t of times) {
+						const diff = Math.abs(new Date(t) - date);
+						if (diff < bestDiff) {
+							best = t;
+							bestDiff = diff;
+						}
+					}
+					return best;
+				};
 				this.timeline.on('scroll', function(e) {
-					if (!e.date || e.date > maxDate || e.date < minDate) {
+					// With enumerated times, snapToAvailable picks the closest time, also for positions on the last day
+					// (maxDate is its start) or before the first tick (drawn at local midnight)
+					if (!e.date || (availableTimes.length === 0 && (e.date > maxDate || e.date < minDate))) {
 						return;
 					}
 					if (run) {
@@ -136,10 +179,11 @@ export default {
 					}
 					run = window.setTimeout(() => {
 						try {
-							let date = e.date.toISOString().substr(0, 10);
-							source.updateDimensions({
-								TIME: date
-							});
+							let date = snapToAvailable(e.date);
+							// Layers with other times get the closest of their own times
+							layerCollection.forEach(l => l.getSource().updateDimensions({
+								TIME: snapToAvailable(e.date, layerTimes.get(l) || [])
+							}));
 							let btns = document.getElementsByClassName('timeline-date-label');
 							btns[0].innerText = date;
 							btns[0].disabled = true;
@@ -164,6 +208,15 @@ export default {
 				title,
 				layers: layerCollection
 			});
+			// Show the extent of the layers (unless they are global) and fit the map to all of them at once
+			const extents = (capabilities.Contents.Layer || [])
+				.filter(l => layerNames.includes(l.Identifier))
+				.map(l => l.WGS84BoundingBox)
+				.filter(bbox => Array.isArray(bbox) && bbox.length === 4 && !(bbox[0] <= -179 && bbox[2] >= 179))
+				.map(bbox => ({west: bbox[0], south: bbox[1], east: bbox[2], north: bbox[3]}));
+			if (extents.length > 0) {
+				this.addExtent(extents, false);
+			}
 			group.on('change:visible',  () => {
 				if (this.timeline && this.timeline.element) {
 					// Remove time selector on Map if not required any more https://github.com/Open-EO/openeo-web-editor/issues/207
