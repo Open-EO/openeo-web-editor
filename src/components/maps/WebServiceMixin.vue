@@ -166,7 +166,9 @@ export default {
 					return best;
 				};
 				this.timeline.on('scroll', function(e) {
-					if (!e.date || e.date > maxDate || e.date < minDate) {
+					// With enumerated times, snapToAvailable picks the closest time, also for positions on the last day
+					// (maxDate is its start) or before the first tick (drawn at local midnight)
+					if (!e.date || (availableTimes.length === 0 && (e.date > maxDate || e.date < minDate))) {
 						return;
 					}
 					if (run) {
