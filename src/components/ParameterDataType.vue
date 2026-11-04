@@ -40,6 +40,8 @@
 		<Editor v-else-if="type === 'process-graph'" class="callbackEditor" :editable="editable" :parent="parent" :parentSchema="schema" :showDiscoveryToolbar="true" v-model="state" :defaultValue="editorDefaultValue" />
 		<!-- Output format options -->
 		<FileFormatOptionsEditor v-else-if="type === 'output-format-options' || type === 'input-format-options'" ref="fileFormatOptionsEditor" :type="type" v-model="state" :format="dependency"></FileFormatOptionsEditor>
+		<!-- Web service configuration -->
+		<ServiceConfigEditor v-else-if="type === 'service-config'" v-model="state" :serviceType="dependency" :editable="editable"></ServiceConfigEditor>
 		<!-- Budget -->
 		<Budget v-else-if="type === 'budget'" v-model="state" :editable="editable" />
 		<!-- Budget -->
@@ -92,6 +94,7 @@ export default {
 		TextEditor,
 		// Asynchronously load the following components to avoid circular references.
 		// See https://vuejs.org/v2/guide/components-edge-cases.html#Circular-References-Between-Components
+		ServiceConfigEditor: () => import('./datatypes/ServiceConfigEditor.vue'),
 		Editor: () => import('./Editor.vue'),
 		FileFormatOptionsEditor: () => import('./datatypes/FileFormatOptionsEditor.vue'),
 		ParameterDataTypes: () => import('./ParameterDataTypes.vue'),
@@ -232,6 +235,9 @@ export default {
 				case 'udf-runtime-version':
 				case 'udf-code':
 					return this.getValueFromOtherParameterByDataType('udf-runtime');
+				case 'service-config':
+					// The service type is either another field or given in the schema (e.g. when editing a service)
+					return this.getValueFromOtherParameterByDataType('service-type') || this.getValueFromOtherFieldBySubtype('service-type') || (this.schema.schema && this.schema.schema.serviceType);
 				case 'band-name':
 					return this.getValueFromOtherParameterByDataType('collection-id');
 				case 'array':
@@ -270,6 +276,23 @@ export default {
 				}
 			}
 			return;
+		},
+		getValueFromOtherFieldBySubtype(subtype) {
+			// Fallback for forms where the schemas of the fields are not (yet) selected
+			if (!Utils.isObject(this.context) || !Array.isArray(this.context.parameters) || !Utils.isObject(this.context.values)) {
+				return;
+			}
+			const hasSubtype = p => {
+				if (!Utils.isObject(p)) {
+					return false;
+				}
+				if (Array.isArray(p.schemas) && p.schemas.some(s => s && typeof s.dataType === 'function' && s.dataType() === subtype)) {
+					return true;
+				}
+				return Utils.isObject(p.schema) && p.schema.subtype === subtype;
+			};
+			const field = this.context.parameters.find(hasSubtype);
+			return field ? this.context.values[field.name] : undefined;
 		},
 		convertToArray() {
 			this.state = [this.state];
