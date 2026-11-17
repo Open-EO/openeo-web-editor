@@ -25,7 +25,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v6
         with:
-          images: mundialis/openeo-web-editor
+          images: osgeo/openeo-web-editor
           tags: |
             type=ref,event=tag
             type=sha
