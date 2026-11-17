@@ -86,20 +86,20 @@ After successful startup, the webeditor can be reached locally at http://127.0.0
 More startup information can be seen at the [official nginx docker image](https://hub.docker.com/_/nginx/) which is used.
 
 ### Use image from Dockerhub
-The same Docker Image is built and pushed to Dockerhub with the help of a github action. It is available [here](https://hub.docker.com/r/mundialis/openeo-web-editor).
+The same Docker Image is built and pushed to Dockerhub with the help of a github action. It is available [here](https://hub.docker.com/r/osgeo/openeo-web-editor).
 
 To use it locally, run
 ```
-docker pull mundialis/openeo-web-editor:latest
+docker pull osgeo/openeo-web-editor:latest
 ```
 Then run it with
 ```
-docker run -p 8080:80 mundialis/openeo-web-editor:latest
+docker run -p 8080:80 osgeo/openeo-web-editor:latest
 ```
 After successful startup, the webeditor can be reached locally at http://127.0.0.1:8080/
 
 To test a certain commit, simply pull the according tag (available from 2021-09-02), e.g.,
 ```
-docker pull mundialis/openeo-web-editor:sha-4636d41
+docker pull osgeo/openeo-web-editor:sha-4636d41
 ```
-The Docker Image is maintained by mundialis.
+The Docker Image is maintained by OSGeo.
