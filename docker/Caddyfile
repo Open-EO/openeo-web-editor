@@ -1,0 +1,15 @@
+{
+	# Static file server only: no admin API, no config autosave, no automatic HTTPS (terminate TLS in front of the container)
+	admin off
+	persist_config off
+	auto_https off
+}
+
+:{$PORT:80} {
+	log {
+		output stdout
+	}
+	encode zstd gzip
+	root * /usr/share/openeo-web-editor
+	file_server
+}

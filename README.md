@@ -83,7 +83,15 @@ docker run -p 8080:80 openeo-web-editor
 ```
 After successful startup, the webeditor can be reached locally at http://127.0.0.1:8080/
 
-More startup information can be seen at the [official nginx docker image](https://hub.docker.com/_/nginx/) which is used.
+The image is based on the [official Caddy docker image](https://hub.docker.com/_/caddy) and runs Caddy as a non-root user (UID 101).
+The web editor is served from `/usr/share/openeo-web-editor`, the Caddy configuration is located at [docker/Caddyfile](docker/Caddyfile).
+Caddy listens on port 80 inside the container.
+Docker (20.10+) and containerd (2.0+) allow non-root users to bind this port.
+If your container runtime doesn't allow it (e.g. containerd 1.x),
+set the environment variable `PORT` to a port above 1023:
+```
+docker run -p 8080:8080 -e PORT=8080 openeo-web-editor
+```
 
 ### Use image from Dockerhub
 The same Docker Image is built and pushed to Dockerhub with the help of a github action. It is available [here](https://hub.docker.com/r/osgeo/openeo-web-editor).
