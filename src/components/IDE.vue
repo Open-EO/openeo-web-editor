@@ -152,7 +152,7 @@ export default {
 		this.resizeListener = event => this.resized(event);
 		window.addEventListener('resize', this.resizeListener);
 		if (this.isAuthenticated) {
-			this.userInfoUpdater = setInterval(() => this.describeAccount().catch(error => console.error(error)), this.$config.dataRefreshInterval*60*1000); // Refresh user data every x minutes
+			this.startUserInfoUpdater();
 		}
 		this.broadcast('title', this.title);
 
@@ -189,12 +189,31 @@ export default {
 		if (this.resizeListener !== null) {
 			window.removeEventListener('resize', this.resizeListener);
 		}
-		if (this.userInfoUpdater !== null) {
-			clearInterval(this.userInfoUpdater);
+		this.stopUserInfoUpdater();
+	},
+	watch: {
+		isAuthenticated(authenticated) {
+			if (authenticated) {
+				this.startUserInfoUpdater();
+			}
+			else {
+				this.stopUserInfoUpdater();
+			}
 		}
 	},
 	methods: {
 		...Utils.mapActions(['describeAccount']),
+		startUserInfoUpdater() {
+			if (this.userInfoUpdater === null) {
+				this.userInfoUpdater = setInterval(() => this.describeAccount().catch(error => console.error(error)), this.$config.dataRefreshInterval*60*1000);
+			}
+		},
+		stopUserInfoUpdater() {
+			if (this.userInfoUpdater !== null) {
+				clearInterval(this.userInfoUpdater);
+				this.userInfoUpdater = null;
+			}
+		},
 		...Utils.mapMutations(['discoveryCompleted']),
 		...Utils.mapMutations('editor', ['setContext', 'setProcess', 'setCollectionPreview']),
 

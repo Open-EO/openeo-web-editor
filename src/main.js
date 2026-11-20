@@ -11,13 +11,11 @@ import Utils from './utils';
 Vue.use(Snotify);
 Vue.use(Clipboard);
 
-// Don't show too many repetitive error messages
-Vue.prototype.$snotify.singleError = function () {
-	let message = arguments[0];
-	if (message !== this.lastMessage) {
-		this.lastMessage = message;
-		this.error(...arguments);
-		setTimeout(() => this.lastMessage = null, 1000);
+// Toasts don't time out in background tabs, so repeated messages would pile up otherwise
+Vue.prototype.$snotify.single = function (type, message, title = null, config = undefined) {
+	const isOpen = this.notifications.some(t => t.config.type === type && t.body === message && (t.title || null) === (title || null));
+	if (!isOpen) {
+		this[type](message, title, config);
 	}
 };
 

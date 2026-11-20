@@ -156,6 +156,7 @@ export default {
 			WorkPanelMixinInstance.methods.stopSyncTimer.call(this);
 			if (this.jobUpdater !== null) {
 				clearTimeout(this.jobUpdater);
+				this.jobUpdater = null;
 			}
 		},
 		async showInEditor(job) {

@@ -53,6 +53,11 @@ class Utils extends VueUtils {
 		}
 	}
 
+	static isAuthError(error) {
+		const status = Utils.isObject(error) && Utils.isObject(error.response) ? error.response.status : null;
+		return status === 401 || status === 403;
+	}
+
 	static exception(vm, error, alt) {
 		console.error(error);
 		var buttons = [];
@@ -100,19 +105,19 @@ class Utils extends VueUtils {
 		var typeDefaults =  {
 			buttons
 		}; 
-		vm.$snotify.singleError(message, title, Object.assign({}, vm.$config.snotifyDefaults, typeDefaults)); 
-	} 
+		vm.$snotify.single('error', message, title, Object.assign({}, vm.$config.snotifyDefaults, typeDefaults));
+	}
 	static error(vm, message, title = null) {
-		vm.$snotify.singleError(message, title, vm.$config.snotifyDefaults); 
+		vm.$snotify.single('error', message, title, vm.$config.snotifyDefaults);
 	}
 	static warn(vm, message, title = null) {
-		vm.$snotify.warning(message, title, vm.$config.snotifyDefaults);
+		vm.$snotify.single('warning', message, title, vm.$config.snotifyDefaults);
 	}
 	static info(vm, message, title = null) {
-		vm.$snotify.info(message, title, vm.$config.snotifyDefaults); 
+		vm.$snotify.single('info', message, title, vm.$config.snotifyDefaults);
 	}
 	static ok(vm, message, title = null) {
-		vm.$snotify.success(message, title, vm.$config.snotifyDefaults); 
+		vm.$snotify.single('success', message, title, vm.$config.snotifyDefaults);
 	}
 	static confirm(vm, message, buttons = []) {
 		var typeDefaults =  {

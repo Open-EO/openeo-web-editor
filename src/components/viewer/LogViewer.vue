@@ -30,7 +30,7 @@ export default {
 		};
 	},
 	computed: {
-		...Utils.mapState(['connection']),
+		...Utils.mapState(['connection', 'isAuthenticated']),
 		...Utils.mapGetters(['federation']),
 		isJob() {
 			return Utils.isObject(this.data) && typeof this.data.debugJob === 'function';
@@ -51,6 +51,11 @@ export default {
 	watch: {
 		logIterator(it) {
 			this.missing = it ? it.getMissingBackends() : null;
+		},
+		isAuthenticated(authenticated) {
+			if (!authenticated) {
+				this.stopWatcher();
+			}
 		}
 	},
 	created() {
@@ -90,7 +95,7 @@ export default {
 			}
 		},
 		startWatcher() {
-			if (this.syncTimer === null) {
+			if (this.syncTimer === null && this.isAuthenticated) {
 				this.syncTimer = setInterval(this.loadNext.bind(this), 10000);
 			}
 		},
@@ -120,6 +125,9 @@ export default {
 					this.logs = this.data;
 				}
 			} catch (error) {
+				if (Utils.isAuthError(error)) {
+					this.stopWatcher();
+				}
 				Utils.exception(this, error, "Loading logs failed");
 			}
 		}
