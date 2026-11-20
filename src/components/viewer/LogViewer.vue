@@ -26,11 +26,12 @@ export default {
 		return {
 			logs: null,
 			missing: null,
-			syncTimer: null
+			syncTimer: null,
+			visible: false
 		};
 	},
 	computed: {
-		...Utils.mapState(['connection']),
+		...Utils.mapState(['connection', 'isAuthenticated']),
 		...Utils.mapGetters(['federation']),
 		isJob() {
 			return Utils.isObject(this.data) && typeof this.data.debugJob === 'function';
@@ -51,6 +52,14 @@ export default {
 	watch: {
 		logIterator(it) {
 			this.missing = it ? it.getMissingBackends() : null;
+		},
+		isAuthenticated(authenticated) {
+			if (!authenticated) {
+				this.stopWatcher();
+			}
+			else if (this.visible) {
+				this.resume();
+			}
 		}
 	},
 	created() {
@@ -66,6 +75,14 @@ export default {
 	},
 	methods: {
 		onShow() {
+			this.visible = true;
+			this.resume();
+		},
+		onHide() {
+			this.visible = false;
+			this.stopWatcher();
+		},
+		resume() {
 			this.loadNext();
 			if (this.isJob) {
 				this.onJobStatusUpdated(this.data);
@@ -73,9 +90,6 @@ export default {
 			else if (this.isService) {
 				this.startWatcher();
 			}
-		},
-		onHide() {
-			this.stopWatcher();
 		},
 		onJobStatusUpdated(job) {
 			if (job !== this.data || typeof this.data.status !== 'string') {
@@ -90,7 +104,7 @@ export default {
 			}
 		},
 		startWatcher() {
-			if (this.syncTimer === null) {
+			if (this.syncTimer === null && this.isAuthenticated) {
 				this.syncTimer = setInterval(this.loadNext.bind(this), 10000);
 			}
 		},
@@ -120,6 +134,9 @@ export default {
 					this.logs = this.data;
 				}
 			} catch (error) {
+				if (Utils.isAuthError(error)) {
+					this.stopWatcher();
+				}
 				Utils.exception(this, error, "Loading logs failed");
 			}
 		}
