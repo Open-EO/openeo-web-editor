@@ -59,6 +59,8 @@ The authors acknowledge the financial support for the development of this packag
 
 This package received major contributions from the following organizations:
 
+[<img src="https://moregeo.it/logo.png" alt="moreGeo logo" title="moreGeo" height="50">](https://moregeo.it) &nbsp;
+[<img src="https://raw.githubusercontent.com/Open-EO/openeo-python-client/master/docs/_static/images/vito-logo.png" alt="VITO Remote Sensing logo" title="VITO Remote Sensing" height="50">](https://remotesensing.vito.be/) &nbsp;
 [<img src="https://www.uni-muenster.de/imperia/md/images/allgemein/farbunabhaengig/wwu.svg" alt="WWU Münster logo" title="WWU Münster" height="50">](https://www.uni-muenster.de/) &nbsp;
 [<img src="https://www.mundialis.de/wordpress/wp-content/uploads/2015/11/mundialis_logo_web.png" alt="mundialis logo" title="mundialis" height="50">](https://www.mundialis.de)
 [<img src="https://www.sinergise.com/sites/default/files/logo.png" alt="Sinergise logo" title="Sinergise" height="50">](https://www.sinergise.com)
