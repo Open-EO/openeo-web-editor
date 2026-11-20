@@ -26,7 +26,8 @@ export default {
 		return {
 			logs: null,
 			missing: null,
-			syncTimer: null
+			syncTimer: null,
+			visible: false
 		};
 	},
 	computed: {
@@ -56,6 +57,9 @@ export default {
 			if (!authenticated) {
 				this.stopWatcher();
 			}
+			else if (this.visible) {
+				this.resume();
+			}
 		}
 	},
 	created() {
@@ -71,6 +75,14 @@ export default {
 	},
 	methods: {
 		onShow() {
+			this.visible = true;
+			this.resume();
+		},
+		onHide() {
+			this.visible = false;
+			this.stopWatcher();
+		},
+		resume() {
 			this.loadNext();
 			if (this.isJob) {
 				this.onJobStatusUpdated(this.data);
@@ -78,9 +90,6 @@ export default {
 			else if (this.isService) {
 				this.startWatcher();
 			}
-		},
-		onHide() {
-			this.stopWatcher();
 		},
 		onJobStatusUpdated(job) {
 			if (job !== this.data || typeof this.data.status !== 'string') {
